@@ -55,7 +55,7 @@ export class SelectaShell {
   readonly store = this.state.store;
   readonly navigation = computed(() => {
     const store = this.store();
-    return store ? themeNavigation(store.templateContent) : null;
+    return store ? themeNavigation(store.templateContent)?.map(link => ({ ...link, to: link.to === '/productos' ? '/tienda' : link.to })) ?? null : null;
   });
   readonly copy = computed(() => {
     const store = this.store();

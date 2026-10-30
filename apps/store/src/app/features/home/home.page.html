@@ -5,6 +5,9 @@
       @case ('hero') {
         <section class="hero" [class.hero--image]="heroImage()" storeSection="hero">
           <div class="store-container hero__layout">
+          @if (heroImage(); as src) {
+            <img class="hero__image" [src]="src" alt="" width="900" height="1125" fetchpriority="high" storeEditImage="hero.image" [editValue]="src" />
+          }
           <div class="hero__content">
             @if (c.eyebrow) { <p class="store-eyebrow" storeEditText="hero.eyebrow" [editValue]="c.eyebrow"></p> }
             @if (c.title) {
@@ -27,9 +30,6 @@
             </div>
             <p class="hero__note">{{ s.checkout.mode === 'online' ? 'Compra sin crear cuenta. Paga con tarjeta o Yape.' : 'Elige aquí y coordina tu pedido por WhatsApp.' }}</p>
           </div>
-          @if (heroImage(); as src) {
-            <img class="hero__image" [src]="src" alt="" width="720" height="720" fetchpriority="high" storeEditImage="hero.image" [editValue]="src" />
-          }
           </div>
         </section>
         <div class="store-container trust-strip" aria-label="Información de compra">

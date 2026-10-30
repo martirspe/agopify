@@ -1,27 +1,31 @@
-<section class="wrap cart-page">
+<section class="wrap cart-page" aria-labelledby="bag-title">
 <store-cart-recovery [captureEnabled]="false" />
-  <p class="eyebrow">TUS FAVORITOS, JUNTOS</p>
-  <h1>Mi bolsa.</h1>
+  <nav class="breadcrumb" aria-label="Ruta de navegación"><a routerLink="/tienda">La colección</a><span aria-hidden="true">/</span><span aria-current="page">Mi bolsa</span></nav>
+  <header class="bag-heading">
+    <div><p class="eyebrow">TUS FAVORITOS, JUNTOS</p><h1 id="bag-title">Mi bolsa.</h1></div>
+    <a class="text-link" routerLink="/tienda">Seguir explorando <app-icon name="arrow" /></a>
+  </header>
   @if (!cart.ready()) {
     <p class="muted" aria-busy="true">Cargando tu bolsa…</p>
   } @else if (rows().length) {
     <div class="cart-layout">
-      <div>
+      <div class="bag-selection">
+        <h2 class="bag-label">Tu selección <span>({{ cart.count() }})</span></h2>
         @for (row of rows(); track row.line.key) {
           <article class="cart-row">
-            <a [routerLink]="['/producto', row.line.handle]">
+            <a [routerLink]="['/producto', row.line.handle]" [attr.aria-label]="'Ver ' + row.line.name">
               @if (row.product) {
                 <app-product-image [product]="row.product" />
               }
             </a>
-            <div>
-              <h3>{{ row.line.name }}@if (row.line.variantLabel) { · {{ row.line.variantLabel }}}</h3>
-              <p>{{ row.product?.descriptionShort }}</p>
-              <strong>{{ row.unitCents | money }}</strong>
-              <div class="quantity">
-                <button (click)="change(row.line, -1)" aria-label="Reducir cantidad"><app-icon name="minus" /></button>
-                <span>{{ row.line.quantity }}</span>
-                <button (click)="change(row.line, 1)" [disabled]="row.line.quantity >= row.max" aria-label="Aumentar cantidad"><app-icon name="plus" /></button>
+            <div class="bag-item-copy">
+              <h3><a [routerLink]="['/producto', row.line.handle]">{{ row.line.name }}</a></h3>
+              @if (row.line.variantLabel) { <p class="bag-variant">{{ row.line.variantLabel }}</p> }
+              <p class="bag-unit-price">{{ row.unitCents | money }} <span>por unidad</span></p>
+              <div class="quantity" role="group" [attr.aria-label]="'Cantidad de ' + row.line.name">
+                <button type="button" (click)="change(row.line, -1)" [attr.aria-label]="(row.line.quantity === 1 ? 'Quitar ' : 'Reducir cantidad de ') + row.line.name"><app-icon name="minus" /></button>
+                <span aria-live="polite" aria-atomic="true">{{ row.line.quantity }}</span>
+                <button type="button" (click)="change(row.line, 1)" [disabled]="row.line.quantity >= row.max" [attr.aria-label]="'Aumentar cantidad de ' + row.line.name"><app-icon name="plus" /></button>
               </div>
               @if (row.max === 0) {
                 <p class="error">Este producto ya no está disponible. Retíralo antes de continuar.</p>
@@ -29,14 +33,17 @@
                 <p class="error">Disponibles: {{ row.max }}. Ajusta la cantidad.</p>
               }
             </div>
-            <button class="icon-button" (click)="cart.remove(row.line.key)" aria-label="Quitar producto"><app-icon name="trash" /></button>
+            <div class="bag-item-end">
+              <strong class="bag-line-total">{{ row.unitCents * row.line.quantity | money }}</strong>
+              <button type="button" class="text-link bag-remove" (click)="cart.remove(row.line.key)" [attr.aria-label]="'Quitar ' + row.line.name"><app-icon name="trash" />Quitar</button>
+            </div>
           </article>
         }
-        <store-recommendations [handles]="recommendationHandles()" />
       </div>
-      <aside class="order-summary">
-        <h2>Tu selección.</h2>
-        <div class="total-line"><span>Productos ({{ cart.count() }})</span><strong>{{ total() | money }}</strong></div>
+      <aside class="order-summary" aria-labelledby="bag-summary-title">
+        <h2 id="bag-summary-title">El siguiente paso.</h2>
+        <div class="total-line bag-subtotal" aria-live="polite" aria-atomic="true"><span>Subtotal</span><strong>{{ total() | money }}</strong></div>
+        <p class="bag-cost-note">El envío y los descuentos aplicables se calculan al finalizar la compra.</p>
         @if (freeFrom() > 0) {
           <div class="free-ship" [class.done]="missing() <= 0">
             <p>
@@ -58,23 +65,34 @@
               Solo elige tu distrito en el siguiente paso; el envío corre por nuestra cuenta.
             }
           </p>
-          <a class="button full" routerLink="/checkout" [class.disabled]="invalid()">Finalizar compra <app-icon name="arrow" /></a>
+          @if (invalid()) {
+            <p class="notice" role="status">Revisa los productos no disponibles o ajusta sus cantidades para continuar.</p>
+            <button type="button" class="button full" disabled>Finalizar compra <app-icon name="arrow" /></button>
+          } @else {
+            <a class="button full" routerLink="/checkout">Finalizar compra <app-icon name="arrow" /></a>
+          }
           <p class="secure"><app-icon name="lock" />Compra sin crear cuenta</p>
           <div class="summary-trust"><app-icon name="package" /><span>Datos, entrega y pago en una sola página.</span></div>
         } @else if (orderHref(); as href) {
           <p>Te confirmamos el stock, el envío y el pago por WhatsApp.</p>
-          <a class="button full" [href]="href" target="_blank" rel="noopener" [class.disabled]="invalid()"><app-icon name="whatsapp" />Enviar pedido por WhatsApp</a>
+          @if (invalid()) {
+            <p class="notice" role="status">Revisa los productos no disponibles o ajusta sus cantidades para continuar.</p>
+            <button type="button" class="button full" disabled><app-icon name="whatsapp" />Enviar pedido por WhatsApp</button>
+          } @else {
+            <a class="button full" [href]="href" target="_blank" rel="noopener"><app-icon name="whatsapp" />Enviar pedido por WhatsApp</a>
+          }
         } @else {
           <p class="notice">Los pedidos no están disponibles por ahora. Vuelve a intentarlo más tarde.</p>
         }
       </aside>
     </div>
+    <store-recommendations [handles]="recommendationHandles()" />
   } @else {
     <div class="empty">
       <app-icon name="bag" />
       <h2>Tu próximo favorito te espera.</h2>
-      <p>Añade un producto o compra directamente desde su ficha.</p>
-      <a class="button" routerLink="/">Explorar la selección <app-icon name="arrow" /></a>
+      <p>Explora la colección y reúne aquí tus favoritos.</p>
+      <a class="button" routerLink="/tienda">Explorar la selección <app-icon name="arrow" /></a>
     </div>
   }
 </section>

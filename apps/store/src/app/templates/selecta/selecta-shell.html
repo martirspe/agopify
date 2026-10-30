@@ -22,7 +22,7 @@
       <span storeEditText="announcement.text" [editValue]="announcement()" editPlaceholder="Escribe un anuncio o déjalo vacío para ocultarlo"></span>
     </div>
   }
-  <header class="header" [class.is-checkout]="inCheckout()">
+  <header class="header" [class.is-checkout]="inCheckout()" [class.is-compact]="onProduct() || inCheckout()">
     <a routerLink="/" class="brand" [attr.aria-label]="s.displayName + ', ir al inicio'">
       @if (logo(); as src) {
         <img class="brand-logo" [src]="src" [alt]="s.displayName" height="44" />
@@ -34,9 +34,9 @@
     <nav aria-label="Principal">
       @if (!inCheckout()) {
         @if (navigation(); as links) { @for (link of links; track $index) { <a [routerLink]="link.to">{{ link.label }}</a> } }
-        @else { <a routerLink="/productos">Catálogo</a> }
+        @else { <a routerLink="/">Inicio</a><a routerLink="/tienda">Tienda</a> }
       }
-      <a routerLink="/carrito" class="cart-link">
+      <a routerLink="/carrito" class="cart-link" [attr.aria-label]="'Mi bolsa, ' + cart.count() + ' productos'">
         <app-icon name="bag" />
         <span>Mi bolsa</span>
         <b>{{ cart.count() }}</b>

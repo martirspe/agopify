@@ -1,0 +1,555 @@
+@if (store(); as s) {
+  <div
+    class="ro-shell"
+    rosalineSourceMotion
+    storeThemeTokens
+    [style.--third]="brand()?.accent"
+  >
+    <a class="ro-skip" [routerLink]="[]" fragment="contenido"
+      >Saltar al contenido</a
+    >
+    @if (announcement() || demo.active || editor.active()) {
+      <div class="tf-topbar bg-black ssm-d-none" storeSection="announcement">
+        <div class="container-full">
+          <div class="row align-items-center">
+            <div class="col-2 d-none d-xl-flex"><store-social-links /></div>
+            <div class="col-xl-8">
+              <div class="topbar-center">
+                <p
+                  class="text-white font-geist text-center"
+                  storeEditText="announcement.text"
+                  [editValue]="
+                    announcement() ||
+                    (demo.active
+                      ? '🚚 FREE SHIPPING ON ORDERS OVER $49! | 🌸 SPRING BEAUTY SALE - UP TO 30% OFF'
+                      : '')
+                  "
+                ></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+    <header
+      class="tf-header header-v4 offset-top"
+      [class.header-sticky]="headerSticky()"
+      [style.top]="headerTop()"
+    >
+      <div class="header-inner">
+        <div class="container-full">
+          <div class="row align-items-center">
+            <div class="col-3 col-md-4 col-lg-5">
+              <div class="header-left">
+                <div class="box-btn-open-menu d-flex">
+                  <button
+                    #menuToggle
+                    class="d-xl-none ro-native-button"
+                    type="button"
+                    (click)="openMenu()"
+                    aria-label="Menú"
+                    [attr.aria-expanded]="menuOpen()"
+                    aria-controls="rosaline-menu"
+                  >
+                    <i class="icon icon-OpenMenu fs-24"></i>
+                  </button>
+                </div>
+                <nav
+                  class="box-navigation d-none d-xl-block"
+                  aria-label="Principal"
+                >
+                  <ul class="box-nav-menu font-geist">
+                    @if (navigation(); as links) {
+                      @for (link of links; track $index) {
+                        <li class="menu-item">
+                          <a class="item-link" [routerLink]="link.to"
+                            ><span class="text">{{ link.label }}</span></a
+                          >
+                        </li>
+                      }
+                    } @else {
+                      <li class="menu-item">
+                        <a routerLink="/" class="item-link"
+                          ><span class="text">{{
+                            demo.active ? "HOME" : "INICIO"
+                          }}</span></a
+                        >
+                      </li>
+                      <li class="menu-item">
+                        <a routerLink="/productos" class="item-link"
+                          ><span class="text">{{
+                            demo.active ? "SHOP" : "TIENDA"
+                          }}</span
+                          ><i class="icon icon-ArrowCaretDown"></i
+                        ></a>
+                        <div class="sub-menu">
+                          <ul class="sub-menu_list">
+                            <li>
+                              <a routerLink="/productos">{{
+                                demo.active ? "Shop All" : "Ver catálogo"
+                              }}</a>
+                            </li>
+                            <li>
+                              <a href="/carrito" (click)="openCart($event)">{{
+                                demo.active ? "Shopping Cart" : "Mi carrito"
+                              }}</a>
+                            </li>
+                          </ul>
+                        </div>
+                      </li>
+                      <li class="menu-item">
+                        <a routerLink="/legal" class="item-link"
+                          ><span class="text">{{
+                            demo.active ? "HELP" : "INFORMACIÓN"
+                          }}</span></a
+                        >
+                      </li>
+                    }
+                  </ul>
+                </nav>
+              </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <div class="header-center d-flex justify-content-center">
+                <a routerLink="/" class="logo-site">
+                  @if (demo.active) {
+                    <img
+                      src="/themes/rosaline/source/assets/images/logo/logo.svg"
+                      [alt]="s.displayName"
+                      width="136"
+                      height="32"
+                    />
+                  } @else if (brand()?.logo; as logo) {
+                    <img
+                      [src]="logo"
+                      [alt]="s.displayName"
+                      width="136"
+                      height="32"
+                    />
+                  } @else {
+                    <span class="font-geist h4">{{ s.displayName }}</span>
+                  }
+                </a>
+              </div>
+            </div>
+            <div class="col-3 col-md-4 col-lg-5">
+              <div class="header-right">
+                <ul class="tf-list nav-icon-list justify-content-end gap-16">
+                  <li class="sm-d-none">
+                    <button
+                      class="nav-icon-item fw-normal ro-native-button"
+                      type="button"
+                      (click)="openSearch()"
+                      aria-label="Buscar"
+                    >
+                      <i class="icon icon-Search"></i>
+                    </button>
+                  </li>
+                  @if (demo.active) {
+                    <li class="sm-d-none" inert>
+                      <span class="nav-icon-item fw-normal"
+                        ><i class="icon icon-UserCircle"></i
+                      ></span>
+                    </li>
+                    <li inert>
+                      <span class="nav-icon-item fw-normal"
+                        ><i class="icon icon-Hearth"></i
+                      ></span>
+                    </li>
+                  }
+                  <li>
+                    <a
+                      href="/carrito" (click)="openCart($event)"
+                      class="nav-icon-item shop-cart fw-medium"
+                      [attr.aria-label]="
+                        'Carrito: ' + cart.count() + ' productos'
+                      "
+                      ><i class="icon icon-ShoppingCart"></i
+                      ><span class="number-order text-body-xs">{{
+                        cart.count()
+                      }}</span></a
+                    >
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+    <dialog #cartDrawer class="offcanvas offcanvas-end popup-shopping-cart" aria-label="Mi carrito" (close)="cartOverlay.opened.set(false)" (click)="$event.target === cartDrawer && cartOverlay.opened.set(false)"><rosaline-cart-drawer (closed)="cartOverlay.opened.set(false)"/></dialog>
+    <dialog
+      #mobileMenu
+      class="offcanvas offcanvas-start canvas-mb"
+      (close)="menuOpen.set(false)"
+    >
+      <div class="canvas-header">
+        <span class="flex-1 d-flex"
+          ><button
+            type="button"
+            class="ro-native-button"
+            (click)="closeMenu()"
+            aria-label="Cerrar menú"
+          >
+            <i class="icon icon-Close link-rotate fs-20"></i></button></span
+        ><a routerLink="/" class="logo-site">
+          @if (demo.active) {
+            <img
+              src="/themes/rosaline/source/assets/images/logo/logo.svg"
+              [alt]="s.displayName"
+              width="102"
+              height="24"
+            />
+          } @else {
+            <span>{{ s.displayName }}</span>
+          }
+        </a>
+        <ul class="tf-list nav-icon-list justify-content-end flex-1">
+          <li>
+            <button
+              class="nav-icon-item ro-native-button"
+              type="button"
+              (click)="openSearch()"
+              aria-label="Buscar"
+            >
+              <i class="icon icon-Search"></i>
+            </button>
+          </li>
+          <li>
+            <a class="nav-icon-item fw-normal" href="/carrito" (click)="openCart($event)"
+              ><i class="icon icon-ShoppingCart"></i
+              ><span class="number-order text-body-s"
+                >({{ cart.count() }})</span
+              ></a
+            >
+          </li>
+        </ul>
+      </div>
+      <div class="br-line bg-line-5"></div>
+      <div class="canvas-body">
+        <div class="mb-content-top">
+          <ul class="nav-ul-mb-2">
+            @if (navigation(); as links) {
+              @for (link of links; track $index) {
+                <li>
+                  <a class="mb-menu-link" [routerLink]="link.to">{{
+                    link.label
+                  }}</a>
+                </li>
+              }
+            } @else {
+              <li><a class="mb-menu-link" routerLink="/">Inicio</a></li>
+              <li>
+                <a class="mb-menu-link" routerLink="/productos">Tienda</a>
+              </li>
+              <li>
+                <a class="mb-menu-link" routerLink="/legal">Información</a>
+              </li>
+            }
+          </ul>
+        </div>
+        <store-social-links />
+      </div>
+    </dialog>
+    <dialog
+      #searchDialog
+      class="modal modal-search"
+      (close)="searchOpen.set(false)"
+    >
+      <rosaline-search
+        [products]="searchProducts()"
+        (submitted)="search($event.event, $event.query)"
+        (closed)="searchDialog.close()"
+      />
+    </dialog>
+    <button
+      id="goTop"
+      type="button"
+      [class.show]="showTop()"
+      (click)="goTop()"
+      aria-label="Volver arriba"
+    >
+      <span
+        class="border-progress"
+        [style.--progress-angle]="progress() + 'deg'"
+      ></span
+      ><span class="ic-wrap"><span class="icon icon-ArrowCaretUp"></span></span>
+    </button>
+    <main id="contenido"><router-outlet /></main>
+    <footer class="tf-footer footer-v4 bg-black font-geist">
+      <div class="flat-spacing-3">
+        <div class="container">
+          <div
+            dir="ltr"
+            class="swiper tf-swiper rosaline-native-slider"
+            data-preview="4"
+            data-tablet="3"
+            data-mobile-sm="2"
+            data-mobile="1"
+            data-space-lg="32"
+            data-space-md="16"
+            data-space="16"
+            data-pagination="1"
+            data-pagination-sm="2"
+            data-pagination-md="3"
+            data-pagination-lg="4"
+          >
+            <div class="swiper-wrapper text-white">
+              <div class="swiper-slide">
+                <div
+                  class="box-icon_V01 style-3 wow fadeInUp"
+                  data-wow-delay="0s"
+                >
+                  <span class="icon cl-text-12">
+                    <i class="icon-FingerPrint"></i>
+                  </span>
+                  <div class="content">
+                    <p
+                      class="title font-anton text-28-34 text-white letter-space--3"
+                    >
+                      {{ footerText("service1Title") }}
+                    </p>
+                    <p class="desc font-geist lh-22 text-white letter-space--3">
+                      {{ footerText("service1Text") }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="swiper-slide">
+                <div
+                  class="box-icon_V01 style-3 wow fadeInUp"
+                  data-wow-delay="0.1s"
+                >
+                  <span class="icon cl-text-12">
+                    <i class="icon-Box"></i>
+                  </span>
+                  <div class="content">
+                    <p
+                      class="title font-anton text-28-34 text-white letter-space--3"
+                    >
+                      {{ footerText("service2Title") }}
+                    </p>
+                    <p class="desc font-geist lh-22 text-white letter-space--3">
+                      {{ footerText("service2Text") }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="swiper-slide">
+                <div
+                  class="box-icon_V01 style-3 wow fadeInUp"
+                  data-wow-delay="0.2s"
+                >
+                  <span class="icon cl-text-12">
+                    <i class="icon-Leaf"></i>
+                  </span>
+                  <div class="content">
+                    <p
+                      class="title font-anton text-28-34 text-white letter-space--3"
+                    >
+                      {{ footerText("service3Title") }}
+                    </p>
+                    <p class="desc font-geist lh-22 text-white letter-space--3">
+                      {{ footerText("service3Text") }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="swiper-slide">
+                <div
+                  class="box-icon_V01 style-3 wow fadeInUp"
+                  data-wow-delay="0.3s"
+                >
+                  <span class="icon cl-text-12">
+                    <i class="icon-StarSroke"></i>
+                  </span>
+                  <div class="content">
+                    <p
+                      class="title font-anton text-28-34 text-white letter-space--3"
+                    >
+                      {{ footerText("service4Title") }}
+                    </p>
+                    <p class="desc font-geist lh-22 text-white letter-space--3">
+                      {{ footerText("service4Text") }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="sw-line-default style-3 tf-sw-pagination"></div>
+          </div>
+        </div>
+      </div>
+      <div class="footer_wrap flat-spacing-4 pb-0">
+        <div class="infiniteSlide-footer-text">
+          <div class="infiniteSlide infiniteSlide-wrapper" data-clone="3">
+            <div class="infiniteSlide-item">
+              <p
+                class="text-display-xl font-anton text-uppercase"
+                storeEditText="footer.marquee"
+                [editValue]="footerText('marquee', s.tagline || s.displayName)"
+              ></p>
+            </div>
+            <div class="infiniteSlide-item">
+              <div class="text-display-xl">&nbsp;</div>
+            </div>
+            <div class="infiniteSlide-item">
+              <p
+                class="text-display-xl font-anton text-uppercase"
+                storeEditText="footer.marquee"
+                [editValue]="footerText('marquee', s.tagline || s.displayName)"
+              ></p>
+            </div>
+            <div class="infiniteSlide-item">
+              <div class="text-display-xl">&nbsp;</div>
+            </div>
+          </div>
+        </div>
+        <div class="footer-inner">
+          <div class="container-2">
+            <div class="footer-inner_wrap">
+              <div class="footer-col-block footer-wrap-5 ft-col_sub">
+                <p class="footer-heading h6 font-anton letter-space--3">
+                  {{ demo.active ? "JOIN THE GLOW CLUB" : s.displayName }}
+                </p>
+                <div class="">
+                  <p class="title-sub cl-text-main lh-22 letter-space--3">
+                    {{
+                      demo.active
+                        ? "Get 10% off your first order + exclusive updates."
+                        : footerCopy().closing
+                    }}
+                  </p>
+                  <form class="form-subcribe-v2" [hidden]="!demo.active" inert>
+                    <fieldset>
+                      <input
+                        type="email"
+                        class="style-2"
+                        name="sub-email"
+                        id="sub-email"
+                        placeholder="Email address"
+                        required=""
+                        aria-label="Email address"
+                      />
+                    </fieldset>
+                    <button class="btn-action">SUBSCRIBE</button>
+                  </form>
+                </div>
+              </div>
+              <div class="footer-col-block footer-wrap-1">
+                <p
+                  class="footer-heading footer-heading-mobile h6 font-anton letter-space--3"
+                >
+                  CALL US
+                </p>
+                <div class="tf-collapse-content">
+                  <ul class="footer-menu-list letter-space--3">
+                    <li>
+                      <a class="cl-text-main link" [href]="whatsappHref()">{{
+                        s.whatsappPhone ||
+                          (demo.active ? "+1 (800) 555-2390" : "")
+                      }}</a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="footer-col-block footer-wrap-2">
+                <p
+                  class="footer-heading footer-heading-mobile h6 font-anton letter-space--3"
+                >
+                  EMAIL
+                </p>
+                <div class="tf-collapse-content">
+                  <ul class="footer-menu-list letter-space--3">
+                    <li>
+                      <a
+                        class="cl-text-main link"
+                        [href]="
+                          s.contactEmail ? 'mailto:' + s.contactEmail : null
+                        "
+                        >{{
+                          s.contactEmail ||
+                            (demo.active ? "Support@glowlyskin.com" : "")
+                        }}</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="footer-col-block footer-wrap-3 ms-xl-auto">
+                <p
+                  class="footer-heading footer-heading-mobile h6 font-anton letter-space--3"
+                >
+                  SHOP
+                </p>
+                <div class="tf-collapse-content">
+                  <ul class="footer-menu-list letter-space--3">
+                    <li>
+                      <a class="cl-text-main link" routerLink="/productos">{{
+                        demo.active ? "Shop All" : "Ver catálogo"
+                      }}</a>
+                    </li>
+                    <li>
+                      <a
+                        class="cl-text-main link"
+                        routerLink="/productos"
+                        [queryParams]="{ orden: 'newest' }"
+                        >{{ demo.active ? "New Arrivals" : "Novedades" }}</a
+                      >
+                    </li>
+                    <li>
+                      <a class="cl-text-main link" href="/carrito" (click)="openCart($event)">{{
+                        demo.active ? "Shopping Cart" : "Mi carrito"
+                      }}</a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="footer-col-block footer-wrap-4">
+                <p
+                  class="footer-heading footer-heading-mobile h6 font-anton letter-space--3"
+                >
+                  HELP
+                </p>
+                <div class="tf-collapse-content">
+                  <ul class="footer-menu-list letter-space--3">
+                    @for (link of legalLinks; track link.slug) {
+                      <li>
+                        <a
+                          class="cl-text-main link"
+                          [routerLink]="'/' + link.slug"
+                          >{{ link.label }}</a
+                        >
+                      </li>
+                    }
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <div class="container-2">
+            <div class="br-line bg-line-2"></div>
+            <div class="footer-bottom_wrap">
+              <store-social-links></store-social-links>
+              <div
+                class="ft-text-nocopy font-geist text-uppercase fw-medium lh-22 letter-space--3"
+              >
+                © {{ year }} {{ s.displayName }}.
+                {{
+                  demo.active
+                    ? "ALL RIGHTS RESERVED."
+                    : "Todos los derechos reservados."
+                }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+}

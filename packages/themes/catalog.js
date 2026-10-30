@@ -12,7 +12,7 @@ const THEME_CATALOG = freeze(require('./catalog.json'));
 const THEME_ENVIRONMENT = freeze({
   contracts: { engine: 1, editor: 1, storefront: 1, content: 1 },
   capabilities: ['catalog', 'cart', 'checkout', 'seo', 'variants', 'search', 'filters', 'coupons', 'services', 'digitalProducts', 'recommendations', 'whatsapp'],
-  renderers: ['classic@1', 'selecta@1', 'stride@1'],
+  renderers: ['classic@1', 'selecta@1', 'stride@1', 'rosaline@1'],
 });
 
 function compareVersions(a, b) {

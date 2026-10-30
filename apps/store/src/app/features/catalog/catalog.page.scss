@@ -5,8 +5,9 @@
   padding-block: var(--ds-space-8) var(--store-section-space);
 }
 .catalog--selecta {
-  --store-catalog-title-font: var(--sel-display, Georgia, serif);
-  --store-catalog-name-font: var(--sel-body, var(--ds-font-ui));
+  --store-catalog-title-font: var(--store-font-display);
+  --store-catalog-name-font: var(--store-card-name-font);
+  --store-catalog-name-weight: var(--store-card-name-weight);
 }
 .catalog--stride {
   --store-catalog-name-weight: 800;

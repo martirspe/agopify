@@ -1,0 +1,101 @@
+<div class="flat-spacing-3 flat-animate-tab">
+  <div class="container">
+    <div class="sect-heading-v2 space-1 space-inner-1 wow fadeInUp">
+      <div class="badge-pill">
+        <span
+          class="font-geist fw-medium lh-22 letter-space--3"
+          [storeEditText]="id() + '.eyebrow'"
+          [editValue]="field('eyebrow')"
+        ></span>
+      </div>
+      <h2
+        class="font-anton text-uppercase letter-space--2"
+        [storeEditText]="id() + '.title'"
+        [editValue]="field('title')"
+      ></h2>
+    </div>
+    <ul
+      class="list-tab-btn-1 style-2 justify-content-center spacing-bottom-3 wow fadeInUp"
+    >
+      <li class="nav-tab-item" role="presentation">
+        <button
+          class="tf-btn-tab"
+          type="button"
+          [class.active]="selected() === ''"
+          [attr.aria-pressed]="selected() === ''"
+          (click)="selected.set('')"
+        >
+          <span class="font-geist text-body-l lh-24 fw-bold letter-space--3">{{
+            field("tabAll", "Todos")
+          }}</span>
+        </button>
+      </li>
+      @for (category of (demo.active ? ['BEST SELLERS', "EDITOR'S PICKS"] : categories()); track category) {
+        <li class="nav-tab-item" role="presentation">
+          <button
+            class="tf-btn-tab"
+            type="button"
+            [class.active]="selected() === category"
+            [attr.aria-pressed]="selected() === category"
+            (click)="selected.set(category)"
+          >
+            <span
+              class="font-geist text-body-l lh-24 fw-bold letter-space--3"
+              >{{ category }}</span
+            >
+          </button>
+        </li>
+      }
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane active show">
+        <div class="tf-btn-swiper-main">
+          <div
+            dir="ltr"
+            class="swiper tf-swiper swiper-type-scrollbar mb-20 rosaline-native-slider"
+            data-preview="4"
+            data-tablet="3"
+            data-mobile-sm="2"
+            data-mobile="2"
+            data-space-lg="24"
+            data-space-md="24"
+            data-space="16"
+            data-pagination="2"
+            data-pagination-sm="2"
+            data-pagination-md="3"
+            data-pagination-lg="4"
+          >
+            <div class="swiper-wrapper">
+              @for (p of visibleProducts(); track p.handle) {
+                <div class="swiper-slide">
+                  <rosaline-product-card
+                    [product]="p"
+                    [purchase]="p"
+                  ></rosaline-product-card>
+                </div>
+              }
+            </div>
+          </div>
+          <div class="mb-20 d-xl-none">
+            <div class="sw-scrollbar-default">
+              <span class="tf-sw-scrollbar"></span>
+            </div>
+          </div>
+        </div>
+        <div class="text-center wow fadeInUp">
+          <a
+            class="tf-btn type-2 style-2 btn-stroke-black py-normal"
+            routerLink="/productos"
+          >
+            <span
+              class="fw-bold font-geist letter-space--3"
+              [storeEditText]="id() + '.cta'"
+              [editValue]="field('cta', 'Ver todo')"
+            ></span>
+            <i class="icon icon-ArrowRight"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

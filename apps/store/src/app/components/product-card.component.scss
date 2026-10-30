@@ -4,18 +4,24 @@
   height: 100%;
 }
 
+.card__media-wrap {
+  position: relative;
+}
+
 .card__media {
   position: relative;
-  aspect-ratio: 1;
+  display: block;
+  aspect-ratio: var(--store-media-ratio);
   overflow: hidden;
-  border-radius: var(--store-radius-card);
+  border-radius: var(--store-card-media-radius);
   background: var(--store-surface);
 }
 
 .card__media img {
+  padding: var(--store-card-media-padding);
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: var(--store-media-fit);
   transition:
     transform var(--ds-motion-base) var(--ds-ease-out),
     opacity var(--ds-motion-base) var(--ds-ease-out);
@@ -127,19 +133,20 @@
   font-size: var(--store-type-caption);
 }
 .card__price strong {
-  font-size: var(--store-type-product);
+  font-size: var(--store-type-price);
+  letter-spacing: var(--store-price-tracking);
   font-variant-numeric: tabular-nums;
 }
 .card {
   grid-template-rows: auto 1fr;
 }
 .card--catalog .card__name {
-  font-family: var(--store-catalog-name-font);
-  font-size: var(--store-type-body);
-  font-weight: var(--store-catalog-name-weight);
+  font-family: var(--store-catalog-name-font, var(--store-card-name-font));
+  font-size: var(--store-card-name-size);
+  font-weight: var(--store-catalog-name-weight, var(--store-card-name-weight));
 }
 .card--catalog .card__price strong {
-  font-size: var(--store-type-subheading);
+  font-size: var(--store-card-price-size);
 }
 .card--list {
   grid-template-columns: var(--store-filter-width) minmax(0, 1fr);
@@ -148,7 +155,7 @@
   padding-bottom: var(--ds-space-6);
   border-bottom: 1px solid var(--store-border);
 }
-.card--list .card__media {
+.card--list .card__media-wrap {
   align-self: start;
 }
 .card--list .card__body {
@@ -167,13 +174,36 @@
   opacity: 0;
   background: var(--store-surface);
 }
-@media (hover: hover) {
+.card__secondary.is-visible {
+  opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) {
   .card__media:hover .card__secondary {
     opacity: 1;
   }
 }
 .card__media:focus-visible .card__secondary {
   opacity: 1;
+}
+.card__alt {
+  position: absolute;
+  right: var(--ds-space-2);
+  bottom: var(--ds-space-2);
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--ds-touch-target);
+  height: var(--ds-touch-target);
+  border: 1px solid var(--store-border);
+  border-radius: var(--store-radius-control);
+  background: var(--store-bg);
+  color: var(--store-text);
+  cursor: pointer;
+}
+.card__alt[aria-pressed='true'] {
+  background: var(--store-brand);
+  border-color: var(--store-brand);
+  color: var(--store-on-brand);
 }
 .card__variants {
   display: grid;

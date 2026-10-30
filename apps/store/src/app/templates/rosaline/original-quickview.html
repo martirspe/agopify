@@ -1,0 +1,176 @@
+<div class="modal-dialog modal-dialog-centered">
+  <div class="modal-content product-thumbs-slider">
+    <div class="col-left">
+      <div dir="ltr" class="swiper swiper-quickview">
+        <div class="swiper-wrapper">
+          @if (images()[activeImage()]; as image) {
+            <div class="swiper-slide">
+              <div class="item">
+                <img
+                  [src]="image"
+                  [alt]="product().name"
+                  loading="lazy"
+                  width="591"
+                  height="714"
+                />
+              </div>
+            </div>
+          }
+        </div>
+        <div class="sw-line-default style-2 tf-sw-pagination pst-1"></div>
+        <div class="group-btn-nav">
+          <div
+            class="single-slide-prev tf-sw-nav"
+            role="button"
+            tabindex="0"
+            aria-label="Imagen anterior"
+            (click)="stepImage(-1)"
+            (keydown.enter)="stepImage(-1)"
+          >
+            <i class="icon icon-ArrowCaretLeft"></i>
+          </div>
+          <div
+            class="single-slide-next tf-sw-nav"
+            role="button"
+            tabindex="0"
+            aria-label="Imagen siguiente"
+            (click)="stepImage(1)"
+            (keydown.enter)="stepImage(1)"
+          >
+            <i class="icon icon-ArrowCaretRight"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-right">
+      <i
+        class="icon icon-Close btn-close-popup fs-24"
+        role="button"
+        tabindex="0"
+        aria-label="Cerrar vista rápida"
+        (click)="closed.emit()"
+        (keydown.enter)="closed.emit()"
+      ></i>
+      <div
+        class="tf-product-info-wrap position-relative mt-md-0 tf-quick-prd_variant"
+      >
+        <div class="tf-zoom-main sticky-top"></div>
+        <div class="tf-product-info-list other-image-zoom">
+          <div class="tf-product-info-heading">
+            <h5 class="product-infor-name font-instrument_serif fw-normal">
+              {{ product().name }}
+            </h5>
+            @if (product().descriptionShort) {
+              <ul class="product-infor-list-tag">
+                <li>
+                  <i class="icon icon-Check"></i
+                  ><span class="text-body-s fw-normal">{{
+                    product().descriptionShort
+                  }}</span>
+                </li>
+              </ul>
+            }
+            <div class="product-infor-price">
+              <div class="mb-4 d-flex align-items-center gap-6">
+                <span
+                  class="price-on-sale text-body-l fw-normal text-primary"
+                  >{{ priceCents() | money: product().currency }}</span
+                >
+                <span
+                  class="price-on-old text-body-l cl-text-6 text-decoration-line-through"
+                  [hidden]="discount() === 0"
+                  >{{
+                    product().compareAtPriceCents | money: product().currency
+                  }}</span
+                >
+                @if (discount() > 0) {
+                  <span class="badge-sale text-body-xs"
+                    >−{{ discount() }}%</span
+                  >
+                }
+              </div>
+              <p class="text-body-xs cl-text-5">
+                El envío se calcula al finalizar la compra.
+              </p>
+            </div>
+          </div>
+          <div class="tf-product-variant">
+            <div
+              class="quick-variant-picker picker_size"
+              [hidden]="options().length === 0"
+            >
+              <div class="variant-picker_label">
+                <div>
+                  <span class="fw-normal"> Size: </span>
+                  <span class="text-capitalize variant__value">{{
+                    variant()?.label
+                  }}</span>
+                </div>
+              </div>
+              <div class="variant-picker_values">
+                @for (option of options(); track option.id) {
+                  <button
+                    class="size_btn text-body-s fw-normal"
+                    type="button"
+                    [class.active]="variantId() === option.id"
+                    [disabled]="!option.isAvailable"
+                    (click)="selectVariant(option.id)"
+                  >
+                    {{ option.label }}
+                  </button>
+                }
+              </div>
+            </div>
+            <div class="tf-product-total-quantity">
+              <div class="group-action">
+                <div class="wg-quantity">
+                  <button
+                    type="button"
+                    class="btn-quantity btn-decrease"
+                    aria-label="Quitar uno"
+                    (click)="adjustQuantity(-1)"
+                    [disabled]="quantity() <= 1"
+                  >
+                    <i class="icon icon-Minus"></i></button
+                  ><output class="quantity-product">{{ quantity() }}</output
+                  ><button
+                    type="button"
+                    class="btn-quantity btn-increase"
+                    aria-label="Agregar uno"
+                    (click)="adjustQuantity(1)"
+                  >
+                    <i class="icon icon-Plus"></i>
+                  </button>
+                </div>
+                <a
+                  class="btn-action-price tf-btn style-2 type-2 btn-light w-100"
+                  role="button"
+                  tabindex="0"
+                  (click)="addQuantity($event)"
+                  [attr.aria-disabled]="!canAdd()"
+                  ><i class="icon icon-ShoppingCart"></i>
+                  {{
+                    added() ? "Agregado al carrito" : "Agregar al carrito"
+                  }}</a
+                >
+              </div>
+              <a
+                class="tf-btn style-2 type-2 w-100"
+                role="button"
+                tabindex="0"
+                (click)="$event.preventDefault(); closed.emit(); buyNow()"
+                [attr.aria-disabled]="!canAdd() || !online()"
+                ><i class="icon icon-ShoppingCart"></i>
+                Comprar ahora</a
+              >
+            </div>
+          </div>
+        </div>
+        <a class="tf-btn-line" [routerLink]="['/producto', product().handle]">
+          <span class="text-body-s fw-normal"> VIEW FULL DETAILS </span>
+          <i class="icon icon-ArrowRight"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

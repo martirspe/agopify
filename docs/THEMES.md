@@ -23,9 +23,9 @@ flowchart LR
 | Theme | Identidad y release, elección de renderer compatible, controles expuestos, tokens default, composición/presets y assets locales declarados |
 | Merchant | Catálogo, pedidos/clientes, identidad legal, SEO, branding, fotos/textos propios, FAQ, layouts y configuración comercial |
 
-Un theme v1 es un paquete **declarativo**, integrado al build y revisado en Git. Puede crear una identidad visual y composición sobre `classic@1`, `selecta@1` o `stride@1` sin cambiar el editor ni el comercio. El renderer es un adaptador de plataforma compilado; sus imports internos no son API del SDK. Una presentación con markup nuevo requiere desarrollar y revisar otro renderer de plataforma. No se ejecuta Angular, JavaScript, PHP, Liquid, HTML o CSS suministrado por un merchant.
+Un theme v1 es un paquete **declarativo**, integrado al build y revisado en Git. Puede crear una identidad visual y composición sobre `classic@1`, `selecta@1`, `stride@1` o `rosaline@1` sin cambiar el editor ni el comercio. El renderer es un adaptador de plataforma compilado; sus imports internos no son API del SDK. Una presentación con markup nuevo requiere desarrollar y revisar otro renderer de plataforma. No se ejecuta Angular, JavaScript, PHP, Liquid, HTML o CSS suministrado por un merchant.
 
-La separación evita tres copias del negocio. Las tres presentaciones usan el mismo catálogo autoritativo, CartService, reserva/checkout, pagos, consentimiento y contratos. Selecta conserva markup propio y hereda lógica de páginas compartidas; Impulso reutiliza gran parte de las páginas clásicas. La duplicación visual deliberada no implica duplicar reglas de dinero.
+La separación evita copias del negocio. Las presentaciones usan el mismo catálogo autoritativo, CartService, reserva/checkout, pagos, consentimiento y contratos. Selecta conserva markup propio y hereda lógica de páginas compartidas; Impulso y Rosaline reutilizan gran parte de las páginas clásicas bajo su chrome (inicio y catálogo propios en Rosaline). La duplicación visual deliberada no implica duplicar reglas de dinero.
 
 ## 2. Definición de theme compatible
 
@@ -91,7 +91,7 @@ No se añaden `minCoreVersion`, `maxCoreVersion`, dependencias npm, routes o scr
 
 ## 5. Identidad, versiones y duplicados
 
-`vendedoria/stride` identifica Impulso en todas sus versiones. `slug` es técnico; `displayName` es comercial; `version` identifica un release; `namespace` distingue autor. La tienda guarda slug y versión instalada; el catálogo resuelve su ID completo.
+`vendedoria/stride` identifica Impulso y `vendedoria/rosaline` identifica Rosaline (Bold Modern) en todas sus versiones. `slug` es técnico; `displayName` es comercial; `version` identifica un release; `namespace` distingue autor. La tienda guarda slug y versión instalada; el catálogo resuelve su ID completo.
 
 Fork: crea namespace **y slug nuevos**; no reutilices un slug registrado. Clonar para crear un preset no crea otra identidad: añade otro preset al próximo release. Renombrar la identidad/comercial de un theme instalado no es un cambio de metadata permitido; exige un proceso explícito de migración de plataforma y comunicación. Nunca cambies un manifest sellado.
 
@@ -277,7 +277,7 @@ npm run theme:check -- theme-starters/estudio-tienda-local/manifest.json
 1. Abre `manifest.json`. Define author/licencia/nombre/description propios; conserva `estudio/tienda-local` y slug único. El starter clona la definición de Clásica compatible; versión inicial `1.0.0`, sin migraciones.
 2. Cambia tokens, por ejemplo `primary: "#203040"`, `font: "editorial"`, `container: "compact"`. Deben aparecer en `settings`. No añadas tokens inventados o URLs de fuentes.
 3. Personaliza `presets[0].sections.hero` con copy neutral propio. Ordena entradas del layout conservando todos los built-ins. Para ocultar hero usa `hidden: true`; no ocultes una sección `canHide: false`. Añade presets con IDs únicos si ofrecen otra composición/copy, dentro del mismo theme.
-4. Si prefieres Selecta/Impulso, empieza de su manifest y conserva sus secciones/preset/styles/rubro. No basta cambiar `renderer` sobre un layout de otra familia. Usa schema/controles de esa familia; no necesitas estudiar servicios de commerce.
+4. Si prefieres Selecta/Impulso/Rosaline, empieza de su manifest y conserva sus secciones/preset/styles/rubro. No basta cambiar `renderer` sobre un layout de otra familia. Usa schema/controles de esa familia; no necesitas estudiar servicios de commerce.
 5. Valida el archivo. El check standalone verifica manifest/compatibilidad/assets; la comprobación de conflictos globales/ancestros sucede al integrarlo en catálogo. Aporta portada local en `apps/web/public/template-previews` si cambias `assets.cover`.
 6. Packaging v1: `manifest.json` + README/licencia y portada local, en PR de integración. Agrega **el objeto** al array `packages/themes/catalog.json`, mantén releases anteriores. No se publica un paquete npm remoto ni se sube ZIP al panel.
 

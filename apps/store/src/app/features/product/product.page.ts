@@ -196,6 +196,24 @@ export class ProductPage {
     this.quantity.update((value) => Math.min(Math.max(value + delta, 1), Math.max(1, this.maxQuantity())));
   }
 
+  stepImage(delta: number): void {
+    const images = this.gallery();
+    if (images.length < 2) return;
+    const current = this.activeImage();
+    const index = Math.max(0, images.indexOf(current ?? images[0]));
+    this.activeImage.set(images[(index + delta + images.length) % images.length]);
+  }
+
+  onGalleryKey(event: KeyboardEvent): void {
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      this.stepImage(1);
+    } else if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      this.stepImage(-1);
+    }
+  }
+
   async addToCart(): Promise<void> {
     const product = this.product();
     if (!product || !this.canAdd()) return;

@@ -36,7 +36,8 @@
 }
 
 .gallery__main {
-  aspect-ratio: 1;
+  position: relative;
+  aspect-ratio: var(--store-gallery-ratio);
   overflow: hidden;
   border-radius: var(--store-radius-card);
   background: var(--store-surface);
@@ -45,7 +46,29 @@
 .gallery__main img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: var(--store-media-fit);
+}
+
+.gallery__nav {
+  position: absolute;
+  inset-inline: var(--ds-space-2);
+  bottom: var(--ds-space-2);
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.gallery__nav button {
+  pointer-events: auto;
+  display: grid;
+  place-items: center;
+  width: var(--ds-touch-target);
+  height: var(--ds-touch-target);
+  border: 1px solid var(--store-border);
+  border-radius: var(--store-radius-control);
+  background: var(--store-bg);
+  color: var(--store-text);
+  cursor: pointer;
 }
 
 .gallery__placeholder {

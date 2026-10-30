@@ -75,7 +75,7 @@ function validateManifest(value) {
   }
   if (new Set(value.presets.map(preset => preset.id)).size !== value.presets.length) fail('preset_identity', 'presets', 'Hay muestras duplicadas.');
   for (const key of Object.keys(value.tokens)) if (!value.settings.includes(key)) fail('token_setting', 'tokens', `La opción ${key} no está declarada.`);
-  if (value.assets.styles.some(asset => !['/selecta.css', '/stride.css'].includes(asset) || asset !== `/${renderer}.css`)) fail('asset', 'assets.styles', 'La hoja de estilos debe pertenecer a la presentación registrada.');
+  if (value.assets.styles.some(asset => !['/selecta.css', '/stride.css', '/rosaline.css'].includes(asset) || asset !== `/${renderer}.css`)) fail('asset', 'assets.styles', 'La hoja de estilos debe pertenecer a la presentación registrada.');
   if (renderer !== 'classic' && !value.assets.styles.includes(`/${renderer}.css`)) fail('asset', 'assets.styles', 'Falta la hoja de estilos de la presentación.');
   for (const migration of value.migrations) {
     if (migration.to !== value.version || catalog.compareVersions(migration.from, migration.to) >= 0) fail('migration', 'migrations', 'La migración debe avanzar hacia la versión del paquete.');

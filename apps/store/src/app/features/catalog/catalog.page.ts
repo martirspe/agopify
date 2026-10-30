@@ -175,7 +175,7 @@ export class CatalogPage {
             (this.store()?.displayName ?? "nuestra tienda") +
             "."
           : null,
-        path: "/productos" + (query ? "?" + query : ""),
+        path: (this.store()?.template === "selecta" ? "/tienda" : "/productos") + (query ? "?" + query : ""),
       });
     });
   }

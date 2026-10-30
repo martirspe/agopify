@@ -1,0 +1,378 @@
+@use "../../../../../../packages/design-tokens/rosaline" as ro;
+@import "./reference.css";
+@font-face {
+  font-family: Geist;
+  src: url("/themes/rosaline/fonts/geist-400.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Geist;
+  src: url("/themes/rosaline/fonts/geist-500.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Geist;
+  src: url("/themes/rosaline/fonts/geist-600.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Geist;
+  src: url("/themes/rosaline/fonts/geist-700.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Anton;
+  src: url("/themes/rosaline/fonts/anton-400.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+body.tpl-rosaline {
+  margin: 0;
+  @include ro.theme;
+}
+body.tpl-rosaline .ro-shell {
+  @include ro.source-adapters;
+  @include ro.theme;
+  .ro-native-button {
+    border: 0;
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+  .ro-skip {
+    position: absolute;
+    transform: translateY(-200%);
+    z-index: 100;
+  }
+  .ro-skip:focus {
+    transform: none;
+    background: white;
+    color: black;
+    padding: 16px;
+  }
+  rosaline-product-card {
+    display: block;
+  }
+  .rosaline-native-slider {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+  .rosaline-native-slider > .swiper-wrapper {
+    transform: none;
+    gap: var(--reference-gap, 24px);
+  }
+  .rosaline-native-slider > .swiper-wrapper > .swiper-slide {
+    flex: 0 0
+      calc(
+        (
+            100% - (var(--reference-columns, 4) - 1) *
+              var(--reference-gap, 24px)
+          ) /
+          var(--reference-columns, 4)
+      );
+    scroll-snap-align: start;
+  }
+  .rosaline-native-slider[data-preview="3"] {
+    --reference-columns: 3;
+    --reference-gap: 64px;
+  }
+  .rosaline-native-slider[data-preview="2"] {
+    --reference-columns: 2;
+  }
+  .tf-product-media-main.rosaline-native-slider {
+    --reference-columns: 1;
+    --reference-gap: 0px;
+  }
+  .tf-product-media-thumbs.rosaline-native-slider {
+    --reference-columns: 5;
+    --reference-gap: 8px;
+  }
+  .infiniteSlide-wrapper {
+    display: flex;
+    width: max-content;
+  }
+  .infiniteSlide-item {
+    flex-shrink: 0;
+  }
+  .infiniteSlide-brand,
+  .footer-v4 .footer-middle {
+    overflow: hidden;
+  }
+  .rosaline-native-compare {
+    position: relative;
+  }
+  .rosaline-native-compare img {
+    width: 100%;
+    height: auto;
+  }
+  .rosaline-compare-overlay {
+    position: absolute;
+    inset: 0;
+  }
+  .rosaline-compare-range {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: ew-resize;
+  }
+  .tf-hero-banner-v3 h1,
+  .sect-heading-v2 h2 {
+    white-space: pre-line;
+  }
+
+  @media (max-width: 1199px) {
+    .rosaline-native-slider {
+      --reference-columns: 3;
+    }
+    .rosaline-native-slider[data-preview="3"] {
+      --reference-columns: 2;
+      --reference-gap: 16px;
+    }
+    .rosaline-native-slider[data-preview="2"] {
+      --reference-columns: 2;
+      --reference-gap: 16px;
+    }
+  }
+  @media (max-width: 767px) {
+    .rosaline-native-slider {
+      --reference-columns: 2;
+      --reference-gap: 16px;
+    }
+    .rosaline-native-slider[data-preview="3"] {
+      --reference-columns: 2;
+    }
+  }
+  @media (max-width: 575px) {
+    .rosaline-native-slider[data-preview="3"] {
+      --reference-columns: 1;
+    }
+    .rosaline-native-slider[data-mobile="1"] {
+      --reference-columns: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation: none;
+      transition: none;
+      scroll-behavior: auto;
+    }
+  }
+}
+
+@font-face {
+  font-family: "Instrument Serif";
+  src: url("/themes/rosaline/fonts/instrument-serif-400.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+body.tpl-rosaline .ro-shell dialog.modal[open] {
+  display: block;
+  position: fixed;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  overflow: auto;
+}
+body.tpl-rosaline .ro-shell dialog.modal::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+body.tpl-rosaline .ro-shell .rosaline-native-compare .icv__control-line {
+  background: #fff;
+}
+body.tpl-rosaline .ro-shell .rosaline-native-compare .icv__control {
+  pointer-events: none;
+  transform: translateX(-25px);
+  width: 50px;
+}
+body.tpl-rosaline .ro-shell .rosaline-native-compare:focus-within {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+body.tpl-rosaline .ro-shell .showcase-card .card-video img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@font-face {
+  font-family: Poppins;
+  src: url("/themes/rosaline/fonts/poppins-300.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Poppins;
+  src: url("/themes/rosaline/fonts/poppins-400.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Poppins;
+  src: url("/themes/rosaline/fonts/poppins-500.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Poppins;
+  src: url("/themes/rosaline/fonts/poppins-600.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Poppins;
+  src: url("/themes/rosaline/fonts/poppins-700.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+body.tpl-rosaline .ro-shell .infiniteSlide-footer-text {
+  overflow: hidden;
+}
+body.tpl-rosaline .ro-shell .rosaline-native-slider {
+  scrollbar-width: none;
+}
+body.tpl-rosaline .ro-shell .rosaline-native-slider::-webkit-scrollbar {
+  display: none;
+}
+body.tpl-rosaline .ro-shell .rosaline-native-marquee {
+  animation: rosaline-native-marquee var(--reference-marquee-duration) linear
+    infinite;
+}
+@keyframes rosaline-native-marquee {
+  to {
+    transform: translateX(var(--reference-marquee-distance));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.tpl-rosaline .ro-shell .rosaline-native-marquee {
+    animation: none;
+  }
+}
+
+body.tpl-rosaline .ro-shell dialog.offcanvas[open] {
+  display: flex;
+  visibility: visible;
+  transform: none;
+  margin: 0;
+  border: 0;
+  max-width: 100%;
+  max-height: none;
+  height: 100%;
+}
+body.tpl-rosaline .ro-shell dialog.offcanvas::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+@font-face {font-family:Geist;src:url('/themes/rosaline/fonts/geist-300.ttf') format('truetype');font-weight:300;font-style:normal;font-display:swap;}
+
+body.tpl-rosaline .ro-shell rosaline-cart-drawer { display: contents; }
+body.tpl-rosaline .ro-shell .tf-product-media-main .swiper-slide[hidden] { display: none; }
+body.tpl-rosaline .ro-shell dialog:not([open]) { display: none; }
+
+body.tpl-rosaline .ro-shell a.ro-skip { position: fixed; left: -10000px; top: 0; }
+body.tpl-rosaline .ro-shell a.ro-skip:focus { left: 16px; top: 16px; }
+
+@media(min-width:1200px) {
+ body.tpl-rosaline .ro-shell .tf-product-media-thumbs.rosaline-native-slider { overflow-y:auto; --reference-gap:16px; }
+ body.tpl-rosaline .ro-shell .tf-product-media-thumbs.rosaline-native-slider > .swiper-wrapper { flex-direction:column; }
+}
+
+/* Shared commerce pages (classic markup) under the Rosaline chrome. */
+body.tpl-rosaline .ro-shell {
+  store-product-page,
+  store-cart-page,
+  store-checkout-page,
+  store-order-page,
+  store-legal-page,
+  store-not-found-page {
+    display: block;
+    font-family: var(--store-font-body);
+    color: var(--store-text);
+    background: var(--store-bg);
+  }
+
+  store-product-page,
+  store-cart-page,
+  store-checkout-page,
+  store-order-page,
+  store-legal-page {
+    padding-block: var(--store-section-space);
+  }
+
+  store-product-page h1,
+  store-cart-page h1,
+  store-checkout-page h1,
+  store-order-page h1,
+  store-legal-page h1,
+  store-not-found-page h1 {
+    font-family: var(--store-font-display);
+    font-weight: 400;
+    letter-spacing: var(--store-rosaline-display-tracking);
+    line-height: var(--store-rosaline-display-leading);
+    text-wrap: balance;
+  }
+
+  store-product-page .store-btn,
+  store-cart-page .store-btn,
+  store-checkout-page .store-btn,
+  store-order-page .store-btn,
+  store-product-page .store-chip,
+  store-cart-page .store-chip,
+  store-checkout-page .store-chip {
+    border-radius: var(--store-radius-control);
+  }
+
+  store-product-page .store-btn--primary,
+  store-cart-page .store-btn--primary,
+  store-checkout-page .store-btn--primary,
+  store-order-page .store-btn--primary {
+    background: var(--store-brand);
+    color: var(--store-on-brand);
+  }
+
+  store-product-page .gallery__main,
+  store-product-page .gallery__thumb,
+  store-cart-page img,
+  store-product-page .info__price {
+    border-radius: var(--store-radius-card);
+  }
+
+  store-product-page .info__price {
+    letter-spacing: var(--store-price-tracking);
+  }
+
+  :focus-visible {
+    outline: var(--store-rosaline-focus-width) solid currentColor;
+    outline-offset: var(--store-rosaline-focus-offset);
+  }
+}

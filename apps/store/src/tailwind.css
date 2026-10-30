@@ -1,0 +1,38 @@
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme) prefix(tw);
+@import 'tailwindcss/utilities.css' layer(utilities) prefix(tw) source(none);
+
+@source "./app/layout";
+@source "./app/features";
+@source "./app/templates";
+@source "./app/components";
+
+/* Tokens own decisions; Tailwind only exposes them as static utilities. */
+@theme inline {
+  --color-*: initial;
+  --color-bg: var(--store-bg);
+  --color-surface: var(--store-surface);
+  --color-foreground: var(--store-text);
+  --color-muted: var(--store-muted);
+  --color-border: var(--store-border);
+  --color-brand: var(--store-brand);
+  --color-on-brand: var(--store-on-brand);
+  --color-accent: var(--store-accent);
+  --color-success: var(--store-success);
+  --color-danger: var(--store-danger);
+  --font-ui: var(--ds-font-ui);
+  --font-display: var(--ds-font-display);
+  --text-hero: var(--store-type-hero);
+  --text-title: var(--store-type-title);
+  --text-section: var(--store-type-section);
+  --text-product: var(--store-type-product);
+  --text-price: var(--store-type-price);
+  --text-body: var(--store-type-body);
+  --text-caption: var(--store-type-caption);
+  --spacing-section: var(--store-section-space);
+  --spacing-gutter: var(--ds-gutter);
+  --spacing-touch: var(--ds-touch-target);
+  --radius-card: var(--store-radius-card);
+  --radius-control: var(--store-radius-control);
+  --container-store: var(--store-max-width);
+}

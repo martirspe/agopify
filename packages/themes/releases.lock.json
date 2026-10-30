@@ -4,5 +4,7 @@
   "vendedoria/classic@1.0.0": "6db23643a81a9b5761c745491f1c9932f0a57e500f1d26a14c919a7a35baffa2",
   "vendedoria/classic@1.1.0": "a49d9d43628cd2db818c5b6dfb15ad2a0fae0124215c8b4c2238a79db38c802d",
   "vendedoria/selecta@1.0.0": "467f9f721aeca86777775ecdf84cb906b3a8cea0b328faf01054433de4787c97",
-  "vendedoria/selecta@1.1.0": "96d47bad24d2e05064198cc7b2ad9e52fe42ee12c766983ed0a5577b1e6bfb01"
+  "vendedoria/selecta@1.1.0": "96d47bad24d2e05064198cc7b2ad9e52fe42ee12c766983ed0a5577b1e6bfb01",
+  "vendedoria/rosaline@1.0.0": "fe9f1f6b7f491fcde1c009b6ad72510bf9c33fe71ee00213e46cf2ce09672b65",
+  "vendedoria/rosaline@1.1.0": "18958207c003b0ead994cf2f95375ea3965f8652d565d5bc7f6ae4e59389154a"
 }

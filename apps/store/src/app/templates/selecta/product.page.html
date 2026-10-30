@@ -1,10 +1,10 @@
 @if (product(); as p) {
   <div class="wrap pdp">
-    <a routerLink="/" class="breadcrumb"><app-icon name="back" /> Volver a la selección</a>
+    <a routerLink="/tienda" class="breadcrumb"><app-icon name="back" /> Volver a la tienda</a>
     <div class="pdp-main">
       <section class="gallery" aria-label="Galería del producto">
         <div class="gallery-main">
-          <button class="zoom-image" (click)="dialog.showModal()" aria-label="Ampliar imagen">
+          <button type="button" class="zoom-image" (click)="dialog.showModal()" aria-label="Ampliar imagen">
             @if (selected() < 0) {
               <app-product-image [product]="p" />
             } @else if (photos()[selected()]; as photo) {
@@ -12,22 +12,22 @@
             }
           </button>
           <div class="gallery-controls">
-            <button (click)="step(-1)" [disabled]="totalPhotos() <= 1" aria-label="Imagen anterior"><app-icon name="prev" /></button>
+            <button type="button" (click)="step(-1)" [disabled]="totalPhotos() <= 1" aria-label="Imagen anterior"><app-icon name="prev" /></button>
             <span>{{ selected() + 1 + (montage() ? 1 : 0) }} / {{ totalPhotos() || 1 }}</span>
-            <button (click)="step(1)" [disabled]="totalPhotos() <= 1" aria-label="Imagen siguiente"><app-icon name="next" /></button>
+            <button type="button" (click)="step(1)" [disabled]="totalPhotos() <= 1" aria-label="Imagen siguiente"><app-icon name="next" /></button>
           </div>
         </div>
         <p class="image-caption">{{ caption() }}</p>
         <div class="thumbs">
           @if (montage()) {
-            <button (click)="selected.set(-1)" [class.selected]="selected() < 0" aria-label="Vista del set" [attr.aria-pressed]="selected() < 0"><app-product-image [product]="p" /></button>
+            <button type="button" (click)="selected.set(-1)" [class.selected]="selected() < 0" aria-label="Vista del set" [attr.aria-pressed]="selected() < 0"><app-product-image [product]="p" /></button>
           }
           @for (photo of photos(); track photo.url; let i = $index) {
-            <button (click)="selected.set(i)" [class.selected]="selected() === i" [attr.aria-label]="'Foto ' + (i + 1)" [attr.aria-pressed]="selected() === i"><app-photo [src]="photo.url" [alt]="photo.alt || p.name" /></button>
+            <button type="button" (click)="selected.set(i)" [class.selected]="selected() === i" [attr.aria-label]="'Foto ' + (i + 1)" [attr.aria-pressed]="selected() === i"><app-photo [src]="photo.url" [alt]="photo.alt || p.name" /></button>
           }
         </div>
         <dialog #dialog (keydown.arrowleft)="step(-1)" (keydown.arrowright)="step(1)">
-          <button class="dialog-close" (click)="dialog.close()" aria-label="Cerrar imagen"><app-icon name="close" /></button>
+          <button type="button" class="dialog-close" (click)="dialog.close()" aria-label="Cerrar imagen"><app-icon name="close" /></button>
           @if (selected() < 0) {
             <div class="dialog-set"><app-product-image [product]="p" /></div>
           } @else if (photos()[selected()]; as photo) {
@@ -99,18 +99,18 @@
         @if (canBuy()) {
           <div class="buy-row">
             <div class="quantity">
-              <button (click)="qty.set(qty() - 1)" [disabled]="qty() <= 1" aria-label="Reducir cantidad"><app-icon name="minus" /></button>
+              <button type="button" (click)="qty.set(qty() - 1)" [disabled]="qty() <= 1" aria-label="Reducir cantidad"><app-icon name="minus" /></button>
               <span>{{ qty() }}</span>
-              <button (click)="qty.set(qty() + 1)" [disabled]="qty() >= maxUnits(p)" aria-label="Aumentar cantidad"><app-icon name="plus" /></button>
+              <button type="button" (click)="qty.set(qty() + 1)" [disabled]="qty() >= maxUnits(p)" aria-label="Aumentar cantidad"><app-icon name="plus" /></button>
             </div>
             @if (online()) {
               <button type="button" class="button" [disabled]="buying()" (click)="buyNow()">{{ buying() ? 'Abriendo compra…' : isService() ? 'Solicitar servicio' : 'Comprar ahora' }} <app-icon name="arrow" /></button>
             } @else {
-              <button class="button" (click)="add(p)"><app-icon name="bag" />Agregar al carrito</button>
+              <button type="button" class="button" (click)="add(p)"><app-icon name="bag" />Agregar al carrito</button>
             }
           </div>
           @if (online()) {
-            <button class="button secondary full" (click)="add(p)"><app-icon name="bag" />Agregar al carrito</button>
+            <button type="button" class="button secondary full" (click)="add(p)"><app-icon name="bag" />Agregar al carrito</button>
           }
         }
         <div class="added-panel" role="status" [class.show]="added()">

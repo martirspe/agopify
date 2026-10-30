@@ -1,0 +1,63 @@
+<div class="flat-spacing-3">
+  <div class="container">
+    <div class="sect-heading-v2 space-1 space-inner-1 wow fadeInUp">
+      <div class="badge-pill">
+        <span
+          class="font-geist fw-medium lh-22 letter-space--3"
+          [storeEditText]="id() + '.eyebrow'"
+          [editValue]="field('eyebrow')"
+        ></span>
+      </div>
+      <h2
+        class="font-anton text-uppercase letter-space--2"
+        [storeEditText]="id() + '.title'"
+        [editValue]="field('title')"
+      ></h2>
+    </div>
+    <div
+      class="main-image-compare-2 image-compare icv wow fadeIn rosaline-native-compare"
+    >
+      <img
+        class="img-comp"
+        loading="lazy"
+        width="1440"
+        height="762"
+        alt="Image"
+        [src]="field('image1') || null"
+        [storeEditImage]="id() + '.image1'"
+        [editValue]="field('image1')"
+      />
+      <img
+        class="img-comp rosaline-compare-overlay"
+        loading="lazy"
+        width="1440"
+        height="762"
+        alt="Image"
+        [src]="field('image2') || null"
+        [storeEditImage]="id() + '.image2'"
+        [editValue]="field('image2')"
+        [style.clip-path]="'inset(0 0 0 ' + reveal() + '%)'"
+      />
+      <div class="icv__control" [style.left.%]="reveal()" aria-hidden="true">
+        <div class="icv__control-line"></div>
+        <div class="icv__circle"></div>
+        <div class="icv__control-line"></div>
+      </div>
+      <span class="icv__label icv__label-before">{{
+        demo.active ? "Before" : "Antes"
+      }}</span
+      ><span class="icv__label icv__label-after">{{
+        demo.active ? "After" : "Después"
+      }}</span
+      ><input
+        class="rosaline-compare-range"
+        type="range"
+        min="0"
+        max="100"
+        [value]="reveal()"
+        (input)="updateReveal($event)"
+        aria-label="Comparar imágenes"
+      />
+    </div>
+  </div>
+</div>

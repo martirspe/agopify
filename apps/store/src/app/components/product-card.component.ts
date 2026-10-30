@@ -52,6 +52,7 @@ export class ProductCardComponent {
   private readonly store = inject(StoreStateService).store;
   readonly added = signal(false);
   readonly secondaryReady = signal(false);
+  readonly showAlt = signal(false);
   readonly online = computed(() => this.store()?.checkout.mode === "online");
   readonly variantId = linkedSignal(() => {
     // A concrete option is chosen explicitly; discovery keeps its displayed minimum price.
@@ -90,6 +91,13 @@ export class ProductCardComponent {
   selectVariant(id: string): void {
     this.variantId.set(id);
     this.added.set(false);
+  }
+
+  toggleAlt(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.secondaryReady.set(true);
+    this.showAlt.update((visible) => !visible);
   }
 
   addToCart(): void {

@@ -189,9 +189,9 @@ body.tpl-stride {
   .stride-hero {
     position: relative;
     display: grid;
-    place-items: center;
+    place-items: end start;
     min-height: var(--store-stride-hero-height);
-    padding: var(--ds-space-8) var(--ds-space-5);
+    padding: var(--ds-space-8) var(--ds-space-5) var(--ds-space-12);
     background: var(--store-stride-ink);
     color: var(--store-stride-paper);
     isolation: isolate;
@@ -214,10 +214,10 @@ body.tpl-stride {
   .stride-hero__copy {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
+    align-items: flex-start;
+    text-align: start;
     gap: var(--ds-space-5);
-    width: 100%;
+    width: min(100%, var(--store-stride-copy-width));
   }
   .stride-hero h1 {
     font-size: var(--store-type-hero);
@@ -323,7 +323,11 @@ body.tpl-stride {
     font-weight: 700;
   }
   store-product-card .card__media {
-    border-radius: var(--store-radius-card);
+    border-radius: var(--store-card-media-radius);
+    aspect-ratio: var(--store-media-ratio);
+  }
+  store-product-card .card__media img {
+    object-fit: var(--store-media-fit);
   }
   store-product-card .card__price {
     gap: var(--ds-space-1) var(--ds-space-2);
@@ -333,7 +337,7 @@ body.tpl-stride {
     gap: var(--ds-space-3);
   }
   .stride-skeleton div {
-    aspect-ratio: 1;
+    aspect-ratio: var(--store-media-ratio);
     background: var(--store-surface);
   }
   .stride-skeleton span {

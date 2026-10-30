@@ -1,0 +1,26 @@
+// Selecta identity adapter. Merchant inline settings retain priority.
+@mixin theme {
+  --store-brand: var(--wine);
+  --store-on-brand: var(--sel-on-wine, #ffffff);
+  --store-bg: var(--cream);
+  --store-surface: var(--rose);
+  --store-surface-strong: color-mix(in srgb, var(--wine) 8%, var(--cream));
+  --store-hero-surface: var(--store-surface-strong);
+  --store-text: var(--ink);
+  --store-muted: var(--muted);
+  --store-border: var(--border);
+  --store-success: var(--green);
+  --store-font-body: var(--sel-body, var(--ds-font-ui));
+  --store-font-display: var(--sel-display, Georgia, serif);
+  --store-card-name-font: var(--store-font-display);
+  --store-card-name-size: var(--store-type-product);
+  --store-card-name-weight: 400;
+  --store-card-price-size: var(--store-type-product);
+  --store-card-media-padding: var(--ds-space-4);
+  --store-media-ratio: 4 / 5;
+  --store-media-fit: contain;
+  --store-gallery-ratio: 1;
+  --store-card-media-radius: var(--store-radius-card);
+  --store-control-height: 3.25rem;
+  --store-price-tracking: 0;
+}

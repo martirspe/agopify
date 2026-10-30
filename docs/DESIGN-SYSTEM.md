@@ -4,6 +4,29 @@ Esta es la matriz de implementación de la consola. El código de `packages/desi
 
 ## Fundamentos
 
+### Storefront · Rosaline · Bold Modern
+
+Tema independiente `vendedoria/rosaline`, renderer `rosaline@1`: [matriz, contratos y auditoría](ROSALINE-DESIGN-SYSTEM.md). Fundamentos aislados en `packages/design-tokens/rosaline.scss`, tipografías Anton/Geist locales, recursos limitados a la demo y estilos bajo `body.tpl-rosaline .ro-shell`. Reutiliza estado comercial y controles del motor; no componentes visuales de Selecta/Impulso. Licencia comercial y derechos de imágenes pendientes antes de distribuir a terceros.
+
+### Storefront · Selecta · Bolsa
+
+Sistema transversal de Selecta: [matriz y gobierno](SELECTA-DESIGN-SYSTEM.md). Tokens de identidad en `packages/design-tokens/selecta.scss`; roles de componentes en `_selecta-system.scss`. Inicio y tienda comparten fuente/tamaño del producto, precio, fotografía y acciones; layouts editoriales solo definen composición.
+
+Inicio de Selecta: portada editorial, navegación visual por hasta seis categorías y una selección acotada a tres productos del catálogo cargado. No ofrece filtros ni carga incremental; los accesos llevan a `/tienda`, que reutiliza búsqueda, facetas, categorías, ordenación, cuadrícula/lista y paginación. En móvil, el primer producto ocupa el ancho de la selección y los siguientes forman dos columnas. La composición `collection` y sus textos editables se conservan.
+
+Anchos de Selecta: hero, cabecera y campaña editorial ocupan la pantalla. El contenido usa `--store-theme-width-wide` (1440 px) por defecto; la elección de contenedor del editor conserva prioridad. Ficha y compra limitan ese ancho mediante `--store-product-max-width` (1280 px) y `--store-commerce-max-width` (1200 px). Márgenes laterales derivados de `--ds-gutter`; texto del hero alineado al catálogo y footer con fondo completo.
+
+Selecta también compone el inicio mediante `_selecta-editorial.scss`: fotografía panorámica con panel superpuesto y contraste derivado del color del merchant; a 600 px, fotografía sobre el panel. Colección de cuatro/tres/dos columnas (escritorio/tablet/móvil), fotos contenidas en un marco 4:5 y acción siempre visible. Bloque editorial asimétrico, ficha con galería y jerarquía de precio y pie legal en columnas. Tokens y contratos de edición existentes; sin nuevas fuentes, dependencias o reglas comerciales.
+
+| Patrón | Contrato vigente |
+| --- | --- |
+| Identidad y composición | Selecta conserva la tipografía editorial y la paleta del merchant. `_selecta-layout.scss` compone selección y resumen lateral; a 900 px pasa a una columna y a 600 px reorganiza los subtotales bajo la información del producto. |
+| Tokens | Tipografía `--store-type-*`, ritmo `--ds-space-*`, superficie `--store-surface`, miniaturas derivadas de `--store-recommendation-thumb` y ancho lateral `--store-summary-width`. Sin nuevas escalas ni componentes comerciales duplicados. |
+| Producto y cantidades | Foto contenida, nombre enlazado, variante, precio unitario y subtotal. Grupo de cantidad con nombre por producto, botones táctiles, cantidad anunciada y retirada explícita. |
+| Resumen y estados | Subtotal anunciado, costes pendientes explícitos y una acción principal. Selección inválida usa un botón nativo deshabilitado y explicación; bolsa vacía enlaza al catálogo. Las recomendaciones quedan después del área de compra. No cambia precios, inventario, checkout ni contratos del editor. |
+
+### Plataforma
+
 | Categoría | Fuente y decisión vigente |
 | --- | --- |
 | Marca | `--ds-color-primary`: verde #C8F542; `--ds-color-ink`: #0B0D12. La consola usa superficies claras, información densa y acento de marca en la acción principal. |

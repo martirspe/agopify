@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catalogResolver, storeResolver } from '../../app.resolvers';
 import { LEGAL_SLUGS } from '../../features/legal/legal-slugs';
 import { selectaCatalogResolver, selectaProductResolver } from './selecta-catalog';
@@ -6,7 +8,7 @@ import { SelectaShell } from './selecta-shell';
 
 const legal = () => import('./legal.page').then((m) => m.SelectaLegalPage);
 
-/** Selecta template: the same URLs as the classic store, so links and sitemaps keep working. */
+/** Selecta shop with legacy catalog aliases for existing integrations. */
 export const SELECTA_ROUTES: Routes = [
   {
     path: '',
@@ -19,12 +21,14 @@ export const SELECTA_ROUTES: Routes = [
         loadComponent: () => import('./home.page').then((m) => m.SelectaHomePage),
       },
       {
-        path: 'productos',
+        path: 'tienda',
         pathMatch: 'full',
         loadComponent: () => import('../../features/catalog/catalog.page').then((m) => m.CatalogPage),
         resolve: { list: catalogResolver },
         runGuardsAndResolvers: 'always',
       },
+      { path: 'productos', pathMatch: 'full', redirectTo: ({ queryParams }) => inject(Router).createUrlTree(['/tienda'], { queryParams }) },
+      { path: 'catalogo', pathMatch: 'full', redirectTo: ({ queryParams }) => inject(Router).createUrlTree(['/tienda'], { queryParams }) },
       { path: 'productos/:handle', redirectTo: ({ params }) => `/producto/${params['handle']}` },
       { path: 'terminos', redirectTo: '/terminos-y-condiciones' },
       { path: 'privacidad', redirectTo: '/politica-de-privacidad' },

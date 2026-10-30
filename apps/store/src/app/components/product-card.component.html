@@ -4,6 +4,7 @@
   [class.card--catalog]="purchase()"
   [class.card--list]="listView()"
 >
+  <div class="card__media-wrap">
   <a
     class="card__media"
     [routerLink]="['/producto', p.handle]"
@@ -17,19 +18,21 @@
         [alt]="p.name"
         loading="lazy"
         decoding="async"
-        width="400"
-        height="400"
+        width="480"
+        height="600"
+        sizes="(max-width: 520px) 50vw, (max-width: 1024px) 33vw, 25vw"
       />
       @if (secondaryReady() && purchase()?.secondaryImageUrl; as secondary) {
         <img
           class="card__secondary"
+          [class.is-visible]="showAlt()"
           [src]="secondary"
           alt=""
           aria-hidden="true"
           loading="lazy"
           decoding="async"
-          width="400"
-          height="400"
+          width="480"
+          height="600"
         />
       }
     } @else {
@@ -52,6 +55,18 @@
       >
     }
   </a>
+  @if (purchase()?.secondaryImageUrl) {
+    <button
+      type="button"
+      class="card__alt"
+      [attr.aria-pressed]="showAlt()"
+      [attr.aria-label]="showAlt() ? 'Ver foto principal de ' + p.name : 'Ver otra foto de ' + p.name"
+      (click)="toggleAlt($event)"
+    >
+      <ds-icon name="image" [size]="1" />
+    </button>
+  }
+  </div>
   <div class="card__body">
     <div class="card__copy">
       @if (p.brand) {

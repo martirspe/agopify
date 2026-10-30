@@ -18,6 +18,13 @@
   --store-type-product: 1.125rem;
   --store-type-price: 1.5rem;
   --store-section-space: clamp(2.5rem, 5vw, 4.5rem);
+  --store-media-ratio: 4 / 5;
+  --store-media-fit: cover;
+  --store-hero-media-ratio: 16 / 9;
+  --store-hero-media-fit: cover;
+  --store-gallery-ratio: 4 / 5;
+  --store-card-media-radius: 0;
+  --store-price-tracking: -0.02em;
   --store-stride-campaign: #c5410d;
   --store-stride-on-campaign: #fff;
   --store-stride-ink: #181a18;

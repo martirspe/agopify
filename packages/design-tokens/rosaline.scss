@@ -1,0 +1,46 @@
+/* Original Rosaline values live in the mechanically scoped reference stylesheet.
+ * These adapters map merchant semantic tokens onto shared commerce pages
+ * (product / cart / checkout / order / legal) that reuse classic markup. */
+@mixin source-adapters {
+  --third: var(--store-accent, #ffe3cb);
+}
+
+@mixin theme {
+  --store-brand: #000000;
+  --store-on-brand: #ffffff;
+  --store-accent: #ffe3cb;
+  --store-on-accent: #000000;
+  --store-bg: #ffffff;
+  --store-surface: #f5f5f5;
+  --store-surface-strong: #ececec;
+  --store-text: #000000;
+  --store-muted: #606060;
+  --store-border: #e5e5e5;
+  --store-radius-card: 0;
+  --store-radius-control: 0;
+  --store-max-width: 1440px;
+  --store-product-max-width: 80rem;
+  --store-commerce-max-width: 75rem;
+  --store-font-body: Geist, system-ui, sans-serif;
+  --store-font-display: Anton, Impact, sans-serif;
+  --store-card-name-font: var(--store-font-body);
+  --store-card-name-size: var(--store-type-body);
+  --store-card-name-weight: 500;
+  --store-card-price-size: var(--store-type-subheading);
+  --store-card-media-padding: 0;
+  --store-media-ratio: 1;
+  --store-media-fit: cover;
+  --store-gallery-ratio: 1;
+  --store-card-media-radius: 0;
+  --store-type-hero: clamp(2.75rem, 8vw, 5.5rem);
+  --store-type-title: clamp(2rem, 4vw, 3.25rem);
+  --store-type-section: clamp(1.5rem, 3vw, 2.25rem);
+  --store-type-product: 1.125rem;
+  --store-type-price: 1.5rem;
+  --store-section-space: clamp(2.5rem, 6vw, 5rem);
+  --store-price-tracking: -0.02em;
+  --store-rosaline-display-tracking: -0.03em;
+  --store-rosaline-display-leading: 0.95;
+  --store-rosaline-focus-width: 2px;
+  --store-rosaline-focus-offset: 4px;
+}

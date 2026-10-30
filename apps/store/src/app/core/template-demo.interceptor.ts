@@ -13,7 +13,7 @@ export const templateDemoInterceptor: HttpInterceptorFn = (request, next) => {
   const demo = inject(TemplateDemo);
   if (!demo.template) return next(request);
   const origin = demo.origin;
-  const url = new URL(request.url, origin);
+  const url = new URL(request.urlWithParams, origin);
   if (
     url.origin !== origin ||
     !(

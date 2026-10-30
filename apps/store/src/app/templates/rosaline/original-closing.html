@@ -1,0 +1,59 @@
+<div class="section-banner-cta-2 flat-spacing-3">
+  <div class="s-bg-img glitch-wrap">
+    <img
+      class="origin-img"
+      loading="lazy"
+      width="1920"
+      height="618"
+      alt="Image"
+      [src]="field('image') || null"
+      [storeEditImage]="id() + '.image'"
+      [editValue]="field('image')"
+    />
+    <div
+      class="glitch-image"
+      [style.background-image]="
+        field('image') ? 'url(' + field('image') + ')' : null
+      "
+    ></div>
+  </div>
+  <div class="container position-relative z-2">
+    <div class="row">
+      <div class="col-lg-6 col-xxl-5">
+        <div class="sect-heading-v2 space-inner-1 mb-0 wow fadeInUp">
+          <div class="badge-pill">
+            <span
+              class="font-geist fw-medium lh-22 letter-space--3"
+              [storeEditText]="id() + '.eyebrow'"
+              [editValue]="field('eyebrow')"
+            ></span>
+          </div>
+          <h2
+            class="font-anton text-uppercase letter-space--2 text-third"
+            [storeEditText]="id() + '.title'"
+            [editValue]="field('title')"
+          ></h2>
+          <form class="form-cta" [hidden]="!demo.active" inert>
+            <input
+              aria-label="Email address"
+              class="style-2"
+              type="email"
+              placeholder="Email address"
+              required=""
+            />
+            <button type="submit" class="btn-action_submit">
+              <span class="font-geist fw-bold text-uppercase letter-space--3">
+                Get My 10% Off
+              </span>
+            </button>
+          </form>
+          @if (!demo.active) {
+            <a class="tf-btn style-2 btn-light-2" routerLink="/productos">{{
+              field("cta", "Ver catálogo")
+            }}</a>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

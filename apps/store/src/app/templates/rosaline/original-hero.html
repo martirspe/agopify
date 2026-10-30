@@ -1,0 +1,82 @@
+<div class="tf-hero-banner-v3">
+  <div class="hero-image">
+    <img
+      loading="eager"
+      fetchpriority="high"
+      width="1920"
+      height="938"
+      alt="Image"
+      [src]="field('image') || null"
+      [storeEditImage]="id() + '.image'"
+      [editValue]="field('image')"
+    />
+  </div>
+  <div class="hero-content">
+    <div class="container">
+      <div class="hero-content_inner wow fadeInUp">
+        <div
+          class="hero__tag font-geist fw-medium text-third lh-22"
+          [storeEditText]="id() + '.eyebrow'"
+          [editValue]="field('eyebrow')"
+        ></div>
+        <h1
+          class="text-display-xl font-anton fw-normal letter-space--3 text-third"
+          [storeEditText]="id() + '.title'"
+          [editValue]="field('title')"
+          style="white-space: pre-line"
+        ></h1>
+        <p
+          class="hero__desc font-geist text-body-l letter-space--3 text-third"
+          [storeEditText]="id() + '.text'"
+          [editValue]="field('text')"
+        ></p>
+        <a class="tf-btn style-2 btn-light-2 py-xl-24" routerLink="/productos">
+          <i class="icon icon-Sparkle"></i>
+          <span
+            class="fw-bold font-geist letter-space--3"
+            [storeEditText]="id() + '.cta'"
+            [editValue]="field('cta')"
+          ></span>
+        </a>
+      </div>
+      <div class="hero-content_bottom wow fadeInUp">
+        <div class="hero__author letter-space--3">
+          <p
+            class="author-title font-geist fw-medium lh-22"
+            [storeEditText]="id() + '.label1'"
+            [editValue]="field('label1')"
+          ></p>
+          <p
+            class="author-name font-anton text-28-34"
+            [storeEditText]="id() + '.value1'"
+            [editValue]="field('value1')"
+          ></p>
+        </div>
+        <div class="hero__author letter-space--3">
+          <p
+            class="author-title font-geist fw-medium lh-22"
+            [storeEditText]="id() + '.label2'"
+            [editValue]="field('label2')"
+          ></p>
+          <p
+            class="author-name font-anton text-28-34"
+            [storeEditText]="id() + '.value2'"
+            [editValue]="field('value2')"
+          ></p>
+        </div>
+        <div class="hero__author letter-space--3">
+          <p
+            class="author-title font-geist fw-medium lh-22"
+            [storeEditText]="id() + '.label3'"
+            [editValue]="field('label3')"
+          ></p>
+          <p
+            class="author-name font-anton text-28-34"
+            [storeEditText]="id() + '.value3'"
+            [editValue]="field('value3')"
+          ></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -4,7 +4,7 @@ Scope: API storefront, console store/editor, store renderers, contracts, shared 
 
 ## Discovery / decision (before code changes)
 
-- Three shipped presentations: `classic` (Clásica), `selecta` (Selecta), `stride` (Impulso). Identity is the persisted English slug, not the Spanish display name.
+- Four shipped presentations: `classic` (Clásica), `selecta` (Selecta), `stride` (Impulso), `rosaline` (Rosaline / Bold Modern). Identity is the persisted English slug, not the Spanish display name.
 - Reuse business services, SSR/host resolution, signed preview, plain-text/image sanitization, shared blocks, per-theme layouts, editor history, scheduled publication and transactional content snapshots.
 - Current API `store-templates.ts` and console `TEMPLATE_OPTIONS` duplicate registration. No manifest, installed release, compatibility gate or release migration exists.
 - Template selection currently mutates the live row immediately. Content draft/snapshot does not capture the selected presentation. Publishing claims `updatedAt`; saving can overwrite another session.

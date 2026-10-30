@@ -1,0 +1,71 @@
+<div class="section-banner-explore">
+  <div class="bn-image overflow-hidden wow fadeIn">
+    <img
+      class="wow fadeZoomOut"
+      loading="lazy"
+      width="640"
+      height="861"
+      alt="Image"
+      [src]="field('image1') || null"
+      [storeEditImage]="id() + '.image1'"
+      [editValue]="field('image1')"
+    />
+  </div>
+  <div class="bn-content">
+    <div class="sect-heading-v2 start space-1 space-inner-1 wow fadeInUp">
+      <div class="badge-pill">
+        <span
+          class="font-geist fw-medium lh-22 letter-space--3"
+          [storeEditText]="id() + '.eyebrow'"
+          [editValue]="field('eyebrow')"
+        ></span>
+      </div>
+      <h2
+        class="font-anton text-uppercase letter-space--2"
+        [storeEditText]="id() + '.title'"
+        [editValue]="field('title')"
+      ></h2>
+      <a
+        class="tf-btn type-2 style-2 btn-stroke-black py-normal"
+        routerLink="/productos"
+      >
+        <span
+          class="fw-bold font-geist letter-space--3"
+          [storeEditText]="id() + '.cta'"
+          [editValue]="field('cta')"
+        ></span>
+        <i class="icon icon-ArrowRight"></i>
+      </a>
+    </div>
+    <ul class="tf-list vertical gap-8 list-explore wow fadeInUp">
+      @for (category of categories(); track category) {
+        <li>
+          <a
+            class="explore-link"
+            routerLink="/productos"
+            [queryParams]="{ categoria: category }"
+            ><p class="text text-28-34 font-anton letter-space--3">
+              {{ category }}
+              <span class="text-body-m lh-22 font-geist fw-medium"
+                >({{ categoryCount(category) }})</span
+              >
+            </p>
+            <i class="icon icon-ArrowRightUp" aria-hidden="true"></i
+          ></a>
+        </li>
+      }
+    </ul>
+  </div>
+  <div class="bn-image overflow-hidden wow fadeIn">
+    <img
+      class="wow fadeZoomOut"
+      loading="lazy"
+      width="640"
+      height="861"
+      alt="Image"
+      [src]="field('image2') || null"
+      [storeEditImage]="id() + '.image2'"
+      [editValue]="field('image2')"
+    />
+  </div>
+</div>

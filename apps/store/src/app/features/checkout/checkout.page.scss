@@ -8,6 +8,18 @@
   padding-block: var(--ds-space-8) var(--ds-space-12);
 }
 
+.checkout__heading {
+  display: grid;
+  gap: var(--ds-space-2);
+  max-width: var(--store-reading-width);
+}
+
+.checkout__heading p:last-child {
+  color: var(--store-muted);
+  font-size: var(--store-type-body);
+  line-height: var(--store-leading-body);
+}
+
 .back {
   display: inline-flex;
   gap: var(--ds-space-2);

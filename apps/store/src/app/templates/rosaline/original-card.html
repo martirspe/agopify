@@ -1,0 +1,93 @@
+<div class="card-product card-s3 wow fadeInUp">
+  <div class="card-product_wrapper size-38d45">
+    <a class="product-img" [routerLink]="['/producto', product().handle]">
+      <img
+        class="img-product"
+        loading="lazy"
+        width="348"
+        height="420"
+        alt="Product"
+        [src]="imageUrl() || null"
+        [alt]="product().name"
+      />
+    </a>
+
+    <ul class="product-action_list">
+      <li>
+        <a
+          class="hover-tooltip tooltip-left box-icon"
+          (click)="openQuickView($event)"
+          role="button"
+          tabindex="0"
+          (keydown.enter)="openQuickView($event)"
+          aria-label="Vista rápida"
+        >
+          <span class="icon icon-EyeOpen"></span>
+          <span class="tooltip">Quick view</span>
+        </a>
+      </li>
+    </ul>
+    <div class="product-action_bot">
+      <a
+        class="btn-action_add tf-btn hv-black btn-white type-2 w-100"
+        href="#"
+        (click)="quickAdd($event)"
+        ><i class="icon icon-ShoppingCart"></i>
+        {{ demo.active ? "QUICK ADD" : "Agregar al carrito" }}</a
+      >
+      <a
+        href="#"
+        class="box-icon btn-open_action xl-d-none"
+        (click)="openQuickView($event)"
+      >
+        <span class="icon icon-Plus"></span>
+        <span class="icon icon-Minus"></span>
+      </a>
+    </div>
+  </div>
+  <div class="card-product_info font-geist gap-8">
+    @if (demo.active) {
+      <div class="product-info__rate">
+        <div class="star-wrap fs-14">
+          <i class="icon icon-Star-Sharp"></i>
+          <i class="icon icon-Star-Sharp"></i>
+          <i class="icon icon-Star-Sharp"></i>
+          <i class="icon icon-Star-Sharp"></i>
+          <i class="icon icon-Star-Sharp"></i>
+        </div>
+      </div>
+    }
+
+    <a
+      class="name-product lh-22 fw-medium link-underline text-uppercase justify-content-center"
+      [routerLink]="['/producto', product().handle]"
+      >{{ product().name }}</a
+    >
+    <p class="product-info__desc fw-normal text-body-s lh-18 cl-text-5">
+      {{ product().descriptionShort }}
+    </p>
+    <span class="product-info__price lh-22 fw-medium">
+      @if (product().priceVaries && !variant()) {
+        <span>Desde </span>
+      }
+      {{ priceCents() | money: product().currency }}
+      @if (discount() > 0) {
+        <s>{{ product().compareAtPriceCents | money: product().currency }}</s>
+      }
+    </span>
+  </div>
+</div>
+<dialog
+  #quickView
+  class="modal modalCentered modal-quickview"
+  (click)="onBackdrop($event)"
+  (close)="quickOpen.set(false)"
+>
+  @if (quickOpen()) {
+  <rosaline-quickview
+    [product]="product()"
+    [purchase]="purchase()"
+    (closed)="quickView.close()"
+  />
+  }
+</dialog>

@@ -1,0 +1,117 @@
+@if (store(); as s) {
+  @for (item of homeSections(); track item.id) {
+    @switch (item.type) {
+      @case ("hero") {
+        <rosaline-original-hero
+          class="tw:block"
+          [id]="item.id"
+          [fields]="fields(item.id)"
+          [products]="sourceProducts()"
+          [storeSection]="item.id"
+        />
+      }
+      @case ("facts") {
+        <rosaline-original-facts
+          [id]="item.id"
+          [fields]="fields(item.id)"
+          [products]="sourceProducts()"
+          [storeSection]="item.id"
+        />
+      }
+      @case ("featured") {
+        <rosaline-original-selection
+          [id]="item.id"
+          [fields]="fields(item.id)"
+          [products]="sourceProducts()"
+          [storeSection]="item.id"
+        />
+      }
+      @case ("categories") {
+        <rosaline-original-explore
+          [id]="item.id"
+          [fields]="fields(item.id)"
+          [products]="sourceProducts()"
+          [storeSection]="item.id"
+        />
+      }
+      @case ("brands") {
+        <rosaline-original-brands
+          [id]="item.id"
+          [fields]="fields(item.id)"
+          [products]="sourceProducts()"
+          [storeSection]="item.id"
+        />
+      }
+      @case ("trusted") {
+        <rosaline-original-trusted
+          [id]="item.id"
+          [fields]="fields(item.id)"
+          [products]="sourceProducts()"
+          [storeSection]="item.id"
+        />
+      }
+      @case ("ritual") {
+        <rosaline-original-ritual
+          [id]="item.id"
+          [fields]="fields(item.id)"
+          [products]="sourceProducts()"
+          [storeSection]="item.id"
+        />
+      }
+      @case ("compare") {
+        <rosaline-original-compare
+          [id]="item.id"
+          [fields]="fields(item.id)"
+          [products]="sourceProducts()"
+          [storeSection]="item.id"
+        />
+      }
+      @case ("closing") {
+        <rosaline-original-closing
+          [id]="item.id"
+          [fields]="fields(item.id)"
+          [products]="sourceProducts()"
+          [storeSection]="item.id"
+        />
+      }
+      @case ("shop") {
+        <rosaline-original-shop
+          [id]="item.id"
+          [fields]="fields(item.id)"
+          [products]="sourceProducts()"
+          [storeSection]="item.id"
+        />
+      }
+      @case ("spotlight") {
+        @if (spotlightProduct(); as p) {
+          <rosaline-spotlight
+            [product]="p"
+            [purchase]="p"
+            storeSection="spotlight"
+          />
+        }
+      }
+      @case ('imageText') {
+        @let b = block(item.id);
+        <section class="flat-spacing-3" [storeSection]="item.id"><div class="container"><div class="row align-items-center"><div class="col-md-6">@if(b.image){<img [src]="b.image" alt="" width="720" height="900" loading="lazy" [storeEditImage]="item.id+'.image'" [editValue]="b.image"/>}</div><div class="col-md-6"><div class="sect-heading-v2"><span class="badge-pill" [storeEditText]="item.id+'.eyebrow'" [editValue]="b.eyebrow"></span><h2 class="font-anton text-uppercase" [storeEditText]="item.id+'.title'" [editValue]="b.title"></h2><p [storeEditText]="item.id+'.text'" [editValue]="b.text"></p>@if(b.cta){<a routerLink="/productos" class="tf-btn style-2" [storeEditText]="item.id+'.cta'" [editValue]="b.cta"></a>}</div></div></div></div></section>
+      }
+      @case ('text') {
+        @let b = block(item.id);
+        <section class="flat-spacing-3" [storeSection]="item.id"><div class="container"><div class="sect-heading-v2"><span class="badge-pill" [storeEditText]="item.id+'.eyebrow'" [editValue]="b.eyebrow"></span><h2 class="font-anton text-uppercase" [storeEditText]="item.id+'.title'" [editValue]="b.title"></h2><p [storeEditText]="item.id+'.text'" [editValue]="b.text"></p></div></div></section>
+      }
+      @default {
+        @if (sharedType(item.type); as type) {
+          <store-home-block
+            class="container flat-spacing-3"
+            [type]="type"
+            [sectionId]="item.id"
+            [block]="block(item.id)"
+            [whatsappHref]="whatsappHref()"
+            [faq]="faq()"
+            [storeSection]="item.id"
+          />
+        }
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import {
   TEMPLATE_SECTIONS,
+  INDUSTRIES,
   effectiveTemplate,
   templateAllowed,
   themeDefaults,
@@ -10,6 +11,13 @@ import {
 } from './store-templates';
 
 describe('template content', () => {
+  it('accepts Rosaline for every console industry and keeps its own editor schema', () => {
+    for(const industry of INDUSTRIES) {
+      expect(templateAllowed('rosaline',industry)).toBe(true);
+      expect(effectiveTemplate('rosaline',industry)).toBe('rosaline');
+    }
+    expect(TEMPLATE_SECTIONS['rosaline'].some(section=>section.id==='hero')).toBe(true);
+  });
   it('validates semantic tokens, favicon ownership, bounded navigation and platform-specific social destinations', () => {
     const content = sanitizeContent({ version: 1, sections: {
       navigation: { label1: 'Catálogo', destination1: '/productos', destination2: 'javascript:alert(1)' },

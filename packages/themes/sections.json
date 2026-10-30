@@ -2566,5 +2566,1458 @@
         }
       ]
     }
+  ],
+  "rosaline": [
+    {
+      "id": "hero",
+      "label": "Portada Bold Modern",
+      "role": "builtin",
+      "canHide": true,
+      "faq": false,
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 60
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "multiline",
+          "maxLength": 80
+        },
+        {
+          "id": "text",
+          "label": "Descripción",
+          "kind": "multiline",
+          "maxLength": 300
+        },
+        {
+          "id": "cta",
+          "label": "Botón al catálogo",
+          "kind": "text",
+          "maxLength": 30
+        },
+        {
+          "id": "image",
+          "label": "Fotografía",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "label1",
+          "label": "Etiqueta 1",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "value1",
+          "label": "Detalle 1",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "label2",
+          "label": "Etiqueta 2",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "value2",
+          "label": "Detalle 2",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "label3",
+          "label": "Etiqueta 3",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "value3",
+          "label": "Detalle 3",
+          "kind": "text",
+          "maxLength": 160
+        }
+      ]
+    },
+    {
+      "id": "facts",
+      "label": "Datos de tu marca",
+      "role": "builtin",
+      "canHide": true,
+      "faq": false,
+      "fields": [
+        {
+          "id": "value1",
+          "label": "Dato 1",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "title1",
+          "label": "Título 1",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "text1",
+          "label": "Detalle 1",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "value2",
+          "label": "Dato 2",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "title2",
+          "label": "Título 2",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "text2",
+          "label": "Detalle 2",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "value3",
+          "label": "Dato 3",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "title3",
+          "label": "Título 3",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "text3",
+          "label": "Detalle 3",
+          "kind": "text",
+          "maxLength": 160
+        }
+      ]
+    },
+    {
+      "id": "featured",
+      "label": "Selección de productos",
+      "role": "builtin",
+      "canHide": false,
+      "faq": false,
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 60
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "text",
+          "maxLength": 80
+        },
+        {
+          "id": "text",
+          "label": "Descripción",
+          "kind": "multiline",
+          "maxLength": 600
+        },
+        {
+          "id": "cta",
+          "label": "cta",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "tabAll",
+          "label": "Primera pestaña",
+          "kind": "text",
+          "maxLength": 160
+        }
+      ]
+    },
+    {
+      "id": "categories",
+      "label": "Explorar categorías",
+      "role": "builtin",
+      "canHide": true,
+      "faq": false,
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "text",
+          "maxLength": 80
+        },
+        {
+          "id": "text",
+          "label": "Descripción",
+          "kind": "multiline",
+          "maxLength": 600
+        },
+        {
+          "id": "cta",
+          "label": "Botón",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "image1",
+          "label": "Imagen 1",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "image2",
+          "label": "Imagen 2",
+          "kind": "image",
+          "maxLength": 0
+        }
+      ]
+    },
+    {
+      "id": "brands",
+      "label": "Marcas y colaboraciones",
+      "role": "builtin",
+      "canHide": true,
+      "faq": false,
+      "fields": [
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "text",
+          "label": "Marcas",
+          "kind": "multiline",
+          "maxLength": 600
+        },
+        {
+          "id": "image1",
+          "label": "Marca 1",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "image2",
+          "label": "Marca 2",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "image3",
+          "label": "Marca 3",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "image4",
+          "label": "Marca 4",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "image5",
+          "label": "Marca 5",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "image6",
+          "label": "Marca 6",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "image7",
+          "label": "Marca 7",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "image8",
+          "label": "Marca 8",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "image9",
+          "label": "Marca 9",
+          "kind": "image",
+          "maxLength": 0
+        }
+      ]
+    },
+    {
+      "id": "trusted",
+      "label": "Historia de la marca",
+      "role": "builtin",
+      "canHide": true,
+      "faq": false,
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "multiline",
+          "maxLength": 160
+        },
+        {
+          "id": "text",
+          "label": "Descripción",
+          "kind": "multiline",
+          "maxLength": 600
+        },
+        {
+          "id": "image1",
+          "label": "Imagen 1",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "image2",
+          "label": "Imagen 2",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "certLabel1",
+          "label": "Reconocimiento 1",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "certTitle1",
+          "label": "Detalle del reconocimiento 1",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "certLabel2",
+          "label": "Reconocimiento 2",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "certTitle2",
+          "label": "Detalle del reconocimiento 2",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "certLabel3",
+          "label": "Reconocimiento 3",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "certTitle3",
+          "label": "Detalle del reconocimiento 3",
+          "kind": "text",
+          "maxLength": 160
+        }
+      ]
+    },
+    {
+      "id": "ritual",
+      "label": "Guía de uso",
+      "role": "builtin",
+      "canHide": true,
+      "faq": false,
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "multiline",
+          "maxLength": 160
+        },
+        {
+          "id": "text",
+          "label": "Descripción",
+          "kind": "multiline",
+          "maxLength": 600
+        },
+        {
+          "id": "step1Title",
+          "label": "Paso 1",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "step1Text",
+          "label": "Detalle 1",
+          "kind": "multiline",
+          "maxLength": 300
+        },
+        {
+          "id": "image1",
+          "label": "Imagen 1",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "step2Title",
+          "label": "Paso 2",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "step2Text",
+          "label": "Detalle 2",
+          "kind": "multiline",
+          "maxLength": 300
+        },
+        {
+          "id": "image2",
+          "label": "Imagen 2",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "step3Title",
+          "label": "Paso 3",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "step3Text",
+          "label": "Detalle 3",
+          "kind": "multiline",
+          "maxLength": 300
+        },
+        {
+          "id": "image3",
+          "label": "Imagen 3",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "step4Title",
+          "label": "Paso 4",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "step4Text",
+          "label": "Detalle 4",
+          "kind": "multiline",
+          "maxLength": 300
+        },
+        {
+          "id": "image4",
+          "label": "Imagen 4",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "step5Title",
+          "label": "Paso 5",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "step5Text",
+          "label": "Detalle 5",
+          "kind": "multiline",
+          "maxLength": 300
+        },
+        {
+          "id": "image5",
+          "label": "Imagen 5",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "image",
+          "label": "image",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "step1Product",
+          "label": "Producto · paso 1",
+          "kind": "text",
+          "maxLength": 300
+        },
+        {
+          "id": "step1Benefit",
+          "label": "Beneficio · paso 1",
+          "kind": "text",
+          "maxLength": 300
+        },
+        {
+          "id": "step1Usage",
+          "label": "Uso · paso 1",
+          "kind": "text",
+          "maxLength": 300
+        },
+        {
+          "id": "step2Product",
+          "label": "Producto · paso 2",
+          "kind": "text",
+          "maxLength": 300
+        },
+        {
+          "id": "step2Benefit",
+          "label": "Beneficio · paso 2",
+          "kind": "text",
+          "maxLength": 300
+        },
+        {
+          "id": "step2Usage",
+          "label": "Uso · paso 2",
+          "kind": "text",
+          "maxLength": 300
+        },
+        {
+          "id": "step3Product",
+          "label": "Producto · paso 3",
+          "kind": "text",
+          "maxLength": 300
+        },
+        {
+          "id": "step3Benefit",
+          "label": "Beneficio · paso 3",
+          "kind": "text",
+          "maxLength": 300
+        },
+        {
+          "id": "step3Usage",
+          "label": "Uso · paso 3",
+          "kind": "text",
+          "maxLength": 300
+        },
+        {
+          "id": "step4Product",
+          "label": "Producto · paso 4",
+          "kind": "text",
+          "maxLength": 300
+        },
+        {
+          "id": "step4Benefit",
+          "label": "Beneficio · paso 4",
+          "kind": "text",
+          "maxLength": 300
+        },
+        {
+          "id": "step4Usage",
+          "label": "Uso · paso 4",
+          "kind": "text",
+          "maxLength": 300
+        },
+        {
+          "id": "step5Product",
+          "label": "Producto · paso 5",
+          "kind": "text",
+          "maxLength": 300
+        },
+        {
+          "id": "step5Benefit",
+          "label": "Beneficio · paso 5",
+          "kind": "text",
+          "maxLength": 300
+        },
+        {
+          "id": "step5Usage",
+          "label": "Uso · paso 5",
+          "kind": "text",
+          "maxLength": 300
+        }
+      ]
+    },
+    {
+      "id": "compare",
+      "label": "Comparar imágenes",
+      "role": "builtin",
+      "canHide": true,
+      "faq": false,
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "multiline",
+          "maxLength": 160
+        },
+        {
+          "id": "text",
+          "label": "Descripción",
+          "kind": "multiline",
+          "maxLength": 600
+        },
+        {
+          "id": "image1",
+          "label": "Imagen 1",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "image2",
+          "label": "Imagen 2",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "before",
+          "label": "Etiqueta anterior",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "after",
+          "label": "Etiqueta posterior",
+          "kind": "text",
+          "maxLength": 160
+        }
+      ]
+    },
+    {
+      "id": "spotlight",
+      "label": "Producto protagonista",
+      "role": "builtin",
+      "canHide": true,
+      "faq": false,
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 60
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "multiline",
+          "maxLength": 100
+        },
+        {
+          "id": "text",
+          "label": "Descripción",
+          "kind": "multiline",
+          "maxLength": 240
+        }
+      ]
+    },
+    {
+      "id": "closing",
+      "label": "Cierre editorial",
+      "role": "builtin",
+      "canHide": true,
+      "faq": false,
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "text",
+          "maxLength": 80
+        },
+        {
+          "id": "text",
+          "label": "Descripción",
+          "kind": "multiline",
+          "maxLength": 240
+        },
+        {
+          "id": "cta",
+          "label": "Botón al catálogo",
+          "kind": "text",
+          "maxLength": 30
+        },
+        {
+          "id": "image",
+          "label": "Imagen de fondo",
+          "kind": "image",
+          "maxLength": 0
+        }
+      ]
+    },
+    {
+      "id": "shop",
+      "label": "Galería de productos",
+      "role": "builtin",
+      "canHide": true,
+      "faq": false,
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "multiline",
+          "maxLength": 160
+        },
+        {
+          "id": "text",
+          "label": "Descripción",
+          "kind": "multiline",
+          "maxLength": 600
+        }
+      ]
+    },
+    {
+      "id": "imageText",
+      "label": "Imagen con texto",
+      "role": "block",
+      "canHide": true,
+      "faq": false,
+      "description": "Una foto junto a un título y un texto: novedades, promociones o la historia de tu marca.",
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 60
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "multiline",
+          "maxLength": 100
+        },
+        {
+          "id": "text",
+          "label": "Texto",
+          "kind": "multiline",
+          "maxLength": 400
+        },
+        {
+          "id": "cta",
+          "label": "Botón hacia tus productos",
+          "kind": "text",
+          "maxLength": 30
+        },
+        {
+          "id": "image",
+          "label": "Imagen",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "layout",
+          "label": "Posición de la imagen",
+          "kind": "choice",
+          "maxLength": 0,
+          "options": [
+            {
+              "value": "start",
+              "label": "Izquierda"
+            },
+            {
+              "value": "end",
+              "label": "Derecha"
+            }
+          ]
+        }
+      ],
+      "defaults": {
+        "eyebrow": "Novedad",
+        "title": "Descubre tu próximo favorito",
+        "text": "Explora el catálogo y encuentra una opción para ti.",
+        "cta": "Ver productos",
+        "image": "",
+        "layout": "start"
+      }
+    },
+    {
+      "id": "text",
+      "label": "Texto destacado",
+      "role": "block",
+      "canHide": true,
+      "faq": false,
+      "description": "Un mensaje breve y centrado: tu propuesta, una garantía o un aviso importante.",
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 60
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "multiline",
+          "maxLength": 120
+        },
+        {
+          "id": "text",
+          "label": "Texto",
+          "kind": "multiline",
+          "maxLength": 600
+        },
+        {
+          "id": "tone",
+          "label": "Fondo",
+          "kind": "choice",
+          "maxLength": 0,
+          "options": [
+            {
+              "value": "",
+              "label": "Sin fondo"
+            },
+            {
+              "value": "soft",
+              "label": "Suave"
+            },
+            {
+              "value": "brand",
+              "label": "Color de tu marca"
+            }
+          ]
+        }
+      ],
+      "defaults": {
+        "eyebrow": "Sobre nosotros",
+        "title": "Elige con toda la información",
+        "text": "Revisa los detalles de cada producto y consulta nuestras políticas antes de comprar."
+      }
+    },
+    {
+      "id": "benefits",
+      "label": "Beneficios",
+      "role": "block",
+      "canHide": true,
+      "faq": false,
+      "description": "Tres razones para comprarte: atención, calidad, entrega o lo que te distinga.",
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 60
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "multiline",
+          "maxLength": 100
+        },
+        {
+          "id": "item1Title",
+          "label": "Beneficio 1",
+          "kind": "text",
+          "maxLength": 50
+        },
+        {
+          "id": "item1Text",
+          "label": "Detalle 1",
+          "kind": "multiline",
+          "maxLength": 160
+        },
+        {
+          "id": "item2Title",
+          "label": "Beneficio 2",
+          "kind": "text",
+          "maxLength": 50
+        },
+        {
+          "id": "item2Text",
+          "label": "Detalle 2",
+          "kind": "multiline",
+          "maxLength": 160
+        },
+        {
+          "id": "item3Title",
+          "label": "Beneficio 3",
+          "kind": "text",
+          "maxLength": 50
+        },
+        {
+          "id": "item3Text",
+          "label": "Detalle 3",
+          "kind": "multiline",
+          "maxLength": 160
+        },
+        {
+          "id": "tone",
+          "label": "Fondo",
+          "kind": "choice",
+          "maxLength": 0,
+          "options": [
+            {
+              "value": "",
+              "label": "Sin fondo"
+            },
+            {
+              "value": "soft",
+              "label": "Suave"
+            },
+            {
+              "value": "brand",
+              "label": "Color de tu marca"
+            }
+          ]
+        }
+      ],
+      "defaults": {
+        "eyebrow": "Por qué elegirnos",
+        "title": "Comprar aquí es fácil",
+        "item1Title": "Información a la mano",
+        "item1Text": "Revisa las características y el precio antes de elegir.",
+        "item2Title": "Productos elegidos",
+        "item2Text": "Explora el catálogo y compara las opciones disponibles.",
+        "item3Title": "Compra sin cuenta",
+        "item3Text": "Haz tu pedido sin crear una cuenta."
+      }
+    },
+    {
+      "id": "testimonials",
+      "label": "Opiniones de clientes",
+      "role": "block",
+      "canHide": true,
+      "faq": false,
+      "description": "Hasta tres comentarios reales de tus clientes con su nombre.",
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 60
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "multiline",
+          "maxLength": 100
+        },
+        {
+          "id": "quote1",
+          "label": "Opinión 1",
+          "kind": "multiline",
+          "maxLength": 300
+        },
+        {
+          "id": "author1",
+          "label": "Cliente 1",
+          "kind": "text",
+          "maxLength": 60
+        },
+        {
+          "id": "quote2",
+          "label": "Opinión 2",
+          "kind": "multiline",
+          "maxLength": 300
+        },
+        {
+          "id": "author2",
+          "label": "Cliente 2",
+          "kind": "text",
+          "maxLength": 60
+        },
+        {
+          "id": "quote3",
+          "label": "Opinión 3",
+          "kind": "multiline",
+          "maxLength": 300
+        },
+        {
+          "id": "author3",
+          "label": "Cliente 3",
+          "kind": "text",
+          "maxLength": 60
+        },
+        {
+          "id": "tone",
+          "label": "Fondo",
+          "kind": "choice",
+          "maxLength": 0,
+          "options": [
+            {
+              "value": "",
+              "label": "Sin fondo"
+            },
+            {
+              "value": "soft",
+              "label": "Suave"
+            },
+            {
+              "value": "brand",
+              "label": "Color de tu marca"
+            }
+          ]
+        }
+      ],
+      "defaults": {
+        "eyebrow": "Lo que dicen",
+        "title": "Opiniones de nuestros clientes",
+        "quote1": "",
+        "author1": "",
+        "quote2": "",
+        "author2": "",
+        "quote3": "",
+        "author3": ""
+      }
+    },
+    {
+      "id": "whatsapp",
+      "label": "Botón de WhatsApp",
+      "role": "block",
+      "canHide": true,
+      "faq": false,
+      "description": "Una invitación a escribirte; abre tu WhatsApp de ventas configurado en Tienda web.",
+      "fields": [
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "multiline",
+          "maxLength": 100
+        },
+        {
+          "id": "text",
+          "label": "Texto",
+          "kind": "multiline",
+          "maxLength": 240
+        },
+        {
+          "id": "cta",
+          "label": "Botón",
+          "kind": "text",
+          "maxLength": 30
+        }
+      ],
+      "defaults": {
+        "title": "¿Tienes dudas? Te ayudamos a elegir",
+        "text": "Escríbenos y te respondemos con gusto.",
+        "cta": "Escríbenos por WhatsApp"
+      }
+    },
+    {
+      "id": "gallery",
+      "label": "Galería de fotos",
+      "role": "block",
+      "canHide": true,
+      "faq": false,
+      "description": "Hasta tres fotos de tus productos, tu local o tu equipo.",
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 60
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "multiline",
+          "maxLength": 100
+        },
+        {
+          "id": "image1",
+          "label": "Imagen 1",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "image2",
+          "label": "Imagen 2",
+          "kind": "image",
+          "maxLength": 0
+        },
+        {
+          "id": "image3",
+          "label": "Imagen 3",
+          "kind": "image",
+          "maxLength": 0
+        }
+      ],
+      "defaults": {
+        "eyebrow": "Conócenos",
+        "title": "Así trabajamos",
+        "image1": "",
+        "image2": "",
+        "image3": ""
+      }
+    },
+    {
+      "id": "cta",
+      "label": "Llamado a la acción",
+      "role": "block",
+      "canHide": true,
+      "faq": false,
+      "description": "Una franja con un mensaje y un botón hacia tus productos: lanzamientos, temporadas o colecciones.",
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 60
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "multiline",
+          "maxLength": 100
+        },
+        {
+          "id": "text",
+          "label": "Texto",
+          "kind": "multiline",
+          "maxLength": 240
+        },
+        {
+          "id": "cta",
+          "label": "Botón hacia tus productos",
+          "kind": "text",
+          "maxLength": 30
+        },
+        {
+          "id": "tone",
+          "label": "Fondo",
+          "kind": "choice",
+          "maxLength": 0,
+          "options": [
+            {
+              "value": "",
+              "label": "Sin fondo"
+            },
+            {
+              "value": "soft",
+              "label": "Suave"
+            },
+            {
+              "value": "brand",
+              "label": "Color de tu marca"
+            }
+          ]
+        }
+      ],
+      "defaults": {
+        "eyebrow": "",
+        "title": "Encuentra tu próximo favorito",
+        "text": "Explora el catálogo y elige lo que va contigo.",
+        "cta": "Ver productos",
+        "tone": "brand"
+      }
+    },
+    {
+      "id": "questions",
+      "label": "Preguntas frecuentes",
+      "role": "block",
+      "canHide": true,
+      "faq": true,
+      "description": "Respuestas sobre pagos, envíos y cambios armadas con tu configuración; puedes personalizarlas.",
+      "fields": [
+        {
+          "id": "eyebrow",
+          "label": "Antetítulo",
+          "kind": "text",
+          "maxLength": 60
+        },
+        {
+          "id": "title",
+          "label": "Título",
+          "kind": "multiline",
+          "maxLength": 100
+        },
+        {
+          "id": "tone",
+          "label": "Fondo",
+          "kind": "choice",
+          "maxLength": 0,
+          "options": [
+            {
+              "value": "",
+              "label": "Sin fondo"
+            },
+            {
+              "value": "soft",
+              "label": "Suave"
+            },
+            {
+              "value": "brand",
+              "label": "Color de tu marca"
+            }
+          ]
+        }
+      ],
+      "defaults": {
+        "eyebrow": "Compra con confianza",
+        "title": "Preguntas frecuentes"
+      }
+    },
+    {
+      "id": "announcement",
+      "label": "Anuncio superior",
+      "role": "fixed",
+      "canHide": false,
+      "faq": false,
+      "description": "Franja arriba de todas las páginas: envíos, promociones o avisos. Déjala vacía para ocultarla.",
+      "fields": [
+        {
+          "id": "text",
+          "label": "Texto del anuncio",
+          "kind": "text",
+          "maxLength": 120
+        }
+      ]
+    },
+    {
+      "id": "product",
+      "label": "Página de producto",
+      "role": "fixed",
+      "canHide": false,
+      "faq": false,
+      "page": "product",
+      "description": "Textos de la página de cada producto. La vista previa abre uno de tus productos.",
+      "fields": [
+        {
+          "id": "whatsapp",
+          "label": "Botón de WhatsApp",
+          "kind": "text",
+          "maxLength": 30
+        },
+        {
+          "id": "note",
+          "label": "Mensaje junto al botón de compra",
+          "kind": "multiline",
+          "maxLength": 240
+        }
+      ]
+    },
+    {
+      "id": "footer",
+      "label": "Pie de página",
+      "role": "fixed",
+      "canHide": false,
+      "faq": false,
+      "fields": [
+        {
+          "id": "closing",
+          "label": "Frase de cierre",
+          "kind": "text",
+          "maxLength": 120
+        },
+        {
+          "id": "note",
+          "label": "Nota",
+          "kind": "multiline",
+          "maxLength": 400
+        },
+        {
+          "id": "marquee",
+          "label": "Frase del pie",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "service1Title",
+          "label": "Título · servicio 1",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "service1Text",
+          "label": "Detalle · servicio 1",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "service2Title",
+          "label": "Título · servicio 2",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "service2Text",
+          "label": "Detalle · servicio 2",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "service3Title",
+          "label": "Título · servicio 3",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "service3Text",
+          "label": "Detalle · servicio 3",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "service4Title",
+          "label": "Título · servicio 4",
+          "kind": "text",
+          "maxLength": 160
+        },
+        {
+          "id": "service4Text",
+          "label": "Detalle · servicio 4",
+          "kind": "text",
+          "maxLength": 160
+        }
+      ]
+    },
+    {
+      "id": "navigation",
+      "label": "Navegación",
+      "role": "fixed",
+      "canHide": false,
+      "faq": false,
+      "description": "Hasta tres enlaces de cabecera hacia las páginas de tu tienda. Sin etiquetas personalizadas se conserva el menú original.",
+      "fields": [
+        {
+          "id": "label1",
+          "label": "Enlace 1",
+          "kind": "text",
+          "maxLength": 30
+        },
+        {
+          "id": "destination1",
+          "label": "Destino 1",
+          "kind": "choice",
+          "maxLength": 0,
+          "options": [
+            {
+              "value": "/",
+              "label": "Inicio"
+            },
+            {
+              "value": "/productos",
+              "label": "Catálogo"
+            },
+            {
+              "value": "/carrito",
+              "label": "Carrito"
+            },
+            {
+              "value": "/legal",
+              "label": "Información de compra"
+            }
+          ]
+        },
+        {
+          "id": "label2",
+          "label": "Enlace 2",
+          "kind": "text",
+          "maxLength": 30
+        },
+        {
+          "id": "destination2",
+          "label": "Destino 2",
+          "kind": "choice",
+          "maxLength": 0,
+          "options": [
+            {
+              "value": "/",
+              "label": "Inicio"
+            },
+            {
+              "value": "/productos",
+              "label": "Catálogo"
+            },
+            {
+              "value": "/carrito",
+              "label": "Carrito"
+            },
+            {
+              "value": "/legal",
+              "label": "Información de compra"
+            }
+          ]
+        },
+        {
+          "id": "label3",
+          "label": "Enlace 3",
+          "kind": "text",
+          "maxLength": 30
+        },
+        {
+          "id": "destination3",
+          "label": "Destino 3",
+          "kind": "choice",
+          "maxLength": 0,
+          "options": [
+            {
+              "value": "/",
+              "label": "Inicio"
+            },
+            {
+              "value": "/productos",
+              "label": "Catálogo"
+            },
+            {
+              "value": "/carrito",
+              "label": "Carrito"
+            },
+            {
+              "value": "/legal",
+              "label": "Información de compra"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "social",
+      "label": "Redes sociales",
+      "role": "fixed",
+      "canHide": false,
+      "faq": false,
+      "description": "Enlaces a los perfiles de tu negocio. Se muestran en el pie de página.",
+      "fields": [
+        {
+          "id": "instagram",
+          "label": "Instagram",
+          "kind": "url",
+          "maxLength": 500
+        },
+        {
+          "id": "facebook",
+          "label": "Facebook",
+          "kind": "url",
+          "maxLength": 500
+        },
+        {
+          "id": "tiktok",
+          "label": "TikTok",
+          "kind": "url",
+          "maxLength": 500
+        }
+      ]
+    }
   ]
 }

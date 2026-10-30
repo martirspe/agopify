@@ -11,6 +11,7 @@ import { StoreShellLayout } from './layout/store-shell.layout';
 import { CartService } from './core/cart.service';
 
 export const routes: Routes = [
+  { path: '', canMatch: [templateMatch('rosaline')], loadChildren: () => import('./templates/rosaline/rosaline.routes').then(m => m.ROSALINE_ROUTES) },
   {
     path: 'live-checkout',
     component: StoreShellLayout,

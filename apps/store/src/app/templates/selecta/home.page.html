@@ -2,7 +2,7 @@
   @for (item of sections(); track item.id) {
   @switch (item.type) {
   @case ('hero') {
-  <section class="hero" storeSection="hero">
+  <section class="hero editorial-hero" [class.editorial-hero--text-only]="!heroImage()" storeSection="hero">
     <div class="hero-copy">
       @if (c.heroEyebrow) {
         <p class="eyebrow" storeEditText="hero.eyebrow" [editValue]="c.heroEyebrow"></p>
@@ -12,7 +12,7 @@
         <p storeEditText="hero.text" editKind="multiline" [editValue]="c.heroText"></p>
       }
       @if (c.heroCta) {
-        <a class="button" href="#coleccion"><span storeEditText="hero.cta" [editValue]="c.heroCta"></span> <app-icon name="arrow" /></a>
+        <a class="button" routerLink="/tienda"><span storeEditText="hero.cta" [editValue]="c.heroCta"></span> <app-icon name="arrow" /></a>
       }
       @if (c.heroNote) {
         <div class="hero-note"><span class="line"></span><span storeEditText="hero.note" [editValue]="c.heroNote"></span></div>
@@ -40,7 +40,19 @@
   }
 
   @case ('collection') {
-  <section id="coleccion" class="collection wrap">
+  <section id="coleccion" class="collection home-selection wrap">
+    @if (categoryLinks().length) {
+      <nav class="category-discovery" aria-label="Explorar por categoría">
+        @for (category of categoryLinks(); track category.value) {
+          <a class="category-discovery__link" routerLink="/tienda" [queryParams]="{ categoria: category.value }">
+            <div class="category-discovery__media">
+              @if (category.image) { <img [src]="category.image" alt="" width="480" height="480" loading="lazy" /> }
+            </div>
+            <span>{{ category.label }} <app-icon name="arrow" /></span>
+          </a>
+        }
+      </nav>
+    }
     <div class="section-heading" storeSection="collection">
       <div>
         @if (c.collectionEyebrow) {
@@ -54,57 +66,16 @@
         <p storeEditText="collection.text" editKind="multiline" [editValue]="c.collectionText"></p>
       }
     </div>
-    <div class="catalog-tools" role="search">
-      <label class="search">
-        <app-icon name="search" />
-        <input type="search" placeholder="Busca por nombre, línea o marca" aria-label="Buscar productos" enterkeyhint="search" autocomplete="off" [value]="search()" (input)="filter(search, $any($event.target).value)" />
-        @if (search()) {
-          <button type="button" class="search-clear" aria-label="Borrar búsqueda" (click)="filter(search, '')"><app-icon name="close" /></button>
-        }
-      </label>
-      <div class="catalog-controls">
-        <div class="segmented" role="group" aria-label="Presentación">
-          @for (f of formats; track f.value) {
-            <button type="button" [class.active]="format() === f.value" [attr.aria-pressed]="format() === f.value" (click)="filter(format, f.value)">{{ f.label }}</button>
-          }
-        </div>
-        @if (brandOptions().length > 2) {
-          <label class="select-field">
-            <span>Marca</span>
-            <ds-select><select aria-label="Marca del producto" (change)="filter(brand, $any($event.target).value)">
-              @for (b of brandOptions(); track b) {
-                <option [value]="b" [selected]="brand() === b">{{ b === 'Todo' ? 'Todas' : b }}</option>
-              }
-            </select></ds-select>
-          </label>
-        }
-      </div>
-    </div>
-    <div class="pills" role="group" aria-label="Categoría">
-      @for (cat of categories(); track cat) {
-        <button type="button" [class.active]="category() === cat" [class.empty-pill]="!categoryCounts()[cat]" [attr.aria-pressed]="category() === cat" (click)="filter(category, cat)">
-          {{ cat }}<span class="pill-count">{{ categoryCounts()[cat] || 0 }}</span>
-        </button>
-      }
-    </div>
-    <div class="catalog-meta">
-      <a class="text-link" routerLink="/productos" [queryParams]="{ q: search() || null }">Buscar en todo el catálogo <app-icon name="arrow" /></a>
-      <p aria-live="polite"><strong>{{ filtered().length }}</strong> {{ filtered().length === 1 ? 'producto' : 'productos' }}@if (search()) { para «{{ search() }}»}</p>
-      @if (activeFilters()) {
-        <button type="button" class="clear-filters" (click)="clearFilters()"><app-icon name="close" />Limpiar filtros ({{ activeFilters() }})</button>
-      }
-    </div>
     <div class="product-grid">
-      @for (p of visible(); track p.handle) {
+      @for (p of featured(); track p.handle) {
         <article class="product-card">
           <a [routerLink]="['/producto', p.handle]" class="card-image">
             <app-product-image [product]="p" />
             @if (!p.isAvailable) {
               <span class="badge">Agotado</span>
-            } @else {
-              <span class="badge">{{ p.format === 'set' ? 'Set de ' + p.includes.length + ' piezas' : 'Individual' }}</span>
+            } @else if (p.format === 'set' && p.includes.length) {
+              <span class="badge">Set de {{ p.includes.length }} piezas</span>
             }
-            <span class="image-arrow"><app-icon name="arrow" /></span>
           </a>
           <p class="eyebrow">@if (p.brand) {{{ p.brand }} · }{{ categoryOf(p) }}</p>
           <a [routerLink]="['/producto', p.handle]"><h3>{{ p.name }}</h3></a>
@@ -138,22 +109,16 @@
           } @else if (!products().length) {
             <h3>Muy pronto, nuevos favoritos.</h3>
             <p>Estamos preparando la selección de esta tienda.</p>
-          } @else {
-            <h3>No encontramos coincidencias.</h3>
-            <p>Prueba con otra palabra o quita algún filtro para ver más opciones.</p>
-            <a class="button secondary" routerLink="/productos" [queryParams]="{ q: search() || null }">Buscar en todo el catálogo</a>
           }
         </div>
       }
     </div>
-    @if (visible().length < filtered().length) {
-      <button class="button secondary load-more" (click)="limit.set(limit() + 18)">Ver más productos <app-icon name="plus" /></button>
-    }
+    <div class="selection-more"><a class="button secondary" routerLink="/tienda">Explorar toda la tienda <app-icon name="arrow" /></a></div>
   </section>
   }
 
   @case ('banner') {
-  <section class="ritual-banner wrap" storeSection="banner">
+  <section class="ritual-banner editorial-story wrap" [class.no-image]="!bannerImage()" storeSection="banner">
     <div>
       @if (c.bannerEyebrow) {
         <p class="eyebrow" storeEditText="banner.eyebrow" [editValue]="c.bannerEyebrow"></p>
@@ -162,7 +127,7 @@
       @if (c.bannerText) {
         <p storeEditText="banner.text" editKind="multiline" [editValue]="c.bannerText"></p>
       }
-      <a class="text-link" href="#coleccion">Explorar la selección <app-icon name="arrow" /></a>
+      <a class="text-link" routerLink="/tienda">Explorar la selección <app-icon name="arrow" /></a>
     </div>
     @if (bannerImage(); as src) {
       <img [src]="src" alt="" width="1024" height="1024" loading="lazy" storeEditImage="banner.image" [editValue]="src" />
@@ -206,7 +171,7 @@
         <h2>Encuentra tu próximo favorito</h2>
         <p>Explora la selección, conoce cada detalle y elige lo que va contigo.</p>
       </div>
-      <a class="button" href="#coleccion">Ver catálogo <app-icon name="arrow" /></a>
+      <a class="button" routerLink="/tienda">Ver catálogo <app-icon name="arrow" /></a>
     </div>
   </section>
   }
@@ -225,7 +190,7 @@
         <p [storeEditText]="item.id + '.text'" editKind="multiline" [editValue]="b.text"></p>
       }
       @if (b.cta) {
-        <a class="text-link" href="#coleccion"><span [storeEditText]="item.id + '.cta'" [editValue]="b.cta"></span> <app-icon name="arrow" /></a>
+        <a class="text-link" routerLink="/tienda"><span [storeEditText]="item.id + '.cta'" [editValue]="b.cta"></span> <app-icon name="arrow" /></a>
       }
     </div>
     @if (b.image) {

@@ -22,6 +22,7 @@ Improve the requested surface with a coherent, production-ready interface. Exten
 | Add or standardize controls, cards, dropdowns, FAQs, icons, tokens or sticky actions | [Shared system](references/shared-system.md) |
 | Verify a UI change and report evidence | [Verification](references/verification.md) |
 | Improve buyer-store funnels and templates | [Commerce conversion](commerce-conversion.md) |
+| Audit or evolve Classic/Selecta/Stride toward premium storefront quality | `vendedoria-storefront-premium` (master brief in that skill) |
 | Audit responsive behavior across the application | [Responsive audit](responsive-audit.md) |
 
 For a section using existing controls, read section polish and verification. Read shared system when a gap requires extending the design system. Load other references only for their applicable mode.

@@ -9,7 +9,7 @@ description: Workflow to implement a feature or fix a bug in VendedorIA (NestJS 
 - Adding or changing behavior in `apps/api`, `apps/web`, `apps/store` or `packages/`.
 - Fixing a bug with a known or suspected location.
 
-Also load, only if the task touches them: `vendedoria-data` (schema/migrations), `vendedoria-security` (auth, webhooks, payments, Meta, public store API), `vendedoria-ui` (templates/styles/UX states).
+Also load, only if the task touches them: `vendedoria-data` (schema/migrations), `vendedoria-security` (auth, webhooks, payments, Meta, public store API), `vendedoria-ui` (templates/styles/UX states), `vendedoria-storefront-premium` (luxury-grade tenant storefront templates).
 
 ## Inputs
 - Task statement; files or module named by the user (start there, exclusively).

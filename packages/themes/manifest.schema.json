@@ -15,7 +15,7 @@
     "author": { "type": "string", "minLength": 1, "maxLength": 120 },
     "license": { "type": "string", "minLength": 1, "maxLength": 80 },
     "description": { "type": "string", "minLength": 1, "maxLength": 500 },
-    "renderer": { "type": "string", "pattern": "^(classic|selecta|stride)@[1-9][0-9]*$" },
+    "renderer": { "type": "string", "pattern": "^(classic|selecta|stride|rosaline)@[1-9][0-9]*$" },
     "contracts": {
       "type": "object", "additionalProperties": false,
       "required": ["engine", "editor", "storefront", "content"],

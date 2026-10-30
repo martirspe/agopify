@@ -1,0 +1,82 @@
+<div class="flat-spacing-4 pb-0">
+  <div class="container">
+    <div
+      dir="ltr"
+      class="swiper tf-swiper wrap-sw-over rosaline-native-slider"
+      data-preview="3"
+      data-tablet="2"
+      data-mobile-sm="2"
+      data-mobile="1"
+      data-space-lg="64"
+      data-space-md="16"
+      data-space="16"
+      data-pagination="1"
+      data-pagination-sm="2"
+      data-pagination-md="2"
+      data-pagination-lg="3"
+    >
+      <div class="swiper-wrapper">
+        <div class="swiper-slide">
+          <div class="wg-counter wow fadeInUp">
+            <div
+              class="title h1 letter-space--2 font-anton view-counter"
+              [storeEditText]="id() + '.value1'"
+              [editValue]="field('value1')"
+            ></div>
+            <p
+              class="sub font-geist fw-medium letter-space--3"
+              [storeEditText]="id() + '.title1'"
+              [editValue]="field('title1')"
+            ></p>
+            <p
+              class="desc font-geist cl-text-5 letter-space--3"
+              [storeEditText]="id() + '.text1'"
+              [editValue]="field('text1')"
+            ></p>
+          </div>
+        </div>
+
+        <div class="swiper-slide">
+          <div class="wg-counter wow fadeInUp">
+            <div
+              class="title h1 letter-space--2 font-anton view-counter"
+              [storeEditText]="id() + '.value2'"
+              [editValue]="field('value2')"
+            ></div>
+            <p
+              class="sub font-geist fw-medium letter-space--3"
+              [storeEditText]="id() + '.title2'"
+              [editValue]="field('title2')"
+            ></p>
+            <p
+              class="desc font-geist cl-text-5 letter-space--3"
+              [storeEditText]="id() + '.text2'"
+              [editValue]="field('text2')"
+            ></p>
+          </div>
+        </div>
+
+        <div class="swiper-slide">
+          <div class="wg-counter wow fadeInUp">
+            <div
+              class="title h1 letter-space--2 font-anton view-counter"
+              [storeEditText]="id() + '.value3'"
+              [editValue]="field('value3')"
+            ></div>
+            <p
+              class="sub font-geist fw-medium letter-space--3"
+              [storeEditText]="id() + '.title3'"
+              [editValue]="field('title3')"
+            ></p>
+            <p
+              class="desc font-geist cl-text-5 letter-space--3"
+              [storeEditText]="id() + '.text3'"
+              [editValue]="field('text3')"
+            ></p>
+          </div>
+        </div>
+      </div>
+      <div class="sw-line-default tf-sw-pagination"></div>
+    </div>
+  </div>
+</div>

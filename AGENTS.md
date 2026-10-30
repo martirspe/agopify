@@ -30,6 +30,7 @@ Multi-tenant SaaS: AI sales agents on WhatsApp/Instagram ("del hola al pago") pl
 - Prisma schema, migrations, tenant-scoped queries, test DB: `vendedoria-data`
 - Auth, webhooks, payments, Meta channel, public store endpoints: `vendedoria-security`
 - Console/store UI, design system, UX states: `vendedoria-ui`. First consult `docs/DESIGN-SYSTEM.md` (DSM); apply `docs/UX-UI-MASTER-SYSTEM.md` §75. Search → reuse → compose → extend before adding shared UI. Brand tokens and component contracts belong in packages, not features.
+- Premium tenant-store templates (art direction, ecommerce DS matrix, Tailwind storefront, catalog/PDP/cart/checkout presentation): `vendedoria-storefront-premium`. Complements `vendedoria-ui`; does not replace the theme engine or commerce rules.
 - S3/CloudFront media, SES email, AWS IAM, deliverability and Terraform (`infra/terraform/`): `vendedoria-aws`
 - Reviewing a diff or PR: `vendedoria-review`
 - Full release pass (cleanup + security + copy + prod config): `vendedoria-production-readiness`, which runs `vendedoria-dead-code-cleanup`, `vendedoria-security-audit` and `vendedoria-copy-audit` (each also usable alone)

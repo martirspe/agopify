@@ -36,9 +36,18 @@
   --store-on-whatsapp: #ffffff;
 
   --store-max-width: 1200px;
+  --store-product-max-width: 80rem;
+  --store-commerce-max-width: 75rem;
   --store-radius-card: var(--ds-radius-lg);
   --store-radius-control: var(--ds-radius-md);
   --store-control-height: 3.25rem;
+  --store-font-body: var(--ds-font-ui);
+  --store-font-display: var(--ds-font-display);
+  --store-card-name-font: var(--ds-font-ui);
+  --store-card-name-size: var(--store-type-body);
+  --store-card-name-weight: 600;
+  --store-card-price-size: var(--store-type-subheading);
+  --store-card-media-padding: 0px;
   --store-recommendation-thumb: 4rem;
   --store-shadow-card: 0 1px 2px rgb(17 19 24 / 6%), 0 8px 24px rgb(17 19 24 / 6%);
   // Shared reading and decision hierarchy; templates keep their own font families.
@@ -62,4 +71,12 @@
   --store-hero-surface: color-mix(in srgb, var(--store-brand) 5%, var(--store-bg));
   --store-overlay: rgb(17 19 24 / 72%);
   --store-on-overlay: #fff;
+  /* Ecommerce matrix: templates override identity; merchants override brand via the editor. */
+  --store-media-ratio: 1;
+  --store-media-fit: contain;
+  --store-hero-media-ratio: 4 / 5;
+  --store-hero-media-fit: cover;
+  --store-gallery-ratio: var(--store-media-ratio);
+  --store-card-media-radius: var(--store-radius-card);
+  --store-price-tracking: 0;
 }

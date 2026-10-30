@@ -730,5 +730,384 @@
       "Más opciones de color, favicon, navegación, redes sociales, ancho, espaciado y tamaño de letra.",
       "Actualización que conserva tus textos, fotos y configuración."
     ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "vendedoria/rosaline",
+    "namespace": "vendedoria",
+    "slug": "rosaline",
+    "displayName": "Rosaline",
+    "version": "1.0.0",
+    "author": "Themesflat / VendedorIA",
+    "license": "LicenseRef-ThemeForest-Pending",
+    "description": "Bold Modern: fotografía inmersiva, tipografía monumental y composición editorial para belleza.",
+    "renderer": "rosaline@1",
+    "contracts": {
+      "engine": 1,
+      "editor": 1,
+      "storefront": 1,
+      "content": 1
+    },
+    "capabilities": {
+      "requires": [
+        "catalog",
+        "cart",
+        "checkout",
+        "seo"
+      ],
+      "supports": [
+        "variants",
+        "search",
+        "filters",
+        "coupons",
+        "services",
+        "digitalProducts",
+        "recommendations",
+        "whatsapp"
+      ],
+      "optional": []
+    },
+    "industries": [
+      "belleza"
+    ],
+    "sections": [
+      "hero",
+      "facts",
+      "featured",
+      "categories",
+      "brands",
+      "trusted",
+      "ritual",
+      "compare",
+      "spotlight",
+      "closing",
+      "shop",
+      "imageText",
+      "text",
+      "benefits",
+      "testimonials",
+      "whatsapp",
+      "gallery",
+      "cta",
+      "questions",
+      "announcement",
+      "product",
+      "footer",
+      "navigation",
+      "social"
+    ],
+    "settings": [
+      "logo",
+      "primary",
+      "accent",
+      "background",
+      "surface",
+      "text",
+      "muted",
+      "border",
+      "corners",
+      "container",
+      "spacing",
+      "typeScale"
+    ],
+    "tokens": {
+      "primary": "#000000",
+      "accent": "#ffe3cb",
+      "background": "#ffffff",
+      "surface": "#f5f5f5",
+      "text": "#000000",
+      "muted": "#606060",
+      "border": "#e5e5e5",
+      "corners": "square",
+      "container": "wide",
+      "spacing": "airy",
+      "typeScale": "standard"
+    },
+    "assets": {
+      "cover": "/template-previews/rosaline.jpg",
+      "styles": [
+        "/rosaline.css"
+      ]
+    },
+    "presets": [
+      {
+        "id": "bold-modern",
+        "label": "Bold Modern",
+        "sections": {
+          "hero": {
+            "eyebrow": "DESCUBRE TU NUEVO RITUAL",
+            "title": "CUIDADO EN SERIO.\nTU PROPIO ESTILO.",
+            "text": "Explora nuestra selección y encuentra lo que va contigo.",
+            "cta": "Explorar catálogo"
+          },
+          "featured": {
+            "eyebrow": "ENCUENTRA TUS FAVORITOS",
+            "title": "Tu próxima elección\nempieza aquí."
+          },
+          "categories": {
+            "eyebrow": "ELIGE TU RITUAL",
+            "title": "Una selección\npara cada día.",
+            "cta": "Explorar más"
+          },
+          "ritual": {
+            "title": "Tu rutina,\npaso a paso."
+          },
+          "closing": {
+            "title": "Haz espacio para\ntus nuevos favoritos.",
+            "cta": "Ver catálogo"
+          },
+          "shop": {
+            "title": "Descubre la selección"
+          }
+        },
+        "layout": [
+          {
+            "id": "hero",
+            "type": "hero"
+          },
+          {
+            "id": "facts",
+            "type": "facts",
+            "hidden": true
+          },
+          {
+            "id": "featured",
+            "type": "featured"
+          },
+          {
+            "id": "categories",
+            "type": "categories"
+          },
+          {
+            "id": "brands",
+            "type": "brands",
+            "hidden": true
+          },
+          {
+            "id": "trusted",
+            "type": "trusted",
+            "hidden": true
+          },
+          {
+            "id": "ritual",
+            "type": "ritual",
+            "hidden": true
+          },
+          {
+            "id": "compare",
+            "type": "compare",
+            "hidden": true
+          },
+          {
+            "id": "spotlight",
+            "type": "spotlight"
+          },
+          {
+            "id": "closing",
+            "type": "closing"
+          },
+          {
+            "id": "shop",
+            "type": "shop"
+          }
+        ]
+      }
+    ],
+    "migrations": [],
+    "changelog": [
+      "Primera integración local de Bold Modern. Distribución pendiente de verificación de licencia."
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "vendedoria/rosaline",
+    "namespace": "vendedoria",
+    "slug": "rosaline",
+    "displayName": "Rosaline",
+    "version": "1.1.0",
+    "author": "Themesflat / VendedorIA",
+    "license": "LicenseRef-ThemeForest-Pending",
+    "description": "Bold Modern: fotografía inmersiva, tipografía monumental y composición editorial para belleza.",
+    "renderer": "rosaline@1",
+    "contracts": {
+      "engine": 1,
+      "editor": 1,
+      "storefront": 1,
+      "content": 1
+    },
+    "capabilities": {
+      "requires": [
+        "catalog",
+        "cart",
+        "checkout",
+        "seo"
+      ],
+      "supports": [
+        "variants",
+        "search",
+        "filters",
+        "coupons",
+        "services",
+        "digitalProducts",
+        "recommendations",
+        "whatsapp"
+      ],
+      "optional": []
+    },
+    "industries": "all",
+    "sections": [
+      "hero",
+      "facts",
+      "featured",
+      "categories",
+      "brands",
+      "trusted",
+      "ritual",
+      "compare",
+      "spotlight",
+      "closing",
+      "shop",
+      "imageText",
+      "text",
+      "benefits",
+      "testimonials",
+      "whatsapp",
+      "gallery",
+      "cta",
+      "questions",
+      "announcement",
+      "product",
+      "footer",
+      "navigation",
+      "social"
+    ],
+    "settings": [
+      "logo",
+      "primary",
+      "accent",
+      "background",
+      "surface",
+      "text",
+      "muted",
+      "border",
+      "corners",
+      "container",
+      "spacing",
+      "typeScale"
+    ],
+    "tokens": {
+      "primary": "#000000",
+      "accent": "#ffe3cb",
+      "background": "#ffffff",
+      "surface": "#f5f5f5",
+      "text": "#000000",
+      "muted": "#606060",
+      "border": "#e5e5e5",
+      "corners": "square",
+      "container": "wide",
+      "spacing": "airy",
+      "typeScale": "standard"
+    },
+    "assets": {
+      "cover": "/template-previews/rosaline.jpg",
+      "styles": [
+        "/rosaline.css"
+      ]
+    },
+    "presets": [
+      {
+        "id": "bold-modern",
+        "label": "Bold Modern",
+        "sections": {
+          "hero": {
+            "eyebrow": "DESCUBRE TU NUEVO RITUAL",
+            "title": "CUIDADO EN SERIO.\nTU PROPIO ESTILO.",
+            "text": "Explora nuestra selección y encuentra lo que va contigo.",
+            "cta": "Explorar catálogo"
+          },
+          "featured": {
+            "eyebrow": "ENCUENTRA TUS FAVORITOS",
+            "title": "Tu próxima elección\nempieza aquí."
+          },
+          "categories": {
+            "eyebrow": "ELIGE TU RITUAL",
+            "title": "Una selección\npara cada día.",
+            "cta": "Explorar más"
+          },
+          "ritual": {
+            "title": "Tu rutina,\npaso a paso."
+          },
+          "closing": {
+            "title": "Haz espacio para\ntus nuevos favoritos.",
+            "cta": "Ver catálogo"
+          },
+          "shop": {
+            "title": "Descubre la selección"
+          }
+        },
+        "layout": [
+          {
+            "id": "hero",
+            "type": "hero"
+          },
+          {
+            "id": "facts",
+            "type": "facts",
+            "hidden": true
+          },
+          {
+            "id": "featured",
+            "type": "featured"
+          },
+          {
+            "id": "categories",
+            "type": "categories"
+          },
+          {
+            "id": "brands",
+            "type": "brands",
+            "hidden": true
+          },
+          {
+            "id": "trusted",
+            "type": "trusted",
+            "hidden": true
+          },
+          {
+            "id": "ritual",
+            "type": "ritual",
+            "hidden": true
+          },
+          {
+            "id": "compare",
+            "type": "compare",
+            "hidden": true
+          },
+          {
+            "id": "spotlight",
+            "type": "spotlight"
+          },
+          {
+            "id": "closing",
+            "type": "closing"
+          },
+          {
+            "id": "shop",
+            "type": "shop"
+          }
+        ]
+      }
+    ],
+    "migrations": [
+      {
+        "from": "1.0.0",
+        "to": "1.1.0",
+        "renameFields": []
+      }
+    ],
+    "changelog": [
+      "Disponible para todos los rubros desde la consola.",
+      "Conserva el diseño Bold Modern y la personalización existente."
+    ]
   }
 ]

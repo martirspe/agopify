@@ -1,0 +1,294 @@
+<div class="section-product-single flat-spacing-3 pt-0">
+  <div
+    class="banner-product-single-home-v1 tf-main-product section-image-zoom flat-spacing-2 pt-0"
+  >
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="tf-product-media-wrap sticky-top">
+            <div class="product-thumbs-slider style-row row_left">
+              <div class="flat-wrap-media-product">
+                <div
+                  dir="ltr"
+                  class="swiper tf-product-media-main rosaline-native-slider"
+                  id="gallery-swiper-started"
+                  data-spacing="0"
+                >
+                  <div class="swiper-wrapper">
+                    @for (image of images(); track image; let index = $index) {
+                      <div class="swiper-slide" [hidden]="activeImage() !== index">
+                        <div class="item">
+                          <img
+                            [src]="image"
+                            [alt]="product().name"
+                            width="720"
+                            height="900"
+                            loading="lazy"
+                          />
+                        </div>
+                      </div>
+                    }
+                  </div>
+                  <div class="group-btn-nav pst-2">
+                    <button type="button" class="thumbs-prev tf-sw-nav" aria-label="Imagen anterior" (click)="stepImage(-1)">
+                      <i class="icon icon-ArrowCaretLeft"></i>
+                    </button>
+                    <button type="button" class="thumbs-next tf-sw-nav" aria-label="Imagen siguiente" (click)="stepImage(1)">
+                      <i class="icon icon-ArrowCaretRight"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div
+                dir="ltr"
+                class="swiper tf-product-media-thumbs other-image-zoom rosaline-native-slider"
+                data-direction="vertical"
+                data-preview="5"
+              >
+                <div class="swiper-wrapper stagger-wrap">
+                  @for (image of images(); track image) {
+                    <div class="swiper-slide">
+                      <div class="item">
+                        <img
+                          [src]="image"
+                          [alt]="product().name"
+                          width="720"
+                          height="900"
+                          loading="lazy"
+                        />
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div
+            class="tf-product-info-wrap position-relative mt-md-0"
+            id="tfProductInfoWrap"
+          >
+            <div class="tf-zoom-main sticky-top"></div>
+            <div class="tf-product-info-list other-image-zoom">
+              <div class="tf-product-info-heading">
+                <h5
+                  class="product-infor-name text-28-34 font-anton fw-normal text-uppercase letter-space--3"
+                >
+                  {{ product().name }}
+                </h5>
+                <p class="product-infor-desc font-geist lh-22 letter-space--3">
+                  {{ product().descriptionShort }}
+                </p>
+
+                <div class="product-infor-price d-grid">
+                  <div
+                    class="mb-4 price-wrap font-geist fw-medium lh-22 letter-space--3"
+                  >
+                    <span class="price-on-sale text-primary">{{
+                      priceCents() | money: product().currency
+                    }}</span>
+                    <span
+                      class="price-on-old cl-text-6 text-decoration-line-through"
+                      [hidden]="discount() === 0"
+                      >{{
+                        product().compareAtPriceCents
+                          | money: product().currency
+                      }}</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="tf-product-variant">
+                <div
+                  class="variant-picker-item variant-size"
+                  [hidden]="options().length === 0"
+                >
+                  <div class="variant-picker-label">
+                    <div>
+                      <span class="font-geist fw-bold letter-space--3"
+                        >OPCIONES:</span
+                      >
+                      <span
+                        class="variant-picker-label-value value-currentSize d-none"
+                        >15ml</span
+                      >
+                    </div>
+                  </div>
+                  <div class="variant-picker-values">
+                    @for (option of options(); track option.id) {
+                      <button
+                        class="size-btn font-geist letter-space--3 text-body-s fw-normal"
+                        type="button"
+                        [class.active]="variantId() === option.id"
+                        [attr.aria-pressed]="variantId() === option.id"
+                        [disabled]="!option.isAvailable"
+                        (click)="selectVariant(option.id)"
+                      >
+                        {{ option.label }}
+                      </button>
+                    }
+                  </div>
+                </div>
+                <div class="tf-product-total-quantity">
+                  <div class="product-infor-quantity">
+                    <span class="font-geist fw-bold lh-22 letter-space--3">
+                      QUANTITY:
+                    </span>
+                    <div class="wg-quantity">
+                      <button
+                        type="button"
+                        class="btn-quantity btn-decrease"
+                        (click)="adjustQuantity(-1)"
+                        [disabled]="quantity() <= 1"
+                        aria-label="Quitar uno"
+                      >
+                        <i class="icon icon-Minus"></i></button
+                      ><output class="quantity-product font-geist">{{
+                        quantity()
+                      }}</output
+                      ><button
+                        type="button"
+                        class="btn-quantity btn-increase"
+                        (click)="adjustQuantity(1)"
+                        aria-label="Agregar uno"
+                      >
+                        <i class="icon icon-Plus"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <a
+                    class="tf-btn style-2 w-100"
+                    role="button"
+                    (click)="addQuantity($event)"
+                    (keydown.enter)="addQuantity($event)"
+                    [attr.aria-disabled]="!canAdd()"
+                    tabindex="0"
+                    ><i class="icon icon-ShoppingCart"></i
+                    ><span>{{
+                      added() ? "Agregado al carrito" : "Agregar al carrito"
+                    }}</span></a
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="tf-product-accordion" id="prdDes">
+              <div class="accordion-item">
+                <div
+                  class="accordion-action"
+                  aria-controls="faq-1"
+                  role="button"
+                  (click)="detailOpen.set(detailOpen() === 1 ? 0 : 1)"
+                  (keydown.enter)="detailOpen.set(detailOpen() === 1 ? 0 : 1)"
+                  tabindex="0"
+                  [class.collapsed]="detailOpen() !== 1"
+                  [attr.aria-expanded]="detailOpen() === 1"
+                >
+                  <span class="text font-geist lh-22 fw-bold letter-space--3"
+                    >DESCRIPTION</span
+                  >
+                  <span class="icon ic-accordion-custom"></span>
+                </div>
+                <div
+                  id="faq-1"
+                  class="collapse show"
+                  [class.show]="detailOpen() === 1"
+                >
+                  <div class="accordion-content">
+                    <p class="font-geist lh-22 letter-space--3 cl-text-5">
+                      {{ catalog()?.descriptionFull ?? product().descriptionShort }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <div
+                  class="accordion-action collapsed"
+                  aria-controls="faq-2"
+                  role="button"
+                  (click)="detailOpen.set(detailOpen() === 2 ? 0 : 2)"
+                  (keydown.enter)="detailOpen.set(detailOpen() === 2 ? 0 : 2)"
+                  tabindex="0"
+                  [class.collapsed]="detailOpen() !== 2"
+                  [attr.aria-expanded]="detailOpen() === 2"
+                >
+                  <span class="text font-geist lh-22 fw-bold letter-space--3"
+                    >BENEFITS</span
+                  >
+                  <span class="icon ic-accordion-custom"></span>
+                </div>
+                <div
+                  id="faq-2"
+                  class="collapse"
+                  [class.show]="detailOpen() === 2"
+                >
+                  <div class="accordion-content">
+                    <p class="font-geist lh-22 letter-space--3 cl-text-5">
+                      {{ catalog()?.details?.benefits?.join(' ') ?? '' }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <div
+                  class="accordion-action collapsed"
+                  aria-controls="faq-3"
+                  role="button"
+                  (click)="detailOpen.set(detailOpen() === 3 ? 0 : 3)"
+                  (keydown.enter)="detailOpen.set(detailOpen() === 3 ? 0 : 3)"
+                  tabindex="0"
+                  [class.collapsed]="detailOpen() !== 3"
+                  [attr.aria-expanded]="detailOpen() === 3"
+                >
+                  <span class="text font-geist lh-22 fw-bold letter-space--3"
+                    >HOW TO USE</span
+                  >
+                  <span class="icon ic-accordion-custom"></span>
+                </div>
+                <div
+                  id="faq-3"
+                  class="collapse"
+                  [class.show]="detailOpen() === 3"
+                >
+                  <div class="accordion-content">
+                    <p class="font-geist lh-22 letter-space--3 cl-text-5">
+                      {{ catalog()?.details?.usage?.join(' ') ?? '' }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <div
+                  class="accordion-action collapsed"
+                  aria-controls="faq-4"
+                  role="button"
+                  (click)="detailOpen.set(detailOpen() === 4 ? 0 : 4)"
+                  (keydown.enter)="detailOpen.set(detailOpen() === 4 ? 0 : 4)"
+                  tabindex="0"
+                  [class.collapsed]="detailOpen() !== 4"
+                  [attr.aria-expanded]="detailOpen() === 4"
+                >
+                  <span class="text font-geist lh-22 fw-bold letter-space--3">
+                    KEY INGREDIENTS
+                  </span>
+                  <span class="icon ic-accordion-custom"></span>
+                </div>
+                <div
+                  id="faq-4"
+                  class="collapse"
+                  [class.show]="detailOpen() === 4"
+                >
+                  <div class="accordion-content">
+                    <p class="font-geist lh-22 letter-space--3 cl-text-5">
+                      {{ catalog()?.details?.notes?.join(' ') ?? '' }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,4 +1,6 @@
 @use './selecta-layout';
+@use './selecta-editorial';
+@use './selecta-system';
 
 // Selecta template: original stylesheet, scoped to the template body class.
 // Layer order puts the classic store base below Selecta's own layers.
@@ -16,6 +18,13 @@ html:has(> body.tpl-selecta) {
 }
 
 body.tpl-selecta {
+  --store-media-ratio: 1;
+  --store-media-fit: contain;
+  --store-hero-media-ratio: 4 / 5;
+  --store-hero-media-fit: cover;
+  --store-gallery-ratio: 1;
+  --store-card-media-radius: 5px;
+  --store-price-tracking: 0;
   /* Every surface uses the same original photo and its measured, non-destructive viewport. */
   app-product-image,app-photo{display:block;width:100%;height:100%;min-width:0;min-height:0}
   app-photo{overflow:hidden}
@@ -90,13 +99,6 @@ body.tpl-selecta {
     --select-border: var(--border);
     --select-brand: var(--wine);
   }
-  .product-card > .eyebrow { margin: var(--ds-space-4) 0 var(--ds-space-2); font-size: var(--store-type-caption); }
-  .product-card h3 { font-size: var(--store-type-product); font-weight: 500; line-height: 1.3; text-wrap: pretty; }
-  .product-card .card-summary { margin: var(--ds-space-2) 0 0; font-size: var(--store-type-caption); line-height: var(--store-leading-body); }
-  .product-card .card-stock { margin: var(--ds-space-3) 0; font-size: var(--store-type-caption); }
-  .product-card .card-bottom { gap: var(--ds-space-3); padding-top: var(--ds-space-4); }
-  .product-card .card-price strong { font-size: var(--store-type-product); line-height: 1.3; }
-  .product-card .card-cta { min-height: var(--ds-touch-target); font-size: var(--store-type-caption); }
   .product-info h1, .cart-page > h1, .checkout-title h1, .legal-head h1, .confirmation h1, .not-found h1 { font-size: var(--store-type-title); line-height: var(--store-leading-heading); }
   .collection-head h2, .faq-intro h2, .related-products h2, .product-details h2 { font-size: var(--store-type-section); line-height: var(--store-leading-heading); }
   .product-info .subtitle, .product-info .description, .product-info .benefits { font-size: var(--store-type-body); line-height: var(--store-leading-body); }
@@ -196,3 +198,5 @@ body.tpl-selecta {
 }
 
 @include selecta-layout.refinements;
+@include selecta-system.system;
+@include selecta-editorial.presentation;

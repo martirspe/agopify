@@ -1,0 +1,113 @@
+<div class="modal-dialog modal-fullscreen">
+  <div class="modal-content">
+    <div class="ctn-wrap">
+      <div class="container">
+        <form
+          class="form-search-prd"
+          role="search"
+          (submit)="submitted.emit({ event: $event, query: query.value })"
+        >
+          <button type="submit" class="btn-action_search link">
+            <i class="icon icon-Search"></i>
+          </button>
+          <fieldset>
+            <input
+              type="search"
+              placeholder="Search product"
+              required=""
+              maxlength="80"
+              #query
+              aria-label="Buscar productos"
+            />
+          </fieldset>
+          <i
+            class="icon icon-Close btn-close-popup fs-20"
+            role="button"
+            tabindex="0"
+            aria-label="Cerrar búsqueda"
+            (click)="closed.emit()"
+            (keydown.enter)="closed.emit()"
+          ></i>
+        </form>
+        <div class="pupular-search">
+          <span class="cl-text-5"> Popular Searches: </span>
+          <div class="list-search">
+            @for (category of categories(); track category) {
+              <a
+                class="fw-normal link-underline"
+                routerLink="/productos"
+                [queryParams]="{ categoria: category }"
+                >{{ category }}</a
+              >
+            }
+          </div>
+        </div>
+        <div class="row gy-30">
+          <div class="col-md-2">
+            <div class="col-suggestion">
+              <p class="text-body-l fw-normal mb-24">Suggestions</p>
+              <div class="tf-list d-md-grid gap-16 flex-wrap">
+                @for (p of products().slice(0, 5); track p.handle) {
+                  <a
+                    class="fw-normal link-underline"
+                    [routerLink]="['/producto', p.handle]"
+                    >{{ p.name }}</a
+                  >
+                }
+              </div>
+            </div>
+          </div>
+          <div class="col-md-10">
+            <div class="tf-btn-swiper-main">
+              <div
+                class="d-flex align-items-center justify-content-between mb-24"
+              >
+                <p class="text-body-l fw-normal">Products</p>
+                <div class="d-flex align-items-center gap-8">
+                  <div class="tf-sw-nav_icon fs-20 nav-prev-swiper">
+                    <i class="icon icon-ArrowCaretLeft"></i>
+                  </div>
+                  <div class="thumbs-pagination"></div>
+                  <div class="tf-sw-nav_icon fs-20 nav-next-swiper">
+                    <i class="icon icon-ArrowCaretRight"></i>
+                  </div>
+                </div>
+              </div>
+              <div
+                dir="ltr"
+                class="swiper tf-swiper swiper-type-number rosaline-native-slider"
+                data-laptop="5"
+                data-preview="4"
+                data-tablet="3"
+                data-mobile-sm="3"
+                data-mobile="2"
+                data-space-lg="16"
+                data-space-md="16"
+                data-space="10"
+                data-pagination="2"
+                data-pagination-sm="3"
+                data-pagination-md="3"
+                data-pagination-lg="4"
+              >
+                <div class="swiper-wrapper">
+                  @for (p of products(); track p.handle) {
+                    <div class="swiper-slide">
+                      <rosaline-product-card
+                        [product]="p"
+                        [purchase]="p"
+                      ></rosaline-product-card>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="box-btn_action text-center">
+          <a class="tf-btn type-2" routerLink="/productos"> See all Results </a>
+        </div>
+      </div>
+    </div>
+    <span class="close" data-bs-dismiss="modal"></span>
+  </div>
+</div>

@@ -1,0 +1,69 @@
+@use '../../../../../../packages/design-tokens/selecta' as tokens;
+
+// Shared visual roles across every Selecta route. Page files own composition only.
+@mixin system {
+  body.tpl-selecta selecta-shell {
+    @include tokens.theme;
+    display: block;
+    background: var(--store-bg);
+    color: var(--store-text);
+    font-family: var(--store-font-body);
+    font-size: var(--store-type-body);
+    line-height: var(--store-leading-body);
+
+    :is(h1, h2, h3, h4) { font-family: var(--store-font-display); font-weight: 400; color: var(--store-text); text-wrap: pretty; }
+    h1 { font-size: var(--store-type-title); line-height: var(--store-leading-heading); }
+    h2 { font-size: var(--store-type-section); line-height: var(--store-leading-heading); }
+    :is(h3, .category-discovery__link > span) { font-size: var(--store-type-product); line-height: 1.35; }
+    :is(p, li) { line-height: var(--store-leading-body); }
+    :is(.eyebrow, .store-eyebrow, .card__brand) { color: var(--store-brand); font-family: var(--store-font-body); font-size: var(--store-type-micro); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+    :is(.breadcrumb, .catalog__breadcrumb, .image-caption, .secure, .summary-trust, .footer-links, .field-error, .terms-check) { font-family: var(--store-font-body); font-size: var(--store-type-caption); }
+    :is(.price, .grand-total strong, .bag-subtotal strong) { font-variant-numeric: tabular-nums; font-size: var(--store-type-price); }
+    :is(.button, .store-btn, .card-cta) {
+      align-items: center; justify-content: center; gap: var(--ds-space-3);
+      min-height: var(--store-control-height); border: 1px solid var(--store-brand);
+      border-radius: var(--store-radius-control); padding: var(--ds-space-3) var(--ds-space-5);
+      background: var(--store-brand); color: var(--store-on-brand);
+      font-family: var(--store-font-body); font-size: var(--store-type-caption); font-weight: 600;
+      line-height: 1.4; text-align: center; text-decoration: none; white-space: normal;
+      transition: background-color var(--ds-motion-fast), border-color var(--ds-motion-fast);
+    }
+    :is(.button.secondary, .store-btn--secondary) { background: transparent; color: var(--store-brand); border-color: var(--store-border); }
+    :is(.button, .store-btn, .card-cta):not(:disabled):hover { background: color-mix(in srgb, var(--store-brand) 90%, var(--store-text)); color: var(--store-on-brand); border-color: var(--store-brand); }
+    :is(.text-link, .card__buy, .card__action) { font-family: var(--store-font-body); font-size: var(--store-type-caption); font-weight: 600; color: var(--store-brand); min-height: var(--ds-touch-target); }
+    :is(button, input, select, textarea, a):focus-visible { outline: var(--store-focus-width) solid var(--store-brand); outline-offset: var(--ds-space-1); }
+    :is(button, input, select, textarea):disabled { cursor: not-allowed; opacity: .5; }
+    :is(input:not([type=checkbox]):not([type=radio]), select, textarea, .ds-select-trigger) {
+      border-color: var(--store-border); border-radius: var(--store-radius-control);
+      background-color: var(--store-bg); color: var(--store-text); font-family: var(--store-font-body); font-size: var(--store-type-body);
+    }
+    :is(.catalog__search input, .checkout-fields input:not([type=checkbox]):not([type=radio]), .ds-select-trigger) { min-height: var(--store-control-height); }
+    ds-select { --select-bg: var(--store-bg); --select-text: var(--store-text); --select-muted: var(--store-muted); --select-border: var(--store-border); --select-brand: var(--store-brand); }
+
+    .product-card { min-width: 0; display: flex; flex-direction: column; }
+    :is(.product-card .card-image, .card__media) { aspect-ratio: var(--store-media-ratio); background: var(--store-surface); border-radius: var(--store-card-media-radius); }
+    .product-card .card-image app-product-image { padding: var(--store-card-media-padding); transition: transform var(--ds-motion-base); }
+    .product-card .card-image:hover app-product-image { transform: scale(1.035); }
+    .product-card > .eyebrow { margin: var(--ds-space-4) 0 var(--ds-space-2); }
+    :is(.product-card h3, .card__name) { font-family: var(--store-card-name-font); font-size: var(--store-card-name-size); font-weight: var(--store-card-name-weight); line-height: 1.35; letter-spacing: 0; }
+    :is(.product-card .card-summary, .card__description) { color: var(--store-muted); font-size: var(--store-type-caption); line-height: var(--store-leading-body); }
+    .product-card .card-summary { min-height: 0; margin: var(--ds-space-2) 0 var(--ds-space-4); }
+    :is(.card-price strong, .card__price strong) { color: var(--store-text); font-size: var(--store-card-price-size); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .product-card .card-bottom { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--ds-space-4); margin-top: auto; padding-top: var(--ds-space-4); border-top: 1px solid var(--store-border); }
+    .product-card .card-price { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--ds-space-2); }
+    .product-card .card-cta { width: 100%; min-height: var(--store-control-height); }
+    .card__body { gap: var(--ds-space-3); }
+    .card__feedback:empty { display: none; }
+    :is(.order-summary, .included, .offer-card, .notice, .legal-summary) { background-color: var(--store-surface); border-color: var(--store-border); border-radius: var(--store-radius-card); }
+    :is(.cart-row h3, .summary-product h3, .checkout-section h2, .order-summary h2) { font-size: var(--store-type-subheading); }
+    :is(.legal, .legal-head, .confirmation, .order-page) { font-size: var(--store-type-body); }
+    .legal-body p { font-size: var(--store-type-body); }
+    @media (max-width: 600px) {
+      --store-card-name-size: var(--store-type-subheading);
+      --store-card-media-padding: var(--ds-space-3);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .product-card .card-image app-product-image { transition: none; transform: none; }
+    }
+  }
+}

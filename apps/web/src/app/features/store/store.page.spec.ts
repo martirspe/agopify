@@ -29,6 +29,16 @@ async function setup(render = false) {
 }
 afterEach(() => TestBed.resetTestingModule());
 describe('store settings sections', () => {
+  it('offers Rosaline for a general business and sends its selection without changing industry', async () => {
+    const {page, update}=await setup(true);
+    expect(page.templates().find(option=>option.value==='rosaline')?.available).toBe(true);
+    page.pickTemplate('rosaline');
+    expect(page.form.controls.template.value).toBe('rosaline');
+    expect(page.hasChanges()).toBe(true);
+    expect(page.templatePreviewUrl('rosaline')).toBe('https://prueba.example.test/_templates/rosaline/');
+    await page.save();
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({template:'rosaline',industry:'general'}));
+  });
   it('keeps an unsaved identity when navigating between subsections and falls back to themes', async () => {
     const { page, params } = await setup();
     page.form.controls.displayName.setValue('Mi tienda'); page.form.markAsDirty();

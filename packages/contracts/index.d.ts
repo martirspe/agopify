@@ -60,7 +60,7 @@ export type StoreThemeRelease = {
   id: string;
   slug: string;
   version: string;
-  renderer: 'classic' | 'selecta' | 'stride';
+  renderer: 'classic' | 'selecta' | 'stride' | 'rosaline';
   defaultLayout: StoreLayoutItem[];
   tokens: StoreTemplateTheme;
   safeMode: boolean;

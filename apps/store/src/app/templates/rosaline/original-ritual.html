@@ -1,0 +1,130 @@
+<div class="section-guide flat-spacing-3 flat-animate-tab fade-to-right">
+  <div class="s-bg-img">
+    <img
+      class="wow fadeZoomOut"
+      loading="lazy"
+      width="1920"
+      height="1110"
+      alt="Image"
+      [src]="field('image') || null"
+      [storeEditImage]="id() + '.image'"
+      [editValue]="field('image')"
+    />
+  </div>
+  <div class="container position-relative z-2">
+    <div class="content">
+      <div class="col-left">
+        <i class="step-icon icon icon-ArrowLeftUp"></i>
+        <div class="sect-heading-v2 start space-inner-1 mt-auto wow fadeInUp">
+          <div class="badge-pill">
+            <span
+              class="font-geist fw-medium lh-22 letter-space--3"
+              [storeEditText]="id() + '.eyebrow'"
+              [editValue]="field('eyebrow')"
+            ></span>
+          </div>
+          <h2
+            class="font-anton text-uppercase letter-space--2"
+            [storeEditText]="id() + '.title'"
+            [editValue]="field('title')"
+          ></h2>
+        </div>
+        <div class="nav-direc mt-auto">
+          <button
+            class="d-flex direc-prev link cs-pointer"
+            type="button"
+            (click)="changeStep(-1)"
+            aria-label="Paso anterior"
+          >
+            <i class="icon icon-ArrowLeftCircleFill"></i>
+          </button>
+          <span class="font-geist fw-bold"> BACK/NEXT STEP </span>
+          <button
+            class="d-flex direc-next link cs-pointer"
+            type="button"
+            (click)="changeStep(1)"
+            aria-label="Paso siguiente"
+          >
+            <i class="icon icon-ArrowRightCircleFill"></i>
+          </button>
+        </div>
+      </div>
+      <div class="col-center">
+        <ul class="step-progress">
+          <li class="line-prg"></li>
+          @for (n of [1, 2, 3, 4, 5]; track n) {
+            <li class="nav-tab-item">
+              <button
+                class="number-order tf-btn-tab"
+                type="button"
+                [class.active]="step() === n"
+                [attr.aria-pressed]="step() === n"
+                (click)="step.set(n)"
+              >
+                <span class="h6 font-anton">{{ n }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+      <div class="col-right">
+        <div class="tab-content">
+          <div class="tab-pane active show">
+            <div class="skin-guide">
+              <div class="skin-guide_heading wow fadeInUp">
+                <p
+                  class="skin-guide__title font-anton text-28-34 letter-space--3"
+                  [storeEditText]="id() + '.step' + step() + 'Title'"
+                  [editValue]="field('step' + step() + 'Title')"
+                ></p>
+                <ul class="skin-guide__list-info font-geist letter-space--3">
+                  @for (kind of ["Product", "Benefit", "Usage"]; track kind) {
+                    <li>
+                      <span class="br-dot bg-black"></span
+                      ><span class="fw-bold">{{
+                        kind === "Product"
+                          ? "PRODUCT:"
+                          : kind === "Benefit"
+                            ? "BENEFIT:"
+                            : "HOW TO USE:"
+                      }}</span>
+                      <span
+                        [storeEditText]="id() + '.step' + step() + kind"
+                        [editValue]="field('step' + step() + kind)"
+                      ></span>
+                    </li>
+                  }
+                </ul>
+              </div>
+              <span class="br-line bg-line-5 wow fadeInUp"></span>
+              <div
+                dir="ltr"
+                class="swiper tf-swiper rosaline-native-slider"
+                data-preview="2"
+                data-tablet="2"
+                data-mobile-sm="2"
+                data-mobile-ssm="2"
+                data-mobile="1"
+                data-space-lg="24"
+                data-space-md="16"
+                data-space="8"
+              >
+                <div class="swiper-wrapper">
+                  @for (p of products().slice(0, 2); track p.handle) {
+                    <div class="swiper-slide">
+                      <rosaline-product-card
+                        [product]="p"
+                        [purchase]="p"
+                      ></rosaline-product-card>
+                    </div>
+                  }
+                </div>
+                <div class="sw-line-default tf-sw-pagination"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

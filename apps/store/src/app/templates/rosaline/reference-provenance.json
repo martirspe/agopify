@@ -1,0 +1,13 @@
+{
+  "template": "Rosaline 1.0.0 / home-bold-modern.html",
+  "transformation": "Selector scope, local asset URLs, namespaced keyframes and icon font. Visual declaration values preserved.",
+  "sources": {
+    "home-bold-modern.html": "7b9a21fc805dc7135c12e1353e355e0fe183e773aaf348f4f64f4b268a5d978e",
+    "assets/css/bootstrap.min.css": "20f66ee81ced0a82723089219c67c4cd05bda4696419ebe23b20bdc25035bab9",
+    "assets/css/swiper-bundle.min.css": "fd8a26e63e3dede19d090fd644f1157e5731cb33abf6b6dd20cdce2f2e182bec",
+    "assets/css/animate.css": "4429b353d7d50b52bdd61f637e0e4e0e0a29ae3a61155fa07173ec93d40eab80",
+    "assets/css/image-compare-viewer.min.css": "2bd307914fcd5f3551e258bc425a3d0cc7c9d490688ae3a02b09c934e4068a7c",
+    "assets/icon/icomoon/style.css": "1983d898f404322e2be275a6d53138505f3aa51a79fad1f9392f38dd462adc30",
+    "assets/css/styles.css": "16c8f6b39731b1cf3a3042442a88dc8396c5df3d8fa4f8e95aa8de698b17f29d"
+  }
+}

@@ -36,7 +36,7 @@ test('white or black foreground has at least 4.5 contrast for representative bra
 });
 
 test('all original demos resolve released presentation, retain isolated data and existing URLs', () => {
-  for (const template of ['classic', 'selecta', 'stride']) {
+  for (const template of ['classic', 'selecta', 'stride', 'rosaline']) {
     assert.equal(templateDemoFromPath(`/_templates/${template}/productos`), template);
     const store = demoStore(template);
     assert.equal(store.themeRelease.renderer, template);
@@ -50,6 +50,18 @@ test('all original demos resolve released presentation, retain isolated data and
   }
   assert.equal(templateDemoFromPath('/_templates/not-registered/'), null);
   assert.equal(templateDemoFromPath('/_templates/classic-other/'), null);
+});
+
+test('Rosaline uses independent presentation and merchant layouts without demo media leaking into presets', () => {
+  const store = demoStore('rosaline');
+  assert.equal(store.themeRelease.id, 'vendedoria/rosaline');
+  assert.equal(store.themeRelease.renderer, 'rosaline');
+  const builtins = store.themeRelease.defaultLayout.map(item => item.type);
+  store.templateContent.layouts = { rosaline: [{ id: 'hero', type: 'hero', hidden: true }, { id: 'featured', type: 'featured' }, { id: 'gallery-a1b2c3', type: 'gallery' }] };
+  assert.deepEqual(storeHomeSections(store, builtins).map(item => item.id), ['featured', 'gallery-a1b2c3']);
+  const products = demoResponse('rosaline', '/catalog');
+  assert.ok(products.every(product => product.imageUrl.startsWith('/themes/rosaline/')));
+  assert.equal(demoResponse('rosaline', '/orders'), null);
 });
 
 test('a stable merchant identity can use another compiled presentation and its own composition', () => {

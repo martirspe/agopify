@@ -9,6 +9,7 @@ import type {
   StoreTemplate,
 } from "@vendedoria/contracts";
 import { getTheme } from '@vendedoria/themes/catalog';
+import { ROSALINE_REFERENCE_SECTIONS } from './rosaline-reference-data.mjs';
 
 const media = (file: string) => `/template-demos/media/${file}.webp`;
 const DETAILS: PublicProductDetails = {
@@ -92,6 +93,7 @@ function product(
 
 export function demoProducts(template: StoreTemplate): StoreCatalogProduct[] {
   const renderer = getTheme(template)?.renderer.split('@')[0] ?? 'classic';
+  if(renderer==='rosaline')return [{"handle":"rosaline-reference-1","name":"Hydra Shine Lip Gloss","description":"Infused with Vitamin E for smooth lips.","category":"CLEAR & CALM","price":3800,"image":"/themes/rosaline/source/assets/images/product/product-18.jpg"},{"handle":"rosaline-reference-2","name":"Barrier Repair Cream","description":"Clinically proven 24-hour hydration.","category":"HYDRA BOOST","price":4200,"image":"/themes/rosaline/source/assets/images/product/product-15.jpg"},{"handle":"rosaline-reference-3","name":"LashLift Defining Mascara","description":"Clinically tested. +92% saw longer.","category":"BRIGHT & EVEN","price":2200,"image":"/themes/rosaline/source/assets/images/product/product-20.jpg"},{"handle":"rosaline-reference-4","name":"Niacinamide 5% + Zinc","description":"Reduces breakouts by up to 90%.","category":"AGE-DEFY","price":2600,"image":"/themes/rosaline/source/assets/images/product/product-22.jpg"},{"handle":"rosaline-reference-serum","name":"AHA Rosaline Serum 10%","description":"Target dullness, refine texture, and boost radiance.","category":"BRIGHT & EVEN","price":3200,"image":"/themes/rosaline/source/assets/images/product/single/detail-1.jpg","images":["/themes/rosaline/source/assets/images/product/single/detail-1.jpg","/themes/rosaline/source/assets/images/product/single/detail-1_2.jpg","/themes/rosaline/source/assets/images/product/single/detail-1_3.jpg","/themes/rosaline/source/assets/images/product/single/detail-1_4.jpg","/themes/rosaline/source/assets/images/product/single/detail-1_5.jpg"],"details":["A chill pill for stressed skin—our lipid blend repairs the barrier, calms irritation, and restores a healthy glow.","Gentle Exfoliation Gently removes dead skin cells without physical scrubs, helping to smooth skin while minimizing irritation. Brighter, More Even Skin Improves overall radiance and helps visibly reduce dullness and uneven skin tone. Refines Skin Texture Enhances skin smoothness and clarity by refining uneven texture over time. Lightweight & Fast-Absorbing Quickly absorbs into the skin with a lightweight, non-greasy finish.","Our AHA Rosaline Serum 10% gently exfoliates dead skin cells, unclogs pores, and boosts cell turnover for smoother, brighter skin. This lightweight formula absorbs quickly without stickiness, making it perfect for both day and night routines.","Ingredient Facts Serving Size: 1 full dropper (approx. 0.5 ml) Alpha Hydroxy Acid (AHA) Complex 10% Glycolic Acid 7% Lactic Acid 3% Niacinamide (Vitamin B3) 2% Hyaluronic Acid 1%"]}].map(item=>{const p=product(item.handle,item.name,item.category,item.price,'',{benefits:item.details ? [item.details[1]] : [item.description],usage:item.details ? [item.details[2]] : [],notes:item.details ? [item.details[3]] : []});return {...p,descriptionShort:item.description,descriptionFull:item.details?.[0] ?? item.description,imageUrl:item.image,media:(item.images ?? [item.image]).map(url=>({url,alt:item.name,caption:null,kind:'image' as const}))};});
   const beauty = [
     product(
       "set-icono",
@@ -202,7 +204,7 @@ export function demoProducts(template: StoreTemplate): StoreCatalogProduct[] {
       ["S", "M", "L"],
     ),
   ];
-  return renderer === "selecta"
+  return renderer === "selecta" || renderer === "rosaline"
     ? beauty
     : renderer === "stride"
       ? fashion
@@ -211,7 +213,7 @@ export function demoProducts(template: StoreTemplate): StoreCatalogProduct[] {
 
 export function demoStore(template: StoreTemplate): StorefrontView {
   const manifest = getTheme(template)!;
-  const renderer = manifest.renderer.split('@')[0] as 'classic' | 'selecta' | 'stride';
+  const renderer = manifest.renderer.split('@')[0] as 'classic' | 'selecta' | 'stride' | 'rosaline';
   const products = demoProducts(template);
   const hero =
     renderer === "stride"
@@ -284,12 +286,13 @@ export function demoStore(template: StoreTemplate): StorefrontView {
     template,
     themeRelease: {
       id: manifest.id, slug: manifest.slug, version: manifest.version, renderer, tokens: manifest.tokens,
-      defaultLayout: manifest.presets[0].layout, safeMode: false,
+      defaultLayout: renderer==='rosaline' ? manifest.presets[0].layout.map(item=>({...item,hidden:false})) : manifest.presets[0].layout, safeMode: false,
     },
     templateContent: {
       version: 1,
       sections: {
-        hero: { image: media(hero) },
+        hero: { image: renderer === 'rosaline' ? '/themes/rosaline/hero-2.jpg' : media(hero) },
+        ...(renderer === 'rosaline' ? ROSALINE_REFERENCE_SECTIONS : {}),
         ...(renderer === "selecta"
           ? { banner: { image: media("osadia-ritual") } }
           : {}),

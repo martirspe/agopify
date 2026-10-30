@@ -28,11 +28,43 @@ test('identity names remain stable and SemVer comparison preserves numeric order
 
 test('all shipped releases have unique immutable identities and compatible contracts', () => {
   assert.deepEqual(themes.validateCatalog(), []);
-  assert.equal(themes.THEME_CATALOG.length, 6);
+  assert.equal(themes.THEME_CATALOG.length, 8);
   for (const theme of themes.THEME_CATALOG) assert.equal(themes.compatibility(theme).status, 'compatible');
   assert.equal(themes.getTheme('stride', '1.0.0').displayName, 'Impulso');
   assert.equal(themes.getTheme('stride', '1.1.0').id, 'vendedoria/stride');
   assert.ok(Object.isFrozen(themes.getTheme('classic').tokens));
+});
+
+test('Rosaline keeps its own renderer and starts without fabricated evidence or third-party media in merchant presets', () => {
+  const theme = themes.getTheme('rosaline', '1.0.0');
+  assert.equal(theme.id, 'vendedoria/rosaline');
+  assert.equal(theme.displayName, 'Rosaline');
+  assert.equal(theme.renderer, 'rosaline@1');
+  assert.equal(theme.license, 'LicenseRef-ThemeForest-Pending');
+  const preset = theme.presets[0];
+  for (const id of ['facts', 'brands', 'trusted', 'ritual', 'compare']) {
+    assert.equal(preset.layout.find(item => item.id === id).hidden, true);
+  }
+  for (const [sectionId, fields] of Object.entries(preset.sections)) {
+    for (const [key, value] of Object.entries(fields)) {
+      const field = themes.RENDERER_SECTIONS.rosaline.find(section => section.id === sectionId).fields.find(field => field.id === key);
+      if (field.kind === 'image') assert.equal(value, '');
+    }
+  }
+  assert.deepEqual(theme.migrations, []);
+});
+
+test('Rosaline schemas do not widen shared editor sanitation contracts', () => {
+  for (const section of themes.RENDERER_SECTIONS.rosaline) {
+    for (const field of section.fields) {
+      const previous = Object.entries(themes.RENDERER_SECTIONS)
+        .filter(([renderer]) => renderer !== 'rosaline')
+        .flatMap(([, sections]) => sections.filter(item => item.id === section.id).flatMap(item => item.fields.filter(item => item.id === field.id)));
+      if (!previous.length) continue;
+      assert.equal(field.maxLength, Math.max(...previous.map(item => item.maxLength)), `${section.id}.${field.id}`);
+      assert.equal(field.kind, previous.some(item => item.kind === 'multiline') ? 'multiline' : previous.at(-1).kind, `${section.id}.${field.id}`);
+    }
+  }
 });
 
 test('unknown properties, executable sources, invalid versions and conflicting identities are rejected', () => {
@@ -113,4 +145,12 @@ test('a third party can define a unique declarative theme with the existing rend
   assert.deepEqual(themes.validateManifest(theme), []);
   assert.equal(themes.compatibility(theme).status, 'compatible');
   assert.deepEqual(themes.validateCatalog([...themes.THEME_CATALOG, theme]), []);
+});
+
+test('Rosaline console release is available for every industry without changing its presentation', () => {
+ const previous=themes.getTheme('rosaline','1.0.0'); const current=themes.getTheme('rosaline');
+ assert.equal(current.version,'1.1.0'); assert.equal(current.industries,'all');
+ for(const key of ['renderer','sections','presets','tokens','settings','assets']) assert.deepEqual(current[key],previous[key]);
+ const content={version:1,sections:{hero:{title:'Mi negocio'}},theme:{accent:'#123456'},layouts:{rosaline:[{id:'hero',type:'hero'}]}};
+ assert.deepEqual(themes.migrateContent(content,'rosaline','1.0.0','1.1.0'),content);
 });

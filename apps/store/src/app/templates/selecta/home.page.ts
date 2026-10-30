@@ -1,4 +1,3 @@
-import { DsSelectComponent } from '@vendedoria/ui';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CartService } from '../../core/cart.service';
@@ -15,14 +14,12 @@ import { selectaCopy } from './selecta-copy';
 import { SelectaIcon } from './selecta-icon';
 import { SelectaProductImage } from './selecta-photo';
 
-const PAGE = 18;
-const ALL = 'Todo';
 /** Home sections of the template in default order (API `TEMPLATE_SECTIONS.selecta`). */
 const BUILTINS = ['hero', 'collection', 'banner', 'faq'];
 
 @Component({
   selector: 'selecta-home',
-  imports: [DsSelectComponent, RouterLink, MoneyPipe, SelectaIcon, SelectaProductImage, HomeBlockComponent, STORE_EDITOR],
+  imports: [RouterLink, MoneyPipe, SelectaIcon, SelectaProductImage, HomeBlockComponent, STORE_EDITOR],
   templateUrl: './home.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -79,51 +76,8 @@ export class SelectaHomePage {
     );
   });
 
-  readonly category = signal(ALL);
-  readonly search = signal('');
-  readonly format = signal(ALL);
-  readonly brand = signal(ALL);
-  readonly limit = signal(PAGE);
-  readonly formats = [
-    { value: ALL, label: 'Todos' },
-    { value: 'individual', label: 'Individuales' },
-    { value: 'set', label: 'Sets' },
-  ];
-  readonly categories = computed(() => [ALL, ...new Set(this.products().map(category))]);
-  readonly brandOptions = computed(() => [
-    ALL,
-    ...new Set(this.products().flatMap((p) => (p.brand ? [p.brand] : []))),
-  ]);
-
-  private matches(p: Product, query: string): boolean {
-    return (
-      (this.format() === ALL || p.format === this.format()) &&
-      (this.brand() === ALL || p.brand === this.brand()) &&
-      `${p.name} ${p.line ?? ''} ${p.brand ?? ''}`.toLocaleLowerCase('es').includes(query)
-    );
-  }
-
-  readonly filtered = computed(() => {
-    const query = this.search().toLocaleLowerCase('es');
-    return this.products().filter(
-      (p) => (this.category() === ALL || category(p) === this.category()) && this.matches(p, query),
-    );
-  });
-  readonly visible = computed(() => this.filtered().slice(0, this.limit()));
-  readonly categoryCounts = computed(() => {
-    const query = this.search().toLocaleLowerCase('es');
-    const counts: Record<string, number> = { [ALL]: 0 };
-    for (const p of this.products()) {
-      if (!this.matches(p, query)) continue;
-      counts[ALL]++;
-      counts[category(p)] = (counts[category(p)] ?? 0) + 1;
-    }
-    return counts;
-  });
-  readonly activeFilters = computed(
-    () =>
-      [this.category(), this.format(), this.brand()].filter((v) => v !== ALL).length + (this.search() ? 1 : 0),
-  );
+  readonly featured = computed(() => this.products().slice(0, 3));
+  readonly categoryLinks = computed(() => [...new Set(this.products().map(category))].slice(0, 6).map(value => ({ value, label: value.split(/\s*[>/]\s*/).at(-1) || value, image: photos(this.products().find(p => category(p) === value)!)[0]?.url })));
   private readonly savings = computed(
     () =>
       new Map(
@@ -156,17 +110,6 @@ export class SelectaHomePage {
       description: store?.seoDescription || this.copy()?.heroText,
       path: '/',
     });
-  }
-
-  filter(target: { set(value: string): void }, value: string): void {
-    target.set(value);
-    this.limit.set(PAGE);
-  }
-
-  clearFilters(): void {
-    for (const s of [this.category, this.format, this.brand]) s.set(ALL);
-    this.search.set('');
-    this.limit.set(PAGE);
   }
 
   saving(p: Product): number {

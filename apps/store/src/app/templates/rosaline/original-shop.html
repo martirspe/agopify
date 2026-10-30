@@ -1,0 +1,92 @@
+<div class="flat-spacing-3">
+  <div class="container">
+    <div class="sect-heading-v2 space-1 space-inner-1 wow fadeInUp">
+      <div class="badge-pill">
+        <span
+          class="font-geist fw-medium lh-22 letter-space--3"
+          [storeEditText]="id() + '.eyebrow'"
+          [editValue]="field('eyebrow')"
+        ></span>
+      </div>
+      <h2
+        class="font-anton text-uppercase letter-space--2"
+        [storeEditText]="id() + '.title'"
+        [editValue]="field('title')"
+      ></h2>
+    </div>
+    <div
+      dir="ltr"
+      class="swiper tf-swiper rosaline-native-slider"
+      data-preview="3"
+      data-tablet="2"
+      data-mobile-sm="1"
+      data-mobile="1"
+      data-space-lg="32"
+      data-space-md="24"
+      data-space="16"
+      data-pagination="1"
+      data-pagination-sm="2"
+      data-pagination-md="3"
+      data-pagination-lg="3"
+    >
+      <div class="swiper-wrapper">
+        @for (p of products().slice(0, 3); track p.handle) {
+          <div class="swiper-slide">
+            <div class="showcase-card">
+              <div class="card-video">
+                @if (demo.active) {
+                  <video
+                    autoplay
+                    muted=""
+                    playsinline=""
+                    loop=""
+                    [src]="demo.active ? sampleVideo($index) : null"
+                  ></video>
+                } @else {
+                  <img
+                    [src]="p.imageUrl || null"
+                    [alt]="p.name"
+                    width="480"
+                    height="600"
+                    loading="lazy"
+                  />
+                }
+              </div>
+              <div class="card-content">
+                <div class="prd-image">
+                  <img
+                    loading="lazy"
+                    width="68"
+                    height="80"
+                    alt="Image"
+                    [src]="p.imageUrl || null"
+                    [alt]="p.name"
+                  />
+                </div>
+                <div class="prd-info">
+                  <div class="">
+                    <a
+                      class="infor_name link-underline font-geist fw-normal text-uppercase mb-8"
+                      [routerLink]="['/producto', p.handle]"
+                      >{{ p.name }}</a
+                    >
+                    <div class="infor_price price-wrap fw-normal">
+                      {{ p.priceCents | money: p.currency }}
+                    </div>
+                  </div>
+                  <a
+                    class="tf-btn-rounded stroke size-2 flex-shrink-0"
+                    [routerLink]="['/producto', p.handle]"
+                  >
+                    <i class="icon icon-ShoppingCart"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="sw-line-default tf-sw-pagination"></div>
+    </div>
+  </div>
+</div>
