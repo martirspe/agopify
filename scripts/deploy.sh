@@ -9,7 +9,7 @@
 #   bash scripts/deploy.sh --skip-backup   # sin backup de la base y .env antes de recrear
 #
 # Primer despliegue: genera POSTGRES_PASSWORD, JWT_ACCESS_SECRET, JWT_REFRESH_SECRET y
-# PAYMENT_CREDENTIALS_KEY si están vacíos (quedan en .env; inclúyelo en tus backups).
+# PAYMENT_CREDENTIALS_KEY y CHANNEL_CREDENTIALS_KEY si están vacíos (quedan en .env; inclúyelo en tus backups).
 # Requiere Docker 24+ con Compose v2 y un .env copiado de .env.production.example.
 
 set -euo pipefail
@@ -101,6 +101,13 @@ if [[ -z "$(read_env PAYMENT_CREDENTIALS_KEY)" ]]; then
   fi
   set_env PAYMENT_CREDENTIALS_KEY "$(random_hex 32)"
   log "Generated PAYMENT_CREDENTIALS_KEY (never change it once stores connect Mercado Pago)."
+fi
+
+# Encrypts WhatsApp tokens for Embedded Signup and customer-owned Cloud API credentials.
+# Safe to generate on an existing install when empty: nothing was sealed without this key.
+if [[ -z "$(read_env CHANNEL_CREDENTIALS_KEY)" ]]; then
+  set_env CHANNEL_CREDENTIALS_KEY "$(random_hex 32)"
+  log "Generated CHANNEL_CREDENTIALS_KEY (never change it once WhatsApp channels are connected)."
 fi
 
 for key in JWT_ACCESS_SECRET JWT_REFRESH_SECRET; do

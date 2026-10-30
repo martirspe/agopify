@@ -35,7 +35,7 @@ CERTBOT_EMAIL=tu@correo.com
 CLOUDFLARE_API_TOKEN=...   # Cloudflare → Mi perfil → Tokens de API → "Editar DNS de zona" → marrso.com
 ```
 
-Contraseñas y secretos se generan solos en el primer deploy. Meta, Mercado Pago, Turnstile, AWS y OpenAI son opcionales: el `.env.production.example` explica cada uno. Las fotos en S3/CloudFront y los correos con SES se crean con Terraform: [TERRAFORM.md](TERRAFORM.md).
+Contraseñas y secretos se generan solos en el primer deploy (incluye `CHANNEL_CREDENTIALS_KEY` para cifrar WhatsApp). Meta, Mercado Pago, Turnstile, AWS y OpenAI son opcionales: el `.env.production.example` explica cada uno. Las fotos en S3/CloudFront y los correos con SES se crean con Terraform: [TERRAFORM.md](TERRAFORM.md).
 
 ## 3. Deploy
 

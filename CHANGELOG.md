@@ -2,7 +2,23 @@
 
 ## [Unreleased]
 
-- WhatsApp: credenciales propias vuelven a quedar disponibles junto a «Conectar con Meta». En desarrollo, `http://localhost` ya no bloquea el formulario; se genera `CHANNEL_CREDENTIALS_KEY` en el setup local; la disponibilidad manual no depende de Embedded Signup ni de una inyección opcional, y se puede cambiar de modalidad mientras Meta se prepara.
+- WhatsApp: credenciales propias vuelven a quedar disponibles junto a «Conectar con Meta». En desarrollo, `http://localhost` ya no bloquea el formulario; `CHANNEL_CREDENTIALS_KEY` se genera en setup local y en `deploy.sh` cuando falta en producción; la disponibilidad manual no depende de Embedded Signup ni de una inyección opcional, y se puede cambiar de modalidad mientras Meta se prepara.
+
+- Consola: Rosaline 1.1.0 disponible para todos los rubros en la selección de plantillas; mantiene el diseño Bold Modern y se guarda como borrador mediante el flujo existente.
+
+- Tienda: nuevo tema independiente Rosaline (Bold Modern), con el marcado y CSS originales de home-bold-modern.html aislados por tema, tipografías e iconos locales, secciones configurables e interacciones Angular de menú, búsqueda, vista rápida, galería y carrito conectadas al motor existente. Demo aislada y release sellado; distribución comercial pendiente de verificar licencia y derechos de imágenes.
+
+- Selecta: sistema visual transversal con tokens de identidad y roles compartidos para inicio, tienda, producto, bolsa, compra y legal. Unificados tipografía/precio de tarjetas, fotografía, superficies, botones, campos y foco; composición editorial separada de componentes. Matriz y reglas de evolución documentadas para evitar estilos aislados por página.
+
+- Vista previa de plantillas: los filtros, ordenación y paginación ahora reciben los parámetros reales de la petición; antes la demo los ignoraba aunque la URL cambiara. Incluye pruebas de categoría y orden/precio con límite de página.
+
+- Selecta: inicio editorial con tres productos y accesos por categoría; búsqueda, filtros, orden y paginación quedan en `/tienda`. Navegación, campañas y retornos desde producto/bolsa enlazan a la tienda. `/productos` y `/catalogo` redirigen conservando parámetros; canonical de Selecta actualizado y personalización del editor conservada.
+
+- Selecta: portada y campaña editorial de borde a borde, cabecera con contenido alineado y catálogo de hasta 1440 px. Ficha limitada a 1280 px y bolsa/pago a 1200 px; se respetan los anchos del editor y los márgenes móviles.
+
+- Selecta: nueva composición editorial con fotografía panorámica y panel de portada superpuesto, adaptación móvil con imagen antes del texto, colección de cuatro columnas y tarjetas verticales, bloque de marca asimétrico, galería y ficha refinadas y pie en columnas. Se conservan textos/imágenes del editor y colores del negocio; anclas de colección corregidas en demos y etiquetas de sets sin cantidades vacías.
+
+- Selecta: bolsa con cabecera editorial, acceso al catálogo, variantes separadas y subtotales por producto. Resumen de compra con costes pendientes explícitos, recomendaciones después de la selección y controles de cantidad con nombres accesibles. Los productos no disponibles bloquean la acción con un botón nativo deshabilitado.
 
 - Checkboxes: casilla negra con check verde unificada en consola, formularios de acceso y tiendas públicas, incluyendo controles nativos que usaban el check blanco del navegador. Superficie compartida con ds-checkbox, estado parcial, disabled, error y foco visibles; comportamiento nativo, semántica de switches, radios y contraste del sistema conservados.
 
