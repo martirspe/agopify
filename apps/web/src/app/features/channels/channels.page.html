@@ -39,7 +39,7 @@
           } @else if (hasConnection) {
             <ds-form-section title="Credenciales propias"><p class="tw:m-0 tw:text-sm tw:text-muted">Desconecta el número actual antes de configurar tu propia app de Meta.</p></ds-form-section>
           } @else if (!configuration()?.manualAvailable) {
-            <ds-form-section title="Credenciales propias"><p class="tw:m-0 tw:text-sm tw:text-muted">La conexión con credenciales propias aún no está disponible. Contacta con soporte.</p><ds-button variant="secondary" (click)="load()">Revisar disponibilidad</ds-button></ds-form-section>
+            <ds-form-section title="Credenciales propias"><p class="tw:m-0 tw:text-sm tw:text-muted">{{ configuration()?.manualMessage || 'La conexión con credenciales propias aún no está disponible. Contacta con soporte.' }}</p><ds-button variant="secondary" (click)="load()">Revisar disponibilidad</ds-button></ds-form-section>
           } @else {
             <form [formGroup]="manualForm" (ngSubmit)="connectManual()" class="tw:grid tw:gap-4">
               <ds-form-section title="Conecta tu propia app de Meta" description="Usa una app y una cuenta de WhatsApp de tu negocio, con el número ya activo en Cloud API. Recomendamos un token de usuario del sistema con permisos de administración y mensajería de WhatsApp.">

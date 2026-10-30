@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- WhatsApp: credenciales propias vuelven a quedar disponibles junto a «Conectar con Meta». La disponibilidad manual ya no depende de una inyección opcional, y se puede cambiar a configuración avanzada mientras se prepara la autorización con Meta.
+- WhatsApp: credenciales propias vuelven a quedar disponibles junto a «Conectar con Meta». En desarrollo, `http://localhost` ya no bloquea el formulario; se genera `CHANNEL_CREDENTIALS_KEY` en el setup local; la disponibilidad manual no depende de Embedded Signup ni de una inyección opcional, y se puede cambiar de modalidad mientras Meta se prepara.
 
 - Checkboxes: casilla negra con check verde unificada en consola, formularios de acceso y tiendas públicas, incluyendo controles nativos que usaban el check blanco del navegador. Superficie compartida con ds-checkbox, estado parcial, disabled, error y foco visibles; comportamiento nativo, semántica de switches, radios y contraste del sistema conservados.
 

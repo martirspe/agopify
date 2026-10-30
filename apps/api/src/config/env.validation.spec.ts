@@ -14,7 +14,14 @@ describe('validateEnv AWS settings', () => {
     const meta = { ...BASE, META_APP_ID: '123456', META_WHATSAPP_CONFIG_ID: '234567', META_APP_SECRET: 'synthetic-secret', META_VERIFY_TOKEN: 'synthetic-verify', CHANNEL_CREDENTIALS_KEY: 'ab'.repeat(32), PUBLIC_API_BASE_URL: 'https://example.test/api/v1' };
     expect(() => validateEnv(meta)).not.toThrow();
     expect(() => validateEnv({ ...meta, PUBLIC_API_BASE_URL: 'http://example.test' })).toThrow(/HTTPS/);
-    expect(() => validateEnv({ ...meta, CHANNEL_CREDENTIALS_KEY: 'synthetic-invalid-sensitive-value' })).not.toThrow(/synthetic-invalid-sensitive-value/);
+    expect(() => validateEnv({ ...meta, CHANNEL_CREDENTIALS_KEY: 'synthetic-invalid-sensitive-value' })).toThrow(
+      /CHANNEL_CREDENTIALS_KEY/,
+    );
+    try {
+      validateEnv({ ...meta, CHANNEL_CREDENTIALS_KEY: 'synthetic-invalid-sensitive-value' });
+    } catch (error) {
+      expect(String(error)).not.toContain('synthetic-invalid-sensitive-value');
+    }
   });
   it('validates private conversion infrastructure without echoing credentials', () => {
     expect(() => validateEnv({ ...BASE, REDIS_URL: 'redis://redis:6379/0', QDRANT_URL: 'http://qdrant:6333', RECOVERY_EMAIL_FROM: 'recovery@example.test' })).not.toThrow();

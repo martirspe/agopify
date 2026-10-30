@@ -49,7 +49,15 @@ const isolated = process.env.DATABASE_URL?.includes('/vendedoria_test?') === tru
   const signature = (raw: Buffer, secret = dto.appSecret) => `sha256=${createHmac('sha256', secret).update(raw).digest('hex')}`;
 
   it('exposes manual availability without platform approval configuration, encrypts secrets and restricts setup to managers of the business', async () => {
-    expect(signup.configuration(users[0])).toMatchObject({ available: false, manualAvailable: true });
+    expect(signup.configuration(users[0])).toMatchObject({ available: false, manualAvailable: true, manualMessage: null });
+    const local = new ConfigService({
+      CHANNEL_CREDENTIALS_KEY: 'ab'.repeat(32),
+      PUBLIC_API_BASE_URL: 'http://localhost:3100/api/v1',
+      NODE_ENV: 'development',
+    });
+    const localManual = new WhatsAppManualService(prisma, local, new ChannelCredentialsService(local), meta as unknown as MetaSignupClient, channels);
+    const localSignup = new WhatsAppSignupService(prisma, local, new ChannelCredentialsService(local), meta as unknown as MetaSignupClient, {} as MetaWhatsAppClient, localManual);
+    expect(localSignup.configuration(users[0])).toMatchObject({ available: false, manualAvailable: true });
     const result = await manual.connect(users[0], dto);
     expect(result.channel.healthStatus).toBe('PENDING');
     expect(result.channel.metadata).toMatchObject({ onboarding: 'MANUAL', hasAccessToken: false });

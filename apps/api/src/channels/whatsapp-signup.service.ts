@@ -9,6 +9,7 @@ import { MetaAuthorizationExpiredException, MetaSignupClient } from './meta-sign
 import { MetaWhatsAppClient } from './meta-whatsapp.client';
 import { asWhatsAppMetadata, publicWhatsAppMetadata } from './whatsapp-metadata';
 import { WhatsAppManualService } from './whatsapp-manual.service';
+import { isMetaPublicApiReady } from './whatsapp-public-api';
 import type { CompleteWhatsAppSignupDto, WhatsAppSignupStateDto } from './dto/whatsapp-signup.dto';
 
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');
@@ -23,14 +24,25 @@ export class WhatsAppSignupService {
   ) {}
 
   configuration(user: AuthUserPayload) {
-    const httpsPublicApi = /^https:\/\//.test(this.config.get<string>('PUBLIC_API_BASE_URL') || '');
+    const publicUrl = this.config.get<string>('PUBLIC_API_BASE_URL');
     // Customer-owned apps stay independent of Embedded Signup approval / config id.
-    const manualAvailable = this.credentials.configured && httpsPublicApi;
+    const manualAvailable = this.manual.available;
     const available = Boolean(this.meta.appId && this.config.get('META_WHATSAPP_CONFIG_ID') &&
-      this.config.get('META_APP_SECRET') && this.config.get('META_VERIFY_TOKEN') && manualAvailable);
-    return { available, manualAvailable, canManage: ['OWNER', 'ADMIN'].includes(user.membershipRole),
-      appId: available ? this.meta.appId : null, graphVersion: this.meta.version,
-      message: available ? null : 'La conexión con Meta aún no está disponible. Contacta con soporte.' };
+      this.config.get('META_APP_SECRET') && this.config.get('META_VERIFY_TOKEN') &&
+      this.credentials.configured && isMetaPublicApiReady(publicUrl));
+    return {
+      available,
+      manualAvailable,
+      canManage: ['OWNER', 'ADMIN'].includes(user.membershipRole),
+      appId: available ? this.meta.appId : null,
+      graphVersion: this.meta.version,
+      message: available ? null : 'La conexión con Meta aún no está disponible. Contacta con soporte.',
+      manualMessage: manualAvailable
+        ? null
+        : !this.credentials.configured
+          ? 'La conexión con credenciales propias aún no está disponible. Contacta con soporte.'
+          : 'Configura una URL pública HTTPS de la API (o localhost en desarrollo) antes de usar credenciales propias.',
+    };
   }
 
   async start(user: AuthUserPayload) {

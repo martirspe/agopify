@@ -96,7 +96,15 @@ export type ChannelDiagnostics = {
   nextSteps: string[];
 };
 
-export type WhatsAppSignupConfiguration = { available: boolean; manualAvailable: boolean; canManage: boolean; appId: string | null; graphVersion: string; message: string | null };
+export type WhatsAppSignupConfiguration = {
+  available: boolean;
+  manualAvailable: boolean;
+  canManage: boolean;
+  appId: string | null;
+  graphVersion: string;
+  message: string | null;
+  manualMessage?: string | null;
+};
 export type WhatsAppManualCredentials = { appId: string; appSecret: string; accessToken: string; wabaId: string; phoneNumberId: string };
 export type WhatsAppManualWebhook = { callbackUrl: string; verifyToken: string; verified: boolean };
 export type WhatsAppSignupSession = { sessionId: string; state: string; expiresAt: string; configId: string; appId: string; graphVersion: string };

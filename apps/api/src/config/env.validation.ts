@@ -12,6 +12,7 @@ import {
   ValidateIf,
   validateSync,
 } from 'class-validator';
+import { parseCredentialsKey } from '../payments/credentials-cipher';
 import { TURNSTILE_TEST_SECRET } from '../turnstile/turnstile.service';
 
 const AWS_REGION = /^[a-z]{2}(-[a-z]+)+-\d$/;
@@ -267,6 +268,9 @@ export function validateEnv(config: Record<string, unknown>) {
 
   if (errors.length > 0) {
     throw new Error(errors.map(error => `${error.property}: ${Object.values(error.constraints || {}).join(', ')}`).join('; '));
+  }
+  if (validated.CHANNEL_CREDENTIALS_KEY && !parseCredentialsKey(validated.CHANNEL_CREDENTIALS_KEY)) {
+    throw new Error('CHANNEL_CREDENTIALS_KEY must be 32 bytes as 64 hex characters or base64');
   }
   if (validated.META_WHATSAPP_CONFIG_ID) {
     if (!validated.META_APP_ID || !validated.META_APP_SECRET || !validated.META_VERIFY_TOKEN || !validated.CHANNEL_CREDENTIALS_KEY) throw new Error('WhatsApp Embedded Signup requires META_APP_ID, META_APP_SECRET, META_VERIFY_TOKEN and CHANNEL_CREDENTIALS_KEY');

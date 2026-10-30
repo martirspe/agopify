@@ -9,6 +9,7 @@ import { ChannelCredentialsService } from './channel-credentials.service';
 import { ChannelsService } from './channels.service';
 import type { ConnectWhatsAppManualDto } from './dto/whatsapp-manual.dto';
 import { MetaAuthorizationExpiredException, MetaSignupClient } from './meta-signup.client';
+import { isManualPublicApiReady } from './whatsapp-public-api';
 import { publicWhatsAppMetadata } from './whatsapp-metadata';
 
 const digest = (value: string) => createHash('sha256').update(value).digest();
@@ -20,12 +21,20 @@ export class WhatsAppManualService {
     private readonly channels: ChannelsService) {}
 
   get available(): boolean {
-    return this.credentials.configured && /^https:\/\//.test(this.config.get<string>('PUBLIC_API_BASE_URL') || '');
+    return this.credentials.configured && isManualPublicApiReady(
+      this.config.get<string>('PUBLIC_API_BASE_URL'),
+      this.config.get<string>('NODE_ENV'),
+    );
   }
 
   async connect(user: AuthUserPayload, dto: ConnectWhatsAppManualDto) {
     this.manager(user);
-    if (!this.available) throw new ServiceUnavailableException('La conexión con credenciales propias aún no está disponible. Contacta con soporte.');
+    if (!this.credentials.configured) {
+      throw new ServiceUnavailableException('La conexión con credenciales propias aún no está disponible. Contacta con soporte.');
+    }
+    if (!isManualPublicApiReady(this.config.get<string>('PUBLIC_API_BASE_URL'), this.config.get<string>('NODE_ENV'))) {
+      throw new ServiceUnavailableException('Configura una URL pública HTTPS de la API (o localhost en desarrollo) antes de usar credenciales propias.');
+    }
     if (dto.appId === this.meta.appId) throw new BadRequestException('Usa la app de tu negocio para conectar con credenciales propias. La app de VendedorIA se conecta mediante autorización con Meta.');
     const client = this.meta.forApp(dto.appId, dto.appSecret);
     const phone = await client.ownPhone(dto.accessToken, dto.wabaId, dto.phoneNumberId);

@@ -7,6 +7,8 @@ const generators = {
   JWT_REFRESH_SECRET: () => randomBytes(48).toString('base64url'),
   META_VERIFY_TOKEN: () => randomBytes(48).toString('base64url'),
   PAYMENT_CREDENTIALS_KEY: () => randomBytes(32).toString('hex'),
+  // Encrypts WhatsApp customer tokens for both Meta signup and customer-owned apps.
+  CHANNEL_CREDENTIALS_KEY: () => randomBytes(32).toString('hex'),
 };
 
 if (!existsSync(target)) {
