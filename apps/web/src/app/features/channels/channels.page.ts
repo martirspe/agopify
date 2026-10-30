@@ -69,16 +69,23 @@ export class ChannelsPage implements OnDestroy {
     if (this.preparing() || this.destroyed) return;
     const config = this.configuration();
     if (!config?.canManage || !config.available || !config.appId || this.mode() !== 'meta' || this.manualConnection) return;
+    const attempt = ++this.attemptVersion;
     this.preparing.set(true); this.ready.set(false);
     try {
       if (this.session) await this.api.cancelWhatsAppSignup(this.session);
       this.session = null;
       const [session] = await Promise.all([this.api.startWhatsAppSignup(), this.meta.load(config.appId, config.graphVersion)]);
+      if (this.destroyed || attempt !== this.attemptVersion || this.mode() !== 'meta') {
+        await this.api.cancelWhatsAppSignup(session).catch(() => undefined);
+        return;
+      }
       this.session = session;
-      if (this.destroyed) { await this.api.cancelWhatsAppSignup(session); return; }
-      this.ready.set(this.mode() === 'meta');
-    } catch (error) { this.errorMessage.set(this.message(error, 'No pudimos preparar la conexión. Inténtalo de nuevo.')); }
-    finally { this.preparing.set(false); }
+      this.ready.set(true);
+    } catch (error) {
+      if (!this.destroyed && attempt === this.attemptVersion && this.mode() === 'meta') {
+        this.errorMessage.set(this.message(error, 'No pudimos preparar la conexión. Inténtalo de nuevo.'));
+      }
+    } finally { if (attempt === this.attemptVersion) this.preparing.set(false); }
   }
   async connect(): Promise<void> {
     if (this.saving() || !this.ready() || !this.session || this.destroyed || this.mode() !== 'meta' || this.manualConnection) return;
@@ -139,11 +146,17 @@ export class ChannelsPage implements OnDestroy {
   }
   async selectMode(value: 'meta' | 'manual'): Promise<void> {
     if (value !== 'meta' && value !== 'manual') return;
-    if (this.saving() || this.preparing() || this.phones().length) return;
+    if (this.saving() || this.phones().length) return;
     this.mode.set(value); this.errorMessage.set(null); this.successMessage.set(null);
-    if (value === 'manual') { this.ready.set(false); if (this.session) await this.api.cancelWhatsAppSignup(this.session).catch(() => undefined); this.session = null; }
-    else { this.manualForm.reset(); this.manualWebhook.set(null); await this.prepare(); }
-    if (value === 'manual' && this.manualConnection) await this.loadManualSetup();
+    if (value === 'manual') {
+      this.attemptVersion++;
+      this.ready.set(false); this.preparing.set(false);
+      if (this.session) await this.api.cancelWhatsAppSignup(this.session).catch(() => undefined);
+      this.session = null;
+      if (this.manualConnection) await this.loadManualSetup();
+      return;
+    }
+    this.manualForm.reset(); this.manualWebhook.set(null); await this.prepare();
   }
   changeMode(event: Event): void {
     if (event.target instanceof HTMLSelectElement && (event.target.value === 'meta' || event.target.value === 'manual')) void this.selectMode(event.target.value);

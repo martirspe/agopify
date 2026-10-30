@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- WhatsApp: credenciales propias vuelven a quedar disponibles junto a «Conectar con Meta». La disponibilidad manual ya no depende de una inyección opcional, y se puede cambiar a configuración avanzada mientras se prepara la autorización con Meta.
+
 - Checkboxes: casilla negra con check verde unificada en consola, formularios de acceso y tiendas públicas, incluyendo controles nativos que usaban el check blanco del navegador. Superficie compartida con ds-checkbox, estado parcial, disabled, error y foco visibles; comportamiento nativo, semántica de switches, radios y contraste del sistema conservados.
 
 - Consola: una sola barra flotante general por vista. Perfil muestra Guardar/Descartar al pie únicamente al editar datos personales; cambiar contraseña conserva su acción local y su formulario independiente. Tienda concentra guardar, descartar, vista previa y publicación en la misma barra superior, priorizando los cambios pendientes. Altura uniforme para botones normales y del CTA: compacta en escritorio y 44 px en móvil/táctil. Botones y barras compartidos admiten asociación nativa a formularios externos, sin duplicar guardados ni mezclar operaciones.

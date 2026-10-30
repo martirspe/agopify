@@ -10,7 +10,8 @@ import { WhatsAppManualService } from './whatsapp-manual.service';
 @Module({
   imports: [MetaWhatsAppModule, ConversationsModule],
   controllers: [ChannelsController],
-  providers: [ChannelsService, WhatsAppSignupService, MetaSignupClient, WhatsAppManualService],
+  // Manual before signup: signup delegates diagnostics/disconnect and must resolve customer-owned availability.
+  providers: [ChannelsService, MetaSignupClient, WhatsAppManualService, WhatsAppSignupService],
   exports: [ChannelsService],
 })
 export class ChannelsModule {}

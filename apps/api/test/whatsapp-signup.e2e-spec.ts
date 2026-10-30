@@ -3,6 +3,7 @@ import { BadRequestException, ConflictException, ForbiddenException, ServiceUnav
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { WhatsAppSignupService } from '../src/channels/whatsapp-signup.service';
+import { WhatsAppManualService } from '../src/channels/whatsapp-manual.service';
 import { ChannelCredentialsService } from '../src/channels/channel-credentials.service';
 import { MetaAuthorizationExpiredException, MetaSignupClient } from '../src/channels/meta-signup.client';
 import { MetaWhatsAppClient } from '../src/channels/meta-whatsapp.client';
@@ -16,7 +17,8 @@ const isolated = process.env.DATABASE_URL?.includes('/vendedoria_test?') === tru
   const config = { get: (key: string) => env[key as keyof typeof env] } as unknown as ConfigService;
   const credentials = new ChannelCredentialsService(config);
   const meta = { appId: '123456', version: 'v26.0', exchange: jest.fn(), authorizedPhones: jest.fn(), register: jest.fn(), subscribe: jest.fn(), subscribed: jest.fn(), unsubscribe: jest.fn() };
-  const service = new WhatsAppSignupService(prisma, config, credentials, meta as unknown as MetaSignupClient, {} as MetaWhatsAppClient);
+  const manual = { available: true, diagnostics: jest.fn(), disconnect: jest.fn() } as unknown as WhatsAppManualService;
+  const service = new WhatsAppSignupService(prisma, config, credentials, meta as unknown as MetaSignupClient, {} as MetaWhatsAppClient, manual);
   let users: AuthUserPayload[] = [];
   let phone = { id: '111111', wabaId: '654321', displayName: 'Synthetic business', displayPhoneNumber: '', coexistence: false, registered: false };
 

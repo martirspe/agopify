@@ -17,7 +17,7 @@
     </ds-form-section>
     @if (configuration()?.canManage) {
       <ds-form-section title="Modalidad de conexión" description="Mantén una sola conexión activa por negocio. Desconecta antes de cambiar de modalidad.">
-        <div class="tw:grid tw:gap-2"><label for="whatsapp-mode" class="tw:text-sm tw:font-semibold">Cómo quieres conectar WhatsApp</label><ds-select><select id="whatsapp-mode" [value]="mode()" [disabled]="saving() || preparing() || phones().length > 0" (change)="changeMode($event)"><option value="meta">Conectar con Meta · recomendado</option><option value="manual">Credenciales propias · configuración avanzada</option></select></ds-select></div>
+        <div class="tw:grid tw:gap-2"><label for="whatsapp-mode" class="tw:text-sm tw:font-semibold">Cómo quieres conectar WhatsApp</label><ds-select><select id="whatsapp-mode" [value]="mode()" [disabled]="saving() || phones().length > 0" (change)="changeMode($event)"><option value="meta">Conectar con Meta · recomendado</option><option value="manual">Credenciales propias · configuración avanzada</option></select></ds-select></div>
       </ds-form-section>
     }
     <div class="tw:grid tw:min-w-0 tw:items-start tw:gap-5 tw:lg:grid-cols-3">

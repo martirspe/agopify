@@ -107,4 +107,27 @@ describe('WhatsApp customer-owned credentials', () => {
     page.channels.set([pendingChannel]); await page.selectMode('meta'); await page.connect();
     expect(api.authorizeWhatsAppSignup).not.toHaveBeenCalled();
   });
+  it('keeps customer-owned credentials available while Meta preparation is in progress', async () => {
+    let finishLoad!: () => void;
+    let finishStart!: (value: typeof session) => void;
+    const { page, api, meta, fixture } = await setup();
+    expect(page.mode()).toBe('meta');
+    meta.load.mockReset();
+    api.startWhatsAppSignup.mockReset();
+    meta.load.mockImplementationOnce(() => new Promise<void>(resolve => { finishLoad = resolve; }));
+    api.startWhatsAppSignup.mockImplementationOnce(() => new Promise(resolve => { finishStart = resolve; }));
+    const preparing = page.prepare();
+    await Promise.resolve();
+    expect(page.preparing()).toBe(true);
+    await page.selectMode('manual');
+    fixture.detectChanges();
+    expect(page.mode()).toBe('manual');
+    expect(page.preparing()).toBe(false);
+    expect(fixture.nativeElement.querySelector('[formControlName="accessToken"]')).toBeTruthy();
+    finishLoad();
+    finishStart(session);
+    await preparing;
+    expect(page.mode()).toBe('manual');
+    expect(page.ready()).toBe(false);
+  });
 });

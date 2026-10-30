@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException, Optional, ServiceUnavailableException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash, randomBytes } from 'node:crypto';
 import type { AuthUserPayload } from '../common/types/auth-user';
@@ -19,14 +19,16 @@ export class WhatsAppSignupService {
     private readonly prisma: PrismaService, private readonly config: ConfigService,
     private readonly credentials: ChannelCredentialsService, private readonly meta: MetaSignupClient,
     private readonly messenger: MetaWhatsAppClient,
-    @Optional() private readonly manual?: WhatsAppManualService,
+    private readonly manual: WhatsAppManualService,
   ) {}
 
   configuration(user: AuthUserPayload) {
+    const httpsPublicApi = /^https:\/\//.test(this.config.get<string>('PUBLIC_API_BASE_URL') || '');
+    // Customer-owned apps stay independent of Embedded Signup approval / config id.
+    const manualAvailable = this.credentials.configured && httpsPublicApi;
     const available = Boolean(this.meta.appId && this.config.get('META_WHATSAPP_CONFIG_ID') &&
-      this.config.get('META_APP_SECRET') && this.config.get('META_VERIFY_TOKEN') && this.credentials.configured &&
-      /^https:\/\//.test(this.config.get<string>('PUBLIC_API_BASE_URL') || ''));
-    return { available, manualAvailable: this.manual?.available || false, canManage: ['OWNER', 'ADMIN'].includes(user.membershipRole),
+      this.config.get('META_APP_SECRET') && this.config.get('META_VERIFY_TOKEN') && manualAvailable);
+    return { available, manualAvailable, canManage: ['OWNER', 'ADMIN'].includes(user.membershipRole),
       appId: available ? this.meta.appId : null, graphVersion: this.meta.version,
       message: available ? null : 'La conexión con Meta aún no está disponible. Contacta con soporte.' };
   }
@@ -139,7 +141,7 @@ export class WhatsAppSignupService {
       checks: [{ id: 'channel', label: 'Número de WhatsApp', status: 'warn', detail: 'No hay una conexión activa.' }],
       nextSteps: ['Elige conectar con Meta o configurar las credenciales de tu propia app.'],
     };
-    if ((channel.metadata as Record<string, unknown> | null)?.onboarding === 'MANUAL' && this.manual) return this.manual.diagnostics(user, channel.id);
+    if ((channel.metadata as Record<string, unknown> | null)?.onboarding === 'MANUAL') return this.manual.diagnostics(user, channel.id);
     if (channel.healthStatus === 'PENDING' && channel.updatedAt.getTime() > Date.now() - 120000) return {
       connected: false, healthStatus: 'PENDING', channel: await this.publicChannel(user.tenantId, channel.id),
       checks: [{ id: 'channel', label: 'Activación del número', status: 'warn', detail: 'La conexión con Meta está en curso.' }],
@@ -184,7 +186,7 @@ export class WhatsAppSignupService {
     this.manager(user);
     const current = await this.prisma.channel.findFirst({ where: { id: channelId, tenantId: user.tenantId, type: 'WHATSAPP' }, select: { metadata: true, healthStatus: true } });
     if (current?.healthStatus === 'DISCONNECTED') return { disconnected: true };
-    if ((current?.metadata as Record<string, unknown> | null)?.onboarding === 'MANUAL' && this.manual) return this.manual.disconnect(user, channelId);
+    if ((current?.metadata as Record<string, unknown> | null)?.onboarding === 'MANUAL') return this.manual.disconnect(user, channelId);
     return this.prisma.$transaction(async tx => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`wa:tenant:${user.tenantId}`}, 0))`;
       const channel = await tx.channel.findFirst({ where: { id: channelId, tenantId: user.tenantId, type: 'WHATSAPP' } });
