@@ -89,15 +89,24 @@ npm run test:docker    # unit + e2e en DB aislada vendedoria_test (stack core de
 - Tras cambiar `package.json` / lock: `npm run dev` otra vez para que `deps` rehaga `npm ci`.
 - Migración nueva:  
   `docker compose -f docker-compose.dev.yml exec api npx prisma migrate dev --name <snake_case>`
-- Operador de plataforma (SUPERADMIN/ADMIN):  
-  `docker compose -f docker-compose.dev.yml exec api npm run create-admin`  
-  Detalle de usuarios: [`docs/USUARIOS.md`](./docs/USUARIOS.md).
 - Una sola vez si vienes del stack Docker antiguo: `npm run docker:clean-legacy` (conserva el volumen de Postgres).
-- Puertos distintos de selecta (3000/4200/5433): ambos proyectos pueden correr a la vez.
+- Puertos distintos de selecta (3000/4200/5433): ambos stacks pueden correr a la vez.
+
+### Usuarios en desarrollo
+
+**No hace falta `create-admin` para usar la consola del negocio.** El registro público en http://localhost:4201 crea el negocio y su `OWNER`. Con eso pruebas vendedor, catálogo, playground, canales, etc.
+
+`create-admin` solo crea **operadores de plataforma** (`SUPERADMIN` / `ADMIN` de VendedorIA), sesión distinta (`/platform/…`), para el backoffice global — no es el admin del tenant. En local solo si trabajas esa consola:
+
+```bash
+docker compose -f docker-compose.dev.yml exec api npm run create-admin
+```
+
+Detalle: [`docs/USUARIOS.md`](./docs/USUARIOS.md).
 
 ### Smoke rápido tras levantar
 
-1. Abre la consola → registro o login.
+1. Consola → **Crear cuenta** (negocio) o login.
 2. Completa el vendedor (Empezar / perfil).
 3. **Playground** del vendedor: un saludo y una pregunta de catálogo.
 4. (Opcional) Canales → simular mensaje entrante → Inbox → pedido / link de pago.
