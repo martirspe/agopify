@@ -26,12 +26,14 @@ describe('readPackage', () => {
   it('finds catalog.json and maps photos under its images folder', async () => {
     const pkg = await readPackage([
       { path: 'selecta/catalog.json', file: file('{"products":[{"content":{"images":[{"url":"/images/products/a/1.jpg"}]}}]}') },
-      { path: 'selecta/images/a/1.jpg', file: file('x') },
+      // Export layout: images/products/{handle}/foto-N.ext (must match catalog refs after imageKey).
+      { path: 'selecta/images/products/a/1.jpg', file: file('x') },
+      { path: 'selecta/images/store/hero.webp', file: file('y') },
       { path: 'selecta/images/a/notes.txt', file: file('x') },
       { path: 'selecta/otros/b.jpg', file: file('x') },
     ]);
     expect(pkg?.folderName).toBe('selecta');
-    expect([...(pkg?.images.keys() ?? [])]).toEqual(['a/1.jpg']);
+    expect([...(pkg?.images.keys() ?? [])].sort()).toEqual(['a/1.jpg', 'store/hero.webp']);
     expect([...(pkg?.referenced ?? [])]).toEqual(['a/1.jpg']);
   });
 

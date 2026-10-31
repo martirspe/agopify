@@ -4,6 +4,8 @@
 
 - Config: `.env.example` / `.env.production.example` recortados a lo necesario para arrancar; features opcionales comentadas; knobs `SALES_*` de tuning viven en defaults de código (`SALES_ENGINE_MODE` default `ai-core`).
 - Docker dev: `npm run dev` solo levanta postgres + api + consola; tienda y Redis van en perfiles (`dev:store`, `dev:redis`, `dev:all`). Guía de arranque en `README.md`.
+- Catálogo: el export ZIP incluye fotos aunque la URL use otro host/puerto que el actual; el import avisa si sueltas el ZIP sin descomprimir o si falta la carpeta `images/`.
+- Catálogo: el import vuelve a emparejar fotos bajo `images/products/…` con las rutas del `catalog.json` (antes se omitían todas al reimportar un paquete exportado).
 - Consola: textos listos para producción (sin guía operativa, jerga interna ni copy de prueba en formularios y pantallas del merchant).
 - Comercial: planes y marketing enfocados en el vendedor IA; la tienda web queda como «próximamente / acceso anticipado», sin promesa oficial en el precio del plan.
 - Planes: lo común (WhatsApp, Instagram, catálogo, cobros) se muestra una sola vez; cada tarjeta solo lista capacidad (chats, productos, usuarios).

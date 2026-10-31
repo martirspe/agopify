@@ -165,12 +165,29 @@ export class CatalogImportPage {
     this.step.set('reading');
     this.progress.set({ done: 0, total: 0, label: 'Buscando catalog.json…' });
     try {
+      const looksLikeZip =
+        entries.length > 0 &&
+        entries.every((entry) => /\.zip$/i.test(entry.path.split('/').pop() || ''));
+      if (looksLikeZip) {
+        this.fail(
+          'Has soltado un ZIP. Descomprímelo y elige la carpeta que contiene catalog.json y la carpeta images/.',
+        );
+        return;
+      }
       const pkg = await readPackage(entries);
       if (!pkg) {
-        this.fail('La carpeta no tiene un archivo catalog.json. Elige la carpeta del paquete completo.');
+        this.fail(
+          'No encontramos catalog.json. Elige la carpeta del paquete (la que tiene catalog.json e images/).',
+        );
         return;
       }
       const used = [...pkg.referenced].filter((key) => pkg.images.has(key));
+      if (pkg.referenced.size > 0 && used.length === 0) {
+        this.fail(
+          'El catálogo pide fotos pero no coinciden con los archivos de images/. Usa el paquete exportado completo (catalog.json + images/products/…).',
+        );
+        return;
+      }
       const files: CatalogImportFile[] = [];
       this.progress.set({ done: 0, total: used.length, label: 'Leyendo fotos…' });
       for (const key of used) {

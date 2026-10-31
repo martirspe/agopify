@@ -103,8 +103,41 @@ export class MediaService {
 
   /** True for URLs this service returned to the tenant (its S3 prefix, or a local upload). */
   isOwnUpload(tenantId: string, url: string): boolean {
-    const prefix = this.s3 ? `${this.s3.cdnBase}/media/${tenantId}/` : `${this.publicBase}/media/`;
+    const prefix = this.s3
+      ? `${this.s3.cdnBase}/media/${tenantId}/`
+      : `${this.publicBase}/media/`;
     return url.startsWith(prefix) && MEDIA_FILE.test(url.slice(prefix.length));
+  }
+
+  /**
+   * Resolves a product photo URL to a local file name or S3 object key for this tenant.
+   * Host/port of PUBLIC_API_BASE_URL may differ from when the photo was uploaded (Docker
+   * 3100 vs 3000); path shape is what matters.
+   */
+  private tenantMediaRef(
+    tenantId: string,
+    url: string,
+  ): { localFile: string } | { s3Key: string; fetchUrl: string | null } | null {
+    let pathname: string;
+    try {
+      pathname = new URL(url).pathname;
+    } catch {
+      pathname = url.startsWith('/') ? url : `/${url}`;
+    }
+    const s3 = pathname.match(
+      new RegExp(`(?:^|/)media/${tenantId}/([a-f0-9]{32}\\.(?:jpg|png|webp))$`, 'i'),
+    );
+    if (s3) {
+      const s3Key = `media/${tenantId}/${s3[1].toLowerCase()}`;
+      // Always pull from the configured CDN (never the URL host) to avoid SSRF.
+      const fetchUrl = this.s3 ? `${this.s3.cdnBase}/${s3Key}` : null;
+      return { s3Key, fetchUrl };
+    }
+    const local = pathname.match(
+      /(?:^|\/)media\/([a-f0-9]{32}\.(?:jpg|png|webp))$/i,
+    );
+    if (local) return { localFile: local[1].toLowerCase() };
+    return null;
   }
 
   async read(file: string): Promise<{ bytes: Buffer; contentType: string }> {
@@ -124,7 +157,9 @@ export class MediaService {
    */
   async jpegForMessaging(url: string): Promise<Buffer | null> {
     try {
-      const bytes = await this.readOwned(url);
+      const tenantGuess =
+        url.match(/\/media\/([a-z0-9_-]{8,})\/[a-f0-9]{32}\./i)?.[1] ?? '_';
+      const bytes = await this.readOwned(tenantGuess, url);
       if (!bytes) return null;
       return await sharp(bytes, { failOn: 'error', limitInputPixels: MAX_INPUT_PIXELS, animated: false })
         .rotate()
@@ -140,22 +175,40 @@ export class MediaService {
 
   /** Bytes of a photo this tenant owns (catalog export). Null when missing or foreign. */
   async bytesForExport(tenantId: string, url: string): Promise<Buffer | null> {
-    if (!this.isOwnUpload(tenantId, url)) return null;
-    return this.readOwned(url);
+    return this.readOwned(tenantId, url);
   }
 
-  private async readOwned(url: string): Promise<Buffer | null> {
-    const localPrefix = `${this.publicBase}/media/`;
-    if (url.startsWith(localPrefix)) {
-      return (await this.read(url.slice(localPrefix.length))).bytes;
+  private async readOwned(tenantId: string, url: string): Promise<Buffer | null> {
+    const ref = this.tenantMediaRef(tenantId, url);
+    if (!ref) return null;
+    if ('localFile' in ref) {
+      try {
+        return (await this.read(ref.localFile)).bytes;
+      } catch {
+        return null;
+      }
     }
-    const target = this.s3;
-    if (!target || !url.startsWith(`${target.cdnBase}/media/`)) return null;
-    const response = await fetch(url, { signal: AbortSignal.timeout(10_000), redirect: 'error' });
-    const length = Number(response.headers.get('content-length') ?? 0);
-    if (!response.ok || length > MESSAGING_MAX_SOURCE_BYTES) return null;
-    const bytes = Buffer.from(await response.arrayBuffer());
-    return bytes.length > MESSAGING_MAX_SOURCE_BYTES ? null : bytes;
+    if (ref.fetchUrl) return this.fetchMediaBytes(ref.fetchUrl);
+    return null;
+  }
+
+  private async fetchMediaBytes(url: string): Promise<Buffer | null> {
+    try {
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(10_000),
+        redirect: 'error',
+      });
+      if (!response.ok) return null;
+      const declared = response.headers.get('content-length');
+      if (declared !== null) {
+        const length = Number(declared);
+        if (Number.isFinite(length) && length > MESSAGING_MAX_SOURCE_BYTES) return null;
+      }
+      const bytes = Buffer.from(await response.arrayBuffer());
+      return bytes.length > MESSAGING_MAX_SOURCE_BYTES ? null : bytes;
+    } catch {
+      return null;
+    }
   }
 
   /**

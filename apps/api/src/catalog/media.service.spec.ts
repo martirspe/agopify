@@ -151,5 +151,52 @@ describe('MediaService', () => {
       ).resolves.toBeNull();
       expect(fetchSpy).not.toHaveBeenCalled();
     });
+
+    it('exports bytes even when the stored URL uses a different host or port', async () => {
+      const media = new MediaService(
+        new ConfigService({ UPLOADS_DIR: dir, PUBLIC_API_BASE_URL: 'http://localhost:3100/api/v1' }),
+      );
+      const { url } = await media.upload('tenant-a', asUpload('image/png', png));
+      const file = url.split('/').pop()!;
+      const staleHostUrl = `http://localhost:3000/api/v1/media/${file}`;
+
+      // Commit gate stays host-strict; export reads by path shape.
+      expect(media.isOwnUpload('tenant-a', staleHostUrl)).toBe(false);
+      const bytes = await media.bytesForExport('tenant-a', staleHostUrl);
+      expect(bytes?.length).toBeGreaterThan(0);
+      await expect(
+        media.bytesForExport('tenant-a', 'http://169.254.169.254/latest/meta-data'),
+      ).resolves.toBeNull();
+    });
+  });
+
+  describe('s3 export ownership', () => {
+    it('reads CDN bytes by tenant path even if MEDIA_CDN_URL host changed', async () => {
+      const media = new MediaService(
+        new ConfigService({
+          MEDIA_STORAGE: 's3',
+          AWS_REGION: 'us-east-1',
+          MEDIA_S3_BUCKET: 'vendedoria-media',
+          MEDIA_CDN_URL: 'https://cdn-new.example.pe',
+        }),
+      );
+      const file = `${'a'.repeat(32)}.webp`;
+      const stale = `https://cdn-old.example.pe/media/tenant-a/${file}`;
+      const foreign = `https://cdn-old.example.pe/media/tenant-b/${file}`;
+      const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue({
+        ok: true,
+        headers: { get: () => null },
+        arrayBuffer: async () => Uint8Array.of(1, 2, 3).buffer,
+      } as unknown as Response);
+
+      expect(media.isOwnUpload('tenant-a', stale)).toBe(false);
+      expect(media.isOwnUpload('tenant-a', foreign)).toBe(false);
+      await expect(media.bytesForExport('tenant-a', stale)).resolves.toEqual(Buffer.from([1, 2, 3]));
+      expect(fetchSpy).toHaveBeenCalledWith(
+        `https://cdn-new.example.pe/media/tenant-a/${file}`,
+        expect.any(Object),
+      );
+      await expect(media.bytesForExport('tenant-a', foreign)).resolves.toBeNull();
+    });
   });
 });

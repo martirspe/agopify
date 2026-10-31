@@ -66,7 +66,9 @@ export async function readPackage(entries: PackageEntry[]): Promise<CatalogPacka
   const images = new Map<string, File>();
   for (const entry of normalized) {
     if (!entry.path.startsWith(imagesRoot) || !IMAGE_EXT.test(entry.path)) continue;
-    const key = imageKey(entry.path.slice(imagesRoot.length));
+    // Prefix `images/` so imageKey strips `images/products/` the same way as catalog.json refs
+    // (`/images/products/{handle}/foto-1.webp` → `{handle}/foto-1.webp`).
+    const key = imageKey(`images/${entry.path.slice(imagesRoot.length)}`);
     if (key) images.set(key, entry.file);
   }
   const catalogText = await catalog.file.text();
