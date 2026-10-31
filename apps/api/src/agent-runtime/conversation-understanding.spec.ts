@@ -4,12 +4,16 @@ import {
   detectAgentPendingAsk,
   filterStandaloneProducts,
   isOpenProductNeed,
+  isOptionSelectionOnly,
+  isPurchaseCommitAnaphora,
+  looksLikeOptionPick,
   parseBuyerQuantity,
   pickSellerRecommendation,
   preferNonBundleProducts,
   resolveBundlePreference,
   resolveByUniqueNameFragment,
   understandBuyerTurn,
+  wantsCancelOrder,
   wantsStandaloneOnly,
 } from './conversation-understanding';
 
@@ -40,10 +44,47 @@ describe('conversation understanding', () => {
     expect(isOpenProductNeed('Busco un café molido')).toBe(true);
     expect(isOpenProductNeed('Necesito zapatillas negras')).toBe(true);
     expect(isOpenProductNeed('quiero comprar Perfume de prueba')).toBe(true);
+    expect(isOpenProductNeed('quiero ver perfumeria masculina')).toBe(true);
+    expect(
+      isOpenProductNeed('muestrame que productos de cafe tienen'),
+    ).toBe(true);
+    expect(isOpenProductNeed('quiero ver productos de zapatillas')).toBe(true);
+    expect(isOpenProductNeed('primero muestrame el producto')).toBe(false);
+    expect(isOpenProductNeed('QUiero ver foto')).toBe(false);
+    expect(isOpenProductNeed('quiero ver la imagen')).toBe(false);
     expect(isOpenProductNeed('perfecto quiero comprarlo')).toBe(false);
     expect(isOpenProductNeed('Lo quiero')).toBe(false);
     expect(isOpenProductNeed('dame el link de pago')).toBe(false);
     expect(isOpenProductNeed('Si')).toBe(false);
+  });
+
+  it('detects cancel / abandon signals across niches', () => {
+    expect(wantsCancelOrder('quiero cancelar el pedido')).toBe(true);
+    expect(wantsCancelOrder('ya no lo voy a comprar')).toBe(true);
+    expect(wantsCancelOrder('cancela la compra')).toBe(true);
+    expect(wantsCancelOrder('no voy a comprar')).toBe(true);
+    expect(wantsCancelOrder('quiero el Café Molido')).toBe(false);
+    expect(wantsCancelOrder('muéstrame la foto')).toBe(false);
+  });
+
+  it('treats "quiero el X" as option selection, not purchase commit (multi-niche)', () => {
+    expect(
+      isOptionSelectionOnly(
+        'quiero el Protector Solar Total Block Ultraprotección',
+      ),
+    ).toBe(true);
+    expect(isOptionSelectionOnly('quiero la Zapatilla Urbana Negra')).toBe(
+      true,
+    );
+    expect(looksLikeOptionPick('quiero el Café Molido 250g')).toBe(true);
+    expect(isOptionSelectionOnly('Lo quiero')).toBe(false);
+    expect(isOptionSelectionOnly('quiero comprarlo')).toBe(false);
+    expect(isOptionSelectionOnly('quiero comprar el perfume')).toBe(false);
+    expect(isPurchaseCommitAnaphora('Lo quiero')).toBe(true);
+    expect(isPurchaseCommitAnaphora('perfecto quiero comprarlo')).toBe(true);
+    expect(
+      isPurchaseCommitAnaphora('quiero el Protector Solar Ultraprotección'),
+    ).toBe(false);
   });
 
   it('detects prepare-purchase and choose-option asks', () => {

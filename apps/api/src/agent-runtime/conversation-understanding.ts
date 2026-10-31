@@ -112,14 +112,43 @@ export function looksLikeOptionPick(text: string): boolean {
     /\b(?:me\s+(?:interesa|gusta|quedo\s+con)|prefiero|voy\s+(?:con|por)|mejor\s+(?:el|la|ese|esa))\b/.test(
       q,
     ) ||
+    // "quiero el/la X" after a list is selection, not checkout (unless comprar/link/llevo).
+    (/\bquiero\s+(?:el|la|los|las|ese|esa|este|esta)\b/.test(q) &&
+      !/\b(?:comprar|link|llevo|compro|pido|separ|reserv|apart)\b/.test(q)) ||
     /^(?:ese|esa|esto|este|esta|aquel|aquella)$/.test(q) ||
     /\bmas\s+(?:barato|caro)\b/.test(q)
   );
 }
 
 /**
- * Buyer starts a new catalog need ("quiero comprar un X", "busco Y") rather than
- * confirming the current SKU ("comprarlo", "lo quiero", "dame el link").
+ * Buyer named an option from the table ("quiero el X") without committing checkout.
+ * Multinicho: structural "quiero el/la…" only — not "lo quiero" / "quiero comprarlo".
+ */
+export function isOptionSelectionOnly(text: string): boolean {
+  const q = scrubBuyerReply(text);
+  if (!q) return false;
+  if (
+    /\b(?:comprar(?:lo|la|los|las)?|l[oa]s?\s+quiero|l[oa]s?\s+(?:llevo|compro|pido)|dame\s+(?:el\s+)?link|pasame\s+(?:el\s+)?link)\b/.test(
+      q,
+    )
+  ) {
+    return false;
+  }
+  return looksLikeOptionPick(text) && /\bquiero\s+(?:el|la|los|las|ese|esa|este|esta)\b/.test(q);
+}
+
+/** Strong anaphora that already commits the current SKU (skip prepare → ask district). */
+export function isPurchaseCommitAnaphora(text: string): boolean {
+  const q = scrubBuyerReply(text);
+  return /\b(?:l[oa]s?\s+quiero|l[oa]s?\s+(?:llevo|compro|pido)|(?:dame|pasame|mandame|enviame)\s+(?:el\s+)?link|quiero\s+comprar(?:lo|la|los|las))\b/.test(
+    q,
+  );
+}
+
+/**
+ * Buyer starts a new catalog need ("quiero comprar un X", "busco Y", "quiero ver
+ * perfumería", "muéstrame productos de…") rather than confirming the current SKU
+ * ("comprarlo", "lo quiero", "dame el link", "muéstrame el producto").
  * Multinicho: structural patterns only — no category vocabulary.
  */
 export function isOpenProductNeed(text: string): boolean {
@@ -132,10 +161,58 @@ export function isOpenProductNeed(text: string): boolean {
   ) {
     return false;
   }
+  // Singular "muéstrame el producto" is presentation of the current SKU (E5), not a new search.
+  if (
+    /\b(?:muestra\w*|ensena\w*|ver|dame|manda\w*)\b.{0,40}\b(?:el\s+|la\s+|ese\s+|esta\s+|este\s+|esa\s+)?producto\b/.test(
+      n,
+    ) &&
+    !/\bproductos\b/.test(n)
+  ) {
+    return false;
+  }
   if (/\b(?:busco|buscando|necesito)\b/.test(n)) return true;
   if (/\bquiero\s+comprar(?:me)?\s+\S+/.test(n)) return true;
   if (/\bquiero\s+(?:unos|unas|una|un)\s+\S+/.test(n)) return true;
+  if (
+    /\bquiero\s+ver\b/.test(n) &&
+    !/\b(?:el|la|ese|esta|este|esa)\s+producto\b/.test(n) &&
+    !/\b(?:foto|fotos|fotito|fotitos|imagen|imagenes|como\s+se\s+ve|como\s+es)\b/.test(
+      n,
+    )
+  ) {
+    return true;
+  }
+  if (/\b(?:muestra\w*|ensena\w*|ver)\b.{0,48}\bproductos\b/.test(n)) {
+    return true;
+  }
+  if (/\bque\s+(?:productos?\s+)?(?:tienen|tienes|hay)\b/.test(n)) return true;
   return false;
+}
+
+/** Buyer asks about discounts / offers / promotions (not a product name). */
+export function asksAboutDiscount(text: string): boolean {
+  return /\b(?:descuento|descuentos|oferta|ofertas|promocion|promociones|promo|promos|cupon|cupones)\b/.test(
+    scrubBuyerReply(text),
+  );
+}
+
+/**
+ * Buyer wants to abort the unpaid order / checkout ("cancelar el pedido",
+ * "ya no lo voy a comprar"). Multinicho — no category words.
+ */
+export function wantsCancelOrder(text: string): boolean {
+  const q = scrubBuyerReply(text);
+  if (!q) return false;
+  return (
+    /\b(?:cancela(?:r)?|anula(?:r)?)\s+(?:la\s+compra|el\s+pedido|mi\s+pedido|el\s+pago|la\s+orden)\b/.test(
+      q,
+    ) ||
+    /\bya\s+no\s+(?:lo\s+|la\s+|los\s+|las\s+)?(?:voy\s+a\s+)?comprar\b/.test(
+      q,
+    ) ||
+    /\bno\s+(?:lo\s+|la\s+)?voy\s+a\s+comprar\b/.test(q) ||
+    /\bya\s+no\s+quiero\s+(?:comprar|el\s+pedido|ese|esa|esta|este)\b/.test(q)
+  );
 }
 
 /**

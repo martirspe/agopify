@@ -26,13 +26,19 @@ import {
   asksSellerRecommendation,
   filterStandaloneProducts,
   isBundleProduct,
+  asksAboutDiscount,
   isOpenProductNeed,
+  isOptionSelectionOnly,
+  isPurchaseCommitAnaphora,
   pickSellerRecommendation,
   preferNonBundleProducts,
+  PREPARE_PURCHASE_ASK,
   standaloneCategoryHint,
   understandBuyerTurn,
+  wantsCancelOrder,
   wantsStandaloneOnly,
 } from './conversation-understanding';
+import type { PublishedDiscountView } from './sales-agent-tools.service';
 import { DeliveryPlan, matchDistrict, planDelivery } from './delivery-plan';
 import { catalogContext, promptHistory } from './catalog-context';
 import {
@@ -197,7 +203,24 @@ export class SalesAgentRuntimeService {
   async generateReply(params: ReplyParams): Promise<AgentReplyResult> {
     const started = Date.now();
     const before = params.salesState?.stage;
+    const priorOrderId = params.salesState?.orderId;
     const salesState = params.salesState ? observeBuyer(params.salesState, params.inboundText, params.messageId ?? 'playground') : undefined;
+    // Topic-change / cancel clears orderId in state; still release the unpaid chat order.
+    if (
+      priorOrderId &&
+      salesState &&
+      salesState.orderId !== priorOrderId &&
+      (wantsCancelOrder(params.inboundText) ||
+        isOpenProductNeed(params.inboundText) ||
+        salesState.intent === 'cancel')
+    ) {
+      await this.tools.cancelUnpaidChatOrder({
+        tenantId: params.tenantId,
+        conversationId: params.conversationId,
+        orderId: priorOrderId,
+        mode: params.mode ?? 'production',
+      });
+    }
     const result = await this.composeReply({ ...params, salesState });
     if (salesState) {
       salesState.consecutiveFallbacks = result.trace?.validation === 'fallback' ? salesState.consecutiveFallbacks + 1 : 0;
@@ -254,8 +277,28 @@ export class SalesAgentRuntimeService {
     const firstTurn = !history.some((turn) => turn.role === 'agent');
     const state = params.salesState;
     const openProductNeed = isOpenProductNeed(params.inboundText);
-    // A new catalog need must not resume a previous district/checkout thread from history.
-    const pendingLines = openProductNeed
+    const cancelAsked = wantsCancelOrder(params.inboundText);
+    const refs = this.tools.extractProductRefs(params.inboundText);
+    const genericSearch = /^(?:que tienes|que tienen|que hay|que opciones|muestrame|y ahora)$/.test(normalizeText(params.inboundText).replace(/[¿?!.]/g, '').trim());
+    const searchText = genericSearch && state?.requirements.need ? state.requirements.need.value : params.inboundText;
+    // Load overview early so a category browse can release a stuck district ask.
+    const [agentRow, runtimeKnowledge, overview] = await Promise.all([
+      this.resolveAgent(params.tenantId, params.agentId, params.channelId),
+      this.knowledge.getRuntimeKnowledge(params.tenantId, state ? params.inboundText : undefined),
+      this.tools.catalogOverview(params.tenantId),
+    ]);
+    const browseIntent = this.tools.browseRequest(params.inboundText, overview);
+    const photoAskedEarly = wantsPhoto(params.inboundText);
+    const catalogBrowse =
+      !photoAskedEarly &&
+      (browseIntent?.kind === 'catalog' || browseIntent?.kind === 'category');
+    // New catalog need / category browse / cancel must not resume district checkout.
+    const releasingCheckout =
+      openProductNeed || catalogBrowse || cancelAsked || state?.intent === 'cancel';
+    if (releasingCheckout && state) {
+      state.pendingLines = [];
+    }
+    const pendingLines = releasingCheckout
       ? []
       : state?.pendingLines.length
         ? state.pendingLines
@@ -269,20 +312,12 @@ export class SalesAgentRuntimeService {
         ...pendingLines.map((line) => line.productId),
       ]),
     ];
-    const refs = this.tools.extractProductRefs(params.inboundText);
-    const genericSearch = /^(?:que tienes|que tienen|que hay|que opciones|muestrame|y ahora)$/.test(normalizeText(params.inboundText).replace(/[¿?!.]/g, '').trim());
-    const searchText = genericSearch && state?.requirements.need ? state.requirements.need.value : params.inboundText;
-    const [agentRow, products, runtimeKnowledge, overview] = await Promise.all([
-      this.resolveAgent(params.tenantId, params.agentId, params.channelId),
-      this.tools.listAvailableProducts(
-        params.tenantId,
-        refs.map((ref) => ref.handle),
-        contextIds,
-        searchText,
-      ),
-      this.knowledge.getRuntimeKnowledge(params.tenantId, state ? params.inboundText : undefined),
-      this.tools.catalogOverview(params.tenantId),
-    ]);
+    const products = await this.tools.listAvailableProducts(
+      params.tenantId,
+      refs.map((ref) => ref.handle),
+      contextIds,
+      searchText,
+    );
 
     const agent = toPersonality(agentRow);
 
@@ -485,13 +520,19 @@ export class SalesAgentRuntimeService {
     const namedPurchaseTarget = openProductNeed
       ? this.tools.identifyProduct(params.inboundText, products, refs)
       : null;
+    // "quiero el X" after a list pins the SKU and asks prepare — it is not checkout yet.
+    const optionSelectionOnly =
+      Boolean(reference) && isOptionSelectionOnly(params.inboundText);
+    // Never treat bare stage=purchase as buying: that trapped browse/cancel after a pending order.
     const buying =
       !turn.declinesOffer &&
+      !optionSelectionOnly &&
+      !releasingCheckout &&
+      !cancelAsked &&
       (turn.confirmsPurchase ||
         (districtReply && Boolean(contextPick)) ||
         (((!openProductNeed || Boolean(namedPurchaseTarget)) &&
-          (state?.intent === 'purchase' ||
-            this.tools.wantsPurchase(params.inboundText)))));
+          this.tools.wantsPurchase(params.inboundText))));
     const processingLane = selectProcessingLane({
       conversationalIntent: intent,
       intents: state?.intents ?? [],
@@ -500,6 +541,56 @@ export class SalesAgentRuntimeService {
       buying,
       humanOrComplaint: false,
     });
+    if (state?.orderId && (cancelAsked || state.intent === 'cancel')) {
+      const cancelled = await this.tools.cancelUnpaidChatOrder({
+        tenantId: params.tenantId,
+        conversationId: params.conversationId,
+        orderId: state.orderId,
+        mode,
+      });
+      if (cancelled?.ok) {
+        state.orderId = undefined;
+        state.orderDraftHash = undefined;
+        state.paymentStatus = undefined;
+        state.stage = openProductNeed || catalogBrowse ? 'DISCOVERY' : 'LOST';
+        if (!openProductNeed && !catalogBrowse) {
+          return {
+            replyText: this.applyTone(
+              agent,
+              'Listo, cancelé tu pedido pendiente. Cuando quieras vemos otras opciones o lo dejamos ahí.',
+            ),
+            escalate: false,
+            usedCatalog: false,
+            pauseOnHandoff: agent.pauseOnHandoff,
+            tools: [
+              {
+                name: 'get_order_status',
+                status: 'ok',
+                summary: 'Pedido cancelado a pedido del comprador',
+                data: { orderId: cancelled.orderId, status: 'CANCELLED' },
+              },
+            ],
+            images: [],
+            ...(state
+              ? { trace: { lane: 'fast', validation: 'deterministic' } }
+              : {}),
+          };
+        }
+      } else if (cancelled?.paid) {
+        return {
+          replyText: this.applyTone(
+            agent,
+            'Tu pedido ya tiene el pago confirmado. El equipo te ayudará con cualquier cambio o cancelación.',
+          ),
+          escalate: true,
+          usedCatalog: false,
+          pauseOnHandoff: agent.pauseOnHandoff,
+          tools: [this.tools.escalateTrace('cancel_after_payment')],
+          images: [],
+          orderId: state.orderId,
+        };
+      }
+    }
     if (state?.orderId && buying) {
       const existing = await this.tools.existingOrder(params.tenantId, params.conversationId, state.orderId);
       if (existing && existing.status !== 'CANCELLED') {
@@ -600,14 +691,28 @@ export class SalesAgentRuntimeService {
     }
     const photoAsked = wantsPhoto(params.inboundText);
     const browse =
-      refs.length || buying || reference || (state?.requirements.need && genericSearch) || (photoAsked && contextProducts.length)
-        ? null
-        : await this.resolveBrowse(
+      releasingCheckout
+        ? await this.resolveBrowse(
             params.tenantId,
             params.inboundText,
             overview,
             history,
-          );
+          )
+        : refs.length ||
+            buying ||
+            reference ||
+            (state?.requirements.need && genericSearch) ||
+            (photoAsked && contextProducts.length)
+          ? null
+          : await this.resolveBrowse(
+              params.tenantId,
+              params.inboundText,
+              overview,
+              history,
+            );
+    if (releasingCheckout && state && (openProductNeed || catalogBrowse)) {
+      state.selectedProduct = undefined;
+    }
     if (browse) {
       matches = browse.view.products;
       searchTrace = browse.trace;
@@ -617,7 +722,9 @@ export class SalesAgentRuntimeService {
       searchTrace = { name: 'search_catalog', status: 'ok', summary: 'Referencia conversacional resuelta', data: { matchIds: [reference.id], count: 1, fromConversation: true } };
     } else {
       const pinned =
-        (buying || turn.confirmsPurchase || state?.stage === 'PRODUCT_SELECTED'
+        (buying ||
+        turn.confirmsPurchase ||
+        (state?.stage === 'PRODUCT_SELECTED' && !releasingCheckout)
           ? anchored ??
             (state?.selectedProduct
               ? products.find((p) => p.id === state.selectedProduct?.productId)
@@ -848,23 +955,18 @@ export class SalesAgentRuntimeService {
         ),
       });
     }
-    if (delivery?.kind === 'ask') {
-      pending = { kind: 'delivery', question: this.deliveryQuestion(delivery) };
-    }
     // Remembered destination must not auto-create an order on the first SKU lock.
     // Named SKU + no shipping config (kind none) may commit; quoted shipping still needs confirm.
+    // Anaphora ("lo quiero") already commits the current SKU → district is OK.
     const mayCommitOrder =
       cartLines.length > 0 ||
       resumedCheckout ||
       districtReply ||
       turn.confirmsPurchase ||
+      isPurchaseCommitAnaphora(params.inboundText) ||
       (Boolean(namedPurchaseTarget) && delivery?.kind === 'none');
-    if (
-      lines.length &&
-      delivery &&
-      delivery.kind !== 'ask' &&
-      !mayCommitOrder
-    ) {
+    // Interest / named SKU without commit: always "¿Te lo preparo?" first — never jump to district.
+    if (lines.length && delivery && !mayCommitOrder) {
       const place =
         delivery.kind === 'quote' && delivery.place
           ? ` para ${delivery.place.district}`
@@ -873,12 +975,10 @@ export class SalesAgentRuntimeService {
         kind: 'delivery',
         question: `¿Te lo preparo${place}?`,
       };
-      delivery = {
-        kind: 'ask',
-        pickupAddress:
-          delivery.kind === 'quote' ? delivery.pickupAddress : null,
-        candidates: [],
-      };
+      // Do not persist awaitingDelivery until the buyer confirms prepare.
+      delivery = null;
+    } else if (delivery?.kind === 'ask') {
+      pending = { kind: 'delivery', question: this.deliveryQuestion(delivery) };
     }
     if (state && delivery?.kind === 'quote') delivery.address = state.requirements.address?.value ?? (/\b(?:calle|avenida|av\.|jiron|jr\.)\s+.+\d/i.test(params.inboundText) ? params.inboundText : null);
     traces.push(searchTrace);
@@ -893,6 +993,25 @@ export class SalesAgentRuntimeService {
       runtimeKnowledge.retrievedFaqIds,
     );
     traces.push(faqTrace);
+
+    const discountAsked = asksAboutDiscount(params.inboundText);
+    let publishedDiscounts: PublishedDiscountView[] = [];
+    if (discountAsked) {
+      const listed = await this.tools.listActivePublishedDiscounts(
+        params.tenantId,
+      );
+      publishedDiscounts = listed.discounts;
+      traces.push(listed.trace);
+    }
+    const discountNote = discountAsked
+      ? this.publishedDiscountNote(
+          publishedDiscounts,
+          matches[0] ??
+            (state?.selectedProduct
+              ? products.find((p) => p.id === state.selectedProduct?.productId)
+              : undefined),
+        )
+      : '';
 
     const journeys: JourneyView[] = runtimeKnowledge.journeys.map((item) => ({
       title: item.title,
@@ -990,20 +1109,91 @@ export class SalesAgentRuntimeService {
 
     // District disambiguation and "where do we ship?" are owned by the backend: skip the
     // model so it cannot invent a confirmed address or a payment link mid-checkout.
-    // Exception: a photo request is answered (with images) and the district ask is repeated.
+    // Exceptions: prepare-ask with product summary; photo/product view; FAQ/discount answers.
     if (pending?.kind === 'delivery' && !checkoutUrl) {
+      const prepareAsk = PREPARE_PURCHASE_ASK.test(
+        normalizeText(pending.question),
+      );
+      if (prepareAsk) {
+        const chosen = matches[0] ?? photoTargets[0];
+        const summary = chosen
+          ? `Perfecto, seguimos con ${chosen.name} (${chosen.priceLabel}, ${chosen.stockLabel}). `
+          : '¡Buena elección! ';
+        return {
+          replyText: this.applyTone(agent, `${summary}${pending.question}`),
+          escalate: false,
+          usedCatalog: Boolean(chosen),
+          pauseOnHandoff: agent.pauseOnHandoff,
+          tools: traces,
+          images: [],
+          orderId,
+          orderRef,
+          checkoutUrl,
+          orderDraftHash,
+          usedAi: false,
+          ...(state
+            ? { trace: { lane: 'fast', validation: 'deterministic' } }
+            : {}),
+        };
+      }
       const photoNote = photoAsked
         ? images.length
           ? `Te mando la foto${images.length > 1 ? 's' : ''}. `
           : 'Aún no tengo foto de ese producto en el catálogo. '
         : '';
+      const faqNote = faqMatches[0]?.answer
+        ? `${faqMatches[0].answer} `
+        : '';
+      // Discount asks use only active published coupons / sale prices — never invent.
+      const policyNote = discountAsked ? discountNote : faqNote;
       return {
-        replyText: this.applyTone(agent, `${photoNote}${pending.question}`),
+        replyText: this.applyTone(
+          agent,
+          `${policyNote}${photoNote}${pending.question}`,
+        ),
         escalate: false,
-        usedCatalog: photoTargets.length > 0 || matches.length > 0,
+        usedCatalog:
+          photoTargets.length > 0 ||
+          matches.length > 0 ||
+          Boolean(policyNote),
         pauseOnHandoff: agent.pauseOnHandoff,
         tools: traces,
         images,
+        orderId,
+        orderRef,
+        checkoutUrl,
+        orderDraftHash,
+        usedAi: false,
+        ...(state
+          ? { trace: { lane: 'fast', validation: 'deterministic' } }
+          : {}),
+      };
+    }
+
+    // Pure discount question: answer from published coupons / sale price only (no LLM invention).
+    if (
+      discountAsked &&
+      discountNote &&
+      !checkoutUrl &&
+      !buying &&
+      !photoAsked &&
+      !openProductNeed &&
+      !catalogBrowse
+    ) {
+      return {
+        replyText: this.applyTone(
+          agent,
+          `${discountNote}${
+            matches.length
+              ? '¿Seguimos con la compra o quieres ver otra opción?'
+              : 'Si quieres, te muestro opciones del catálogo.'
+          }`,
+        ),
+        escalate: false,
+        usedCatalog: matches.length > 0 || publishedDiscounts.length > 0,
+        pauseOnHandoff: agent.pauseOnHandoff,
+        tools: traces,
+        images: [],
         orderId,
         orderRef,
         checkoutUrl,
@@ -1026,6 +1216,7 @@ export class SalesAgentRuntimeService {
           firstTurn,
           catalogMatches: matches,
           faqMatches,
+          publishedDiscounts,
           journeys,
           checkoutUrl,
           deliveryText,
@@ -1335,6 +1526,27 @@ export class SalesAgentRuntimeService {
       where: { tenantId },
       orderBy: { createdAt: 'asc' },
     });
+  }
+
+  /**
+   * Spanish answer grounded only in active published coupons and/or a catalog sale price.
+   * Empty published list → honest “no hay descuentos activos”.
+   */
+  private publishedDiscountNote(
+    discounts: PublishedDiscountView[],
+    product?: CatalogProductView | null,
+  ): string {
+    if (discounts.length) {
+      const lines = discounts
+        .slice(0, 5)
+        .map((d) => `• ${d.summary}`)
+        .join('\n');
+      return `Sí, hay descuentos publicados y activos:\n${lines}\n`;
+    }
+    if (product?.compareAtPriceLabel) {
+      return `Este producto está en oferta publicada: ${product.priceLabel} (antes ${product.compareAtPriceLabel}). No hay otros descuentos activos ahora.\n`;
+    }
+    return 'Por ahora no hay descuentos publicados y activos.\n';
   }
 
   /** Asks where to deliver, offering pickup when the business has it. */
@@ -1691,6 +1903,7 @@ export class SalesAgentRuntimeService {
     firstTurn: boolean;
     catalogMatches: CatalogProductView[];
     faqMatches: FaqMatch[];
+    publishedDiscounts?: PublishedDiscountView[];
     journeys: JourneyView[];
     checkoutUrl?: string;
     deliveryText: DeliveryText;
@@ -1780,6 +1993,9 @@ export class SalesAgentRuntimeService {
       params.catalogMatches.some((product) => product.compareAtPriceLabel)
         ? 'regularPrice es el precio antes de la oferta publicada en la tienda: puedes mencionar que está en oferta con esos dos montos, sin calcular ni prometer otros descuentos.'
         : '',
+      (params.publishedDiscounts?.length ?? 0) > 0
+        ? 'publishedDiscounts son los únicos cupones/ofertas activos y publicados: puedes mencionarlos tal cual (label/summary/code). Prohibido inventar otros % o códigos.'
+        : 'No hay descuentos publicados y activos (publishedDiscounts vacío): si preguntan por descuento/oferta/cupón, dilo con claridad. Nunca inventes promociones.',
       params.checkoutUrl
         ? ''
         : params.salesState?.selectedProduct
@@ -1800,7 +2016,14 @@ export class SalesAgentRuntimeService {
     const current = {
       inboundText: params.inboundText, catalog: catalogJson,
       ...(params.browse ? { catalogOverview: { totalProducts: params.browse.overview.total, categories: params.browse.overview.categories.slice(0, 12).map((item) => ({ category: item.label, products: item.count })) }, storeUrl: params.browse.overview.storeUrl } : {}),
-      faqs: params.faqMatches, journeyScripts: params.journeys, paymentLinkReady: Boolean(params.checkoutUrl),
+      faqs: params.faqMatches,
+      publishedDiscounts: (params.publishedDiscounts ?? []).map((d) => ({
+        label: d.label,
+        summary: d.summary,
+        method: d.method,
+        code: d.code,
+      })),
+      journeyScripts: params.journeys, paymentLinkReady: Boolean(params.checkoutUrl),
     };
     const messages: AiChatMessage[] = params.salesState ? contextMessages(system, current, params.salesState, params.history, Number(this.config.get('SALES_CONTEXT_TOKEN_BUDGET', 16000)), Number(this.config.get('SALES_RECENT_MESSAGES_LIMIT', 20))) : [
       { role: 'system', content: system }, ...promptHistory(params.history).map((turn) => ({ role: turn.role === 'buyer' ? 'user' : 'assistant', content: turn.text })), { role: 'user', content: JSON.stringify(current) },
@@ -1883,7 +2106,18 @@ export class SalesAgentRuntimeService {
         const fresh = await this.tools.getProducts(params.tenantId, params.catalogMatches.map((p) => p.id));
         params.catalogMatches.splice(0, params.catalogMatches.length, ...fresh);
       }
-      const failures = validateSalesResponse(parsed.replyText, Array.isArray(parsed.productNames) ? parsed.productNames.filter((v): v is string => typeof v === 'string') : [], params.catalogMatches, params.salesState, params.faqMatches.map((faq) => faq.answer));
+      const failures = validateSalesResponse(
+        parsed.replyText,
+        Array.isArray(parsed.productNames)
+          ? parsed.productNames.filter((v): v is string => typeof v === 'string')
+          : [],
+        params.catalogMatches,
+        params.salesState,
+        [
+          ...params.faqMatches.map((faq) => faq.answer),
+          ...(params.publishedDiscounts ?? []).map((d) => d.summary),
+        ],
+      );
       if (failures.length) { this.logger.warn(JSON.stringify({ event: 'sales_response_rejected', tenantId: params.tenantId, conversationId: params.conversationId, failures })); return null; }
     }
     const normalizedReply = normalizeText(parsed.replyText);

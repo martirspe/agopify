@@ -54,7 +54,8 @@ const RULES: Array<{ id: BuyerIntentId; pattern: RegExp; priority: number }> = [
   },
   {
     id: 'rejection',
-    pattern: /\b(no\s+quiero\s+ese|ya\s+no\s+quiero|cancela(?:r)?\s+la\s+compra|no\s+voy\s+a\s+comprar|descarta)\b/,
+    pattern:
+      /\b(no\s+quiero\s+ese|ya\s+no\s+quiero|cancela(?:r)?\s+(?:la\s+compra|el\s+pedido|mi\s+pedido)|anula(?:r)?\s+(?:el\s+)?pedido|ya\s+no\s+(?:lo\s+|la\s+)?(?:voy\s+a\s+)?comprar|no\s+(?:lo\s+|la\s+)?voy\s+a\s+comprar|descarta)\b/,
     priority: 88,
   },
   {

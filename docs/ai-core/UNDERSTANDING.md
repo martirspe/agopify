@@ -14,7 +14,9 @@ Architecture priority #3: **determinism first** for references, yes/no to closin
 4. Runtime pins `matches` to the selected/anchored product when buying or in `PRODUCT_SELECTED`  
 5. LLM/deterministic reply — prompt forbids re-asking “qué producto buscas” if a product is already chosen  
 
-**Open product need** (`isOpenProductNeed`: “quiero comprar un X”, “busco Y”, “necesito Z”): starts catalog discovery. It must **not** resume a prior pending checkout / remembered district into an order. Anaphora checkout (“comprarlo”, “lo quiero”, “dame el link”) stays on the current SKU. A named SKU in the same phrase (“quiero comprar Perfume X”) may enter checkout; quoted shipping still asks confirmation before creating the order.
+**Open product need** (`isOpenProductNeed`: “quiero comprar un X”, “busco Y”, “necesito Z”, “quiero ver …”, “muéstrame productos de…”): starts catalog discovery and **releases** a stuck district ask. It must **not** resume a prior pending checkout / remembered district into an order. Singular “muéstrame el producto” is presentation of the current SKU (E5), not a new search. Anaphora checkout (“comprarlo”, “lo quiero”, “dame el link”) stays on the current SKU. A named SKU in the same phrase (“quiero comprar Perfume X”) may enter checkout; quoted shipping still asks confirmation before creating the order.
+
+**Cancel / abandon** (`wantsCancelOrder`: “cancelar el pedido”, “ya no lo voy a comprar”): cancels an unpaid chat order (DRAFT / PENDING_PAYMENT) or hands off if already paid. Must never loop “Ya tienes un pedido pendiente” when the buyer is cancelling or starting a new catalog need.
 
 ## Pending seller asks
 
@@ -26,7 +28,9 @@ Architecture priority #3: **determinism first** for references, yes/no to closin
 
 Affirmatives (`sí`, `dale`, `sí sólo uno`, `lo quiero`, …) against `prepare_purchase` ⇒ purchase confirmation. Soft declines (`no`, `no gracias después`, `luego`) clear the offer without checkout. Bare `sí` without a prepare-ask does **not** invent a purchase.
 
-While district/checkout is pending, “quiero ver foto” still sends the selected product image and re-asks the district — the photo request is never ignored.
+While district/checkout is pending, “quiero ver foto” / “muéstrame el producto” still sends the selected product image and re-asks the district — the presentation request is never ignored. FAQ questions use published knowledge. Discount / oferta / cupón questions use **only** active coupons in vigencia (`listActivePublishedDiscounts`) or a catalog sale price (`compareAt`); if none, the agent says there are no published active discounts — never invents %.
+
+**Option selection vs checkout:** after the agent listed options, “quiero el X” / “quiero esa” pins that SKU and asks “¿Te lo preparo?” — it must **not** jump to the district ask. District is asked only after prepare confirmation, anaphora commit (“lo quiero”, “quiero comprarlo”, payment link), or a remembered district reply.
 
 ## Product references (recommended list only)
 

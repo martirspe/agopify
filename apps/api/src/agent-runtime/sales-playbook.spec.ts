@@ -28,7 +28,7 @@ describe('sales playbook prompt', () => {
     expect(prompt).not.toContain('MÉTODO DE VENTA');
     expect(prompt).toContain('REGLAS DEL SISTEMA');
     expect(prompt).toContain('Nunca inventes precios');
-    expect(prompt).toContain('Nunca ofrezcas descuentos');
+    expect(prompt).toContain('Nunca inventes descuentos');
   });
 
   it('falls back to the guided persona when custom mode has an empty prompt', () => {

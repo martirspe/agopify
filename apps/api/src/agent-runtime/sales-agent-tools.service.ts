@@ -4,7 +4,7 @@ import { Prisma, type ProductKind } from '@prisma/client';
 import { CATALOG_CANDIDATES, maximumPrice, searchCatalogIds } from '../catalog/catalog-search';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrderShipping, OrdersService } from '../orders/orders.service';
-import { orderReference } from '../orders/settlement';
+import { orderReference, releaseOrder } from '../orders/settlement';
 import { PaymentsService } from '../payments/payments.service';
 import { SalesSearchService } from './sales-search.service';
 import type { ShippingRules } from '../storefront/shipping';
@@ -341,6 +341,7 @@ export type AgentToolName =
   | 'search_catalog'
   | 'get_product_availability'
   | 'lookup_faq'
+  | 'list_promotions'
   | 'create_order'
   | 'create_payment_link'
   | 'quote_shipping'
@@ -348,6 +349,17 @@ export type AgentToolName =
   /** Playground / audit: product photo that Meta would send after the text. */
   | 'send_product_image';
 // Read tools and backend state traces share the existing audit contract.
+
+/** Buyer-facing snapshot of a coupon that is active and inside its date window. */
+export type PublishedDiscountView = {
+  id: string;
+  label: string;
+  /** One-line Spanish summary the agent may quote (no invented %). */
+  summary: string;
+  method: 'CODE' | 'AUTOMATIC';
+  /** Present only for CODE coupons the buyer can type at checkout. */
+  code: string | null;
+};
 
 export type AgentToolTrace = {
   name: AgentToolName | 'select_variant' | 'search_products' | 'get_product' | 'get_price' | 'check_inventory' | 'get_product_variants' | 'calculate_shipping' | 'get_commercial_policy' | 'get_order_status';
@@ -530,6 +542,123 @@ export class SalesAgentToolsService {
     return order ? { id: order.id, status: order.status, orderRef: orderReference(order), checkoutUrl: order.payments[0]?.checkoutUrl } : null;
   }
 
+  /**
+   * Active coupons inside their vigencia window — the only discounts the seller may offer.
+   * Product sale prices (compareAt) stay on each catalog row, not here.
+   */
+  async listActivePublishedDiscounts(
+    tenantId: string,
+    now = new Date(),
+  ): Promise<{ discounts: PublishedDiscountView[]; trace: AgentToolTrace }> {
+    const rows = await this.prisma.coupon.findMany({
+      where: {
+        tenantId,
+        isActive: true,
+        AND: [
+          { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+          { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
+        ],
+      },
+      orderBy: [{ method: 'asc' }, { updatedAt: 'desc' }],
+      take: 12,
+    });
+    const discounts = rows.map((coupon) => ({
+      id: coupon.id,
+      label: coupon.label,
+      summary: this.couponSummary(coupon),
+      method: coupon.method as 'CODE' | 'AUTOMATIC',
+      code: coupon.method === 'CODE' ? coupon.code : null,
+    }));
+    return {
+      discounts,
+      trace: {
+        name: 'list_promotions',
+        status: discounts.length ? 'ok' : 'skipped',
+        summary: discounts.length
+          ? `${discounts.length} descuento(s) activo(s) consultado(s)`
+          : 'Sin descuentos publicados y activos',
+        data: {
+          count: discounts.length,
+          ids: discounts.map((d) => d.id),
+        },
+      },
+    };
+  }
+
+  private couponSummary(coupon: {
+    kind: string;
+    value: number;
+    label: string;
+    method: string;
+    code: string;
+    buyQuantity: number | null;
+    getQuantity: number | null;
+    note: string | null;
+  }): string {
+    const benefit =
+      coupon.kind === 'PERCENT'
+        ? `${coupon.value}% de descuento`
+        : coupon.kind === 'FIXED'
+          ? `${moneyLabel('PEN', coupon.value)} de descuento`
+          : coupon.kind === 'FREE_SHIPPING'
+            ? 'envío gratis'
+            : coupon.kind === 'BUY_X_GET_Y'
+              ? `lleva ${coupon.buyQuantity ?? 0} y obtén ${coupon.getQuantity ?? 0}`
+              : coupon.label;
+    const how =
+      coupon.method === 'CODE'
+        ? `con el código ${coupon.code}`
+        : 'automático al comprar';
+    const note = coupon.note?.trim() ? ` (${coupon.note.trim()})` : '';
+    return `${coupon.label}: ${benefit} ${how}${note}`;
+  }
+
+  /**
+   * Cancel an unpaid chat order (DRAFT / PENDING_PAYMENT) when the buyer asks.
+   * Playground/shadow dry-run IDs are acknowledged without a DB write.
+   */
+  async cancelUnpaidChatOrder(params: {
+    tenantId: string;
+    conversationId?: string | null;
+    orderId: string;
+    mode: AgentRuntimeMode;
+  }): Promise<
+    | { ok: true; orderId: string; dryRun?: boolean }
+    | { ok: false; paid?: boolean }
+    | null
+  > {
+    if (params.mode === 'playground' || params.mode === 'shadow') {
+      return { ok: true, orderId: params.orderId, dryRun: true };
+    }
+    if (!params.conversationId) return null;
+    const order = await this.prisma.order.findFirst({
+      where: {
+        id: params.orderId,
+        tenantId: params.tenantId,
+        conversationId: params.conversationId,
+      },
+      include: { items: true },
+    });
+    if (!order) return null;
+    if (['PAID', 'FULFILLING', 'SHIPPED', 'COMPLETED'].includes(order.status)) {
+      return { ok: false, paid: true };
+    }
+    if (!['DRAFT', 'PENDING_PAYMENT'].includes(order.status)) {
+      return { ok: false };
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "Order" WHERE "id" = ${order.id} AND "tenantId" = ${params.tenantId} FOR UPDATE`;
+      const fresh = await tx.order.findFirstOrThrow({
+        where: { id: order.id, tenantId: params.tenantId },
+        include: { items: true },
+      });
+      if (fresh.status === 'CANCELLED') return;
+      if (!['DRAFT', 'PENDING_PAYMENT'].includes(fresh.status)) return;
+      await releaseOrder(tx, fresh, 'Cancelado por el comprador en el chat');
+    });
+    return { ok: true, orderId: order.id };
+  }
+
   /** Category counts of the whole available catalog, used to summarize it instead of listing it. */
   async catalogOverview(tenantId: string): Promise<CatalogOverview> {
     const [rows, storeUrl] = await Promise.all([
@@ -589,6 +718,10 @@ export class SalesAgentToolsService {
     const best = scored[0];
     if (best && tokens.every((token) => best.hits.includes(token))) {
       return { kind: 'category', category: best.category };
+    }
+    // "muéstrame el producto" is presentation of the current SKU, not a catalog dump.
+    if (/\b(?:el|la|ese|esta|este|esa)\s+producto\b/.test(normalized)) {
+      return null;
     }
     const asksCatalog =
       /\b(productos?|catalogo|que (tienen|venden|hay|ofrecen)|recomiend\w*|opciones|muestrame|ensename)\b/.test(

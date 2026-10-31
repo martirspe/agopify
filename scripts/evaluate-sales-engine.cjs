@@ -90,6 +90,15 @@ async function main() {
     });
     tools.browseProducts = async () => ({ products: catalog, remaining: 0 });
     tools.shippingRules = async () => null;
+    tools.listActivePublishedDiscounts = async () => ({
+      discounts: [],
+      trace: {
+        name: 'list_promotions',
+        status: 'skipped',
+        summary: 'Sin descuentos publicados y activos',
+        data: { count: 0, ids: [] },
+      },
+    });
     const runtime = new SalesAgentRuntimeService(
       { salesAgent: { findFirst: async () => null } },
       config,

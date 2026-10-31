@@ -24,6 +24,7 @@ filters + validator/prompt guards. Every row must stay **niche-agnostic**.
 | B3 | Bare “Sí” after “¿te lo preparo?” | Purchase, not rediscovery | Pending ask = `prepare_purchase` |
 | B4 | Soft decline: no / después / luego | Do not force checkout | Understanding |
 | B5 | Affirmative without pending prepare | Do not invent a purchase | Understanding |
+| B6 | After options: “quiero el X” / “quiero esa” | Pin SKU + ¿Te lo preparo?; never jump to district | Understanding + runtime |
 
 ## C. Quantity & packing
 
@@ -50,7 +51,9 @@ filters + validator/prompt guards. Every row must stay **niche-agnostic**.
 | E2 | Topic change clears wrong selection | Clear only on clear topic shift | `observeBuyer` |
 | E3 | Operator pause | Agent silent until reactivation | Gateway / pause |
 | E4 | District / shipping ask | Capture district; do not restart catalog | Pending ask |
-| E5 | “quiero ver foto” while district/checkout pending | Send photo of selected SKU; re-ask district if still needed — never ignore the photo | Runtime |
+| E5 | “quiero ver foto” / “muéstrame el producto” while district/checkout pending | Send photo of selected SKU; re-ask district if still needed — never ignore the presentation ask | Runtime |
+| E6 | Browse another category while district pending (“muéstrame productos de…”) | Release district lock; show catalog; do not re-ask distrito | Runtime + Understanding |
+| E7 | “cancelar el pedido” / “ya no lo voy a comprar” with unpaid chat order | Cancel unpaid order (or hand off if paid); never loop “pedido pendiente” | Runtime + tools |
 
 ## F. Voice & UX copy (Spanish)
 

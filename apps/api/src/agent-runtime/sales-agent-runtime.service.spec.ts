@@ -40,6 +40,15 @@ describe('sales agent buyer replies', () => {
       carrierRates: { olva: [900, 1200, 1600, 2200, 2800] },
     });
     jest.spyOn(tools, 'createOrderWithOptionalLink').mockResolvedValue({ traces: [] });
+    jest.spyOn(tools, 'listActivePublishedDiscounts').mockResolvedValue({
+      discounts: [],
+      trace: {
+        name: 'list_promotions',
+        status: 'skipped',
+        summary: 'Sin descuentos publicados y activos',
+        data: { count: 0, ids: [] },
+      },
+    });
     const config = {
       get: (key: string, fallback?: unknown) =>
         key === 'OPENAI_API_KEY' && aiEnabled ? 'fixture-key' : fallback,
@@ -90,13 +99,38 @@ describe('sales agent buyer replies', () => {
     expect(defaultReply.replyText).not.toContain(discoverScript);
   });
 
-  it('responds to a purchase mixed with a greeting and keeps delivery before payment', async () => {
+  it('asks prepare before district when the buyer names a SKU to buy', async () => {
     const reply = await runtime.generateReply({
       tenantId: 'tenant-1', inboundText: 'Hola, quiero comprar Perfume de prueba', history,
     });
-    expect(reply.replyText).toContain('distrito');
+    expect(reply.replyText).toMatch(/preparo/i);
+    expect(reply.replyText).toContain(product.name);
+    expect(reply.replyText.toLowerCase()).not.toContain('distrito');
     expect(reply.usedCatalog).toBe(true);
     expect(reply.images).toEqual([]);
+    expect(tools.createOrderWithOptionalLink).not.toHaveBeenCalled();
+  });
+
+  it('pins an option selection without jumping to district (B6)', async () => {
+    const state = initialSalesState();
+    state.recommendedProductIds = [product.id];
+    state.stage = 'RECOMMENDATION';
+    const reply = await runtime.generateReply({
+      tenantId: 'tenant-1',
+      inboundText: `quiero el ${product.name}`,
+      history: [
+        {
+          role: 'agent',
+          text: `Tenemos tres opciones. 1. ${product.name}. ¿Cuál te interesa?`,
+          productIds: [product.id],
+        },
+      ],
+      salesState: state,
+    });
+    expect(reply.replyText).toContain(product.name);
+    expect(reply.replyText).toMatch(/preparo/i);
+    expect(reply.replyText.toLowerCase()).not.toContain('distrito');
+    expect(reply.salesState?.selectedProduct?.productId).toBe(product.id);
     expect(tools.createOrderWithOptionalLink).not.toHaveBeenCalled();
   });
 
@@ -256,6 +290,118 @@ describe('sales agent buyer replies', () => {
     expect(reply.replyText.toLowerCase()).toMatch(/desodorant|floral|preparo/);
   });
 
+  it('releases district lock when the buyer asks to browse another category', async () => {
+    const cologne: CatalogProductView = {
+      ...product,
+      id: 'col-1',
+      handle: 'colonia-hombre',
+      name: 'Colonia masculina Fresh',
+      descriptionShort: 'Fresco · 100 ml',
+      categories: ['Perfumería masculina'],
+      imageUrl: 'https://example.com/col.jpg',
+    };
+    jest.spyOn(tools, 'listAvailableProducts').mockResolvedValue([product, cologne]);
+    jest.spyOn(tools, 'browseProducts').mockResolvedValue({
+      products: [cologne],
+      remaining: 0,
+    });
+    const state = initialSalesState();
+    state.pendingLines = [{ productId: product.id, variantId: null, quantity: 1 }];
+    state.selectedProduct = { productId: product.id };
+    state.stage = 'CHECKOUT';
+    state.intent = 'purchase';
+    state.missingInformation = ['destination'];
+    const reply = await runtime.generateReply({
+      tenantId: 'tenant-1',
+      inboundText: 'muestrame que productos de colonia masculina tienen',
+      history: [
+        {
+          role: 'agent',
+          text: 'Para calcular el envío, ¿a qué distrito te lo enviamos?',
+          productIds: [product.id],
+          pendingDelivery: {
+            lines: [{ productId: product.id, variantId: null, quantity: 1 }],
+          },
+        },
+      ],
+      salesState: state,
+    });
+    expect(reply.replyText.toLowerCase()).not.toContain('distrito');
+    expect(reply.replyText.toLowerCase()).toMatch(/colonia|masculina/);
+    expect(tools.createOrderWithOptionalLink).not.toHaveBeenCalled();
+  });
+
+  it('cancels an unpaid pending order when the buyer asks', async () => {
+    const state = initialSalesState();
+    state.orderId = 'ord-pending-1';
+    state.stage = 'PAYMENT_PENDING';
+    state.intent = 'purchase';
+    state.selectedProduct = { productId: product.id };
+    const cancelSpy = jest
+      .spyOn(tools, 'cancelUnpaidChatOrder')
+      .mockResolvedValue({ ok: true, orderId: 'ord-pending-1', dryRun: true });
+    const reply = await runtime.generateReply({
+      tenantId: 'tenant-1',
+      inboundText: 'quiero cancelar el pedido',
+      history: [
+        {
+          role: 'agent',
+          text: 'Listo, va el perfume. Completa el pago.',
+          paymentLink: true,
+          productIds: [product.id],
+        },
+      ],
+      salesState: state,
+      mode: 'playground',
+    });
+    expect(cancelSpy).toHaveBeenCalled();
+    expect(reply.replyText.toLowerCase()).toMatch(/cancel/);
+    expect(reply.replyText.toLowerCase()).not.toContain(
+      'ya tienes un pedido pendiente',
+    );
+    expect(reply.checkoutUrl).toBeUndefined();
+    expect(reply.salesState?.orderId).toBeUndefined();
+  });
+
+  it('lets the buyer abandon checkout and browse after a pending order', async () => {
+    const cologne: CatalogProductView = {
+      ...product,
+      id: 'col-2',
+      handle: 'colonia-b',
+      name: 'Colonia nocturna',
+      categories: ['Perfumería'],
+    };
+    jest.spyOn(tools, 'listAvailableProducts').mockResolvedValue([product, cologne]);
+    jest.spyOn(tools, 'cancelUnpaidChatOrder').mockResolvedValue({
+      ok: true,
+      orderId: 'ord-pending-2',
+      dryRun: true,
+    });
+    const state = initialSalesState();
+    state.orderId = 'ord-pending-2';
+    state.stage = 'PAYMENT_PENDING';
+    state.intent = 'purchase';
+    state.selectedProduct = { productId: product.id };
+    const reply = await runtime.generateReply({
+      tenantId: 'tenant-1',
+      inboundText: 'ya no lo voy a comprar, quiero ver productos de perfumeria',
+      history: [
+        {
+          role: 'agent',
+          text: 'Listo, va el perfume. Completa el pago.',
+          paymentLink: true,
+          productIds: [product.id],
+        },
+      ],
+      salesState: state,
+      mode: 'playground',
+    });
+    expect(reply.replyText.toLowerCase()).not.toContain('pedido pendiente');
+    expect(reply.checkoutUrl).toBeUndefined();
+    expect(reply.salesState?.orderId).toBeUndefined();
+    expect(reply.replyText.toLowerCase()).toMatch(/colonia|perfume|preparo|opcion/);
+  });
+
   it('hands off after order when payment link is unavailable', async () => {
     const waiting: ConversationTurn[] = [{
       role: 'agent',
@@ -349,6 +495,94 @@ describe('sales agent buyer replies', () => {
     expect(reply.replyText.toLowerCase()).toMatch(/foto/);
     expect(reply.replyText).toMatch(/distrito/i);
     expect(tools.createOrderWithOptionalLink).not.toHaveBeenCalled();
+  });
+
+  it('shows the product when asked before giving a district (E5)', async () => {
+    const state = initialSalesState();
+    state.pendingLines = [{ productId: product.id, variantId: null, quantity: 1 }];
+    state.selectedProduct = { productId: product.id };
+    state.stage = 'CHECKOUT';
+    state.intent = 'purchase';
+    state.missingInformation = ['destination'];
+    const reply = await runtime.generateReply({
+      tenantId: 'tenant-1',
+      inboundText: 'primero muestrame el producto',
+      history: [
+        {
+          role: 'agent',
+          text: 'Para calcular el envío, ¿a qué distrito te lo enviamos?',
+          productIds: [product.id],
+          pendingDelivery: {
+            lines: [{ productId: product.id, variantId: null, quantity: 1 }],
+          },
+        },
+      ],
+      salesState: state,
+    });
+    expect(reply.images).toEqual([
+      expect.objectContaining({ productId: product.id, imageUrl: product.imageUrl }),
+    ]);
+    expect(reply.replyText.toLowerCase()).toMatch(/foto/);
+    expect(reply.replyText).toMatch(/distrito/i);
+    expect(tools.createOrderWithOptionalLink).not.toHaveBeenCalled();
+  });
+
+  it('denies discounts when none are published and active (G2)', async () => {
+    const state = initialSalesState();
+    state.pendingLines = [{ productId: product.id, variantId: null, quantity: 1 }];
+    state.selectedProduct = { productId: product.id };
+    state.stage = 'CHECKOUT';
+    state.intent = 'purchase';
+    state.missingInformation = ['destination'];
+    const reply = await runtime.generateReply({
+      tenantId: 'tenant-1',
+      inboundText: 'hay algun descuento?',
+      history: [
+        {
+          role: 'agent',
+          text: 'Para calcular el envío, ¿a qué distrito te lo enviamos?',
+          productIds: [product.id],
+          pendingDelivery: {
+            lines: [{ productId: product.id, variantId: null, quantity: 1 }],
+          },
+        },
+      ],
+      salesState: state,
+    });
+    expect(reply.replyText.toLowerCase()).toMatch(/no hay descuentos publicados/);
+    expect(reply.replyText).toMatch(/distrito/i);
+    expect(tools.listActivePublishedDiscounts).toHaveBeenCalled();
+    expect(tools.createOrderWithOptionalLink).not.toHaveBeenCalled();
+  });
+
+  it('offers only active published discounts when the buyer asks', async () => {
+    jest.spyOn(tools, 'listActivePublishedDiscounts').mockResolvedValue({
+      discounts: [
+        {
+          id: 'c1',
+          label: 'Verano 10',
+          summary: 'Verano 10: 10% de descuento con el código VERANO10',
+          method: 'CODE',
+          code: 'VERANO10',
+        },
+      ],
+      trace: {
+        name: 'list_promotions',
+        status: 'ok',
+        summary: '1 descuento(s) activo(s) consultado(s)',
+        data: { count: 1, ids: ['c1'] },
+      },
+    });
+    const reply = await runtime.generateReply({
+      tenantId: 'tenant-1',
+      inboundText: 'tienen algun descuento o promo?',
+      history,
+    });
+    expect(reply.replyText).toContain('VERANO10');
+    expect(reply.replyText.toLowerCase()).toContain('descuento');
+    expect(reply.replyText.toLowerCase()).not.toContain(
+      'no hay descuentos publicados',
+    );
   });
 
   it.each([false, true])('sends photos only on request, including repeat requests (AI enabled: %s)', async (useAi) => {

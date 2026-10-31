@@ -200,17 +200,35 @@ export function askedForDistrict(history: ConversationTurn[]): boolean {
 
 export function wantsPhoto(text: string): boolean {
   const visual = /\b(fotos?|fotitos?|imagen|imagenes|como se ve|ver como es)\b/;
+  // "muéstrame / ver el producto" — presentation ask, not "quiero el producto" (purchase).
+  const productView =
+    /\b(manda\w*|envia\w*|muestra\w*|ensena\w*|pasa\w*|dame|deme|ver|puedes|podrias)\b.{0,40}\b(?:el\s+|la\s+|ese\s+|esta\s+|este\s+|esa\s+)?productos?\b/;
   let requested = false;
   for (const clause of normalizeText(text).split(/[.!?;,]|\bpero\b/)) {
-    if (!visual.test(clause)) continue;
-    if (/\b(no|nunca|tampoco|deja de|dejes de)\b|\bsin\s+(?:mas\s+)?(?:fotos?|fotitos?|imagen|imagenes)\b/.test(clause)) {
+    const hasVisual = visual.test(clause);
+    const hasProductView = productView.test(clause);
+    if (!hasVisual && !hasProductView) continue;
+    if (
+      /\b(no|nunca|tampoco|deja de|dejes de)\b|\bsin\s+(?:mas\s+)?(?:fotos?|fotitos?|imagen|imagenes|producto)\b/.test(
+        clause,
+      )
+    ) {
       requested = false;
       continue;
     }
-    const asks = /^\s*(?:(?:una|unas|otra|otras)\s+)?(?:fotos?|fotitos?|imagen|imagenes)\b/.test(clause)
-      || /\b(por favor|porfa)\b/.test(clause)
-      || /\b(manda\w*|envia\w*|muestra\w*|ensena\w*|pasa\w*|dame|deme|comparte\w*|quiero|quisiera|necesito|ver|tienes|tienen|hay|puedes|podrias)\b.{0,60}\b(fotos?|fotitos?|imagen|imagenes)\b/.test(clause)
-      || /\b(como se ve|ver como es)\b/.test(clause);
+    if (hasProductView) {
+      requested = true;
+      continue;
+    }
+    const asks =
+      /^\s*(?:(?:una|unas|otra|otras)\s+)?(?:fotos?|fotitos?|imagen|imagenes)\b/.test(
+        clause,
+      ) ||
+      /\b(por favor|porfa)\b/.test(clause) ||
+      /\b(manda\w*|envia\w*|muestra\w*|ensena\w*|pasa\w*|dame|deme|comparte\w*|quiero|quisiera|necesito|ver|tienes|tienen|hay|puedes|podrias)\b.{0,60}\b(fotos?|fotitos?|imagen|imagenes)\b/.test(
+        clause,
+      ) ||
+      /\b(como se ve|ver como es)\b/.test(clause);
     if (asks) requested = true;
   }
   return requested;

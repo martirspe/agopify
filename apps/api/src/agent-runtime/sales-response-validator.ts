@@ -109,9 +109,19 @@ export function validateSalesResponse(
       ...policyAnswers,
       ...selected.flatMap((p) => Object.values(p.facts ?? {}).flat()),
     ].map(normalizeText);
+    // Honest denial of unpublished discounts/policies is allowed (not a promise).
+    const honestDenial = (s: string) =>
+      /\b(?:no\s+(?:puedo|podemos|hay|tenemos|ofrezco|ofrecemos)|sin)\b.{0,48}\b(?:descuento|garantia|devoluc|cambios|reembolso)/i.test(
+        normalizeText(s),
+      ) ||
+      /\b(?:descuento|garantia|devoluc|cambios|reembolso)\w*.{0,48}\b(?:no\s+est(?:a|an|én|en)\s+publicad|no\s+publicad)/i.test(
+        normalizeText(s),
+      );
     if (
       sentences.some(
-        (s) => !facts.some((fact) => fact.includes(normalizeText(s))),
+        (s) =>
+          !honestDenial(s) &&
+          !facts.some((fact) => fact.includes(normalizeText(s))),
       )
     )
       failures.add('unsupported_policy');

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- AI Core: preguntas de descuento/oferta/cupón solo responden con cupones activos y vigentes del negocio (o precio tachado del catálogo); si no hay, lo dice sin inventar promociones.
+- AI Core: ciclo completo — “quiero el X” → ¿Te lo preparo? (no distrito); con distrito pendiente honra foto/producto y descuentos; browse de otra categoría libera el envío; “cancelar el pedido” / “ya no lo voy a comprar” cancela el pedido impago y no queda en bucle de “pedido pendiente” (B6/E5/E6/E7/G2 multinicho).
 - Consola / Planes: vista de consumo y comparación alineada al design system; el formulario de pago del plan se abre en un modal centrado con fondo oscurecido y difuminado (`modal-frame`).
 - AI Core: si el negocio no tiene medios de pago (Mercado Pago) para el link en el chat, el pedido se registra igual y se deriva a un asesor (`payment_provider_missing`); el agente ya no inventa ni promete el link ni agradece una compra sin cobro.
 - AI Core: “quiero comprar un X” / “busco Y” abre búsqueda nueva y no reanuda un checkout anterior ni crea pedido con el distrito guardado; el cobro espera confirmación explícita.

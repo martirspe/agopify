@@ -277,7 +277,9 @@ export function observeBuyer(
   }
   if (
     analysis.primary === 'rejection' ||
-    /\b(ya no quiero|cancela la compra|no voy a comprar)\b/.test(normalized)
+    /\b(ya no quiero|cancela(?:r)? (?:la compra|el pedido|mi pedido)|anula(?:r)? (?:el )?pedido|ya no (?:lo |la )?(?:voy a )?comprar|no (?:lo |la )?voy a comprar)\b/.test(
+      normalized,
+    )
   ) {
     next.stage = 'LOST';
     next.intent = 'cancel';
@@ -304,12 +306,18 @@ export function observeBuyer(
           'HUMAN_HANDOFF',
         ].includes(next.stage),
     );
+  const catalogLook =
+    /\b(tambien quiero ver|cambiando de tema|ahora busco|otra cosa)\b/.test(
+      normalized,
+    ) ||
+    (/\bquiero ver\b/.test(normalized) &&
+      !/\b(?:foto|fotos|fotito|fotitos|imagen|imagenes|como se ve|como es|el producto|la producto)\b/.test(
+        normalized,
+      ));
   if (
     analysis.primary === 'topic_change' ||
     switchingProductThread ||
-    /\b(tambien quiero ver|cambiando de tema|ahora busco|otra cosa|quiero ver (?:tambien )?(?:mochilas|zapatillas|perfumes|polos|pantalones))\b/.test(
-      normalized,
-    )
+    catalogLook
   ) {
     Object.assign(next, applyTopicChange(next));
     // A new need leaves any prior unpaid chat order with the operator; this thread shops again.

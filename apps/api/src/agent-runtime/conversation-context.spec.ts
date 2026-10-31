@@ -122,10 +122,32 @@ describe('conversationalIntent', () => {
 
 describe('wantsPhoto', () => {
   it('requires a request instead of just mentioning an image', () => {
-    for (const text of ['Mándame una foto', '¿Me envías imágenes?', 'Foto del perfume, porfa', '¿Tienes fotos?', 'Quiero ver cómo se ve', 'La foto por favor', 'Envíame fotos sin filtros']) {
+    for (const text of [
+      'Mándame una foto',
+      '¿Me envías imágenes?',
+      'Foto del perfume, porfa',
+      '¿Tienes fotos?',
+      'Quiero ver cómo se ve',
+      'La foto por favor',
+      'Envíame fotos sin filtros',
+      'primero muestrame el producto',
+      'muéstrame el producto',
+      'quiero ver el producto',
+    ]) {
       expect(wantsPhoto(text)).toBe(true);
     }
-    for (const text of ['Hola', 'Quiero el perfume', 'No quiero fotos', 'No me mandes imágenes', 'Sin fotos por favor', 'No quiero ver cómo se ve', 'La foto no carga', 'La foto se ve borrosa', 'Tengo fotos del producto']) {
+    for (const text of [
+      'Hola',
+      'Quiero el perfume',
+      'Quiero el producto',
+      'No quiero fotos',
+      'No me mandes imágenes',
+      'Sin fotos por favor',
+      'No quiero ver cómo se ve',
+      'La foto no carga',
+      'La foto se ve borrosa',
+      'Tengo fotos del producto',
+    ]) {
       expect(wantsPhoto(text)).toBe(false);
     }
   });

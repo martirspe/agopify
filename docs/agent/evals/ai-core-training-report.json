@@ -1,8 +1,8 @@
 {
   "mode": "ai-core-training-offline",
-  "datasetVersion": "2026.10.31d-training",
+  "datasetVersion": "2026.10.31f-training",
   "dataset": "ai-core-training",
-  "fixtureCount": 22,
+  "fixtureCount": 32,
   "gapsCovered": [
     "A1",
     "A2",
@@ -11,28 +11,32 @@
     "B3",
     "B4",
     "B5",
+    "B6",
     "C2",
     "D1",
     "E1",
     "E4",
     "E5",
+    "E6",
+    "E7",
     "F1",
-    "G1"
+    "G1",
+    "G2"
   ],
   "verticals": [
     "beauty",
     "footwear",
     "grocery"
   ],
-  "passCount": 22,
+  "passCount": 32,
   "failCount": 0,
   "metrics": {
     "context_retention": {
-      "samples": 11,
+      "samples": 19,
       "value": 1
     },
     "repeated_question_rate": {
-      "samples": 22,
+      "samples": 32,
       "value": 0
     },
     "intent_accuracy": {
@@ -44,15 +48,15 @@
       "value": null
     },
     "price_accuracy": {
-      "samples": 15,
+      "samples": 19,
       "value": 1
     },
     "inventory_accuracy": {
-      "samples": 11,
+      "samples": 15,
       "value": 1
     },
     "hallucination_rate": {
-      "samples": 22,
+      "samples": 32,
       "value": 0
     },
     "tool_selection_accuracy": {
@@ -60,15 +64,15 @@
       "value": null
     },
     "state_transition_accuracy": {
-      "samples": 2,
+      "samples": 4,
       "value": 1
     },
     "reference_resolution_accuracy": {
-      "samples": 17,
+      "samples": 23,
       "value": 1
     },
     "handoff_accuracy": {
-      "samples": 20,
+      "samples": 30,
       "value": 1
     },
     "sales_progression": {
@@ -76,15 +80,15 @@
       "value": 1
     },
     "reply_ban_accuracy": {
-      "samples": 22,
+      "samples": 32,
       "value": 1
     },
     "checkout_accuracy": {
-      "samples": 6,
+      "samples": 16,
       "value": 1
     },
     "image_accuracy": {
-      "samples": 2,
+      "samples": 4,
       "value": 1
     }
   },
@@ -327,7 +331,7 @@
       "gap": "B5",
       "vertical": "footwear",
       "failed": false,
-      "replyPreview": "Tengo estas opciones para ti:\n• Zapatilla Runner A (S/ 180.00, 2 en stock) — Amortiguación para correr\n• Zapatilla Urbana B (S/ 150.00, 2 en stock) — Para uso d",
+      "replyPreview": "Estas opciones encajan con lo que buscas:\n• Zapatilla Runner A (S/ 180.00, 2 en stock) — Amortiguación para correr\n• Zapatilla Urbana B (S/ 150.00, 2 en stock) ",
       "selectedProductId": null,
       "metrics": {
         "repeated_question_rate": 0,
@@ -345,13 +349,11 @@
       "gap": "B5",
       "vertical": "grocery",
       "failed": false,
-      "replyPreview": "Tengo estas opciones para ti:\n• Café de Altura 250g (S/ 28.00, 2 en stock) — Para uso diario\n• Pack Café + Taza (S/ 45.00, 2 en stock) — Para uso diario\n¿Cuál d",
+      "replyPreview": "¡Perfecto! ¿Te ayudo con algo más?",
       "selectedProductId": null,
       "metrics": {
         "repeated_question_rate": 0,
         "hallucination_rate": 0,
-        "price_accuracy": 1,
-        "inventory_accuracy": 1,
         "reply_ban_accuracy": 1,
         "reference_resolution_accuracy": 1,
         "checkout_accuracy": 1,
@@ -461,6 +463,184 @@
         "reference_resolution_accuracy": 1,
         "checkout_accuracy": 1,
         "image_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "B6-quiero-el-option-beauty",
+      "gap": "B6",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "Perfecto, seguimos con Perfume Floral A (S/ 89.00, 2 en stock). ¿Te lo preparo?",
+      "selectedProductId": "perfume-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "state_transition_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "checkout_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "B6-quiero-el-option-footwear",
+      "gap": "B6",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "Esta opción encaja con lo que me pediste:\n• Zapatilla Runner A (S/ 180.00, 2 en stock) — Amortiguación para correr\n¿Te lo preparo?",
+      "selectedProductId": "shoe-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "state_transition_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "checkout_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "E5-muestrame-producto-while-district-beauty",
+      "gap": "E5",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "Te mando la foto. Para calcular el envío, ¿a qué distrito te lo enviamos? Escríbeme el distrito y la provincia, por ejemplo: Miraflores, Lima.",
+      "selectedProductId": "perfume-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "checkout_accuracy": 1,
+        "image_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "E5-muestrame-producto-while-district-footwear",
+      "gap": "E5",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "Te mando la foto. Para calcular el envío, ¿a qué distrito te lo enviamos? Escríbeme el distrito y la provincia, por ejemplo: Miraflores, Lima.",
+      "selectedProductId": "shoe-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "checkout_accuracy": 1,
+        "image_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "G2-discount-while-district-beauty",
+      "gap": "G2",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "Por ahora no hay descuentos publicados y activos.\nPara calcular el envío, ¿a qué distrito te lo enviamos? Escríbeme el distrito y la provincia, por ejemplo: Mir",
+      "selectedProductId": "perfume-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "checkout_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "G2-discount-while-district-footwear",
+      "gap": "G2",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "Por ahora no hay descuentos publicados y activos.\nPara calcular el envío, ¿a qué distrito te lo enviamos? Escríbeme el distrito y la provincia, por ejemplo: Mir",
+      "selectedProductId": "shoe-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "checkout_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "E6-browse-releases-district-beauty",
+      "gap": "E6",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "Esta opción encaja con lo que me pediste:\n• Set Cuidado Hombre (S/ 98.90, 2 en stock) — Eau de parfum + Desodorante Roll On Hombre\n¿Te lo preparo?",
+      "selectedProductId": null,
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "reply_ban_accuracy": 1,
+        "checkout_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "E6-browse-releases-district-footwear",
+      "gap": "E6",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "Esta opción encaja con lo que me pediste:\n• Zapatilla Urbana B (S/ 150.00, 2 en stock) — Para uso diario\n¿Te lo preparo?",
+      "selectedProductId": null,
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "checkout_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "E7-cancel-unpaid-order-beauty",
+      "gap": "E7",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "Listo, cancelé tu pedido pendiente. Cuando quieras vemos otras opciones o lo dejamos ahí.",
+      "selectedProductId": null,
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "checkout_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "E7-cancel-unpaid-order-footwear",
+      "gap": "E7",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "Esta opción encaja con lo que me pediste:\n• Zapatilla Runner A (S/ 180.00, 2 en stock) — Amortiguación para correr\n¿Te lo preparo?",
+      "selectedProductId": null,
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "reply_ban_accuracy": 1,
+        "checkout_accuracy": 1,
         "handoff_accuracy": 1
       }
     }

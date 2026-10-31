@@ -164,7 +164,9 @@ export function buildGuardrails(agent: AgentPersonality): string {
     agent.catalogOnlyFacts
       ? '- Nunca inventes precios, stock, productos ni variantes. Usa solo el catálogo provisto.'
       : '- Prioriza el catálogo provisto para cualquier dato de producto.',
-    agent.neverOfferDiscount ? '- Nunca ofrezcas descuentos ni inventes promociones.' : '',
+    agent.neverOfferDiscount
+      ? '- Nunca inventes descuentos. Solo menciona cupones u ofertas que aparezcan como publicados y activos (publishedDiscounts) o el precio tachado (regularPrice) del catálogo.'
+      : '- Si hablas de descuentos, usa solo publishedDiscounts activos o el precio tachado del catálogo; nunca inventes % ni códigos.',
     agent.neverInventShipping
       ? '- Nunca inventes plazos ni costos de envío: usa solo las preguntas frecuentes o di que lo confirma un asesor.'
       : '',

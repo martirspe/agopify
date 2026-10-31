@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.31d-training",
+  "version": "2026.10.31f-training",
   "dataset": "ai-core-training",
   "description": "Automated AI Core conversation curriculum (gap matrix, multinicho). Run via npm run train:ai-core.",
   "forbiddenPhrases": [
@@ -408,6 +408,240 @@
         "hasCheckout": false,
         "replyIncludes": ["foto", "distrito"],
         "replyExcludes": ["cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "B6-quiero-el-option-beauty",
+      "gap": "B6",
+      "vertical": "beauty",
+      "text": "quiero el Perfume Floral A",
+      "recommended": ["perfume-a", "perfume-b"],
+      "catalog": "beauty",
+      "agentHistory": [
+        "Tenemos Perfume Floral A y Perfume Floral B. ¿Cuál te gusta más?"
+      ],
+      "expected": {
+        "referenceId": "perfume-a",
+        "stage": "PRODUCT_SELECTED",
+        "hasCheckout": false,
+        "replyIncludes": ["Perfume Floral A", "preparo"],
+        "replyExcludes": ["distrito", "cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "B6-quiero-el-option-footwear",
+      "gap": "B6",
+      "vertical": "footwear",
+      "text": "quiero la Zapatilla Runner A",
+      "recommended": ["shoe-a", "shoe-b"],
+      "catalog": "footwear",
+      "agentHistory": [
+        "Tenemos Zapatilla Runner A y Zapatilla Urbana B. ¿Cuál prefieres?"
+      ],
+      "expected": {
+        "referenceId": "shoe-a",
+        "stage": "PRODUCT_SELECTED",
+        "hasCheckout": false,
+        "replyIncludes": ["Zapatilla Runner A", "preparo"],
+        "replyExcludes": ["distrito", "cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "E5-muestrame-producto-while-district-beauty",
+      "gap": "E5",
+      "vertical": "beauty",
+      "text": "primero muestrame el producto",
+      "selected": "perfume-a",
+      "recommended": ["perfume-a"],
+      "catalog": "beauty",
+      "seedStage": "CHECKOUT",
+      "seedIntent": "purchase",
+      "pendingLines": [
+        { "productId": "perfume-a", "variantId": null, "quantity": 1 }
+      ],
+      "missingInformation": ["destination"],
+      "agentHistory": [
+        "Para calcular el envío, ¿a qué distrito te lo enviamos? Escríbeme el distrito y la provincia, por ejemplo: Miraflores, Lima."
+      ],
+      "expected": {
+        "referenceId": "perfume-a",
+        "hasImages": true,
+        "hasCheckout": false,
+        "replyIncludes": ["foto", "distrito"],
+        "replyExcludes": ["cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "E5-muestrame-producto-while-district-footwear",
+      "gap": "E5",
+      "vertical": "footwear",
+      "text": "muéstrame el producto",
+      "selected": "shoe-a",
+      "recommended": ["shoe-a"],
+      "catalog": "footwear",
+      "seedStage": "CHECKOUT",
+      "seedIntent": "purchase",
+      "pendingLines": [
+        { "productId": "shoe-a", "variantId": null, "quantity": 1 }
+      ],
+      "missingInformation": ["destination"],
+      "agentHistory": [
+        "Para calcular el envío, ¿a qué distrito te lo enviamos?"
+      ],
+      "expected": {
+        "referenceId": "shoe-a",
+        "hasImages": true,
+        "hasCheckout": false,
+        "replyIncludes": ["foto", "distrito"],
+        "replyExcludes": ["cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "G2-discount-while-district-beauty",
+      "gap": "G2",
+      "vertical": "beauty",
+      "text": "hay algun descuento?",
+      "selected": "perfume-a",
+      "recommended": ["perfume-a"],
+      "catalog": "beauty",
+      "seedStage": "CHECKOUT",
+      "seedIntent": "purchase",
+      "pendingLines": [
+        { "productId": "perfume-a", "variantId": null, "quantity": 1 }
+      ],
+      "missingInformation": ["destination"],
+      "agentHistory": [
+        "Para calcular el envío, ¿a qué distrito te lo enviamos?"
+      ],
+      "expected": {
+        "referenceId": "perfume-a",
+        "hasCheckout": false,
+        "replyIncludes": ["descuentos publicados", "distrito"],
+        "replyExcludes": ["cuéntame qué producto buscas", "90%"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "G2-discount-while-district-footwear",
+      "gap": "G2",
+      "vertical": "footwear",
+      "text": "tienen alguna oferta o descuento?",
+      "selected": "shoe-a",
+      "recommended": ["shoe-a"],
+      "catalog": "footwear",
+      "seedStage": "CHECKOUT",
+      "seedIntent": "purchase",
+      "pendingLines": [
+        { "productId": "shoe-a", "variantId": null, "quantity": 1 }
+      ],
+      "missingInformation": ["destination"],
+      "agentHistory": [
+        "Para calcular el envío, ¿a qué distrito te lo enviamos?"
+      ],
+      "expected": {
+        "referenceId": "shoe-a",
+        "hasCheckout": false,
+        "replyIncludes": ["descuentos publicados", "distrito"],
+        "replyExcludes": ["cuéntame qué producto buscas", "90%"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "E6-browse-releases-district-beauty",
+      "gap": "E6",
+      "vertical": "beauty",
+      "text": "muestrame que productos de cuidado tienen",
+      "selected": "perfume-a",
+      "recommended": ["perfume-a"],
+      "catalog": "beauty",
+      "seedStage": "CHECKOUT",
+      "seedIntent": "purchase",
+      "pendingLines": [
+        { "productId": "perfume-a", "variantId": null, "quantity": 1 }
+      ],
+      "missingInformation": ["destination"],
+      "agentHistory": [
+        "Para calcular el envío, ¿a qué distrito te lo enviamos?"
+      ],
+      "expected": {
+        "hasCheckout": false,
+        "replyExcludes": ["distrito", "cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "E6-browse-releases-district-footwear",
+      "gap": "E6",
+      "vertical": "footwear",
+      "text": "quiero ver productos de zapatillas",
+      "selected": "shoe-a",
+      "recommended": ["shoe-a"],
+      "catalog": "footwear",
+      "seedStage": "CHECKOUT",
+      "seedIntent": "purchase",
+      "pendingLines": [
+        { "productId": "shoe-a", "variantId": null, "quantity": 1 }
+      ],
+      "missingInformation": ["destination"],
+      "agentHistory": [
+        "Para calcular el envío, ¿a qué distrito te lo enviamos?"
+      ],
+      "expected": {
+        "hasCheckout": false,
+        "replyIncludes": ["Zapatilla"],
+        "replyExcludes": ["distrito", "cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "E7-cancel-unpaid-order-beauty",
+      "gap": "E7",
+      "vertical": "beauty",
+      "text": "quiero cancelar el pedido",
+      "selected": "perfume-a",
+      "recommended": ["perfume-a"],
+      "catalog": "beauty",
+      "seedStage": "PAYMENT_PENDING",
+      "seedIntent": "purchase",
+      "seedOrderId": "ord-train-beauty",
+      "agentHistory": [
+        "Listo, va el Perfume Floral A. Completa el pago con el botón."
+      ],
+      "expected": {
+        "hasCheckout": false,
+        "replyIncludes": ["cancel"],
+        "replyExcludes": [
+          "ya tienes un pedido pendiente",
+          "cuéntame qué producto buscas"
+        ],
+        "handoff": false
+      }
+    },
+    {
+      "id": "E7-cancel-unpaid-order-footwear",
+      "gap": "E7",
+      "vertical": "footwear",
+      "text": "ya no lo voy a comprar, quiero ver productos",
+      "selected": "shoe-a",
+      "recommended": ["shoe-a"],
+      "catalog": "footwear",
+      "seedStage": "PAYMENT_PENDING",
+      "seedIntent": "purchase",
+      "seedOrderId": "ord-train-shoe",
+      "agentHistory": [
+        "Listo, va la Zapatilla Runner A. Completa el pago."
+      ],
+      "expected": {
+        "hasCheckout": false,
+        "replyExcludes": [
+          "ya tienes un pedido pendiente",
+          "cuéntame qué producto buscas"
+        ],
         "handoff": false
       }
     }

@@ -166,6 +166,15 @@ function buildRuntime(catalog) {
     checkoutUrl: 'https://example.test/pay',
     dryRun: true,
   });
+  tools.listActivePublishedDiscounts = async () => ({
+    discounts: [],
+    trace: {
+      name: 'list_promotions',
+      status: 'skipped',
+      summary: 'Sin descuentos publicados y activos',
+      data: { count: 0, ids: [] },
+    },
+  });
   const runtime = new SalesAgentRuntimeService(
     { salesAgent: { findFirst: async () => null } },
     config,
@@ -185,6 +194,7 @@ function seedState(fixture) {
   if (fixture.seedStage) state.stage = fixture.seedStage;
   if (fixture.seedIntent) state.intent = fixture.seedIntent;
   if (fixture.pendingLines) state.pendingLines = fixture.pendingLines;
+  if (fixture.seedOrderId) state.orderId = fixture.seedOrderId;
   if (fixture.missingInformation) {
     state.missingInformation = fixture.missingInformation;
   }
