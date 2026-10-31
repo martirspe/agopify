@@ -138,6 +138,12 @@ export class MediaService {
     }
   }
 
+  /** Bytes of a photo this tenant owns (catalog export). Null when missing or foreign. */
+  async bytesForExport(tenantId: string, url: string): Promise<Buffer | null> {
+    if (!this.isOwnUpload(tenantId, url)) return null;
+    return this.readOwned(url);
+  }
+
   private async readOwned(url: string): Promise<Buffer | null> {
     const localPrefix = `${this.publicBase}/media/`;
     if (url.startsWith(localPrefix)) {

@@ -74,6 +74,10 @@ async function bootstrap() {
       'X-Requested-With',
       'X-Turnstile-Token',
     ],
+    exposedHeaders: [
+      'Content-Disposition',
+      'X-Catalog-Export-Warnings',
+    ],
   });
   app.useGlobalPipes(
     new ValidationPipe({

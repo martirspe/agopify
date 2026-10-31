@@ -81,6 +81,30 @@ export class CatalogController {
     return this.media.upload(user.tenantId, dto);
   }
 
+  /** ZIP with catalog.json + photos for re-import (manager only). */
+  @Get('export')
+  @RateLimit('catalog-export', 10)
+  async exportCatalog(
+    @CurrentUser() user: AuthUserPayload,
+    @Res({ passthrough: false }) reply: FastifyReply,
+  ) {
+    const pack = await this.catalogImport.exportZip(user);
+    if (pack.warnings.length) {
+      reply.header(
+        'X-Catalog-Export-Warnings',
+        encodeURIComponent(JSON.stringify(pack.warnings)),
+      );
+    }
+    return reply
+      .header('Content-Type', 'application/zip')
+      .header(
+        'Content-Disposition',
+        `attachment; filename="${pack.filename}"`,
+      )
+      .header('Cache-Control', 'no-store')
+      .send(pack.bytes);
+  }
+
   /** Validates a catalog package and returns what the import would do; writes nothing. */
   @Post('import/preview')
   @RateLimit('catalog-import', 30)

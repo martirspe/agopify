@@ -15,6 +15,8 @@ const product = (id: string): ProductDto => ({
   line: null, details: null, variants: [], media: [], components: [], createdAt: '2026-10-05', updatedAt: '2026-10-05',
 });
 
+const flushFocus = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
 describe('set editor round trip', () => {
   beforeEach(() => {
     vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
@@ -178,13 +180,19 @@ describe('catalog management', () => {
     page.openCreate(); fixture.detectChanges();
     (fixture.nativeElement.querySelector('ds-button[type="submit"] button') as HTMLButtonElement).click();
     await fixture.whenStable(); fixture.detectChanges();
+    await flushFocus();
+    fixture.detectChanges();
     expect(page.errorMessage()).toContain('Revisa los datos');
     expect(fixture.nativeElement.querySelector('#product-name-error').textContent).toContain('2 caracteres');
     expect(document.activeElement?.getAttribute('formControlName')).toBe('name');
     page.productForm.patchValue({ name: 'Producto válido', descriptionShort: 'Descripción suficiente', price: 10, handle: '---' });
     fixture.detectChanges();
-    await page.saveProduct(); fixture.detectChanges();
+    await page.saveProduct();
+    fixture.detectChanges();
+    await flushFocus();
+    fixture.detectChanges();
     expect(page.readinessReady()).toBe(false);
+    expect(page.showHandle()).toBe(true);
     expect(page.editorFieldError('handle')).toContain('2 letras o números');
     expect(document.activeElement?.getAttribute('formControlName')).toBe('handle');
     page.productForm.controls.handle.setValue('producto-valido'); fixture.detectChanges();
@@ -201,12 +209,15 @@ describe('catalog management', () => {
     page.productForm.patchValue({ kind: 'DIGITAL', name: 'Guía digital', handle: 'guia', descriptionShort: 'Guía para descargar', price: 20, digitalAccessUrl: 'http://example.test/guia' });
     fixture.detectChanges();
     await page.saveProduct(); fixture.detectChanges();
+    await flushFocus();
+    fixture.detectChanges();
     expect(page.editorFieldError('access')).toContain('HTTPS');
     expect(document.activeElement?.getAttribute('formControlName')).toBe('digitalAccessUrl');
     page.productForm.controls.digitalAccessUrl.setValue('https://example.test/guia'); fixture.detectChanges();
     expect(page.readinessReady()).toBe(true);
     expect(page.editorFieldError('access')).toBeNull();
     (fixture.nativeElement.querySelector('button[aria-label="Revisar Enlace de acceso seguro"]') as HTMLButtonElement).click();
+    await flushFocus();
     expect(document.activeElement?.getAttribute('formControlName')).toBe('digitalAccessUrl');
   });
 

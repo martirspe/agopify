@@ -116,7 +116,7 @@ Sin esto la integración «Dominio propio» aparece como «Próximamente» en pr
 No uses los scripts `apps/api/scripts/seed-*.mjs` en producción: copian fotos al disco del contenedor y se saltan el límite del plan.
 
 1. Crea el negocio desde el registro normal y deja el plan con cupo suficiente (por ejemplo, Crece para hasta 100 productos).
-2. En la consola: Productos → Importar catálogo, arrastra la carpeta del paquete (`catalog.json` + `images/`; Selecta está en `apps/api/seed-data/selecta`).
+2. En la consola: Productos → Exportar paquete (ZIP con `catalog.json` + fotos) si necesitas respaldo antes de un reset; o Importar catálogo arrastrando la carpeta del paquete (`catalog.json` + `images/`; Selecta está en `apps/api/seed-data/selecta`).
 3. Revisa la vista previa (creados, actualizados, sin publicar, avisos), marca «Aplicar los ajustes de tienda del paquete» si quieres plantilla y envíos, e importa. Las fotos se suben a S3 y nada se guarda si falla.
 
 Para volver a importar cuando cambie el catálogo, usa la misma carpeta: solo se suben las fotos nuevas y se respetan el precio, el stock y la publicación cambiados en la consola, salvo que elijas actualizarlos.

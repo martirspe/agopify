@@ -29,7 +29,7 @@ import {
 } from '../../core/api/catalog-api.service';
 import { IntegrationsStateService } from '../../core/integrations/integrations-state.service';
 import { resizeImage } from '../../core/media/resize-image';
-import { productCompleteness, specificationHint } from './product-completeness';
+import { productCompleteness } from './product-completeness';
 
 import { CombinationDraft, VariantAxis, generateCombinations, readOptions, keyOf } from './variant-combinations';
 import { CatalogCategory } from '../../core/api/catalog-api.service';
@@ -159,7 +159,6 @@ export class ProductsPage {
   readonly editingVersion = signal<string | null>(null);
   readonly handleLocked = signal(false);
   readonly variantsEnabled = signal(false);
-  readonly sellerHelpEnabled = signal(false);
   readonly media = signal<MediaDraft[]>([]);
   readonly mediaDraft = signal('');
   readonly uploading = signal(false);
@@ -212,6 +211,11 @@ export class ProductsPage {
   readonly attributeValues = signal<Record<string, string>>({});
   readonly kindCategories = computed(() => this.categories().filter((category) => category.kind === this.formValues().kind));
   readonly selectedCategory = computed(() => this.categories().find((category) => category.id === this.categoryId()));
+  /** Category attributes required to save when a category is chosen. */
+  readonly requiredCategoryAttributes = computed(
+    () => this.selectedCategory()?.attributes.filter((attribute) => attribute.required) ?? [],
+  );
+  readonly showHandle = signal(false);
   readonly faqs = signal<FaqDraft[]>([]);
   readonly maxFaqs = MAX_FAQS;
 
@@ -275,8 +279,8 @@ export class ProductsPage {
   readonly isService = computed(() => this.formValues().kind === 'SERVICE');
   readonly isDigital = computed(() => this.formValues().kind === 'DIGITAL');
   readonly isPhysical = computed(() => this.formValues().kind === 'PRODUCT');
-  readonly specificationHint = computed(() => specificationHint(this.parseCategories(this.formValues().categoriesText)));
 
+  /** Minimum to save/publish — not the enrichment coach. */
   readonly readiness = computed(() => {
     const values = this.formValues();
     const hasName = values.name.trim().length >= 2;
@@ -291,16 +295,35 @@ export class ProductsPage {
       },
       {
         id: 'description',
-        label: 'Descripción',
+        label: 'Descripción corta',
         done: hasDescription,
         required: true,
       },
-      { id: 'handle', label: 'Dirección del producto', done: slugify(values.handle).length >= 2, required: true },
+      {
+        id: 'handle',
+        label: 'Enlace del producto',
+        done: slugify(values.handle).length >= 2,
+        required: true,
+      },
       { id: 'price', label: 'Precio', done: hasPrice, required: true },
     ];
-    if (values.kind === 'DIGITAL') items.push({ id: 'access', label: 'Enlace de acceso seguro', done: /^https:\/\/[^\s]+$/.test(values.digitalAccessUrl.trim()), required: true });
+    if (values.kind === 'DIGITAL') {
+      items.push({
+        id: 'access',
+        label: 'Enlace de acceso seguro',
+        done: /^https:\/\/[^\s]+$/.test(values.digitalAccessUrl.trim()),
+        required: true,
+      });
+    }
     return items;
   });
+
+  /** Warn when store visibility is on without a main photo. */
+  readonly storePhotoWarning = computed(
+    () =>
+      this.formValues().isPublishedOnStore &&
+      !this.media().some((item) => item.kind === 'image'),
+  );
 
   readonly completeness = computed(() => {
     const values = this.formValues();
@@ -308,11 +331,7 @@ export class ProductsPage {
       kind: values.kind,
       categories: this.parseCategories(values.categoriesText),
       photos: this.media().filter((item) => item.kind === 'image').length,
-      details: this.detailsPayload(values),
       descriptionFull: values.descriptionFull,
-      durationMinutes: values.durationMinutes,
-      serviceMode: values.serviceMode,
-      digitalAccessUrl: values.digitalAccessUrl,
     });
   });
 
@@ -331,10 +350,22 @@ export class ProductsPage {
   }));
 
   focusEditorField(id: string): void {
-    const names: Record<string, string> = { name: 'name', description: 'descriptionShort', handle: 'handle', price: 'price', access: 'digitalAccessUrl' };
-    const field = this.host.nativeElement.querySelector<HTMLElement>(`[formControlName="${names[id] ?? id}"]`);
-    field?.focus({ preventScroll: true });
-    field?.scrollIntoView?.({ block: 'center' });
+    if (id === 'handle') this.showHandle.set(true);
+    const names: Record<string, string> = {
+      name: 'name',
+      description: 'descriptionShort',
+      handle: 'handle',
+      price: 'price',
+      access: 'digitalAccessUrl',
+    };
+    // Wait a tick so a newly revealed handle input exists in the DOM.
+    setTimeout(() => {
+      const field = this.host.nativeElement.querySelector<HTMLElement>(
+        `[formControlName="${names[id] ?? id}"]`,
+      );
+      field?.focus({ preventScroll: true });
+      field?.scrollIntoView?.({ block: 'center' });
+    }, 0);
   }
 
   editorFieldError(id: string): string | null {
@@ -405,8 +436,8 @@ export class ProductsPage {
   openCreate(): void {
     this.editingId.set(null);
     this.handleLocked.set(false);
+    this.showHandle.set(false);
     this.variantsEnabled.set(false);
-    this.sellerHelpEnabled.set(false);
     this.media.set([]);
     this.mediaDraft.set('');
     this.categoryDraft.set('');
@@ -470,9 +501,9 @@ export class ProductsPage {
     this.editingId.set(product.id);
     this.editingVersion.set(product.updatedAt);
     this.handleLocked.set(true);
+    this.showHandle.set(false);
     this.errorMessage.set(null);
     this.successMessage.set(null);
-    this.sellerHelpEnabled.set(Boolean(product.descriptionFull?.trim()));
     this.variantsEnabled.set((product.variants?.length ?? 0) > 0);
     this.media.set(
       (product.media ?? []).map((item) => ({
@@ -675,15 +706,15 @@ export class ProductsPage {
     this.handleLocked.set(true);
   }
 
+  openHandleEditor(): void {
+    this.showHandle.set(true);
+  }
+
   toggleVariants(enabled: boolean): void {
     this.variantsEnabled.set(enabled);
     if (enabled && this.variantDrafts().length === 0) {
       this.addVariant();
     }
-  }
-
-  toggleSellerHelp(enabled: boolean): void {
-    this.sellerHelpEnabled.set(enabled);
   }
 
   async loadCategories(): Promise<void> {
@@ -825,11 +856,48 @@ export class ProductsPage {
     });
   }
 
-  exportCatalog(): void {
-    const url = URL.createObjectURL(new Blob([catalogCsv(this.filteredProducts())], { type: 'text/csv;charset=utf-8' }));
+  readonly exportingPackage = signal(false);
+
+  /** Spreadsheet of the current filtered list (not re-importable). */
+  exportCatalogCsv(): void {
+    const url = URL.createObjectURL(
+      new Blob([catalogCsv(this.filteredProducts())], {
+        type: 'text/csv;charset=utf-8',
+      }),
+    );
     const link = document.createElement('a');
-    link.href = url; link.download = 'catalogo-vendedoria.csv'; link.click();
+    link.href = url;
+    link.download = 'catalogo-vendedoria.csv';
+    link.click();
     URL.revokeObjectURL(url);
+  }
+
+  /** Full package ZIP for «Importar catálogo» (backup before a DB reset). */
+  async exportCatalogPackage(): Promise<void> {
+    if (this.exportingPackage() || !this.products().length) return;
+    this.exportingPackage.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    try {
+      const pack = await this.api.exportPackage();
+      const url = URL.createObjectURL(pack.blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = pack.filename;
+      link.click();
+      URL.revokeObjectURL(url);
+      this.successMessage.set(
+        pack.warnings.length
+          ? `Paquete descargado. Aviso: ${pack.warnings[0]}`
+          : 'Paquete descargado. Puedes reimportarlo desde «Importar catálogo».',
+      );
+    } catch {
+      this.errorMessage.set(
+        'No se pudo exportar el catálogo. Solo el dueño o un administrador puede hacerlo.',
+      );
+    } finally {
+      this.exportingPackage.set(false);
+    }
   }
 
   listScore(product: ProductDto): number {
@@ -837,11 +905,7 @@ export class ProductsPage {
       kind: product.kind,
       categories: product.categories ?? [],
       photos: (product.media ?? []).filter((item) => item.kind !== 'related').length,
-      details: product.details,
       descriptionFull: product.descriptionFull,
-      durationMinutes: product.durationMinutes,
-      serviceMode: product.serviceMode,
-      digitalAccessUrl: product.digitalAccessUrl,
     }).score;
   }
 
@@ -1014,9 +1078,7 @@ export class ProductsPage {
             name: values.name.trim(),
             handle,
             descriptionShort: values.descriptionShort.trim() || undefined,
-            descriptionFull: this.sellerHelpEnabled()
-              ? values.descriptionFull.trim() || undefined
-              : '',
+            descriptionFull: values.descriptionFull.trim() || '',
             categories: this.parseCategories(values.categoriesText),
             basePriceCents: toCents(values.price),
             currency: values.currency,
@@ -1031,9 +1093,7 @@ export class ProductsPage {
             name: values.name.trim(),
             handle,
             descriptionShort: values.descriptionShort.trim() || undefined,
-            descriptionFull: this.sellerHelpEnabled()
-              ? values.descriptionFull.trim() || undefined
-              : undefined,
+            descriptionFull: values.descriptionFull.trim() || undefined,
             categories: this.parseCategories(values.categoriesText),
             basePriceCents: toCents(values.price),
             currency: values.currency,

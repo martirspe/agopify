@@ -20,6 +20,11 @@ import {
   ParsedCatalog,
   planImport,
 } from './catalog-import';
+import {
+  buildCatalogExport,
+  buildStoredZip,
+  type ExportProduct,
+} from './catalog-export';
 import { CatalogService } from './catalog.service';
 import {
   CatalogImportCommitDto,
@@ -29,7 +34,7 @@ import { MediaUploadDto } from './dto/inventory.dto';
 import { MediaService } from './media.service';
 
 const MANAGER_MESSAGE =
-  'Solo el dueño o un administrador puede importar el catálogo.';
+  'Solo el dueño o un administrador puede importar o exportar el catálogo.';
 
 export type CatalogImportReport = {
   source: string | null;
@@ -103,6 +108,133 @@ export class CatalogImportService {
     assertManager(user, MANAGER_MESSAGE);
     const { parsed, plan } = await this.prepare(user.tenantId, dto, new Map());
     return this.report(parsed, plan);
+  }
+
+  /**
+   * ZIP with `catalog.json` + `images/` ready for «Importar catálogo».
+   * Manager-only; never includes other tenants' media.
+   */
+  async exportZip(user: AuthUserPayload): Promise<{
+    filename: string;
+    bytes: Buffer;
+    warnings: string[];
+  }> {
+    assertManager(user, MANAGER_MESSAGE);
+    const { tenantId } = user;
+    const [rows, storefront] = await Promise.all([
+      this.prisma.product.findMany({
+        where: { tenantId },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+        include: {
+          media: { orderBy: { sortOrder: 'asc' } },
+          variants: { select: { id: true } },
+          components: {
+            orderBy: { id: 'asc' },
+            include: {
+              component: {
+                select: { handle: true, name: true, sku: true },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.storefront.findUnique({ where: { tenantId } }),
+    ]);
+    if (!rows.length) {
+      throw new BadRequestException(
+        'No hay productos para exportar. Publica al menos uno o importa un catálogo primero.',
+      );
+    }
+
+    const products: ExportProduct[] = rows.map((row) => ({
+      handle: row.handle,
+      name: row.name,
+      descriptionShort: row.descriptionShort,
+      descriptionFull: row.descriptionFull,
+      categories: row.categories,
+      basePriceCents: row.basePriceCents,
+      kind: row.kind,
+      durationMinutes: row.durationMinutes,
+      serviceMode: row.serviceMode,
+      digitalAccessUrl: row.digitalAccessUrl,
+      digitalInstructions: row.digitalInstructions,
+      isAvailable: row.isAvailable,
+      stockUnlimited: row.stockUnlimited,
+      stockQty: row.stockQty,
+      isPublishedOnStore: row.isPublishedOnStore,
+      brand: row.brand,
+      sku: row.sku,
+      line: row.line,
+      details:
+        row.details &&
+        typeof row.details === 'object' &&
+        !Array.isArray(row.details)
+          ? (row.details as Record<string, unknown>)
+          : null,
+      seoTitle: row.seoTitle,
+      seoDescription: row.seoDescription,
+      sortOrder: row.sortOrder,
+      media: row.media.map((item) => ({
+        url: item.url,
+        kind: item.kind,
+        alt: item.alt,
+        caption: item.caption,
+        sortOrder: item.sortOrder,
+      })),
+      components: row.components.map((link) => ({
+        quantity: link.quantity,
+        component: link.component,
+      })),
+      variants: row.variants,
+    }));
+
+    const bannerImageUrl = storefront
+      ? readTemplateContent(storefront.templateContent).sections['banner']?.[
+          'image'
+        ] || null
+      : null;
+    const built = buildCatalogExport(
+      products,
+      storefront
+        ? {
+            industry: storefront.industry,
+            template: storefront.template,
+            freeShippingFromCents: storefront.freeShippingFromCents,
+            shippingOriginUbigeo: storefront.shippingOriginUbigeo,
+            carrierRates: storefront.carrierRates,
+            heroImageUrl: storefront.heroImageUrl,
+            bannerImageUrl,
+          }
+        : null,
+    );
+
+    const files: Array<{ path: string; bytes: Buffer }> = [
+      {
+        path: 'catalog.json',
+        bytes: Buffer.from(JSON.stringify(built.catalog, null, 2), 'utf8'),
+      },
+    ];
+    let missingPhotos = 0;
+    for (const image of built.images) {
+      const bytes = await this.media.bytesForExport(tenantId, image.url);
+      if (!bytes) {
+        missingPhotos += 1;
+        continue;
+      }
+      files.push({ path: image.path, bytes });
+    }
+    if (missingPhotos) {
+      built.warnings.push(
+        `${missingPhotos} foto${missingPhotos === 1 ? '' : 's'} no se pudieron incluir en el ZIP. Al importar faltarán y podrás subirlas de nuevo.`,
+      );
+    }
+
+    const stamp = new Date().toISOString().slice(0, 10);
+    return {
+      filename: `catalogo-vendedoria-${stamp}.zip`,
+      bytes: buildStoredZip(files),
+      warnings: built.warnings,
+    };
   }
 
   uploadPhoto(

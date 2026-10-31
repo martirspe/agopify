@@ -263,6 +263,35 @@ export class CatalogApiService {
     return firstValueFrom(this.http.post<{ url: string }>(`${this.root}/media`, { contentType, data }));
   }
 
+  /**
+   * Downloads a re-importable ZIP (`catalog.json` + photos). Manager-only on the API.
+   */
+  exportPackage(): Promise<{ blob: Blob; filename: string; warnings: string[] }> {
+    return firstValueFrom(
+      this.http.get(`${this.root}/export`, {
+        responseType: 'blob',
+        observe: 'response',
+      }),
+    ).then((response) => {
+      const disposition = response.headers.get('Content-Disposition') ?? '';
+      const match = /filename="([^"]+)"/i.exec(disposition);
+      const filename = match?.[1] || 'catalogo-vendedoria.zip';
+      let warnings: string[] = [];
+      const raw = response.headers.get('X-Catalog-Export-Warnings');
+      if (raw) {
+        try {
+          const parsed = JSON.parse(decodeURIComponent(raw)) as unknown;
+          if (Array.isArray(parsed)) {
+            warnings = parsed.filter((item): item is string => typeof item === 'string');
+          }
+        } catch {
+          warnings = [];
+        }
+      }
+      return { blob: response.body!, filename, warnings };
+    });
+  }
+
   previewImport(payload: CatalogImportPayload): Promise<CatalogImportReport> {
     return firstValueFrom(this.http.post<CatalogImportReport>(`${this.root}/import/preview`, payload));
   }
