@@ -62,14 +62,14 @@ export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
 
   usesDurablePath(agentAiRuntimeMode?: string | null): boolean {
     return usesDurableAiCore(
-      this.config.get('SALES_ENGINE_MODE', 'sales-engine-v2'),
+      this.config.get('SALES_ENGINE_MODE', 'ai-core'),
       agentAiRuntimeMode,
     );
   }
 
   isShadowPath(agentAiRuntimeMode?: string | null): boolean {
     return isShadowAiCore(
-      this.config.get('SALES_ENGINE_MODE', 'sales-engine-v2'),
+      this.config.get('SALES_ENGINE_MODE', 'ai-core'),
       agentAiRuntimeMode,
     );
   }

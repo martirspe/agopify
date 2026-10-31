@@ -13,7 +13,7 @@ export function normalizeAiRuntimeMode(value: unknown): AiRuntimeMode {
 }
 
 function globalDurable(envMode: string | undefined): boolean {
-  const global = envMode ?? 'sales-engine-v2';
+  const global = envMode ?? 'ai-core';
   return (
     global === 'sales-engine-v2' ||
     global === 'ai-core' ||
