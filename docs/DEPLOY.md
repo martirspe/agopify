@@ -121,33 +121,19 @@ No uses los scripts `apps/api/scripts/seed-*.mjs` en producción: copian fotos a
 
 Para volver a importar cuando cambie el catálogo, usa la misma carpeta: solo se suben las fotos nuevas y se respetan el precio, el stock y la publicación cambiados en la consola, salvo que elijas actualizarlos.
 
-### Unificar migraciones (`0001_init`) sin borrar datos
+### Base de datos (primer arranque o reset limpio)
 
-El historial Prisma del repo es una sola migración `0001_init` (schema completo). Tras un squash, las bases **con datos** no deben ejecutar ese SQL otra vez: hay que **baselinar** `_prisma_migrations`.
+El historial Prisma es **una sola** migración `0001_init` (tablas del schema + búsqueda full-text + triggers del outbox + categorías base). En un Postgres vacío, `migrate deploy` la aplica y listo. Cambios futuros: `prisma migrate dev` (migraciones aditivas nuevas); no reedites `0001_init`.
 
-```bash
-bash scripts/backup.sh --no-media
-git pull
-docker compose build migrate
-bash scripts/prisma-baseline-squash.sh   # ensure columnas + baseline; no DROP SCHEMA
-bash scripts/deploy.sh
-```
-
-El script aplica ALTERs idempotentes si faltan columnas recientes, restaura SQL custom (búsqueda full-text `catalog_search_document`, triggers del outbox y semillas de `CatalogCategory`), comprueba que el schema coincida con `schema.prisma` y deja una sola fila `0001_init` aplicada. No lo vuelvas a correr salvo un nuevo squash.
-
-Cambios de schema **después** de este squash: migraciones aditivas nuevas (`prisma migrate dev`), nunca reeditar `0001_init` a mano.
-
-### Reiniciar la base de datos (borra tenants)
-
-Solo si la base aún no tiene negocios reales o aceptas perder todos los datos. Las fotos en S3/volumen y el `.env` se conservan.
+Si la base ya existe y quieres el mismo estado que un **primer deploy** (borra todos los tenants/pedidos/chats; fotos en S3/volumen y `.env` se conservan):
 
 ```bash
-bash scripts/backup.sh                                   # por si acaso
+bash scripts/backup.sh
 git pull
 docker compose stop api web store
 docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"'
-bash scripts/deploy.sh                                   # aplica 0001_init desde cero
-docker compose exec api npm run create-admin             # vuelve a crear tu operador
+bash scripts/deploy.sh
+docker compose exec api npm run create-admin
 ```
 
 ## Si algo falla
@@ -156,7 +142,6 @@ docker compose exec api npm run create-admin             # vuelve a crear tu ope
 |---------|-----------|
 | El build muere (`SIGKILL`) | Añade 2 GB de swap al VPS |
 | Health check agota el tiempo | `docker compose logs --tail 100 migrate api` |
-| Consola: «No pudimos cargar tu avance» / playground falla | Suele ser API 500 por columnas Prisma faltantes. Revisa `docker compose logs migrate api`. Tras un squash: `bash scripts/prisma-baseline-squash.sh` y redeploy (no reedites `0001_init` ni hagas `DROP` si hay datos). |
-| `migrate` / baseline habla de schema drift | El live DB no coincide con `schema.prisma`; no baselines a ciegas. Revisa el diff del script y corrige columnas antes. |
+| Consola: «No pudimos cargar tu avance» / playground falla | Revisa `docker compose logs migrate api`. Suele ser schema a medias: haz el reset limpio de arriba tras backup, o corrige con una migración aditiva. |
 | HTTPS muestra otro sitio o certificado | DNS mal apuntado o con nube naranja; corrígelo y `sudo bash scripts/bootstrap-host.sh` |
 | `CLOUDFLARE_API_TOKEN cannot access the … zone` | El token no tiene permiso `Zona · DNS · Editar` sobre `marrso.com`; edítalo en Cloudflare |

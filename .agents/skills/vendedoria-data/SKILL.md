@@ -28,9 +28,9 @@ Do NOT open frontend apps unless an API response shape changes.
 - Money columns are `*Cents` Int, never Float/Decimal.
 - External event idempotency is enforced by a DB unique key (e.g. `Payment.idempotencyKey`, `Channel @@unique([tenantId, type, externalId])`, `Conversation @@unique([channelId, externalThreadId])`), not by in-memory checks.
 - Refresh tokens are stored hashed (`RefreshToken.tokenHash`); passwords with bcrypt. Never store raw secrets or tokens in new columns without encryption decision from the user.
-- Never edit or renumber an applied migration. The repo keeps a single squashed `0001_init` (full schema + custom SQL). New changes go in **new additive migrations after it** — never re-edit `0001_init` for features.
-- Squash / re-baseline of an existing production DB: only via `scripts/prisma-baseline-squash.sh` (ensure SQL + rewrite `_prisma_migrations`, no `DROP SCHEMA`). Documented in `docs/DEPLOY.md`. Do not delete incremental folders in git without that baseline path for live DBs.
-- `prisma migrate diff` from `schema.prisma` does **not** emit custom Postgres objects. Keep `catalog_search_document`, GIN index, `sales_search_enqueue` triggers and `CatalogCategory` seeds in `apps/api/prisma/custom-objects.sql`, the tail of `0001_init`, and `baseline-ensure.sql` (all three stay in sync).
+- Never edit or renumber an applied migration. History starts with a single first-deploy `0001_init` (Prisma schema SQL + `prisma/sql/custom.sql`). New changes go in **new additive migrations after it** — never re-edit `0001_init` for features.
+- Rebuild `0001_init` only when intentionally resetting migration history on empty DBs: `node scripts/prisma-build-init.mjs` (schema diff + append `sql/custom.sql`). Production/dev with data that must match first-deploy: `DROP SCHEMA public CASCADE` then `migrate deploy` (see `docs/DEPLOY.md`). No baseline/ensure scripts.
+- `prisma migrate diff` does **not** emit custom Postgres objects — they live only in `apps/api/prisma/sql/custom.sql` and are part of `0001_init`.
 
 ## Procedure
 1. Edit `schema.prisma` minimally, following neighbouring naming (camelCase fields, PascalCase models, `createdAt`/`updatedAt`).

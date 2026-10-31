@@ -1,9 +1,8 @@
--- Custom Postgres objects Prisma schema does not emit (full-text search + search outbox).
--- Keep this file in sync with the tail of migrations/0001_init/migration.sql.
--- Safe to re-run (CREATE OR REPLACE / IF NOT EXISTS / DROP TRIGGER IF EXISTS).
+-- Custom Postgres objects that Prisma schema does not emit.
+-- Appended to migrations/0001_init/migration.sql (first-deploy only; empty database).
 
--- Do not index private access URLs or delivery instructions.
-CREATE OR REPLACE FUNCTION catalog_search_document(text, text, text, text[], text, text, jsonb)
+-- Full-text search over catalog fields (never indexes private digital URLs/instructions).
+CREATE FUNCTION catalog_search_document(text, text, text, text[], text, text, jsonb)
 RETURNS tsvector LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$
   SELECT
     setweight(to_tsvector('spanish', translate(lower(coalesce($1, '') || ' ' || coalesce($7->'keywords', '[]')::text),
@@ -14,12 +13,11 @@ RETURNS tsvector LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$
       'áéíóúüñ', 'aeiouun')), 'C');
 $$;
 
-CREATE INDEX IF NOT EXISTS "Product_catalog_search_idx" ON "Product" USING GIN
+CREATE INDEX "Product_catalog_search_idx" ON "Product" USING GIN
   (catalog_search_document(name, brand, line, categories, "descriptionShort", "descriptionFull", details));
 
--- Outbox changes commit/rollback with the catalog operation, including imports and deletions.
--- Prices, stock and visual changes do not require new paid semantic embeddings.
-CREATE OR REPLACE FUNCTION sales_search_enqueue() RETURNS trigger LANGUAGE plpgsql AS $$
+-- Search outbox: catalog/FAQ writes enqueue embedding jobs in the same transaction.
+CREATE FUNCTION sales_search_enqueue() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE doc RECORD; owner TEXT; source TEXT; kind TEXT; previous JSONB; current_doc JSONB;
 BEGIN
   IF TG_OP = 'UPDATE' THEN
@@ -56,19 +54,14 @@ BEGIN
   RETURN NULL;
 END $$;
 
-DROP TRIGGER IF EXISTS sales_product_search ON "Product";
 CREATE TRIGGER sales_product_search AFTER INSERT OR UPDATE OR DELETE ON "Product"
   FOR EACH ROW EXECUTE FUNCTION sales_search_enqueue();
-
-DROP TRIGGER IF EXISTS sales_variant_search ON "ProductVariant";
 CREATE TRIGGER sales_variant_search AFTER INSERT OR UPDATE OR DELETE ON "ProductVariant"
   FOR EACH ROW EXECUTE FUNCTION sales_search_enqueue();
-
-DROP TRIGGER IF EXISTS sales_faq_search ON "KnowledgeFaq";
 CREATE TRIGGER sales_faq_search AFTER INSERT OR UPDATE OR DELETE ON "KnowledgeFaq"
   FOR EACH ROW EXECUTE FUNCTION sales_search_enqueue();
 
--- Shared classification seeds (idempotent). Products keep working with free-text categories alone.
+-- Shared product classification tree (store/agent free-text categories remain independent).
 INSERT INTO "CatalogCategory" ("id", "name", "kind", "parentId", "attributes") VALUES
 ('fashion', 'Moda', 'PRODUCT', NULL, '[{"key":"material","name":"Material","group":"Composición","variant":true},{"key":"audience","name":"Público","group":"Uso"}]'),
 ('beauty', 'Belleza y cuidado', 'PRODUCT', NULL, '[{"key":"contents","name":"Contenido neto","group":"Presentación","maxLength":60},{"key":"skin_type","name":"Tipo de piel","group":"Uso"}]'),
@@ -80,5 +73,4 @@ INSERT INTO "CatalogCategory" ("id", "name", "kind", "parentId", "attributes") V
 ('sneakers', 'Zapatillas', 'PRODUCT', 'footwear', '[]'),
 ('skin_care', 'Cuidado facial', 'PRODUCT', 'beauty', '[]'),
 ('creams', 'Cremas', 'PRODUCT', 'skin_care', '[]'),
-('fragrances', 'Fragancias', 'PRODUCT', 'beauty', '[{"key":"family","name":"Familia olfativa","group":"Fragancia"},{"key":"intensity","name":"Intensidad","group":"Fragancia"}]')
-ON CONFLICT ("id") DO NOTHING;
+('fragrances', 'Fragancias', 'PRODUCT', 'beauty', '[{"key":"family","name":"Familia olfativa","group":"Fragancia"},{"key":"intensity","name":"Intensidad","group":"Fragancia"}]');
