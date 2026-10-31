@@ -17,7 +17,7 @@
 - Consola del vendedor: se quitan campos que no sumaban (estilo de venta, paleta de emojis, palabras a evitar, texto de objeciones) y se reducen las técnicas a 5 énfasis opcionales; el método base del runtime ya cubre el resto.
 - Conocimiento del negocio: las FAQ se organizan por tema (envíos, cambios, pagos, horarios, negocio); plantillas de políticas sugeridas; el vendedor prioriza respuestas del tema correcto sin un RAG paralelo.
 - Motor de ventas: AI Core es el camino de producto por defecto (`ai_core`); se retira de la consola el selector de motor y el panel de migración progresiva (sin clientes en producción aún).
-- Base de datos: historial de migraciones Prisma consolidado de nuevo en una sola `0001_init` alineada al schema actual.
+- Base de datos: se restauran las migraciones incrementales (el re-squash de `0001_init` rompía producción) y se añaden migraciones aditivas para `SalesAgent.aiRuntimeMode` y `KnowledgeFaq.topic`.
 - Productos: exportar paquete ZIP (`catalog.json` + fotos) listo para reimportar; el CSV filtrado se mantiene como exportación de lista.
 - Productos: editor reorganizado en jerarquía (Identidad → Fotos → Precio → Inventario/entrega → Opciones → Descripción detallada); solo campos operativos para tienda y agente; precio tachado y publicación en el panel; sin ficha estructurada (FAQs, beneficios, etc.).
 

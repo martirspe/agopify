@@ -140,5 +140,6 @@ docker compose exec api npm run create-admin             # vuelve a crear tu ope
 |---------|-----------|
 | El build muere (`SIGKILL`) | Añade 2 GB de swap al VPS |
 | Health check agota el tiempo | `docker compose logs --tail 100 migrate api` |
+| Consola: «No pudimos cargar tu avance» | Suele ser API 500 por columnas Prisma faltantes (`aiRuntimeMode` / `KnowledgeFaq.topic`). Revisa `docker compose logs migrate api`; tras `git pull`, un redeploy aplica las migraciones aditivas. Si `migrate` dice que faltan carpetas de migración en el historial, no edites `0001_init`: restaura el historial incremental del repo. |
 | HTTPS muestra otro sitio o certificado | DNS mal apuntado o con nube naranja; corrígelo y `sudo bash scripts/bootstrap-host.sh` |
 | `CLOUDFLARE_API_TOKEN cannot access the … zone` | El token no tiene permiso `Zona · DNS · Editar` sobre `marrso.com`; edítalo en Cloudflare |
