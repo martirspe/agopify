@@ -28,7 +28,8 @@ Do NOT open frontend apps unless an API response shape changes.
 - Money columns are `*Cents` Int, never Float/Decimal.
 - External event idempotency is enforced by a DB unique key (e.g. `Payment.idempotencyKey`, `Channel @@unique([tenantId, type, externalId])`, `Conversation @@unique([channelId, externalThreadId])`), not by in-memory checks.
 - Refresh tokens are stored hashed (`RefreshToken.tokenHash`); passwords with bcrypt. Never store raw secrets or tokens in new columns without encryption decision from the user.
-- Never edit or renumber an applied migration. History was squashed into `0001_init` before the first production customers; new changes go in new migrations after it.
+- Never edit or renumber an applied migration. The repo keeps a single squashed `0001_init` (full schema). New changes go in **new additive migrations after it** — never re-edit `0001_init` for features.
+- Squash / re-baseline of an existing production DB: only via `scripts/prisma-baseline-squash.sh` (ensure SQL + rewrite `_prisma_migrations`, no `DROP SCHEMA`). Documented in `docs/DEPLOY.md`. Do not delete incremental folders in git without that baseline path for live DBs.
 
 ## Procedure
 1. Edit `schema.prisma` minimally, following neighbouring naming (camelCase fields, PascalCase models, `createdAt`/`updatedAt`).

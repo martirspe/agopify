@@ -3,6 +3,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildAgentContext, HISTORY_LIMIT } from '../agent-runtime/conversation-context';
@@ -144,15 +145,28 @@ export class PlaygroundService {
         shownImageProductIds: context.shownImageProductIds,
         allowAi: await this.planLimits.canUseAi(tenantId),
         salesState: readSalesState(session.salesState),
-        messageId: `playground:${session.id}`,
+        messageId: `playground:${session.id}:${randomUUID()}`,
       });
     } catch (error) {
+      const prismaCode =
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        typeof (error as { code: unknown }).code === 'string'
+          ? (error as { code: string }).code
+          : null;
       this.logger.warn(
         JSON.stringify({
           event: 'playground_turn_failed',
           tenantId,
           sessionId: session.id,
           errorClass: error instanceof Error ? error.name : 'unknown',
+          prismaCode,
+          // Short, non-PII hint (e.g. missing column) — never log buyer text.
+          errorHint:
+            error instanceof Error
+              ? error.message.replace(/".*?"/g, '"…"').slice(0, 180)
+              : null,
         }),
       );
       agentResult = {

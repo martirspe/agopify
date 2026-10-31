@@ -121,9 +121,25 @@ No uses los scripts `apps/api/scripts/seed-*.mjs` en producción: copian fotos a
 
 Para volver a importar cuando cambie el catálogo, usa la misma carpeta: solo se suben las fotos nuevas y se respetan el precio, el stock y la publicación cambiados en la consola, salvo que elijas actualizarlos.
 
-### Reiniciar la base de datos
+### Unificar migraciones (`0001_init`) sin borrar datos
 
-Solo si la base aún no tiene negocios reales (por ejemplo, tras unificar las migraciones en `0001_init`). Borra todos los datos; las fotos y el `.env` se conservan.
+El historial Prisma del repo es una sola migración `0001_init` (schema completo). Tras un squash, las bases **con datos** no deben ejecutar ese SQL otra vez: hay que **baselinar** `_prisma_migrations`.
+
+```bash
+bash scripts/backup.sh --no-media
+git pull
+docker compose build migrate
+bash scripts/prisma-baseline-squash.sh   # ensure columnas + baseline; no DROP SCHEMA
+bash scripts/deploy.sh
+```
+
+El script aplica ALTERs idempotentes si faltan columnas recientes, comprueba que el schema coincida con `schema.prisma` y deja una sola fila `0001_init` aplicada. No lo vuelvas a correr salvo un nuevo squash.
+
+Cambios de schema **después** de este squash: migraciones aditivas nuevas (`prisma migrate dev`), nunca reeditar `0001_init` a mano.
+
+### Reiniciar la base de datos (borra tenants)
+
+Solo si la base aún no tiene negocios reales o aceptas perder todos los datos. Las fotos en S3/volumen y el `.env` se conservan.
 
 ```bash
 bash scripts/backup.sh                                   # por si acaso
@@ -140,6 +156,7 @@ docker compose exec api npm run create-admin             # vuelve a crear tu ope
 |---------|-----------|
 | El build muere (`SIGKILL`) | Añade 2 GB de swap al VPS |
 | Health check agota el tiempo | `docker compose logs --tail 100 migrate api` |
-| Consola: «No pudimos cargar tu avance» | Suele ser API 500 por columnas Prisma faltantes (`aiRuntimeMode` / `KnowledgeFaq.topic`). Revisa `docker compose logs migrate api`; tras `git pull`, un redeploy aplica las migraciones aditivas. Si `migrate` dice que faltan carpetas de migración en el historial, no edites `0001_init`: restaura el historial incremental del repo. |
+| Consola: «No pudimos cargar tu avance» / playground falla | Suele ser API 500 por columnas Prisma faltantes. Revisa `docker compose logs migrate api`. Tras un squash: `bash scripts/prisma-baseline-squash.sh` y redeploy (no reedites `0001_init` ni hagas `DROP` si hay datos). |
+| `migrate` / baseline habla de schema drift | El live DB no coincide con `schema.prisma`; no baselines a ciegas. Revisa el diff del script y corrige columnas antes. |
 | HTTPS muestra otro sitio o certificado | DNS mal apuntado o con nube naranja; corrígelo y `sudo bash scripts/bootstrap-host.sh` |
 | `CLOUDFLARE_API_TOKEN cannot access the … zone` | El token no tiene permiso `Zona · DNS · Editar` sobre `marrso.com`; edítalo en Cloudflare |
