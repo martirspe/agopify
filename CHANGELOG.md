@@ -12,6 +12,7 @@
 - AI Core: skill de entrenamiento conversacional multinicho (`vendedoria-ai-core-training`) con matriz de huecos, reglas sin vertical fijo y ciclo Collect→Diagnose→fix→Eval.
 - AI Core: curriculum de entrenamiento automatizado (`npm run train:ai-core`) con matriz de huecos multinicho y reporte offline; integrado en CI.
 - AI Core: decline suave (“no gracias después”), “sí” sin prepare no compra, distrito sin perder selección, y precio+envío multi-intent; curriculum B4/B5/E4/G1.
+- AI Core: “quiero ver foto” con distrito pendiente envía la foto del SKU elegido y repregunta el distrito (E5 multinicho); curriculum + gate.
 - AI Core: “cuál me recomiendas de todos / cuál es el mejor” elige entre opciones ya presentadas (best-first) sin reiniciar el discovery (multinicho).
 - AI Core: rechazo de pack (no quiero solo / no hay solo / no quiero el pack) deja de reofrecer el set; prioriza unitarios multinicho.
 - Config: `.env.example` / `.env.production.example` recortados a lo necesario para arrancar; features opcionales comentadas; knobs `SALES_*` de tuning viven en defaults de código (`SALES_ENGINE_MODE` default `ai-core`).

@@ -24,6 +24,8 @@ Architecture priority #3: **determinism first** for references, yes/no to closin
 
 Affirmatives (`sí`, `dale`, `sí sólo uno`, `lo quiero`, …) against `prepare_purchase` ⇒ purchase confirmation. Soft declines (`no`, `no gracias después`, `luego`) clear the offer without checkout. Bare `sí` without a prepare-ask does **not** invent a purchase.
 
+While district/checkout is pending, “quiero ver foto” still sends the selected product image and re-asks the district — the photo request is never ignored.
+
 ## Product references (recommended list only)
 
 - Ordinals: primero…quinto, último (slot-stable if a product was deactivated)  

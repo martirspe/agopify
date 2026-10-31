@@ -1,8 +1,8 @@
 {
   "mode": "ai-core-training-offline",
-  "datasetVersion": "2026.10.31c-training",
+  "datasetVersion": "2026.10.31d-training",
   "dataset": "ai-core-training",
-  "fixtureCount": 20,
+  "fixtureCount": 22,
   "gapsCovered": [
     "A1",
     "A2",
@@ -15,6 +15,7 @@
     "D1",
     "E1",
     "E4",
+    "E5",
     "F1",
     "G1"
   ],
@@ -23,15 +24,15 @@
     "footwear",
     "grocery"
   ],
-  "passCount": 20,
+  "passCount": 22,
   "failCount": 0,
   "metrics": {
     "context_retention": {
-      "samples": 9,
+      "samples": 11,
       "value": 1
     },
     "repeated_question_rate": {
-      "samples": 20,
+      "samples": 22,
       "value": 0
     },
     "intent_accuracy": {
@@ -43,7 +44,7 @@
       "value": null
     },
     "price_accuracy": {
-      "samples": 13,
+      "samples": 15,
       "value": 1
     },
     "inventory_accuracy": {
@@ -51,7 +52,7 @@
       "value": 1
     },
     "hallucination_rate": {
-      "samples": 20,
+      "samples": 22,
       "value": 0
     },
     "tool_selection_accuracy": {
@@ -63,11 +64,11 @@
       "value": 1
     },
     "reference_resolution_accuracy": {
-      "samples": 15,
+      "samples": 17,
       "value": 1
     },
     "handoff_accuracy": {
-      "samples": 18,
+      "samples": 20,
       "value": 1
     },
     "sales_progression": {
@@ -75,11 +76,15 @@
       "value": 1
     },
     "reply_ban_accuracy": {
-      "samples": 20,
+      "samples": 22,
       "value": 1
     },
     "checkout_accuracy": {
-      "samples": 4,
+      "samples": 6,
+      "value": 1
+    },
+    "image_accuracy": {
+      "samples": 2,
       "value": 1
     }
   },
@@ -160,7 +165,7 @@
       "gap": "B2",
       "vertical": "footwear",
       "failed": false,
-      "replyPreview": "La entrega la coordinamos contigo por este chat.\n\nPerfecto. Aquí tienes el link de pago para completar tu compra:",
+      "replyPreview": "Para calcular el envío, ¿a qué distrito te lo enviamos? Escríbeme el distrito y la provincia, por ejemplo: Miraflores, Lima.",
       "selectedProductId": "shoe-a",
       "metrics": {
         "repeated_question_rate": 0,
@@ -175,7 +180,7 @@
       "gap": "B3",
       "vertical": "beauty",
       "failed": false,
-      "replyPreview": "La entrega la coordinamos contigo por este chat.\n\nPerfecto. Aquí tienes el link de pago para completar tu compra:",
+      "replyPreview": "Para calcular el envío, ¿a qué distrito te lo enviamos? Escríbeme el distrito y la provincia, por ejemplo: Miraflores, Lima.",
       "selectedProductId": "perfume-a",
       "metrics": {
         "repeated_question_rate": 0,
@@ -240,7 +245,7 @@
       "gap": "E1",
       "vertical": "footwear",
       "failed": false,
-      "replyPreview": "La entrega la coordinamos contigo por este chat.\n\nPerfecto. Aquí tienes el link de pago para completar tu compra:",
+      "replyPreview": "Para calcular el envío, ¿a qué distrito te lo enviamos? Escríbeme el distrito y la provincia, por ejemplo: Miraflores, Lima.",
       "selectedProductId": "shoe-a",
       "metrics": {
         "repeated_question_rate": 0,
@@ -358,11 +363,12 @@
       "gap": "E4",
       "vertical": "footwear",
       "failed": false,
-      "replyPreview": "La entrega la coordinamos contigo por este chat.\n\nPerfecto. Aquí tienes el link de pago para completar tu compra:",
+      "replyPreview": "*Resumen de tu pedido*\nProductos: S/ 180.00\nEnvío con Olva Courier a Miraflores, Lima: S/ 9.00\n*Total: S/ 189.00*\n\nDespués del pago, envíanos tu dirección exact",
       "selectedProductId": "shoe-a",
       "metrics": {
         "repeated_question_rate": 0,
         "hallucination_rate": 0,
+        "price_accuracy": 1,
         "context_retention": 1,
         "reply_ban_accuracy": 1,
         "reference_resolution_accuracy": 1,
@@ -374,11 +380,12 @@
       "gap": "E4",
       "vertical": "beauty",
       "failed": false,
-      "replyPreview": "La entrega la coordinamos contigo por este chat.\n\nPerfecto. Aquí tienes el link de pago para completar tu compra:",
+      "replyPreview": "*Resumen de tu pedido*\nProductos: S/ 89.00\nEnvío con Olva Courier a San Isidro, Lima: S/ 9.00\n*Total: S/ 98.00*\n\nDespués del pago, envíanos tu dirección exacta ",
       "selectedProductId": "perfume-a",
       "metrics": {
         "repeated_question_rate": 0,
         "hallucination_rate": 0,
+        "price_accuracy": 1,
         "context_retention": 1,
         "reply_ban_accuracy": 1,
         "reference_resolution_accuracy": 1,
@@ -418,6 +425,42 @@
         "context_retention": 1,
         "reply_ban_accuracy": 1,
         "reference_resolution_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "E5-photo-while-district-pending-beauty",
+      "gap": "E5",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "Te mando la foto. Para calcular el envío, ¿a qué distrito te lo enviamos? Escríbeme el distrito y la provincia, por ejemplo: Miraflores, Lima.",
+      "selectedProductId": "perfume-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "checkout_accuracy": 1,
+        "image_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "E5-photo-while-district-pending-footwear",
+      "gap": "E5",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "Te mando la foto. Para calcular el envío, ¿a qué distrito te lo enviamos? Escríbeme el distrito y la provincia, por ejemplo: Miraflores, Lima.",
+      "selectedProductId": "shoe-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "checkout_accuracy": 1,
+        "image_accuracy": 1,
         "handoff_accuracy": 1
       }
     }

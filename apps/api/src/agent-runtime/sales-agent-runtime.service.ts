@@ -899,20 +899,36 @@ export class SalesAgentRuntimeService {
     }
     const cartOrder = cartLines.length > 0 && Boolean(orderId);
 
+    // While waiting for district, still honor "quiero ver foto" of the selected SKU.
+    const photoTargets =
+      matches.length > 0
+        ? matches
+        : ([
+            state?.selectedProduct
+              ? products.find((p) => p.id === state.selectedProduct?.productId)
+              : null,
+            ...contextProducts,
+          ].filter((p): p is CatalogProductView => p != null && !isSoldOut(p)));
     const images = cartOrder
       ? []
-      : this.pickImages(matches, photoAsked);
+      : this.pickImages(photoAsked ? photoTargets : matches, photoAsked);
 
     // District disambiguation and "where do we ship?" are owned by the backend: skip the
     // model so it cannot invent a confirmed address or a payment link mid-checkout.
+    // Exception: a photo request is answered (with images) and the district ask is repeated.
     if (pending?.kind === 'delivery' && !checkoutUrl) {
+      const photoNote = photoAsked
+        ? images.length
+          ? `Te mando la foto${images.length > 1 ? 's' : ''}. `
+          : 'Aún no tengo foto de ese producto en el catálogo. '
+        : '';
       return {
-        replyText: this.applyTone(agent, pending.question),
+        replyText: this.applyTone(agent, `${photoNote}${pending.question}`),
         escalate: false,
-        usedCatalog: matches.length > 0,
+        usedCatalog: photoTargets.length > 0 || matches.length > 0,
         pauseOnHandoff: agent.pauseOnHandoff,
         tools: traces,
-        images: [],
+        images,
         orderId,
         orderRef,
         checkoutUrl,

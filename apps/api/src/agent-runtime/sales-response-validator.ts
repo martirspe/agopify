@@ -27,8 +27,17 @@ export function validateSalesResponse(
   if (mentioned.some((p) => !p)) failures.add('unknown_product');
   const selected = mentioned.filter((p): p is CatalogProductView => Boolean(p));
   // Numbers must be present in current authoritative prices, with the same currency.
+  // Order-summary shipping/total lines are tool-authored (not product prices).
+  const priceScanText = text
+    .split('\n')
+    .filter((line) => {
+      const n = normalizeText(line);
+      return !/^(?:\*?total\b|envio\b|productos\s*:)/.test(n);
+    })
+    .join('\n');
   const amounts =
-    text.match(/(?:S\s*\/\.?|PEN|USD|\$|€)\s*\d+(?:[.,]\d{1,2})?/gi) ?? [];
+    priceScanText.match(/(?:S\s*\/\.?|PEN|USD|\$|€)\s*\d+(?:[.,]\d{1,2})?/gi) ??
+    [];
   const canonical = (amount: string) =>
     normalizeText(amount).replace(/[\s.]/g, '').replace(',', '');
   const allowed = new Set(
@@ -44,7 +53,7 @@ export function validateSalesResponse(
   );
   for (const amount of amounts)
     if (!allowed.has(canonical(amount))) failures.add('unsupported_price');
-  for (const line of text.split(/\n|(?<=[.!?])\s+/)) {
+  for (const line of priceScanText.split(/\n|(?<=[.!?])\s+/)) {
     const named = selected.filter((p) =>
       normalizeText(line).includes(normalizeText(p.name)),
     );

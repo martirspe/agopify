@@ -18,6 +18,7 @@ export const SALES_METRICS = [
   'sales_progression',
   'reply_ban_accuracy',
   'checkout_accuracy',
+  'image_accuracy',
 ] as const;
 export type SalesMetric = (typeof SALES_METRICS)[number];
 export type SalesExpectation = {
@@ -39,6 +40,8 @@ export type SalesExpectation = {
   hasCheckout?: boolean;
   /** When true, selectedProduct must be cleared (soft decline of prepare). */
   selectedAbsent?: boolean;
+  /** When true, reply must attach at least one product image. */
+  hasImages?: boolean;
 };
 
 /** Scores annotated outputs. Null means no annotated opportunity, never an invented success. */
@@ -115,6 +118,9 @@ export function evaluateSalesTurn(
   if (expected.hasCheckout !== undefined)
     score.checkout_accuracy =
       Boolean(result.checkoutUrl) === expected.hasCheckout ? 1 : 0;
+  if (expected.hasImages !== undefined)
+    score.image_accuracy =
+      (result.images?.length ?? 0) > 0 === expected.hasImages ? 1 : 0;
   if (expected.handoff !== undefined)
     score.handoff_accuracy = result.escalate === expected.handoff ? 1 : 0;
   if (expected.allowedTools)

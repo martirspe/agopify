@@ -50,7 +50,7 @@ function product(id, name, cents, extra = {}) {
     priceLabel: `S/ ${(cents / 100).toFixed(2)}`,
     isService: false,
     productUrl: null,
-    imageUrl: null,
+    imageUrl: extra.imageUrl ?? null,
     variants: extra.variants === null ? [] : (extra.variants ?? [
       {
         id: `${id}-v`,
@@ -70,10 +70,12 @@ const CATALOGS = {
       descriptionShort: 'Amortiguación para correr',
       categories: ['Zapatillas'],
       variants: null,
+      imageUrl: 'https://cdn.example.test/shoe-a.jpg',
     }),
     product('shoe-b', 'Zapatilla Urbana B', 15000, {
       categories: ['Zapatillas'],
       variants: null,
+      imageUrl: 'https://cdn.example.test/shoe-b.jpg',
     }),
   ],
   'footwear-oos': [
@@ -94,10 +96,12 @@ const CATALOGS = {
       descriptionShort: 'Floral amaderado de larga duración',
       categories: ['Perfumes'],
       variants: null,
+      imageUrl: 'https://cdn.example.test/perfume-a.jpg',
     }),
     product('perfume-b', 'Perfume Floral B', 9200, {
       categories: ['Perfumes'],
       variants: null,
+      imageUrl: 'https://cdn.example.test/perfume-b.jpg',
     }),
     product('deo-unit', 'Desodorante Roll On Hombre', 4600, {
       descriptionShort: 'Desodorante roll on',
@@ -114,6 +118,7 @@ const CATALOGS = {
     product('coffee', 'Café de Altura 250g', 2800, {
       categories: ['Café'],
       variants: null,
+      imageUrl: 'https://cdn.example.test/coffee.jpg',
     }),
     product('coffee-pack', 'Pack Café + Taza', 4500, {
       categories: ['Café'],
@@ -147,7 +152,14 @@ function buildRuntime(catalog) {
     products: catalog.filter((p) => p.isAvailable).slice(0, 3),
     remaining: 0,
   });
-  tools.shippingRules = async () => null;
+  tools.shippingRules = async () => ({
+    deliveryEnabled: true,
+    freeShippingFromCents: null,
+    pickupEnabled: false,
+    pickupAddress: null,
+    shippingOriginUbigeo: '150122',
+    carrierRates: { olva: [900, 1200, 1600, 2200, 2800] },
+  });
   tools.createOrderWithOptionalLink = async () => ({
     traces: [{ name: 'create_order', status: 'ok', summary: 'fixture' }],
     orderId: 'order-training',
@@ -171,6 +183,11 @@ function seedState(fixture) {
   if (fixture.recommended) state.recommendedProductIds = fixture.recommended;
   if (fixture.selected) state.selectedProduct = { productId: fixture.selected };
   if (fixture.seedStage) state.stage = fixture.seedStage;
+  if (fixture.seedIntent) state.intent = fixture.seedIntent;
+  if (fixture.pendingLines) state.pendingLines = fixture.pendingLines;
+  if (fixture.missingInformation) {
+    state.missingInformation = fixture.missingInformation;
+  }
   if (fixture.seedNeed) {
     state.requirements.need = {
       value: fixture.seedNeed,

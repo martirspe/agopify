@@ -50,6 +50,7 @@ filters + validator/prompt guards. Every row must stay **niche-agnostic**.
 | E2 | Topic change clears wrong selection | Clear only on clear topic shift | `observeBuyer` |
 | E3 | Operator pause | Agent silent until reactivation | Gateway / pause |
 | E4 | District / shipping ask | Capture district; do not restart catalog | Pending ask |
+| E5 | “quiero ver foto” while district/checkout pending | Send photo of selected SKU; re-ask district if still needed — never ignore the photo | Runtime |
 
 ## F. Voice & UX copy (Spanish)
 

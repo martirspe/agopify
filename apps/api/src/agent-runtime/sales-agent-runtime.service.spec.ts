@@ -219,6 +219,39 @@ describe('sales agent buyer replies', () => {
     expect(reply.replyText).not.toContain(closeScript);
   });
 
+  it('sends the selected product photo while waiting for district (E5)', async () => {
+    const state = initialSalesState();
+    state.pendingLines = [{ productId: product.id, variantId: null, quantity: 1 }];
+    state.selectedProduct = { productId: product.id };
+    state.stage = 'CHECKOUT';
+    state.intent = 'purchase';
+    state.missingInformation = ['destination'];
+    const reply = await runtime.generateReply({
+      tenantId: 'tenant-1',
+      inboundText: 'QUiero ver foto',
+      history: [
+        {
+          role: 'agent',
+          text: 'Para calcular el envío, ¿a qué distrito te lo enviamos?',
+          productIds: [product.id],
+          pendingDelivery: {
+            lines: [{ productId: product.id, variantId: null, quantity: 1 }],
+          },
+        },
+      ],
+      salesState: state,
+    });
+    expect(reply.images).toEqual([
+      expect.objectContaining({
+        productId: product.id,
+        imageUrl: product.imageUrl,
+      }),
+    ]);
+    expect(reply.replyText.toLowerCase()).toMatch(/foto/);
+    expect(reply.replyText).toMatch(/distrito/i);
+    expect(tools.createOrderWithOptionalLink).not.toHaveBeenCalled();
+  });
+
   it.each([false, true])('sends photos only on request, including repeat requests (AI enabled: %s)', async (useAi) => {
     aiEnabled = useAi;
     for (const inboundText of [product.name, 'Hola', 'No quiero fotos', 'La foto se ve borrosa']) {

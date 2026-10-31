@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.31c-training",
+  "version": "2026.10.31d-training",
   "dataset": "ai-core-training",
   "description": "Automated AI Core conversation curriculum (gap matrix, multinicho). Run via npm run train:ai-core.",
   "forbiddenPhrases": [
@@ -355,6 +355,58 @@
         "intents": ["price_inquiry", "shipping_inquiry"],
         "referenceId": "perfume-a",
         "replyIncludes": ["S/", "distrito"],
+        "replyExcludes": ["cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "E5-photo-while-district-pending-beauty",
+      "gap": "E5",
+      "vertical": "beauty",
+      "text": "QUiero ver foto",
+      "selected": "perfume-a",
+      "recommended": ["perfume-a"],
+      "catalog": "beauty",
+      "seedStage": "CHECKOUT",
+      "seedIntent": "purchase",
+      "pendingLines": [
+        { "productId": "perfume-a", "variantId": null, "quantity": 1 }
+      ],
+      "missingInformation": ["destination"],
+      "agentHistory": [
+        "Para calcular el envío, ¿a qué distrito te lo enviamos? Escríbeme el distrito y la provincia, por ejemplo: Miraflores, Lima."
+      ],
+      "expected": {
+        "referenceId": "perfume-a",
+        "hasImages": true,
+        "hasCheckout": false,
+        "replyIncludes": ["foto", "distrito"],
+        "replyExcludes": ["cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "E5-photo-while-district-pending-footwear",
+      "gap": "E5",
+      "vertical": "footwear",
+      "text": "Mándame una foto",
+      "selected": "shoe-a",
+      "recommended": ["shoe-a"],
+      "catalog": "footwear",
+      "seedStage": "CHECKOUT",
+      "seedIntent": "purchase",
+      "pendingLines": [
+        { "productId": "shoe-a", "variantId": null, "quantity": 1 }
+      ],
+      "missingInformation": ["destination"],
+      "agentHistory": [
+        "Para calcular el envío, ¿a qué distrito te lo enviamos?"
+      ],
+      "expected": {
+        "referenceId": "shoe-a",
+        "hasImages": true,
+        "hasCheckout": false,
+        "replyIncludes": ["foto", "distrito"],
         "replyExcludes": ["cuéntame qué producto buscas"],
         "handoff": false
       }
