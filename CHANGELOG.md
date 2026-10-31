@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- AI Core: si el negocio no tiene medios de pago (Mercado Pago) para el link en el chat, el pedido se registra igual y se deriva a un asesor (`payment_provider_missing`); el agente ya no inventa ni promete el link ni agradece una compra sin cobro.
 - Conocimiento del negocio: los filtros de tema usan el chip de filtro de la consola (borde, radio y estado seleccionado del sistema), en lugar de pastillas locales.
 - AI Core: referencias ordinales del comprador (“el último”, “el cuarto”, “me interesa el último”) se resuelven contra el orden de productos ya presentados, sin volver a pedir qué busca.
 - AI Core: “sí, quiero uno” / “dale, lo quiero” tras “¿te lo preparo?” confirma la compra del producto ya seleccionado (cantidad “uno/una” incluida).

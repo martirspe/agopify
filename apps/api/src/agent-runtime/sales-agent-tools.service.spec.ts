@@ -477,3 +477,57 @@ describe('createOrderWithOptionalLink dry-run modes', () => {
     }
   });
 });
+
+describe('createOrderWithOptionalLink without payment provider', () => {
+  const ordersService = { create: jest.fn() };
+  const payments = {
+    providerStatus: jest.fn().mockResolvedValue({
+      provider: 'none',
+      mockMode: false,
+      configured: false,
+    }),
+  };
+  const prisma = { order: { findUnique: jest.fn().mockResolvedValue(null) } };
+  const tools = new SalesAgentToolsService(
+    prisma as never,
+    ordersService as never,
+    null as never,
+    payments as never,
+  );
+  const lineProduct = product('zentro', 12000);
+
+  it('creates the order without a link and marks payment unavailable', async () => {
+    ordersService.create.mockResolvedValue({
+      id: 'ord-1',
+      code: 'A1',
+      totalCents: 12000,
+      currency: 'PEN',
+      payments: [],
+    });
+    const result = await tools.createOrderWithOptionalLink({
+      tenantId: 'tenant-a',
+      mode: 'production',
+      lines: [{ product: lineProduct, quantity: 1 }],
+      conversationId: 'conv-1',
+      createPaymentLink: true,
+    });
+    expect(ordersService.create).toHaveBeenCalledWith(
+      'tenant-a',
+      expect.objectContaining({ createPaymentLink: false }),
+      undefined,
+      expect.any(Object),
+    );
+    expect(result.orderId).toBe('ord-1');
+    expect(result.checkoutUrl).toBeUndefined();
+    expect(result.paymentLinkUnavailable).toBe(true);
+    expect(result.traces).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'create_payment_link',
+          status: 'error',
+          data: expect.objectContaining({ code: 'payment_provider_missing' }),
+        }),
+      ]),
+    );
+  });
+});

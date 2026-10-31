@@ -208,11 +208,15 @@ export function validateSalesResponse(
     !state?.orderId
   )
     failures.add('unsupported_action');
+  const normalized = normalizeText(text);
+  const paymentSettled = ['PAID', 'FULFILLING', 'SHIPPED', 'COMPLETED'].includes(
+    state?.paymentStatus ?? '',
+  );
   if (
-    /\b(?:pagado|pago confirmado)\w*/.test(normalizeText(text)) &&
-    !['PAID', 'FULFILLING', 'SHIPPED', 'COMPLETED'].includes(
-      state?.paymentStatus ?? '',
-    )
+    /\b(?:pagado|pago confirmado|gracias\s+por\s+tu\s+compra|compra\s+confirmada|ya\s+pagaste)\b/.test(
+      normalized,
+    ) &&
+    !paymentSettled
   )
     failures.add('unsupported_payment');
   // Claiming the district is settled or offering a payment link without an order
@@ -221,7 +225,15 @@ export function validateSalesResponse(
     state?.pendingLines.length &&
     !state.orderId &&
     /\b(?:ya\s+tengo\s+todo|distrito\s+confirmad|confirmar\s+tu\s+distrito|link\s+(?:de\s+)?pago|pase\s+el\s+link|pasar\s+el\s+link)\b/.test(
-      normalizeText(text),
+      normalized,
+    )
+  )
+    failures.add('unsupported_checkout_claim');
+  // Never invent sending a payment link without an actual checkout URL turn.
+  if (
+    state?.stage !== 'PAYMENT_PENDING' &&
+    /\b(?:te\s+(?:envio|mando|paso)\s+el\s+link|(?:envio|mando|paso|enviare)\s+el\s+link|aqui\s+tienes\s+el\s+link|quieres\s+que\s+te\s+envie\s+el\s+link)\b/.test(
+      normalized,
     )
   )
     failures.add('unsupported_checkout_claim');

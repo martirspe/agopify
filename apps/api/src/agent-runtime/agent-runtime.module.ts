@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { KnowledgeModule } from '../knowledge/knowledge.module';
 import { OrdersModule } from '../orders/orders.module';
+import { PaymentsModule } from '../payments/payments.module';
 import { SalesAgentRuntimeService } from './sales-agent-runtime.service';
 import { SalesAgentToolsService } from './sales-agent-tools.service';
 import { SalesInfrastructureModule } from './sales-infrastructure.module';
@@ -12,7 +13,12 @@ import { AiModelRouter } from './models/ai-model.router';
 import { OpenAiChatProvider } from './models/openai-chat.provider';
 
 @Module({
-  imports: [OrdersModule, KnowledgeModule, SalesInfrastructureModule],
+  imports: [
+    OrdersModule,
+    PaymentsModule,
+    KnowledgeModule,
+    SalesInfrastructureModule,
+  ],
   controllers: [SalesEngineController],
   providers: [
     OpenAiChatProvider,

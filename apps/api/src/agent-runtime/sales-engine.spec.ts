@@ -676,6 +676,37 @@ describe('AI Sales Engine regression/evaluation', () => {
       validateSalesResponse(text, [products[0].name], products, state),
     ).toContain(failure);
   });
+
+  it('rejects invented payment-link offers and unpaid thank-yous', () => {
+    const state = observeBuyer(initialSalesState(), 'Lo quiero', 'm1');
+    state.selectedProduct = { productId: products[0].id };
+    state.stage = 'CHECKOUT';
+    state.orderId = 'ord-1';
+    expect(
+      validateSalesResponse(
+        'Perfecto, te envío el link para que puedas pagar.',
+        [products[0].name],
+        products,
+        state,
+      ),
+    ).toContain('unsupported_checkout_claim');
+    expect(
+      validateSalesResponse(
+        '¿Quieres que te envíe el link para pagar?',
+        [products[0].name],
+        products,
+        state,
+      ),
+    ).toContain('unsupported_checkout_claim');
+    expect(
+      validateSalesResponse(
+        'Perfecto, muchas gracias por tu compra.',
+        [products[0].name],
+        products,
+        state,
+      ),
+    ).toContain('unsupported_payment');
+  });
   it('retains critical state/current message and drops whole history turns to meet the budget', () => {
     const state = observeBuyer(initialSalesState(), 'Talla 40', 'm1');
     const messages = contextMessages(

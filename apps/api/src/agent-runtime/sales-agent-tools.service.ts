@@ -5,6 +5,7 @@ import { CATALOG_CANDIDATES, maximumPrice, searchCatalogIds } from '../catalog/c
 import { PrismaService } from '../prisma/prisma.service';
 import { OrderShipping, OrdersService } from '../orders/orders.service';
 import { orderReference } from '../orders/settlement';
+import { PaymentsService } from '../payments/payments.service';
 import { SalesSearchService } from './sales-search.service';
 import type { ShippingRules } from '../storefront/shipping';
 import { variantOptions } from '../catalog/variant-options';
@@ -405,8 +406,19 @@ export class SalesAgentToolsService {
     private readonly prisma: PrismaService,
     private readonly ordersService: OrdersService,
     private readonly config: ConfigService,
+    @Optional() private readonly payments?: PaymentsService,
     @Optional() private readonly semantic?: SalesSearchService,
   ) {}
+
+  /**
+   * Flow B checkout link is available when Mercado Pago is connected,
+   * or the non-production mock provider is allowed.
+   */
+  async canCreatePaymentLink(tenantId: string): Promise<boolean> {
+    if (!this.payments) return true;
+    const status = await this.payments.providerStatus(tenantId);
+    return status.provider !== 'none';
+  }
 
   extractProductRefs(text: string): ProductRef[] {
     const refs = new Map<string, ProductRef>();
@@ -962,6 +974,8 @@ export class SalesAgentToolsService {
     orderDraftHash?: string;
     dryRun: boolean;
     replayed?: boolean;
+    /** Link was requested but no provider/credentials (or generation failed). */
+    paymentLinkUnavailable?: boolean;
   }> {
     const lines = params.lines.map((line) => ({
       ...line,
@@ -1045,6 +1059,11 @@ export class SalesAgentToolsService {
       };
     }
 
+    const paymentsReady = params.createPaymentLink
+      ? await this.canCreatePaymentLink(params.tenantId)
+      : false;
+    const createPaymentLink = params.createPaymentLink && paymentsReady;
+
     try {
       const before = idempotency
         ? await this.prisma.order.findUnique({
@@ -1066,7 +1085,7 @@ export class SalesAgentToolsService {
             quantity: line.quantity,
             unitCents: line.unitCents,
           })),
-          createPaymentLink: params.createPaymentLink,
+          createPaymentLink,
           sendLinkToChat: false,
         },
         shipping,
@@ -1075,6 +1094,9 @@ export class SalesAgentToolsService {
       const replayed = Boolean(before && before.id === order.id);
 
       const payment = order.payments?.[0];
+      const checkoutUrl = payment?.checkoutUrl ?? undefined;
+      const paymentLinkUnavailable =
+        params.createPaymentLink && !checkoutUrl;
       const traces: AgentToolTrace[] = [
         {
           name: 'create_order',
@@ -1096,17 +1118,24 @@ export class SalesAgentToolsService {
       if (params.createPaymentLink) {
         traces.push({
           name: 'create_payment_link',
-          status: payment?.checkoutUrl ? 'ok' : 'error',
-          summary: payment?.checkoutUrl
+          status: checkoutUrl ? 'ok' : 'error',
+          summary: checkoutUrl
             ? replayed
               ? 'Link de pago existente reutilizado'
               : 'Link de pago generado para el comprador'
-            : 'No se pudo generar el link de pago',
+            : paymentsReady
+              ? 'No se pudo generar el link de pago'
+              : 'Medios de pago no configurados: se deriva a un asesor',
           data: {
             dryRun: false,
             paymentId: payment?.id,
-            checkoutUrl: payment?.checkoutUrl ?? null,
+            checkoutUrl: checkoutUrl ?? null,
             replayed,
+            code: checkoutUrl
+              ? null
+              : paymentsReady
+                ? 'payment_link_failed'
+                : 'payment_provider_missing',
           },
         });
       }
@@ -1115,10 +1144,11 @@ export class SalesAgentToolsService {
         traces,
         orderId: order.id,
         orderRef: orderReference(order),
-        checkoutUrl: payment?.checkoutUrl ?? undefined,
+        checkoutUrl,
         orderDraftHash,
         dryRun: false,
         replayed,
+        ...(paymentLinkUnavailable ? { paymentLinkUnavailable: true } : {}),
       };
     } catch (error) {
       return {

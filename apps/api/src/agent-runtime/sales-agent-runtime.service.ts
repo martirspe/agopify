@@ -706,6 +706,7 @@ export class SalesAgentRuntimeService {
     let orderRef: string | undefined;
     let checkoutUrl: string | undefined;
     let orderDraftHash: string | undefined;
+    let paymentLinkUnavailable = false;
     let pending: PendingChoice = null;
     const cartLines = this.tools.orderLinesFromRefs(refs, products);
     let lines: OrderLine[] = [];
@@ -885,6 +886,7 @@ export class SalesAgentRuntimeService {
       orderRef = commerce.orderRef;
       checkoutUrl = commerce.checkoutUrl;
       orderDraftHash = commerce.orderDraftHash;
+      paymentLinkUnavailable = Boolean(commerce.paymentLinkUnavailable);
       if (checkoutUrl && delivery) {
         deliveryText = this.deliveryText(delivery, lines);
       }
@@ -912,6 +914,30 @@ export class SalesAgentRuntimeService {
     const images = cartOrder
       ? []
       : this.pickImages(photoAsked ? photoTargets : matches, photoAsked);
+
+    // Order reserved but Flow B cannot charge: never invent a link — hand off to Inbox.
+    if (paymentLinkUnavailable && orderId) {
+      traces.push(this.tools.escalateTrace('payment_provider_missing'));
+      const refBit = orderRef ? ` (#${orderRef})` : '';
+      return {
+        replyText: this.applyTone(
+          agent,
+          `Perfecto, tu pedido quedó registrado${refBit}. Un asesor te escribe por aquí para coordinar el pago.`,
+        ),
+        escalate: true,
+        usedCatalog: true,
+        pauseOnHandoff: true,
+        tools: traces,
+        images: [],
+        orderId,
+        orderRef,
+        orderDraftHash,
+        usedAi: false,
+        ...(state
+          ? { trace: { lane: 'fast', validation: 'deterministic' } }
+          : {}),
+      };
+    }
 
     // District disambiguation and "where do we ship?" are owned by the backend: skip the
     // model so it cannot invent a confirmed address or a payment link mid-checkout.
@@ -1708,8 +1734,8 @@ export class SalesAgentRuntimeService {
       params.checkoutUrl
         ? ''
         : params.salesState?.selectedProduct
-          ? 'paymentLinkReady es false: no digas que enviaste un link. El producto ya está elegido; pide solo el dato que falta (distrito, variante o confirmación), nunca qué producto busca.'
-          : 'paymentLinkReady es false: no digas que vas a enviar ni que ya enviaste un link de pago. Si el cliente quiere comprar, pide solo el dato que falta (qué producto u opción).',
+          ? 'paymentLinkReady es false: no digas que vas a enviar ni que ya enviaste un link de pago, ni agradezcas una compra. El producto ya está elegido; pide solo el dato que falta (distrito, variante o confirmación), nunca qué producto busca. Nunca inventes Yape, transferencia ni cuentas para pagar por chat.'
+          : 'paymentLinkReady es false: no digas que vas a enviar ni que ya enviaste un link de pago, ni agradezcas una compra. Si el cliente quiere comprar, pide solo el dato que falta (qué producto u opción). Nunca inventes Yape, transferencia ni cuentas para pagar por chat.',
       params.photoAsked
         ? 'El cliente solicitó fotos: las fotos disponibles de los productos que pongas en productNames se envían después de tu mensaje. No pegues enlaces de imágenes.'
         : 'El cliente no solicitó fotos: no se enviará ninguna imagen. productNames identifica los productos de tu respuesta, no autoriza enviar fotos. No digas que envías fotos.',

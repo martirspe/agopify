@@ -57,7 +57,7 @@ Exactly one response path per inbound message. See `MIGRATION.md`.
 | --- | --- | --- |
 | L0 read | Autonomous | Model tools in `SalesToolRegistry` |
 | L1 reversible write | Autonomous + audit | Preferences / memory writes (backend) |
-| L2 commercial commit | Explicit customer confirmation + idempotency | Order + payment link in runtime (not model tools); `order_draft_hash` → `Order.checkoutKey` (see `ORDER_IDEMPOTENCY.md`) |
+| L2 commercial commit | Explicit customer confirmation + idempotency | Order + payment link in runtime (not model tools); `order_draft_hash` → `Order.checkoutKey` (see `ORDER_IDEMPOTENCY.md`). If Flow B payments are not configured, the order is still created and the turn hands off (`payment_provider_missing`) — never invent a link or chat transfer instructions |
 | L3 irreversible / out of policy | Human only | Handoff / escalate |
 
 Businesses may tighten; never relax above L2 without product change.

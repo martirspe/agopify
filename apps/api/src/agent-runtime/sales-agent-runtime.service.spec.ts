@@ -212,6 +212,61 @@ describe('sales agent buyer replies', () => {
     expect(tools.createOrderWithOptionalLink).not.toHaveBeenCalled();
   });
 
+  it('hands off after order when payment link is unavailable', async () => {
+    const waiting: ConversationTurn[] = [{
+      role: 'agent',
+      text: '¿A qué distrito te lo enviamos?',
+      productIds: [product.id],
+      pendingDelivery: { lines: [{ productId: product.id, variantId: null, quantity: 1 }] },
+    }];
+    const state = initialSalesState();
+    state.pendingLines = [{ productId: product.id, variantId: null, quantity: 1 }];
+    state.selectedProduct = { productId: product.id };
+    state.stage = 'CHECKOUT';
+    state.missingInformation = ['destination'];
+    state.intent = 'purchase';
+
+    jest.spyOn(tools, 'createOrderWithOptionalLink').mockResolvedValue({
+      traces: [
+        { name: 'create_order', status: 'ok', summary: 'Pedido creado' },
+        {
+          name: 'create_payment_link',
+          status: 'error',
+          summary: 'Medios de pago no configurados: se deriva a un asesor',
+          data: { checkoutUrl: null, code: 'payment_provider_missing' },
+        },
+      ],
+      orderId: 'ord-manual-1',
+      orderRef: 'M-1',
+      dryRun: false,
+      paymentLinkUnavailable: true,
+    });
+
+    const reply = await runtime.generateReply({
+      tenantId: 'tenant-1',
+      inboundText: 'Miraflores, Lima',
+      history: waiting,
+      salesState: state,
+    });
+
+    expect(reply.checkoutUrl).toBeUndefined();
+    expect(reply.orderId).toBe('ord-manual-1');
+    expect(reply.escalate).toBe(true);
+    expect(reply.pauseOnHandoff).toBe(true);
+    expect(reply.replyText).toContain('M-1');
+    expect(reply.replyText.toLowerCase()).toContain('asesor');
+    expect(reply.replyText.toLowerCase()).not.toContain('link');
+    expect(reply.tools).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'escalate',
+          data: expect.objectContaining({ reason: 'payment_provider_missing' }),
+        }),
+      ]),
+    );
+    expect(reply.salesState?.stage).toBe('HUMAN_HANDOFF');
+  });
+
   it('uses a buyer-facing closing question in fallback instead of the internal script', async () => {
     const reply = await runtime.generateReply({ tenantId: 'tenant-1', inboundText: product.name });
     expect(reply.replyText).toContain(product.name);
