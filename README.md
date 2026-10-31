@@ -24,8 +24,10 @@ packages/*   Design system, tokens y contratos compartidos
 Requisito: Docker Desktop con Compose v2. No hace falta Node ni Postgres en el host.
 
 ```bash
-npm run dev            # crea apps/api/.env si falta y levanta todo con recarga en caliente
-npm run docker:logs    # logs de api, web y store
+npm run dev            # mínimo: postgres + api + consola
+npm run dev:store      # + tienda en :4300
+npm run dev:redis      # + Redis (opcional; REDIS_URL en apps/api/.env)
+npm run docker:logs    # logs de api y web
 npm run docker:ps
 npm run docker:down
 npm run test:docker    # tests unitarios + e2e en una base aislada vendedoria_test
@@ -35,13 +37,13 @@ npm run test:docker    # tests unitarios + e2e en una base aislada vendedoria_te
 |----------|-----|
 | Consola | http://localhost:4201 |
 | API | http://localhost:3100/api/v1/health · Swagger http://localhost:3100/docs |
-| Tiendas | http://{slug}.localhost:4300 |
 | Postgres | `localhost:5432` (`postgres` / `postgres` / db `vendedoria`) |
+| Tiendas | http://{slug}.localhost:4300 (solo con `npm run dev:store`) |
 
 - Los puertos no chocan con selecta (3000/4200/5433): ambos stacks pueden correr a la vez.
 - Usa siempre `localhost`: los puertos solo escuchan en loopback y, en desarrollo, `http://127.0.0.1:*` (enlaces de Docker Desktop) redirige a `http://localhost:*` con la misma ruta.
-- Guardar un archivo recarga la API (Nest watch), la consola y la tienda (`ng serve` con sondeo).
-- Cambios en dependencias (`package.json`): `npm run dev` de nuevo (el servicio `deps` ejecuta `npm ci`).
+- Guardar un archivo recarga la API (Nest watch) y la consola (`ng serve` con sondeo).
+- Cambios en dependencias (`package.json`): `npm run dev` de nuevo (el one-shot `deps` ejecuta `npm ci`).
 - Migraciones nuevas: `docker compose -f docker-compose.dev.yml exec api npx prisma migrate dev --name <nombre>`.
 - Una sola vez, tras migrar del stack anterior: `npm run docker:clean-legacy` (conserva la base).
 - Operadores de la plataforma (SUPERADMIN / ADMIN): `docker compose -f docker-compose.dev.yml exec api npm run create-admin` (interactivo; `-- --help` muestra las opciones). Entran por `POST /api/v1/platform/auth/login`, con una sesión separada de la de los negocios. Alta de todos los tipos de usuario: [`docs/USUARIOS.md`](./docs/USUARIOS.md).
