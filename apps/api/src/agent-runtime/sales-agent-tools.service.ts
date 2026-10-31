@@ -479,10 +479,28 @@ export class SalesAgentToolsService {
       [...referenced, ...products].map((product) => [product.id, product]),
     );
     const maxPrice = maximumPrice(inboundText);
-    return [...byId.values()].map((product) => ({
-      ...this.toStoreView(product, base),
-      ...(ids.includes(product.id) ? { searchRank: ids.length - ids.indexOf(product.id) } : {}),
-    })).filter((product) => contextIds.includes(product.id) || referencedHandles.includes(product.handle) || maxPrice === undefined || product.basePriceCents <= maxPrice);
+    return [...byId.values()]
+      .map((product) => ({
+        ...this.toStoreView(product, base),
+        ...(ids.includes(product.id)
+          ? { searchRank: ids.length - ids.indexOf(product.id) }
+          : {}),
+      }))
+      .filter((product) => {
+        const pinned =
+          contextIds.includes(product.id) ||
+          referencedHandles.includes(product.handle);
+        // Stock-zero rows can keep DB isAvailable=true; never feed them to recommenders.
+        if (!pinned && !product.isAvailable) return false;
+        if (
+          !pinned &&
+          maxPrice !== undefined &&
+          product.basePriceCents > maxPrice
+        ) {
+          return false;
+        }
+        return true;
+      });
   }
 
   /** Hydration for function calls/references; a vector payload never supplies facts. */
@@ -595,8 +613,11 @@ export class SalesAgentToolsService {
       this.prisma.product.count({ where }),
       this.storeBase(tenantId),
     ]);
+    const products = rows
+      .map((product) => this.toStoreView(product, base))
+      .filter((product) => product.isAvailable);
     return {
-      products: rows.map((product) => this.toStoreView(product, base)),
+      products,
       remaining: Math.max(0, total - rows.length),
     };
   }
@@ -663,7 +684,10 @@ export class SalesAgentToolsService {
       };
     }
 
-    const scored = products
+    // Recommendations never surface sold-out SKUs (DB flag may still be true with 0 stock).
+    // Explicit cart/refs above keep the referenced row so checkout can say it is exhausted.
+    const sellable = products.filter((product) => product.isAvailable);
+    const scored = sellable
       .map((product) => {
         const nameWords = wordsOf(
           [product.name, product.brand ?? '', ...(product.keywords ?? [])].join(' '),
@@ -704,8 +728,8 @@ export class SalesAgentToolsService {
 
     const asksCatalog =
       /productos?|catalogo|que\s+tienen|que\s+venden|recomend/.test(query);
-    if (!matches.length && asksCatalog && products.length && tokens.every((token) => BROWSE_WORDS.has(token))) {
-      matches = products.slice(0, 3);
+    if (!matches.length && asksCatalog && sellable.length && tokens.every((token) => BROWSE_WORDS.has(token))) {
+      matches = sellable.slice(0, 3);
     }
 
     return {
@@ -1179,7 +1203,7 @@ export class SalesAgentToolsService {
   }
 
   wantsPurchase(text: string): boolean {
-    return /\b(?:comprar(?:lo|la|los|las)?|hacer\s+(un|el|mi|este)\s+pedido|pagar(?:lo|la)?|checkout|link\s+de\s+pago|(?:pasa|pasame|manda|mandame|envia|enviame|dame)\s+(?:el\s+)?link|quiero\s+(ese|este|esa|esta|el|la)|lo\s+quiero|la\s+quiero|l[oa]\s+(llevo|compro|pido)|(separ|reserv|apart)(a|as|ame|alo|ala|amelo|amela|ar)|me\s+l[oa]\s+(separas|reservas|envias|mandas)|al\s+toke|de\s+una|ya\s+pues)\b/.test(
+    return /\b(?:comprar(?:lo|la|los|las)?|hacer\s+(un|el|mi|este)\s+pedido|pagar(?:lo|la)?|checkout|link\s+de\s+pago|(?:pasa|pasame|manda|mandame|envia|enviame|dame)\s+(?:el\s+)?link|quiero(?:\s+(?:solo|solamente))?\s+(un[oa]|\d{1,2}|dos|tres|cuatro|ese|este|esa|esta|el|la)|(?:solo|solamente)\s+(un[oa]|\d{1,2}|dos|tres|cuatro)|lo\s+quiero|la\s+quiero|l[oa]\s+(llevo|compro|pido)|(separ|reserv|apart)(a|as|ame|alo|ala|amelo|amela|ar)|me\s+l[oa]\s+(separas|reservas|envias|mandas)|al\s+toke|de\s+una|ya\s+pues)\b/.test(
       normalizeText(text),
     );
   }

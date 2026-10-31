@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+- Conocimiento del negocio: los filtros de tema usan el chip de filtro de la consola (borde, radio y estado seleccionado del sistema), en lugar de pastillas locales.
+- AI Core: referencias ordinales del comprador (“el último”, “el cuarto”, “me interesa el último”) se resuelven contra el orden de productos ya presentados, sin volver a pedir qué busca.
+- AI Core: “sí, quiero uno” / “dale, lo quiero” tras “¿te lo preparo?” confirma la compra del producto ya seleccionado (cantidad “uno/una” incluida).
+- AI Core: “el que viene sólo” elige el producto unitario frente al set; “sí, sólo uno” y un “sí” tras “¿te lo reserve/prepare?” avanzan el checkout sin perder la selección.
+- AI Core Understanding: capa determinista unificada (`conversation-understanding`) para confirmaciones, cantidad, unitario vs set, fragmentos de nombre y anclaje del producto elegido; el fallback ya no pide “qué producto buscas” si hay selección; golden 34–36.
+- AI Core: preferencia unitario vs set/kit/pack es agnóstica al rubro (“sólo la zapatilla”, “sólo el café”, “sin el kit”); el listado determinista deja de decir “Encontré esto en el catálogo”.
+- AI Core: las recomendaciones y el browse no ofrecen productos agotados (stock 0), aunque el flag de catálogo siga activo; el modelo no puede inventar ni comentar ítems agotados al recomendar.
+- AI Core: skill de entrenamiento conversacional multinicho (`vendedoria-ai-core-training`) con matriz de huecos, reglas sin vertical fijo y ciclo Collect→Diagnose→fix→Eval.
+- AI Core: curriculum de entrenamiento automatizado (`npm run train:ai-core`) con matriz de huecos multinicho y reporte offline; integrado en CI.
+- AI Core: decline suave (“no gracias después”), “sí” sin prepare no compra, distrito sin perder selección, y precio+envío multi-intent; curriculum B4/B5/E4/G1.
+- AI Core: “cuál me recomiendas de todos / cuál es el mejor” elige entre opciones ya presentadas (best-first) sin reiniciar el discovery (multinicho).
+- AI Core: rechazo de pack (no quiero solo / no hay solo / no quiero el pack) deja de reofrecer el set; prioriza unitarios multinicho.
 - Config: `.env.example` / `.env.production.example` recortados a lo necesario para arrancar; features opcionales comentadas; knobs `SALES_*` de tuning viven en defaults de código (`SALES_ENGINE_MODE` default `ai-core`).
 - Docker dev: `npm run dev` solo levanta postgres + api + consola; tienda y Redis van en perfiles (`dev:store`, `dev:redis`, `dev:all`). Guía de arranque en `README.md`.
 - Catálogo: el export ZIP incluye fotos aunque la URL use otro host/puerto que el actual; el import avisa si sueltas el ZIP sin descomprimir o si falta la carpeta `images/`.

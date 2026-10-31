@@ -101,11 +101,16 @@ async function main() {
       state = observeBuyer(state, text, `fixture-${i}`);
     if (fixture.recommended) state.recommendedProductIds = fixture.recommended;
     if (fixture.selected) state.selectedProduct = { productId: fixture.selected };
+    const history = (fixture.agentHistory ?? []).map((text) => ({
+      role: 'agent',
+      text,
+    }));
     const result = await runtime.generateReply({
       tenantId: 'fixture',
       inboundText: fixture.text,
       mode: 'playground',
       salesState: state,
+      history,
       allowAi: false,
     });
     const metrics = evaluateSalesTurn(result, catalog, fixture.expected);

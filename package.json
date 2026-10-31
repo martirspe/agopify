@@ -42,7 +42,9 @@
     "icons:sync": "node scripts/sync-icons.mjs",
     "prisma:generate": "npm run prisma:generate -w @vendedoria/api",
     "prisma:migrate": "npm run prisma:migrate -w @vendedoria/api",
-    "eval:sales": "npm run eval:sales -w @vendedoria/api"
+    "eval:sales": "npm run eval:sales -w @vendedoria/api",
+    "eval:ai-core-training": "node scripts/evaluate-ai-core-training.cjs",
+    "train:ai-core": "node scripts/train-ai-core.mjs"
   },
   "overrides": {
     "@nestjs/platform-fastify": {

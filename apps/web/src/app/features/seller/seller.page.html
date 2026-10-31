@@ -218,13 +218,13 @@
 
             <div
               class="tw:flex tw:flex-wrap tw:gap-2"
-              role="tablist"
+              role="group"
               aria-label="Filtrar por tema"
             >
               <button
                 type="button"
-                class="pill"
-                [class.pill--ok]="knowledgeFilter() === 'ALL'"
+                class="tw:console-filter-chip tw:font-semibold"
+                [attr.aria-pressed]="knowledgeFilter() === 'ALL'"
                 (click)="setKnowledgeFilter('ALL')"
               >
                 Todas
@@ -232,8 +232,8 @@
               @for (topic of knowledgeTopics(); track topic.id) {
                 <button
                   type="button"
-                  class="pill"
-                  [class.pill--ok]="knowledgeFilter() === topic.id"
+                  class="tw:console-filter-chip tw:font-semibold"
+                  [attr.aria-pressed]="knowledgeFilter() === topic.id"
                   (click)="setKnowledgeFilter(topic.id)"
                 >
                   {{ topic.label }}

@@ -9,6 +9,13 @@ import {
   toSalesStateIntent,
 } from './buyer-intents';
 import { applyTopicChange } from './memory-policy';
+import {
+  isBundleProduct,
+  parseBuyerQuantity,
+  resolveBundlePreference,
+  resolveByUniqueNameFragment,
+  wantsStandaloneOnly,
+} from './conversation-understanding';
 
 export const SALES_STAGES = [
   'NEW',
@@ -180,18 +187,9 @@ export function observeBuyer(
     )
     .at(-1);
   if (color) remember('color', color[1].replace(/s$/, ''));
-  const quantity = normalized.match(
-    /\b(?:quiero|llevo|comprar|necesito)\s+(\d{1,2}|dos|tres|cuatro)\b/,
-  );
-  if (quantity)
-    remember(
-      'quantity',
-      String(
-        ({ dos: 2, tres: 3, cuatro: 4 } as Record<string, number>)[
-          quantity[1]
-        ] ?? Number(quantity[1]),
-      ),
-    );
+  const quantity = parseBuyerQuantity(text);
+  if (quantity !== null) remember('quantity', String(quantity));
+  if (wantsStandaloneOnly(text)) remember('packaging', 'standalone');
   const name = text.match(
     /\b(?:me llamo|mi nombre es)\s+([\p{L}]+(?:\s+[\p{L}]+){0,2})/iu,
   );
@@ -243,10 +241,10 @@ export function observeBuyer(
     if (found) remember(key, found[1]);
   }
   // Preserve the buyer's search wording across recent-window eviction; it remains attributed input.
+  // "quiero uno" is quantity of the current pick, not a new catalog need.
   if (
-    /\b(busco|buscando|necesito|quiero (?:un|una|unos|unas))\b/.test(
-      normalized,
-    ) &&
+    (/\b(?:busco|buscando|necesito)\b/.test(normalized) ||
+      /\bquiero (?:unos|unas|una|un) \S/.test(normalized)) &&
     !/\b(humano|asesor|persona|reembolso)\b/.test(normalized)
   )
     remember('need', text.slice(0, 600));
@@ -299,9 +297,8 @@ export function observeBuyer(
     Object.assign(next, applyTopicChange(next));
     next.intents = analysis.intents;
     if (
-      /\b(busco|buscando|necesito|quiero (?:un|una|unos|unas)|quiero ver)\b/.test(
-        normalized,
-      )
+      /\b(?:busco|buscando|necesito|quiero ver)\b/.test(normalized) ||
+      /\bquiero (?:unos|unas|una|un) \S/.test(normalized)
     ) {
       remember('need', text.slice(0, 600));
     }
@@ -336,6 +333,29 @@ export function observeBuyer(
   return next;
 }
 
+/**
+ * Presentation-slot index for Spanish ordinal references ("el primero", "la última").
+ * Uses the original recommendation length so a missing/deactivated product never shifts the slot.
+ */
+export function salesOrdinalIndex(
+  text: string,
+  presentationLength: number,
+): number | null {
+  const ordinal = normalizeText(text).match(
+    /\b(?:el |la )?(primer[oa]?|segund[oa]|tercer[oa]?|cuart[oa]|quint[oa]|ultim[oa]|1ro|2do|3ro|4to|5to)\b/,
+  );
+  if (!ordinal) return null;
+  const token = ordinal[1];
+  if (/^(primer|1)/.test(token)) return 0;
+  if (/^(segund|2)/.test(token)) return 1;
+  if (/^(tercer|3)/.test(token)) return 2;
+  if (/^(cuart|4)/.test(token)) return 3;
+  if (/^(quint|5)/.test(token)) return 4;
+  if (/^ultim/.test(token))
+    return presentationLength > 0 ? presentationLength - 1 : null;
+  return null;
+}
+
 /** Resolves only unambiguous references against the ordered, hydrated previous recommendations. */
 export function resolveSalesReference(
   text: string,
@@ -346,25 +366,27 @@ export function resolveSalesReference(
   const ordered = state.recommendedProductIds.map((id) =>
     products.find((p) => p.id === id),
   );
-  const ordinal = query.match(
-    /\b(?:el |la )?(primer[oa]?|segund[oa]|tercer[oa]?|1ro|2do|3ro)\b/,
-  );
-  if (ordinal) {
-    const picked =
-      ordered[
-        /^(primer|1)/.test(ordinal[1])
-          ? 0
-          : /^(segund|2)/.test(ordinal[1])
-            ? 1
-            : 2
-      ] ?? null;
-    // "el segundo en negro" keeps the ordinal product; color is stored as a requirement.
-    if (picked) return picked;
+  const ordinalSlot = salesOrdinalIndex(text, state.recommendedProductIds.length);
+  if (ordinalSlot !== null) {
+    // Missing/deactivated IDs must not fall through to "me gusta" / cheapest heuristics.
+    return ordered[ordinalSlot] ?? null;
   }
   const current = ordered.filter((p): p is CatalogProductView => Boolean(p));
+  const standalone = wantsStandaloneOnly(text);
+  const focus = standalone
+    ? current.filter((p) => !isBundleProduct(p))
+    : current;
+  const bundlePick = resolveBundlePreference(text, current);
+  if (bundlePick) return bundlePick;
+  // When the buyer wants a unit SKU, never resolve a reference onto a pack.
+  const pool = standalone ? focus : current;
   if (/\bmas barato\b/.test(query))
-    return current.length
-      ? [...current].sort((a, b) => a.basePriceCents - b.basePriceCents)[0]
+    return pool.length
+      ? [...pool].sort((a, b) => a.basePriceCents - b.basePriceCents)[0]
+      : null;
+  if (/\bmas caro\b/.test(query))
+    return pool.length
+      ? [...pool].sort((a, b) => b.basePriceCents - a.basePriceCents)[0]
       : null;
   if (/\b(el otro|la otra|anterior)\b/.test(query)) {
     const candidates = [
@@ -372,7 +394,9 @@ export function resolveSalesReference(
         ...state.recommendedProductIds,
         ...state.previousRecommendedProductIds,
       ]),
-    ].flatMap((id) => products.find((p) => p.id === id) ?? []);
+    ]
+      .flatMap((id) => products.find((p) => p.id === id) ?? [])
+      .filter((p) => !standalone || !isBundleProduct(p));
     const other = candidates.filter(
       (p) =>
         p.id !==
@@ -384,20 +408,24 @@ export function resolveSalesReference(
     /\b(el|la)\s+(negro|negra|blanco|blanca|rojo|roja|azul|verde)\b/,
   );
   if (color) {
-    const found = current.filter((p) =>
+    const found = pool.filter((p) =>
       normalizeText(
         [p.name, ...p.variants.map((v) => v.label)].join(' '),
       ).includes(color[2]),
     );
     return found.length === 1 ? found[0] : null;
   }
+  const fragment = resolveByUniqueNameFragment(text, pool);
+  if (fragment && !(standalone && isBundleProduct(fragment))) return fragment;
   if (
-    /\b(ese|esa|eso|lo quiero|la quiero|quiero dos|quiero tres)\b/.test(query)
-  )
-    return (
-      products.find((p) => p.id === state.selectedProduct?.productId) ??
-      (current.length === 1 ? current[0] : null)
-    );
+    /\b(ese|esa|eso|este|esta|esto|lo quiero|la quiero|me interesa|me gusta|me quedo con|prefiero|voy con|quiero dos|quiero tres)\b/.test(
+      query,
+    )
+  ) {
+    const selected = products.find((p) => p.id === state.selectedProduct?.productId);
+    if (selected && !(standalone && isBundleProduct(selected))) return selected;
+    return pool.length === 1 ? pool[0] : null;
+  }
   return null;
 }
 

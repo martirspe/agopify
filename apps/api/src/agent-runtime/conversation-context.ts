@@ -190,23 +190,7 @@ export function conversationalIntent(text: string): 'greeting' | 'closing' | 'ac
   return closing ? 'closing' : 'acknowledgement';
 }
 
-const AFFIRMATIVE =
-  /^(si+|claro|claro que si|ok|okey|oki|dale|ya|ya pues|ya dale|listo|va|de una|obvio|perfecto|bueno|porfa|por favor|si por favor|si porfa|si dale|si claro|si ya|sale|claro al toke|al toke|de una pues)$/;
-const AFFIRMATIVE_PREFIX =
-  /^(si+|claro|dale|ya|listo|va|de una|obvio|perfecto|bueno|porfa|por favor|sale|al toke)(?:\s+(?:que\s+si|pues|porfa|por favor|al toke|estoy\s+apurad[oa]|rapido|ya))*$/;
-const CLOSING_QUESTION =
-  /\b(te\s+l[oa]s?\s+(prepar|separ|reserv|apart|envi|mand|pid)[oea]|l[oa]s?\s+(quieres|llevas|separo|preparo|reservo)|prepar[oe]\s+(el|tu)\s+pedido|proceder\s+con\s+(la\s+compra|el\s+pago)|llevarl[oa]s?|hacer\s+(el|tu)\s+pedido|te\s+animas|pase\s+el\s+link|pasar\s+el\s+link|link\s+(?:para|de)\s+(?:que\s+)?(?:puedas\s+)?(?:hacer\s+)?(?:el\s+)?pago|te\s+paso\s+el\s+link)\b/;
-
-/** A bare "sí" / "dale" answering the seller's closing question ("¿te lo preparo?") is a purchase. */
-export function confirmsPurchase(text: string, history: ConversationTurn[]): boolean {
-  const reply = normalizeText(text)
-    .replace(/[\p{P}\p{S}\p{Extended_Pictographic}]/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  if (!AFFIRMATIVE.test(reply) && !AFFIRMATIVE_PREFIX.test(reply)) return false;
-  const last = [...history].reverse().find((turn) => turn.role === 'agent');
-  return Boolean(last && !last.paymentLink && CLOSING_QUESTION.test(normalizeText(last.text)));
-}
+export { confirmsPurchase } from './conversation-understanding';
 
 /** The seller's latest message asked where to deliver, without a payment link yet. */
 export function askedForDistrict(history: ConversationTurn[]): boolean {

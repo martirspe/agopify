@@ -60,7 +60,7 @@ const RULES: Array<{ id: BuyerIntentId; pattern: RegExp; priority: number }> = [
   {
     id: 'purchase_intent',
     pattern:
-      /\b(lo\s+quiero|la\s+quiero|los\s+quiero|las\s+quiero|comprar(?:lo|la|los|las)?|como\s+compro|quiero\s+pedir|separar(?:lo|la)?|link\s+de\s+pago|donde\s+pago)\b/,
+      /\b(lo\s+quiero|la\s+quiero|los\s+quiero|las\s+quiero|comprar(?:lo|la|los|las)?|como\s+compro|quiero\s+pedir|quiero(?:\s+(?:solo|solamente))?\s+(?:un[oa]|\d{1,2}|dos|tres|cuatro)\b|(?:solo|solamente)\s+(?:un[oa]|\d{1,2}|dos|tres|cuatro)\b|separar(?:lo|la)?|link\s+de\s+pago|donde\s+pago)\b/,
     priority: 85,
   },
   {
@@ -105,7 +105,8 @@ const RULES: Array<{ id: BuyerIntentId; pattern: RegExp; priority: number }> = [
   },
   {
     id: 'product_recommendation',
-    pattern: /\b(recomienda|recomendarias|sugiere|que\s+me\s+consejas|para\s+regalar)\b/,
+    pattern:
+      /\b((?:cual|que)\s+(?:me\s+)?(?:recomiend\w*|aconsej\w*|sugier\w*)|recomienda|recomendarias|recomiendas|sugiere|que\s+me\s+consejas|para\s+regalar|cual\s+(?:es|seria)\s+(?:el\s+|la\s+)?mejor)\b/,
     priority: 58,
   },
   {
@@ -115,7 +116,9 @@ const RULES: Array<{ id: BuyerIntentId; pattern: RegExp; priority: number }> = [
   },
   {
     id: 'product_search',
-    pattern: /\b(busco|buscando|tienen|tienes|necesito|quiero\s+(?:un|una|unos|unas)|catalogo|mostrar)\b/,
+    // "quiero un protector" is search; "quiero uno" is quantity of the current pick (purchase_intent).
+    pattern:
+      /\b(?:busco|buscando|tienen|tienes|necesito|catalogo|mostrar)\b|\bquiero\s+(?:unos|unas|una|un)\s+\S/i,
     priority: 50,
   },
   {

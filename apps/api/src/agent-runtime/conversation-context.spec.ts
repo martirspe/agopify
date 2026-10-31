@@ -38,6 +38,36 @@ describe('confirmsPurchase', () => {
     ).toBe(true);
   });
 
+  it('reads “sí, quiero uno” after “¿te lo preparo?” as a purchase', () => {
+    const offered = [
+      {
+        role: 'agent' as const,
+        text: 'Cuesta S/ 46.00. ¿Quieres que te lo prepare para comprar?',
+      },
+    ];
+    for (const text of [
+      'Si, quiero uno',
+      'sí quiero uno',
+      'Dale, lo quiero',
+      'si quiero esa',
+      'Si, sólo uno',
+      'si solo uno',
+    ]) {
+      expect(confirmsPurchase(text, offered)).toBe(true);
+    }
+  });
+
+  it('reads a bare yes after “¿te lo reserve para la compra?” as a purchase', () => {
+    expect(
+      confirmsPurchase('Si', [
+        {
+          role: 'agent',
+          text: 'Perfecto, te preparo el desodorante. ¿Quieres que te lo reserve para la compra?',
+        },
+      ]),
+    ).toBe(true);
+  });
+
   it('ignores a yes to any other question or after the payment link', () => {
     expect(confirmsPurchase('si', [{ role: 'agent', text: '¿Es para ti o para regalar?' }])).toBe(false);
     expect(confirmsPurchase('si, pero en otro color', asked)).toBe(false);

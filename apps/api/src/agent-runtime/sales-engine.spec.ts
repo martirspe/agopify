@@ -187,6 +187,305 @@ describe('AI Sales Engine regression/evaluation', () => {
     expect(result.salesState?.stage).toBe('PRODUCT_SELECTED');
     expect(result.replyText).toContain(products[1].name);
   });
+  it('B: “sí, sólo uno” after prepare/reserve keeps selection and advances checkout', async () => {
+    const deo = shoe('deo', 'Temptation Desodorante Roll on', 4600);
+    deo.variants = [];
+    const bundle = shoe('set', 'Set Temptation Hombre', 12000);
+    bundle.variants = [];
+    jest.spyOn(tools, 'listAvailableProducts').mockResolvedValue([deo, bundle]);
+    const state = initialSalesState();
+    state.recommendedProductIds = ['deo', 'set'];
+    state.selectedProduct = { productId: 'deo' };
+    state.stage = 'PRODUCT_SELECTED';
+    const afterQty = await runtime.generateReply({
+      tenantId: 'tenant-a',
+      inboundText: 'Si, sólo uno',
+      salesState: state,
+      history: [
+        {
+          role: 'agent',
+          text: 'Perfecto, el desodorante cuesta S/ 46. ¿Quieres que te lo prepare para la compra?',
+        },
+      ],
+    });
+    expect(afterQty.replyText).not.toContain('Cuéntame qué producto buscas');
+    expect(afterQty.salesState?.selectedProduct?.productId).toBe('deo');
+    expect(afterQty.salesState?.requirements.quantity?.value).toBe('1');
+
+    const afterYes = await runtime.generateReply({
+      tenantId: 'tenant-a',
+      inboundText: 'Si',
+      salesState: {
+        ...afterQty.salesState!,
+        selectedProduct: { productId: 'deo' },
+        stage: 'PRODUCT_SELECTED',
+      },
+      history: [
+        {
+          role: 'agent',
+          text: 'Te preparo el desodorante. ¿Quieres que te lo reserve para la compra?',
+        },
+      ],
+    });
+    expect(afterYes.replyText).not.toContain('Cuéntame qué producto buscas');
+    expect(afterYes.salesState?.selectedProduct?.productId).toBe('deo');
+  });
+
+  it('B: soft decline after prepare does not checkout (multinicho)', async () => {
+    const runner = { ...products[0], variants: [] };
+    const perfume = shoe('perfume', 'Perfume Floral A', 8900);
+    perfume.variants = [];
+    jest
+      .spyOn(tools, 'listAvailableProducts')
+      .mockResolvedValue([runner, perfume]);
+
+    const declinedShoe = await runtime.generateReply({
+      tenantId: 'tenant-a',
+      inboundText: 'No gracias, después',
+      salesState: {
+        ...initialSalesState(),
+        selectedProduct: { productId: 'one' },
+        recommendedProductIds: ['one'],
+        stage: 'PRODUCT_SELECTED',
+      },
+      history: [
+        { role: 'agent', text: 'La zapatilla cuesta S/ 150. ¿Te lo preparo?' },
+      ],
+    });
+    expect(declinedShoe.checkoutUrl).toBeUndefined();
+    expect(declinedShoe.salesState?.selectedProduct).toBeUndefined();
+    expect(declinedShoe.replyText).toMatch(/Sin problema/i);
+
+    const declinedPerfume = await runtime.generateReply({
+      tenantId: 'tenant-a',
+      inboundText: 'Luego',
+      salesState: {
+        ...initialSalesState(),
+        selectedProduct: { productId: 'perfume' },
+        recommendedProductIds: ['perfume'],
+        stage: 'PRODUCT_SELECTED',
+      },
+      history: [
+        {
+          role: 'agent',
+          text: 'El perfume está listo. ¿Quieres que te lo prepare para la compra?',
+        },
+      ],
+    });
+    expect(declinedPerfume.checkoutUrl).toBeUndefined();
+    expect(declinedPerfume.replyText).toMatch(/Sin problema/i);
+  });
+
+  it('B: price + shipping multi-intent keeps selection (multinicho)', async () => {
+    const simple = { ...products[0], variants: [] };
+    jest.spyOn(tools, 'listAvailableProducts').mockResolvedValue([simple]);
+    const result = await runtime.generateReply({
+      tenantId: 'tenant-a',
+      inboundText: 'Cuánto cuesta y cuánto sale el envío?',
+      salesState: {
+        ...initialSalesState(),
+        selectedProduct: { productId: 'one' },
+        recommendedProductIds: ['one'],
+        stage: 'PRODUCT_SELECTED',
+      },
+    });
+    expect(result.salesState?.selectedProduct?.productId).toBe('one');
+    expect(result.salesState?.intents).toEqual(
+      expect.arrayContaining(['price_inquiry', 'shipping_inquiry']),
+    );
+    expect(result.replyText).toMatch(/S\//);
+    expect(result.replyText).toMatch(/distrito/i);
+    expect(result.replyText).not.toContain('Cuéntame qué producto buscas');
+  });
+
+  it('B: “cuál me recomiendas de todos” picks among recommended (multinicho)', async () => {
+    const aura = shoe('aura', 'Aura Lila Perfume de Mujer', 8900);
+    aura.variants = [];
+    aura.descriptionShort = 'Floral amaderado de larga duración';
+    const vibranza = shoe('vibranza', 'Vibranza Blanc Perfume', 9200);
+    vibranza.variants = [];
+    const runner = shoe('runner', 'Zapatilla Runner Pro', 18000);
+    runner.variants = [];
+    runner.descriptionShort = 'Amortiguación para correr';
+    const urban = shoe('urban', 'Zapatilla Urbana', 15000);
+    urban.variants = [];
+    jest
+      .spyOn(tools, 'listAvailableProducts')
+      .mockResolvedValue([aura, vibranza, runner, urban]);
+
+    const perfume = await runtime.generateReply({
+      tenantId: 'tenant-a',
+      inboundText: 'Cual me recomiendas de todos?',
+      salesState: {
+        ...initialSalesState(),
+        recommendedProductIds: ['aura', 'vibranza'],
+        stage: 'RECOMMENDATION',
+        requirements: {
+          need: {
+            value: 'perfume fuerte para novia',
+            source: 'buyer',
+            confidence: 1,
+            timestamp: new Date().toISOString(),
+            scope: 'conversation',
+          },
+        },
+      },
+      history: [
+        {
+          role: 'agent',
+          text: 'Te recomiendo Aura Lila y Vibranza Blanc. ¿Cuál te gustaría que te prepare?',
+        },
+      ],
+    });
+    expect(perfume.replyText).not.toContain('Cuéntame qué producto buscas');
+    expect(perfume.replyText).toMatch(/Aura Lila/i);
+    expect(perfume.salesState?.selectedProduct?.productId).toBe('aura');
+
+    const shoes = await runtime.generateReply({
+      tenantId: 'tenant-a',
+      inboundText: 'Cuál es el mejor de estos?',
+      salesState: {
+        ...initialSalesState(),
+        recommendedProductIds: ['runner', 'urban'],
+        stage: 'RECOMMENDATION',
+      },
+      history: [
+        {
+          role: 'agent',
+          text: 'Te muestro Runner Pro y Urbana. ¿Cuál prefieres?',
+        },
+      ],
+    });
+    expect(shoes.replyText).not.toContain('Cuéntame qué producto buscas');
+    expect(shoes.replyText).toMatch(/Runner Pro/i);
+    expect(shoes.salesState?.selectedProduct?.productId).toBe('runner');
+  });
+
+  it('B: “no, quiero solo” after set prepare switches to unit SKU (multinicho)', async () => {
+    const deo = shoe('deo', 'Temptation Desodorante Roll on Hombre', 4600);
+    deo.variants = [];
+    deo.descriptionShort = 'Desodorante roll on';
+    const set = shoe('set', 'Set Temptation Hombre', 9890);
+    set.variants = [];
+    set.descriptionShort =
+      'Temptation Eau de Parfum + Temptation Desodorante Roll on Hombre';
+    const coffee = shoe('coffee', 'Café de Altura 250g', 2800);
+    coffee.variants = [];
+    const pack = shoe('pack', 'Pack Café + Taza', 4500);
+    pack.variants = [];
+    jest
+      .spyOn(tools, 'listAvailableProducts')
+      .mockResolvedValue([deo, set, coffee, pack]);
+
+    const afterSet = await runtime.generateReply({
+      tenantId: 'tenant-a',
+      inboundText: 'No, quiero solo',
+      salesState: {
+        ...initialSalesState(),
+        recommendedProductIds: ['set'],
+        selectedProduct: { productId: 'set' },
+        stage: 'PRODUCT_SELECTED',
+        requirements: {
+          need: {
+            value: 'desodorante',
+            source: 'buyer',
+            confidence: 1,
+            timestamp: new Date().toISOString(),
+            scope: 'conversation',
+          },
+        },
+      },
+      history: [
+        {
+          role: 'agent',
+          text: 'Te recomiendo el Set Temptation Hombre. ¿Te lo preparo?',
+        },
+      ],
+    });
+    expect(afterSet.replyText).not.toMatch(/Encontré esto en el catálogo/i);
+    expect(afterSet.replyText).not.toMatch(/Set Temptation/i);
+    expect(afterSet.salesState?.selectedProduct?.productId).not.toBe('set');
+    expect(afterSet.salesState?.requirements.packaging?.value).toBe(
+      'standalone',
+    );
+    expect(afterSet.replyText).toMatch(/Desodorante|suelta|unitari/i);
+
+    const afterCoffee = await runtime.generateReply({
+      tenantId: 'tenant-a',
+      inboundText: 'No quiero el pack, solo el cafe',
+      salesState: {
+        ...initialSalesState(),
+        recommendedProductIds: ['pack'],
+        selectedProduct: { productId: 'pack' },
+        stage: 'PRODUCT_SELECTED',
+      },
+      history: [
+        {
+          role: 'agent',
+          text: 'Tenemos el Pack Café + Taza. ¿Te lo preparo?',
+        },
+      ],
+    });
+    expect(afterCoffee.replyText).not.toMatch(/Pack Café/i);
+    expect(afterCoffee.salesState?.requirements.packaging?.value).toBe(
+      'standalone',
+    );
+  });
+
+  it('B: “sí, quiero uno” after “¿te lo preparo?” keeps the selected product', async () => {
+    const simple = {
+      ...products[0],
+      variants: [],
+    };
+    jest.spyOn(tools, 'listAvailableProducts').mockResolvedValue([simple]);
+    const state = initialSalesState();
+    state.selectedProduct = { productId: 'one' };
+    state.recommendedProductIds = ['one'];
+    state.stage = 'PRODUCT_SELECTED';
+    const result = await runtime.generateReply({
+      tenantId: 'tenant-a',
+      inboundText: 'Si, quiero uno',
+      salesState: state,
+      history: [
+        {
+          role: 'agent',
+          text: 'El Total Block cuesta S/ 46.00. ¿Quieres que te lo prepare para comprar?',
+        },
+      ],
+    });
+    expect(result.replyText).not.toContain('Cuéntame qué producto buscas');
+    expect(result.salesState?.selectedProduct?.productId).toBe('one');
+    expect(result.salesState?.requirements.quantity?.value).toBe('1');
+    expect(result.salesState?.intent).toBe('purchase');
+    expect(
+      result.salesState?.stage === 'CHECKOUT' ||
+        result.salesState?.stage === 'PAYMENT_PENDING' ||
+        Boolean(result.checkoutUrl) ||
+        /distrito/i.test(result.replyText),
+    ).toBe(true);
+  });
+
+  it('B: resolves “el último” / “me interesa el último” against presentation order', async () => {
+    const three = [
+      products[0],
+      products[1],
+      shoe('three', 'Zapatilla blanca Tres', 17000),
+    ];
+    jest.spyOn(tools, 'listAvailableProducts').mockResolvedValue(three);
+    const state = initialSalesState();
+    state.recommendedProductIds = ['one', 'two', 'three'];
+    const result = await runtime.generateReply({
+      tenantId: 'tenant-a',
+      inboundText: 'Me interesa el último',
+      salesState: state,
+    });
+    expect(result.salesState?.selectedProduct?.productId).toBe('three');
+    expect(result.salesState?.stage).toBe('PRODUCT_SELECTED');
+    expect(result.replyText).toContain('Zapatilla blanca Tres');
+    expect(result.replyText).not.toContain(
+      'Cuéntame qué producto buscas',
+    );
+  });
   it('J: an immediate purchase with size skips discovery and uses backend commerce', async () => {
     const result = await runtime.generateReply({
       tenantId: 'tenant-a',
@@ -244,6 +543,30 @@ describe('AI Sales Engine regression/evaluation', () => {
     });
     expect(result.replyText).toContain('Agotado');
     expect(tools.createOrderWithOptionalLink).not.toHaveBeenCalled();
+  });
+  it('H: recommendations omit sold-out products from the offer list', async () => {
+    const exhausted = {
+      ...products[0],
+      id: 'sold-out',
+      handle: 'sold-out',
+      name: 'Zapatilla agotada',
+      isAvailable: false,
+      stockQty: 0,
+      stockLabel: 'Agotado',
+      variants: [],
+    };
+    jest
+      .spyOn(tools, 'listAvailableProducts')
+      .mockResolvedValue([exhausted, products[0], products[1]]);
+    const result = await runtime.generateReply({
+      tenantId: 'tenant-a',
+      inboundText: 'Quiero comprar zapatillas',
+      salesState: initialSalesState(),
+    });
+    expect(result.replyText).not.toMatch(/agotada|Agotado/i);
+    expect(result.salesState?.recommendedProductIds ?? []).not.toContain(
+      'sold-out',
+    );
   });
   it('does not require a budget and preserves explicit changes of variant', () => {
     let state = observeBuyer(
@@ -310,6 +633,10 @@ describe('AI Sales Engine regression/evaluation', () => {
     expect(resolveSalesReference('el segundo', state, [products[1]])?.id).toBe(
       'two',
     );
+    state.recommendedProductIds = ['one', 'two', 'three'];
+    expect(
+      resolveSalesReference('el último', state, [products[0], products[1]]),
+    ).toBeNull();
   });
   it('does not guess an ambiguous reference and resolves the cheapest from current prices', () => {
     const state = initialSalesState();
@@ -339,6 +666,10 @@ describe('AI Sales Engine regression/evaluation', () => {
     ['Tienes garantía de por vida', 'unsupported_policy'],
     ['¿Qué talla buscas?', 'repeated_question'],
     ['Ya reservé tu pedido', 'unsupported_action'],
+    [
+      'Te recomiendo Cielo. El Ccori está agotado por ahora.',
+      'unsupported_sold_out_mention',
+    ],
   ])('rejects an ungrounded answer: %s', (text, failure) => {
     const state = observeBuyer(initialSalesState(), 'Talla 40', 'm1');
     expect(

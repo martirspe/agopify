@@ -766,11 +766,13 @@ El sistema debe resolver correctamente expresiones como:
 
 - "el primero";
 - "el segundo";
+- "el último";
 - "ese";
 - "el negro";
 - "el más barato";
 - "el anterior";
 - "me gusta ese";
+- "me interesa el último";
 - "quiero dos";
 - "mejor el otro".
 

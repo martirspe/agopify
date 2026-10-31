@@ -108,4 +108,33 @@ describe('ordinal + color reference', () => {
       resolveSalesReference('¿Y el segundo en negro?', state, products)?.id,
     ).toBe('two');
   });
+
+  it('resolves el último to the last presentation slot without shifting', () => {
+    const state = initialSalesState();
+    state.recommendedProductIds = ['one', 'two', 'three'];
+    const products = [
+      product('one', 'Protector Uno'),
+      product('two', 'Protector Dos'),
+      product('three', 'Protector Tres'),
+    ];
+    expect(
+      resolveSalesReference('Me interesa el último', state, products)?.id,
+    ).toBe('three');
+    expect(
+      resolveSalesReference('el último', state, [products[0], products[1]]),
+    ).toBeNull();
+  });
+
+  it('resolves “el que viene sólo” to the non-bundle recommendation', () => {
+    const state = initialSalesState();
+    state.recommendedProductIds = ['deo', 'set'];
+    const products = [
+      product('deo', 'Temptation Desodorante Perfumado Roll on Hombre'),
+      product('set', 'Set Temptation Hombre'),
+    ];
+    expect(
+      resolveSalesReference('El que viene sólo', state, products)?.id,
+    ).toBe('deo');
+    expect(resolveSalesReference('el set', state, products)?.id).toBe('set');
+  });
 });

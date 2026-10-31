@@ -25,6 +25,8 @@ jobs:
           JWT_REFRESH_SECRET: ci-refresh-secret-must-be-at-least-32-chars
       - name: Offline sales-engine eval (AI Core golden set)
         run: npm run eval:sales -w @vendedoria/api
+      - name: AI Core training curriculum (gap matrix, multinicho)
+        run: npm run eval:ai-core-training
       - run: npm run theme:build
       - run: npm run test -w @vendedoria/api -- --runInBand
       - run: npm run theme:check

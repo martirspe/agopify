@@ -9,6 +9,7 @@ Jump table from domain to paths. API paths are under `apps/api/src/`, console pa
 | Sales agent runtime + tools | `agent-runtime/` | — | implement |
 | Stateful AI Sales Engine, durable channel inbox, read tools, semantic catalog/FAQ index and evaluation | `agent-runtime/sales-*`, `conversations/sales-gateway.service.ts`; operations `docs/AI-SALES-ENGINE.md`; dataset `docs/agent/evals/` | existing Inbox / Playground | implement, data, security; personal `vendedoria-ai-sales-engine` |
 | AI Core (hybrid evolution of sales-engine-v2: multi-model port, migration docs, mode alias `ai-core`) | `agent-runtime/models/`, `docs/ai-core/`; skill `.agents/skills/vendedoria-ai-core` | Seller / playground unchanged | implement; `vendedoria-ai-core` |
+| AI Core conversation training (Understanding, multinicho gap matrix, golden evals) | `agent-runtime/conversation-understanding.ts`, `sales-state.ts`, `sales-response-validator.ts`, `docs/ai-core/UNDERSTANDING.md`, `docs/agent/evals/`; skill `.agents/skills/vendedoria-ai-core-training` | Playground / WhatsApp quality | `vendedoria-ai-core-training` + implement |
 | Knowledge (FAQs, journeys) | `knowledge/` | `features/seller/` | implement |
 | WhatsApp channel + Meta webhook + dual onboarding | `channels/` (`whatsapp-signup.service.ts`, `whatsapp-manual.service.ts`, `meta-signup.client.ts`); activation guide `docs/WHATSAPP-ONBOARDING.md` | `features/channels/`, `features/integrations/` | security, data, ui |
 | Inbox / conversations | `conversations/` | `features/messages/` | implement |

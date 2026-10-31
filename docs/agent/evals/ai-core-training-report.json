@@ -1,0 +1,425 @@
+{
+  "mode": "ai-core-training-offline",
+  "datasetVersion": "2026.10.31c-training",
+  "dataset": "ai-core-training",
+  "fixtureCount": 20,
+  "gapsCovered": [
+    "A1",
+    "A2",
+    "A7",
+    "B2",
+    "B3",
+    "B4",
+    "B5",
+    "C2",
+    "D1",
+    "E1",
+    "E4",
+    "F1",
+    "G1"
+  ],
+  "verticals": [
+    "beauty",
+    "footwear",
+    "grocery"
+  ],
+  "passCount": 20,
+  "failCount": 0,
+  "metrics": {
+    "context_retention": {
+      "samples": 9,
+      "value": 1
+    },
+    "repeated_question_rate": {
+      "samples": 20,
+      "value": 0
+    },
+    "intent_accuracy": {
+      "samples": 2,
+      "value": 1
+    },
+    "product_accuracy": {
+      "samples": 0,
+      "value": null
+    },
+    "price_accuracy": {
+      "samples": 13,
+      "value": 1
+    },
+    "inventory_accuracy": {
+      "samples": 11,
+      "value": 1
+    },
+    "hallucination_rate": {
+      "samples": 20,
+      "value": 0
+    },
+    "tool_selection_accuracy": {
+      "samples": 0,
+      "value": null
+    },
+    "state_transition_accuracy": {
+      "samples": 2,
+      "value": 1
+    },
+    "reference_resolution_accuracy": {
+      "samples": 15,
+      "value": 1
+    },
+    "handoff_accuracy": {
+      "samples": 18,
+      "value": 1
+    },
+    "sales_progression": {
+      "samples": 2,
+      "value": 1
+    },
+    "reply_ban_accuracy": {
+      "samples": 20,
+      "value": 1
+    },
+    "checkout_accuracy": {
+      "samples": 4,
+      "value": 1
+    }
+  },
+  "failures": [],
+  "cases": [
+    {
+      "id": "A1-ordinal-ultimo-footwear",
+      "gap": "A1",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "¡Hola! Soy Vendedor de nuestra tienda. Esta opción encaja con lo que me pediste:\n• Zapatilla Urbana B (S/ 150.00, 2 en stock) — Para uso diario\n¿Te lo preparo?",
+      "selectedProductId": "shoe-b",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "reply_ban_accuracy": 1,
+        "state_transition_accuracy": 1,
+        "reference_resolution_accuracy": 1
+      }
+    },
+    {
+      "id": "A2-el-otro-beauty",
+      "gap": "A2",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "¡Hola! Soy Vendedor de nuestra tienda. Esta opción encaja con lo que me pediste:\n• Set Cuidado Hombre (S/ 98.90, 2 en stock) — Eau de parfum + Desodorante Roll ",
+      "selectedProductId": "deo-set",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "reply_ban_accuracy": 1,
+        "state_transition_accuracy": 1,
+        "reference_resolution_accuracy": 1
+      }
+    },
+    {
+      "id": "A7-seller-pick-beauty",
+      "gap": "A7",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "De las opciones que te mostré, te recomiendo Perfume Floral A (S/ 89.00, 2 en stock). Floral amaderado de larga duración. Si prefieres otra, también tienes Perf",
+      "selectedProductId": "perfume-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "A7-seller-pick-footwear",
+      "gap": "A7",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "De las opciones que te mostré, te recomiendo Zapatilla Runner A (S/ 180.00, 2 en stock). Amortiguación para correr. Si prefieres otra, también tienes Zapatilla ",
+      "selectedProductId": "shoe-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "B2-si-quiero-uno-prepare",
+      "gap": "B2",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "La entrega la coordinamos contigo por este chat.\n\nPerfecto. Aquí tienes el link de pago para completar tu compra:",
+      "selectedProductId": "shoe-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "B3-bare-si-prepare",
+      "gap": "B3",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "La entrega la coordinamos contigo por este chat.\n\nPerfecto. Aquí tienes el link de pago para completar tu compra:",
+      "selectedProductId": "perfume-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "C2-quiero-solo-after-set-beauty",
+      "gap": "C2",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "Esta opción encaja con lo que me pediste:\n• Desodorante Roll On Hombre (S/ 46.00, 2 en stock) — Desodorante roll on\n¿Te lo preparo?",
+      "selectedProductId": null,
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "reply_ban_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "C2-no-quiero-pack-grocery",
+      "gap": "C2",
+      "vertical": "grocery",
+      "failed": false,
+      "replyPreview": "Esta opción encaja con lo que me pediste:\n• Café de Altura 250g (S/ 28.00, 2 en stock) — Para uso diario\n¿Te lo preparo?",
+      "selectedProductId": null,
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "D1-sold-out-excluded-search",
+      "gap": "D1",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "¡Hola! Soy Vendedor de nuestra tienda. Esta opción encaja con lo que me pediste:\n• Zapatilla Runner A (S/ 180.00, 2 en stock) — Para uso diario\n¿Te lo preparo?",
+      "selectedProductId": null,
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "reply_ban_accuracy": 1,
+        "handoff_accuracy": 1,
+        "sales_progression": 1
+      }
+    },
+    {
+      "id": "E1-no-rediscovery-after-select",
+      "gap": "E1",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "La entrega la coordinamos contigo por este chat.\n\nPerfecto. Aquí tienes el link de pago para completar tu compra:",
+      "selectedProductId": "shoe-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "F1-no-robotic-catalog-intro",
+      "gap": "F1",
+      "vertical": "grocery",
+      "failed": false,
+      "replyPreview": "¡Hola! Soy Vendedor de nuestra tienda. Estas opciones encajan con lo que buscas:\n• Café de Altura 250g (S/ 28.00, 2 en stock) — Para uso diario\n• Pack Café + Ta",
+      "selectedProductId": null,
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "reply_ban_accuracy": 1,
+        "handoff_accuracy": 1,
+        "sales_progression": 1
+      }
+    },
+    {
+      "id": "multi-turn-gift-then-seller-pick",
+      "gap": "A7",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "De las opciones que te mostré, te recomiendo Perfume Floral A (S/ 89.00, 2 en stock). Floral amaderado de larga duración. Si prefieres otra, también tienes Perf",
+      "selectedProductId": "perfume-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "reply_ban_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "B4-soft-decline-prepare-footwear",
+      "gap": "B4",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "Sin problema. Cuando quieras seguimos con otra opción o lo dejamos para después.",
+      "selectedProductId": null,
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "checkout_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "B4-soft-decline-prepare-beauty",
+      "gap": "B4",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "Sin problema. Cuando quieras seguimos con otra opción o lo dejamos para después.",
+      "selectedProductId": null,
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "checkout_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "B5-bare-si-without-prepare-footwear",
+      "gap": "B5",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "Tengo estas opciones para ti:\n• Zapatilla Runner A (S/ 180.00, 2 en stock) — Amortiguación para correr\n• Zapatilla Urbana B (S/ 150.00, 2 en stock) — Para uso d",
+      "selectedProductId": null,
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "checkout_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "B5-bare-si-without-prepare-grocery",
+      "gap": "B5",
+      "vertical": "grocery",
+      "failed": false,
+      "replyPreview": "Tengo estas opciones para ti:\n• Café de Altura 250g (S/ 28.00, 2 en stock) — Para uso diario\n• Pack Café + Taza (S/ 45.00, 2 en stock) — Para uso diario\n¿Cuál d",
+      "selectedProductId": null,
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "checkout_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "E4-district-keeps-selection-footwear",
+      "gap": "E4",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "La entrega la coordinamos contigo por este chat.\n\nPerfecto. Aquí tienes el link de pago para completar tu compra:",
+      "selectedProductId": "shoe-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "E4-district-keeps-selection-beauty",
+      "gap": "E4",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "La entrega la coordinamos contigo por este chat.\n\nPerfecto. Aquí tienes el link de pago para completar tu compra:",
+      "selectedProductId": "perfume-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "G1-price-and-shipping-footwear",
+      "gap": "G1",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "Zapatilla Runner A cuesta S/ 180.00. Para cotizar el envío con las reglas reales del negocio, indícame tu distrito.",
+      "selectedProductId": "shoe-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "intent_accuracy": 1,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "G1-price-and-shipping-beauty",
+      "gap": "G1",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "Perfume Floral A cuesta S/ 89.00. Para cotizar el envío con las reglas reales del negocio, indícame tu distrito.",
+      "selectedProductId": "perfume-a",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "intent_accuracy": 1,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    }
+  ]
+}

@@ -149,6 +149,27 @@ export function validateSalesResponse(
         failures.add('unsupported_variant');
     }
   }
+  // Do not volunteer OOS chatter ("el X está agotado") when recommending sellable items.
+  // Honest missing-ordinal copy ("Esa opción ya no está disponible…") is allowed.
+  const normalizedReply = normalizeText(text);
+  const mentionsSoldOut =
+    /\b(?:agotad[oa]s?|sin stock|no (?:hay|tenemos) stock)\b/.test(
+      normalizedReply,
+    ) ||
+    (/\bno (?:esta|estan) disponibles?\b/.test(normalizedReply) &&
+      !/\b(?:esa|esta) opcion ya no (?:esta|estan) disponibles?\b/.test(
+        normalizedReply,
+      ));
+  if (mentionsSoldOut) {
+    const catalogHasSoldOut = products.some((p) => !p.isAvailable);
+    const askedSoldOutByName = products.some(
+      (p) =>
+        !p.isAvailable &&
+        normalizeText(text).includes(normalizeText(p.name)),
+    );
+    if (!catalogHasSoldOut || !askedSoldOutByName)
+      failures.add('unsupported_sold_out_mention');
+  }
   for (const match of text.matchAll(
     /\b(\d+)\s+(?:unidades?\s+(?:disponibles?|en stock)|en stock)\b/gi,
   )) {

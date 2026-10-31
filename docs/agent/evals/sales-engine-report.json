@@ -1,17 +1,17 @@
 {
   "mode": "deterministic-offline",
-  "datasetVersion": "2026.10.30",
+  "datasetVersion": "2026.10.31c",
   "dataset": "sales-engine",
-  "fixtureCount": 33,
-  "runtimeCases": 30,
+  "fixtureCount": 39,
+  "runtimeCases": 36,
   "integrationCases": 3,
   "metrics": {
     "context_retention": {
-      "samples": 9,
+      "samples": 10,
       "value": 1
     },
     "repeated_question_rate": {
-      "samples": 30,
+      "samples": 36,
       "value": 0
     },
     "intent_accuracy": {
@@ -23,15 +23,15 @@
       "value": 1
     },
     "price_accuracy": {
-      "samples": 17,
+      "samples": 20,
       "value": 1
     },
     "inventory_accuracy": {
-      "samples": 25,
+      "samples": 28,
       "value": 1
     },
     "hallucination_rate": {
-      "samples": 30,
+      "samples": 36,
       "value": 0
     },
     "tool_selection_accuracy": {
@@ -39,19 +39,27 @@
       "value": 1
     },
     "state_transition_accuracy": {
-      "samples": 10,
+      "samples": 12,
       "value": 1
     },
     "reference_resolution_accuracy": {
-      "samples": 3,
+      "samples": 9,
       "value": 1
     },
     "handoff_accuracy": {
-      "samples": 27,
+      "samples": 31,
       "value": 1
     },
     "sales_progression": {
       "samples": 4,
+      "value": 1
+    },
+    "reply_ban_accuracy": {
+      "samples": 1,
+      "value": 1
+    },
+    "checkout_accuracy": {
+      "samples": 1,
       "value": 1
     }
   },
@@ -114,6 +122,17 @@
     },
     {
       "id": "06-second",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "state_transition_accuracy": 1,
+        "reference_resolution_accuracy": 1
+      }
+    },
+    {
+      "id": "06b-last",
       "metrics": {
         "repeated_question_rate": 0,
         "hallucination_rate": 0,
@@ -385,6 +404,58 @@
         "hallucination_rate": 0,
         "inventory_accuracy": 1,
         "product_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "34-last-ordinal",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "state_transition_accuracy": 1,
+        "reference_resolution_accuracy": 1
+      }
+    },
+    {
+      "id": "35-yes-one-after-prepare",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "reference_resolution_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "36-solo-uno-after-prepare",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "reference_resolution_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "37-seller-pick-among-recommended",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "reply_ban_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "38-soft-decline-prepare",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "context_retention": 1,
+        "reference_resolution_accuracy": 1,
+        "checkout_accuracy": 1,
         "handoff_accuracy": 1
       }
     }

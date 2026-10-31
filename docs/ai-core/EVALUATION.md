@@ -4,7 +4,8 @@
 
 - Path: `docs/agent/evals/sales-engine.json`
 - Shape: `{ version, dataset, description, cases[] }` (legacy bare arrays still load)
-- Current version: see `version` field in the JSON (`2026.10.30`)
+- Current version: see `version` field in the JSON (`2026.10.31`)
+- Optional `agentHistory`: prior agent turns passed as conversation history (for “¿te lo preparo?” + “sí”)
 - Runner: `npm run eval:sales` (after `npm run build:api`)
 - Latest report: `docs/agent/evals/sales-engine-report.json` (generated, not a source of truth)
 

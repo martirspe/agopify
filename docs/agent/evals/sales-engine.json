@@ -1,7 +1,7 @@
 {
-  "version": "2026.10.30",
+  "version": "2026.10.31c",
   "dataset": "sales-engine",
-  "description": "Deterministic offline golden set for AI Core / sales-engine-v2",
+  "description": "Deterministic offline golden set for AI Core / sales-engine-v2 (understanding + commerce continuity)",
   "cases": [
     {
       "id": "01-no-budget",
@@ -65,6 +65,18 @@
     {
       "id": "06-second",
       "text": "Me gusta el segundo",
+      "recommended": [
+        "one",
+        "two"
+      ],
+      "expected": {
+        "referenceId": "two",
+        "stage": "PRODUCT_SELECTED"
+      }
+    },
+    {
+      "id": "06b-last",
+      "text": "Me interesa el último",
       "recommended": [
         "one",
         "two"
@@ -354,6 +366,86 @@
       "text": "Quiero comprar Producto extranjero",
       "expected": {
         "productIds": [],
+        "handoff": false
+      }
+    },
+    {
+      "id": "34-last-ordinal",
+      "text": "Me interesa el último",
+      "recommended": [
+        "one",
+        "two"
+      ],
+      "expected": {
+        "referenceId": "two",
+        "stage": "PRODUCT_SELECTED"
+      }
+    },
+    {
+      "id": "35-yes-one-after-prepare",
+      "text": "Si, quiero uno",
+      "selected": "one",
+      "recommended": [
+        "one"
+      ],
+      "agentHistory": [
+        "El producto cuesta S/ 150. ¿Quieres que te lo prepare para la compra?"
+      ],
+      "expected": {
+        "referenceId": "one",
+        "handoff": false
+      }
+    },
+    {
+      "id": "36-solo-uno-after-prepare",
+      "text": "Si, sólo uno",
+      "selected": "one",
+      "recommended": [
+        "one",
+        "two"
+      ],
+      "agentHistory": [
+        "Perfecto. ¿Quieres que te lo reserve para la compra?"
+      ],
+      "expected": {
+        "referenceId": "one",
+        "handoff": false
+      }
+    },
+    {
+      "id": "37-seller-pick-among-recommended",
+      "text": "Cual me recomiendas de todos?",
+      "recommended": [
+        "one",
+        "two"
+      ],
+      "agentHistory": [
+        "Te recomiendo Zapatilla negra Uno y Dos. ¿Cuál te gustaría que te prepare?"
+      ],
+      "expected": {
+        "referenceId": "one",
+        "replyExcludes": [
+          "cuéntame qué producto buscas"
+        ],
+        "handoff": false
+      }
+    },
+    {
+      "id": "38-soft-decline-prepare",
+      "text": "No gracias, después",
+      "selected": "one",
+      "recommended": [
+        "one"
+      ],
+      "agentHistory": [
+        "El producto cuesta S/ 150. ¿Te lo preparo?"
+      ],
+      "expected": {
+        "selectedAbsent": true,
+        "hasCheckout": false,
+        "replyIncludes": [
+          "Sin problema"
+        ],
         "handoff": false
       }
     }

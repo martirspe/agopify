@@ -196,7 +196,9 @@ export class SalesToolRegistry {
         [],
         dto.query,
       );
-      const matches = this.tools.searchCatalog(dto.query!, products).matches;
+      const matches = this.tools
+        .searchCatalog(dto.query!, products)
+        .matches.filter((p) => p.isAvailable);
       return {
         value: {
           products: matches.map((p) => ({

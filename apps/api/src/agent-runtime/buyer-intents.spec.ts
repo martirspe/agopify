@@ -42,6 +42,15 @@ describe('buyer multi-intent extraction', () => {
       'purchase_intent',
     );
   });
+
+  it('treats “quiero uno” as purchase, not a new product search', () => {
+    expect(extractBuyerIntents('Si, quiero uno').primary).toBe(
+      'purchase_intent',
+    );
+    expect(extractBuyerIntents('Quiero un protector solar').primary).toBe(
+      'product_search',
+    );
+  });
 });
 
 describe('usesDurableAiCore', () => {

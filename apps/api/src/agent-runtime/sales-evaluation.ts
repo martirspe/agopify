@@ -16,6 +16,8 @@ export const SALES_METRICS = [
   'reference_resolution_accuracy',
   'handoff_accuracy',
   'sales_progression',
+  'reply_ban_accuracy',
+  'checkout_accuracy',
 ] as const;
 export type SalesMetric = (typeof SALES_METRICS)[number];
 export type SalesExpectation = {
@@ -31,6 +33,12 @@ export type SalesExpectation = {
   progressed?: boolean;
   /** Substrings that must appear in the reply (normalized loosely via includes). */
   replyIncludes?: string[];
+  /** Substrings that must NOT appear (discovery restart, robotic intros, etc.). */
+  replyExcludes?: string[];
+  /** When false, reply must not create/include a checkout URL. */
+  hasCheckout?: boolean;
+  /** When true, selectedProduct must be cleared (soft decline of prepare). */
+  selectedAbsent?: boolean;
 };
 
 /** Scores annotated outputs. Null means no annotated opportunity, never an invented success. */
@@ -83,6 +91,14 @@ export function evaluateSalesTurn(
         reply.includes(needle.toLowerCase()),
       ).length / expected.replyIncludes.length;
   }
+  if (expected.replyExcludes?.length) {
+    const reply = result.replyText.toLowerCase();
+    score.reply_ban_accuracy = expected.replyExcludes.some((needle) =>
+      reply.includes(needle.toLowerCase()),
+    )
+      ? 0
+      : 1;
+  }
   if (expected.productIds)
     score.product_accuracy =
       JSON.stringify(state?.recommendedProductIds ?? []) ===
@@ -94,6 +110,11 @@ export function evaluateSalesTurn(
   if (expected.referenceId)
     score.reference_resolution_accuracy =
       state?.selectedProduct?.productId === expected.referenceId ? 1 : 0;
+  if (expected.selectedAbsent)
+    score.reference_resolution_accuracy = state?.selectedProduct ? 0 : 1;
+  if (expected.hasCheckout !== undefined)
+    score.checkout_accuracy =
+      Boolean(result.checkoutUrl) === expected.hasCheckout ? 1 : 0;
   if (expected.handoff !== undefined)
     score.handoff_accuracy = result.escalate === expected.handoff ? 1 : 0;
   if (expected.allowedTools)

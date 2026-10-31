@@ -35,6 +35,7 @@ AI Core is **not** a greenfield rewrite. The durable sales engine (`sales-engine
 - Tenant from JWT/channel resolution, never from model args.
 - Product default is AI Core (`ai_core` / `sales-engine-v2`). Legacy/shadow remain ops/test overrides only; see `docs/ai-core/MIGRATION.md`.
 - Document implemented behaviour under `docs/ai-core/`; update `CHANGELOG.md` for product-visible changes.
+- Conversation quality / Understanding gaps (ordinals, sí/sólo uno, pack vs unit, sold-out, continuity): use sibling skill `vendedoria-ai-core-training`. **Every fix must be multinicho** — no vertical-only regexes.
 
 ## Verify
 

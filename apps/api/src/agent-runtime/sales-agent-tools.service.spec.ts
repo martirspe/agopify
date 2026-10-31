@@ -205,6 +205,30 @@ describe('SalesAgentToolsService product references', () => {
     ).toBe('crema-b');
   });
 
+  it('never recommends sold-out products in catalog search', () => {
+    const catalog = [
+      {
+        ...product('agotado', 1250),
+        name: 'Ccori Desodorante Perfumado Roll on',
+        isAvailable: false,
+        stockQty: 0,
+        stockLabel: 'Agotado',
+      },
+      {
+        ...product('cielo', 1250),
+        name: 'Desodorante Antitranspirante Cielo',
+      },
+      {
+        ...product('dendur', 1250),
+        name: 'Desodorante Antitranspirante Roll On Dendur Destiny',
+      },
+    ];
+    const { matches } = tools.searchCatalog('Quiero comprar un desodorante', catalog);
+    expect(matches.map((item) => item.handle)).not.toContain('agotado');
+    expect(matches.every((item) => item.isAvailable)).toBe(true);
+    expect(matches.length).toBeGreaterThan(0);
+  });
+
   it('treats merchant keywords as synonyms of the product name', () => {
     const catalog = [
       { ...product('polo-basico', 4500), keywords: ['polera', 'camiseta'] },
@@ -401,6 +425,8 @@ describe('SalesAgentToolsService purchase intent', () => {
     expect(tools.wantsPurchase('dame el link de pago porfavor')).toBe(true);
     expect(tools.wantsPurchase('el de color me interesa, me lo separas?')).toBe(true);
     expect(tools.wantsPurchase('ya, lo llevo')).toBe(true);
+    expect(tools.wantsPurchase('Si, quiero uno')).toBe(true);
+    expect(tools.wantsPurchase('quiero una')).toBe(true);
     expect(tools.wantsPurchase('lo voy a pensar')).toBe(false);
   });
 

@@ -29,7 +29,7 @@ AI Core is **not** a new microservice. The durable sales engine (`sales-engine-v
 | --- | --- |
 | Channel Gateway | `channels/` + `conversations.service` + `sales-gateway` |
 | Conversation Manager | `SalesGatewayService`, `Conversation` / `Message` / `SalesEngineTurn` |
-| Understanding | `buyer-intents.ts`, `conversation-context.ts`, `observeBuyer`, `resolveSalesReference` |
+| Understanding | `conversation-understanding.ts`, `buyer-intents.ts`, `conversation-context.ts`, `observeBuyer`, `resolveSalesReference` (see `UNDERSTANDING.md`) |
 | Memory | `sales-memory.service.ts`, `salesState`, `SalesCustomerMemory`, Redis `wa:state:*` |
 | Knowledge | Tenant FAQ by topic + policy templates (`knowledge/`); `lookupFaqs` topic boost; `sales-search` embed includes topic (Qdrant→PG) |
 | Sales | `sales-state` stages + runtime |

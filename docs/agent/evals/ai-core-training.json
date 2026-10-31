@@ -1,0 +1,363 @@
+{
+  "version": "2026.10.31c-training",
+  "dataset": "ai-core-training",
+  "description": "Automated AI Core conversation curriculum (gap matrix, multinicho). Run via npm run train:ai-core.",
+  "forbiddenPhrases": [
+    "cuéntame qué producto buscas",
+    "encontré esto en el catálogo"
+  ],
+  "cases": [
+    {
+      "id": "A1-ordinal-ultimo-footwear",
+      "gap": "A1",
+      "vertical": "footwear",
+      "text": "Me interesa el último",
+      "recommended": ["shoe-a", "shoe-b"],
+      "catalog": "footwear",
+      "expected": {
+        "referenceId": "shoe-b",
+        "stage": "PRODUCT_SELECTED",
+        "replyExcludes": ["cuéntame qué producto buscas"]
+      }
+    },
+    {
+      "id": "A2-el-otro-beauty",
+      "gap": "A2",
+      "vertical": "beauty",
+      "text": "Mejor el otro",
+      "selected": "deo-unit",
+      "recommended": ["deo-unit", "deo-set"],
+      "catalog": "beauty",
+      "expected": {
+        "referenceId": "deo-set",
+        "stage": "PRODUCT_SELECTED",
+        "replyExcludes": ["cuéntame qué producto buscas"]
+      }
+    },
+    {
+      "id": "A7-seller-pick-beauty",
+      "gap": "A7",
+      "vertical": "beauty",
+      "text": "Cual me recomiendas de todos?",
+      "recommended": ["perfume-a", "perfume-b"],
+      "catalog": "beauty",
+      "agentHistory": [
+        "Te recomiendo Perfume Floral A y Perfume Floral B. ¿Cuál te gustaría que te prepare?"
+      ],
+      "expected": {
+        "referenceId": "perfume-a",
+        "replyIncludes": ["Perfume Floral A"],
+        "replyExcludes": [
+          "cuéntame qué producto buscas",
+          "encontré esto en el catálogo"
+        ],
+        "handoff": false
+      }
+    },
+    {
+      "id": "A7-seller-pick-footwear",
+      "gap": "A7",
+      "vertical": "footwear",
+      "text": "Cuál es el mejor de estos?",
+      "recommended": ["shoe-a", "shoe-b"],
+      "catalog": "footwear",
+      "agentHistory": [
+        "Te muestro Zapatilla Runner A y Zapatilla Urbana B. ¿Cuál prefieres?"
+      ],
+      "expected": {
+        "referenceId": "shoe-a",
+        "replyIncludes": ["Runner A"],
+        "replyExcludes": ["cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "B2-si-quiero-uno-prepare",
+      "gap": "B2",
+      "vertical": "footwear",
+      "text": "Si, quiero uno",
+      "selected": "shoe-a",
+      "recommended": ["shoe-a"],
+      "catalog": "footwear",
+      "agentHistory": [
+        "La Zapatilla Runner A cuesta S/ 180.00. ¿Quieres que te lo prepare para la compra?"
+      ],
+      "expected": {
+        "referenceId": "shoe-a",
+        "replyExcludes": ["cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "B3-bare-si-prepare",
+      "gap": "B3",
+      "vertical": "beauty",
+      "text": "Si",
+      "selected": "perfume-a",
+      "recommended": ["perfume-a"],
+      "catalog": "beauty",
+      "agentHistory": [
+        "El Perfume Floral A está listo. ¿Quieres que te lo reserve para la compra?"
+      ],
+      "expected": {
+        "referenceId": "perfume-a",
+        "replyExcludes": ["cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "C2-quiero-solo-after-set-beauty",
+      "gap": "C2",
+      "vertical": "beauty",
+      "text": "No, quiero solo",
+      "selected": "deo-set",
+      "recommended": ["deo-set"],
+      "catalog": "beauty",
+      "seedNeed": "desodorante",
+      "agentHistory": [
+        "Te recomiendo el Set Cuidado Hombre. ¿Te lo preparo?"
+      ],
+      "expected": {
+        "replyExcludes": [
+          "Set Cuidado Hombre",
+          "cuéntame qué producto buscas",
+          "encontré esto en el catálogo"
+        ],
+        "handoff": false
+      }
+    },
+    {
+      "id": "C2-no-quiero-pack-grocery",
+      "gap": "C2",
+      "vertical": "grocery",
+      "text": "No quiero el pack, solo el cafe",
+      "selected": "coffee-pack",
+      "recommended": ["coffee-pack"],
+      "catalog": "grocery",
+      "agentHistory": [
+        "Tenemos el Pack Café + Taza. ¿Te lo preparo?"
+      ],
+      "expected": {
+        "replyExcludes": [
+          "Pack Café",
+          "cuéntame qué producto buscas",
+          "encontré esto en el catálogo"
+        ],
+        "replyIncludes": ["Café"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "D1-sold-out-excluded-search",
+      "gap": "D1",
+      "vertical": "footwear",
+      "text": "Busco zapatillas",
+      "catalog": "footwear-oos",
+      "expected": {
+        "replyExcludes": ["Agotada Ghost"],
+        "handoff": false,
+        "progressed": true
+      }
+    },
+    {
+      "id": "E1-no-rediscovery-after-select",
+      "gap": "E1",
+      "vertical": "footwear",
+      "text": "Dale",
+      "selected": "shoe-a",
+      "recommended": ["shoe-a"],
+      "catalog": "footwear",
+      "agentHistory": [
+        "La Zapatilla Runner A cuesta S/ 180. ¿Te lo preparo?"
+      ],
+      "expected": {
+        "referenceId": "shoe-a",
+        "replyExcludes": ["cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "F1-no-robotic-catalog-intro",
+      "gap": "F1",
+      "vertical": "grocery",
+      "text": "Busco cafe",
+      "catalog": "grocery",
+      "expected": {
+        "replyExcludes": ["encontré esto en el catálogo"],
+        "handoff": false,
+        "progressed": true
+      }
+    },
+    {
+      "id": "multi-turn-gift-then-seller-pick",
+      "gap": "A7",
+      "vertical": "beauty",
+      "catalog": "beauty",
+      "turns": [
+        { "role": "buyer", "text": "Quiero algo para mi novia" },
+        {
+          "role": "buyer",
+          "text": "Le gusta los perfumes fuertes"
+        },
+        { "role": "buyer", "text": "Cual me recomiendas de todos?" }
+      ],
+      "expected": {
+        "replyExcludes": ["cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "B4-soft-decline-prepare-footwear",
+      "gap": "B4",
+      "vertical": "footwear",
+      "text": "No gracias, después",
+      "selected": "shoe-a",
+      "recommended": ["shoe-a", "shoe-b"],
+      "catalog": "footwear",
+      "agentHistory": [
+        "La Zapatilla Runner A está lista. ¿Te lo preparo?"
+      ],
+      "expected": {
+        "selectedAbsent": true,
+        "hasCheckout": false,
+        "replyIncludes": ["Sin problema"],
+        "replyExcludes": [
+          "cuéntame qué producto buscas",
+          "link de pago",
+          "Pagar pedido"
+        ],
+        "handoff": false
+      }
+    },
+    {
+      "id": "B4-soft-decline-prepare-beauty",
+      "gap": "B4",
+      "vertical": "beauty",
+      "text": "Luego",
+      "selected": "perfume-a",
+      "recommended": ["perfume-a"],
+      "catalog": "beauty",
+      "agentHistory": [
+        "El Perfume Floral A cuesta S/ 89. ¿Quieres que te lo prepare para la compra?"
+      ],
+      "expected": {
+        "selectedAbsent": true,
+        "hasCheckout": false,
+        "replyIncludes": ["Sin problema"],
+        "replyExcludes": ["cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "B5-bare-si-without-prepare-footwear",
+      "gap": "B5",
+      "vertical": "footwear",
+      "text": "Si",
+      "recommended": ["shoe-a", "shoe-b"],
+      "catalog": "footwear",
+      "agentHistory": [
+        "Te muestro Runner A y Urbana B. ¿Cuál prefieres?"
+      ],
+      "expected": {
+        "hasCheckout": false,
+        "selectedAbsent": true,
+        "replyExcludes": [
+          "cuéntame qué producto buscas",
+          "link de pago"
+        ],
+        "handoff": false
+      }
+    },
+    {
+      "id": "B5-bare-si-without-prepare-grocery",
+      "gap": "B5",
+      "vertical": "grocery",
+      "text": "Dale",
+      "recommended": ["coffee", "coffee-pack"],
+      "catalog": "grocery",
+      "agentHistory": [
+        "Tenemos Café de Altura y el Pack Café + Taza. ¿Cuál te gusta más?"
+      ],
+      "expected": {
+        "hasCheckout": false,
+        "selectedAbsent": true,
+        "replyExcludes": ["link de pago"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "E4-district-keeps-selection-footwear",
+      "gap": "E4",
+      "vertical": "footwear",
+      "text": "Miraflores, Lima",
+      "selected": "shoe-a",
+      "recommended": ["shoe-a"],
+      "catalog": "footwear",
+      "seedStage": "CHECKOUT",
+      "agentHistory": [
+        "¡Buena elección! Para calcular el envío, ¿a qué distrito te lo enviamos?"
+      ],
+      "expected": {
+        "referenceId": "shoe-a",
+        "facts": {
+          "destination": "Miraflores, Lima, Lima"
+        },
+        "replyExcludes": ["cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "E4-district-keeps-selection-beauty",
+      "gap": "E4",
+      "vertical": "beauty",
+      "text": "San Isidro, Lima",
+      "selected": "perfume-a",
+      "recommended": ["perfume-a"],
+      "catalog": "beauty",
+      "seedStage": "CHECKOUT",
+      "agentHistory": [
+        "Perfecto. ¿A qué distrito te enviamos el pedido?"
+      ],
+      "expected": {
+        "referenceId": "perfume-a",
+        "facts": {
+          "destination": "San Isidro, Lima, Lima"
+        },
+        "replyExcludes": ["cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "G1-price-and-shipping-footwear",
+      "gap": "G1",
+      "vertical": "footwear",
+      "text": "Cuánto cuesta y cuánto sale el envío?",
+      "selected": "shoe-a",
+      "recommended": ["shoe-a"],
+      "catalog": "footwear",
+      "expected": {
+        "intents": ["price_inquiry", "shipping_inquiry"],
+        "referenceId": "shoe-a",
+        "replyIncludes": ["S/", "distrito"],
+        "replyExcludes": ["cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "G1-price-and-shipping-beauty",
+      "gap": "G1",
+      "vertical": "beauty",
+      "text": "Cuál es el precio y el costo de envío?",
+      "selected": "perfume-a",
+      "recommended": ["perfume-a"],
+      "catalog": "beauty",
+      "expected": {
+        "intents": ["price_inquiry", "shipping_inquiry"],
+        "referenceId": "perfume-a",
+        "replyIncludes": ["S/", "distrito"],
+        "replyExcludes": ["cuéntame qué producto buscas"],
+        "handoff": false
+      }
+    }
+  ]
+}
