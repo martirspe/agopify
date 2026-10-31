@@ -80,11 +80,11 @@ describe('inbox recovery and selection', () => {
     await page.openConversation('qa');
     page.selected.update((value) => value && ({ ...value, messages: [{ id: 'manual', body: 'Respuesta de prueba', createdAt: '2026-10-08T00:00:00Z', direction: 'OUTBOUND', authorType: 'HUMAN_OPERATOR' }] }));
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('#composer-help').textContent).toContain('la IA se pausará');
+    expect(fixture.nativeElement.querySelector('#composer-help').textContent).toContain('Pausar IA');
     expect(fixture.nativeElement.querySelector('.bubble footer').textContent).toContain('Equipo');
     page.selected.update((value) => value && ({ ...value, agentEnabled: false }));
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('#composer-help').textContent).toContain('La IA seguirá pausada');
+    expect(fixture.nativeElement.querySelector('#composer-help').textContent).toContain('Reactivar IA');
   });
 
   it('distinguishes failure from an empty inbox and offers retry', async () => {

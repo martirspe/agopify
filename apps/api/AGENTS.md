@@ -15,7 +15,7 @@ Global rules live in the root `AGENTS.md`. Data work: `vendedoria-data` skill. A
 - Controllers carry `@ApiTags`; authenticated ones `@ApiBearerAuth()`. Swagger is the public API contract.
 - New env vars: add to `src/config/env.validation.ts`, `.env.example` and `.env.production.example` with placeholder values only.
 - Payment providers implement `payments/payment-provider.port.ts`; orders and billing never call a vendor directly. Mock provider is used when Mercado Pago credentials are empty.
-- Sales agent: `agent-runtime/`. Tools read catalog truth through `sales-agent-tools.service.ts`; OpenAI is optional with a deterministic fallback. A future merchant coach must be a separate runtime with separate permissions.
+- Sales agent / AI Core: `agent-runtime/` (durable path via `conversations/sales-gateway.service.ts`). LLM access goes through `agent-runtime/models/` (`AiModelRouter` + OpenAI adapter); tools read catalog truth through `sales-agent-tools.service.ts`; deterministic fallback when the model is unavailable. Docs: `docs/ai-core/`, `docs/AI-SALES-ENGINE.md`. A future merchant coach must be a separate runtime with separate permissions.
 - Public store payloads are typed in `packages/contracts`; change the contract and `storefront-mapper.ts` together.
 
 ## Tests

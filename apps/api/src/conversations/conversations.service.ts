@@ -145,13 +145,22 @@ export class ConversationsService {
       const conversation = await this.prisma.conversation.findFirst({ where: { id: conversationId, tenantId }, select: { channel: { select: { type: true } } } });
       if (conversation?.channel.type === 'TIKTOK_LIVE') throw new BadRequestException('TikTok LIVE no permite activar respuestas automáticas. Usa su panel para revisar las sugerencias.');
     }
+    // Pausing/resuming the sales agent is only driven by this explicit flag (Inbox
+    // "Pausar IA" / "Reactivar IA"). Viewing the thread or sending a human reply must not.
+    const status =
+      data.status ??
+      (data.agentEnabled === true
+        ? 'OPEN'
+        : data.agentEnabled === false
+          ? 'PAUSED'
+          : undefined);
     const updated = await this.prisma.conversation.update({
       where: { id: conversationId },
       data: {
         agentEnabled: data.agentEnabled,
         markedAsSale: data.markedAsSale,
         markedUnattended: data.markedUnattended,
-        status: data.status,
+        status,
       },
     });
     this.inboxEvents.publish(tenantId, conversationId, 'conversation');
@@ -175,8 +184,6 @@ export class ConversationsService {
       );
     }
 
-    // Pause before network I/O: an in-flight engine turn checks this before commerce and sending.
-    await this.prisma.conversation.updateMany({ where: { id: conversationId, tenantId }, data: { agentEnabled: false, status: 'PAUSED' } });
     const recipient = this.messenger.recipientOf(conversation.channel, conversation);
     const send = recipient ? await this.messenger.sendText(conversation.channel, recipient, text) : null;
     if (send && !send.ok) {
@@ -196,20 +203,17 @@ export class ConversationsService {
       }),
       this.prisma.conversation.update({
         where: { id: conversationId },
-        data: {
-          agentEnabled: false,
-          status: 'PAUSED',
-          markedUnattended: false,
-        },
+        data: { markedUnattended: false },
       }),
     ]);
     this.inboxEvents.publish(tenantId, conversationId);
 
     return {
       message,
-      agentEnabled: false,
-      notice:
-        'El vendedor IA se pausó en esta conversación porque respondiste como humano.',
+      agentEnabled: conversation.agentEnabled,
+      notice: conversation.agentEnabled
+        ? 'Mensaje enviado. La IA sigue activa; usa «Pausar IA» si quieres atender solo tú.'
+        : 'Mensaje enviado. La IA sigue pausada en esta conversación.',
     };
   }
 
@@ -240,7 +244,6 @@ export class ConversationsService {
     const metadata = asWhatsAppMetadata(conversation.channel.metadata);
     let externalId: string | undefined;
     let dryRun = false;
-    await this.prisma.conversation.updateMany({ where: { id: conversationId, tenantId }, data: { agentEnabled: false, status: 'PAUSED' } });
 
     if (
       conversation.channel.type === 'WHATSAPP' &&
@@ -285,22 +288,20 @@ export class ConversationsService {
       }),
       this.prisma.conversation.update({
         where: { id: conversationId },
-        data: {
-          agentEnabled: false,
-          status: 'PAUSED',
-          markedUnattended: false,
-        },
+        data: { markedUnattended: false },
       }),
     ]);
     this.inboxEvents.publish(tenantId, conversationId);
 
     return {
       message,
-      agentEnabled: false,
+      agentEnabled: conversation.agentEnabled,
       dryRun,
       notice: dryRun
-        ? 'Plantilla registrada en local (token placeholder · sin Graph API). El agente quedó pausado.'
-        : 'Plantilla enviada. El vendedor IA se pausó en esta conversación.',
+        ? 'Plantilla registrada en local (token placeholder · sin Graph API).'
+        : conversation.agentEnabled
+          ? 'Plantilla enviada. La IA sigue activa; usa «Pausar IA» si quieres atender solo tú.'
+          : 'Plantilla enviada. La IA sigue pausada en esta conversación.',
     };
   }
 
@@ -371,6 +372,8 @@ export class ConversationsService {
     },
   ) {
     const now = new Date();
+    const agentMode = await this.resolveChannelAiRuntimeMode(channel);
+    const durable = this.salesGateway.usesDurablePath(agentMode);
     if (params.externalMessageId && await this.salesGateway.isDuplicate(channel.tenantId, channel.id, params.externalMessageId)) return { duplicate: true };
     if (params.externalMessageId) {
       const duplicate = await this.prisma.message.findFirst({ where: { externalId: params.externalMessageId, direction: 'INBOUND', conversation: { tenantId: channel.tenantId, channelId: channel.id } }, select: { id: true } });
@@ -423,7 +426,7 @@ export class ConversationsService {
         body: params.text,
         externalId: params.externalMessageId,
         inboundKey: params.externalMessageId ? `${channel.tenantId}/${channel.id}/${params.externalMessageId}` : undefined,
-        enginePending: this.salesGateway.enabled,
+        enginePending: durable,
       },
     });
     return { conversation, inbound };
@@ -442,7 +445,7 @@ export class ConversationsService {
       data: { lastActiveAt: now, healthStatus: 'CONNECTED' },
     });
 
-    if (this.salesGateway.enabled) {
+    if (durable) {
       await this.salesGateway.buffered(tenantId, conversation.id, inbound.id);
       return { conversationId: conversation.id, buffered: true };
     }
@@ -596,6 +599,25 @@ export class ConversationsService {
         ? null
         : 'Ventana de 24h de Meta cerrada. Usa una plantilla aprobada.',
     };
+  }
+
+  /** Channel agent override, else primary tenant agent, else inherit. */
+  private async resolveChannelAiRuntimeMode(
+    channel: Channel,
+  ): Promise<string> {
+    if (channel.salesAgentId) {
+      const assigned = await this.prisma.salesAgent.findFirst({
+        where: { id: channel.salesAgentId, tenantId: channel.tenantId },
+        select: { aiRuntimeMode: true },
+      });
+      if (assigned?.aiRuntimeMode) return assigned.aiRuntimeMode;
+    }
+    const primary = await this.prisma.salesAgent.findFirst({
+      where: { tenantId: channel.tenantId },
+      orderBy: { createdAt: 'asc' },
+      select: { aiRuntimeMode: true },
+    });
+    return primary?.aiRuntimeMode ?? 'inherit';
   }
 
   private async ensureOwnership(tenantId: string, conversationId: string) {

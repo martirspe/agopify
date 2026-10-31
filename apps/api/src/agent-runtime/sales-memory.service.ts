@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConversionInfrastructure } from '../conversion/conversion-infrastructure.service';
+import { durableCustomerFacts } from './memory-policy';
 import { ExplicitFact, SalesState } from './sales-state';
 
 @Injectable()
@@ -32,11 +33,7 @@ export class SalesMemoryService {
     customerKey: string,
     state: SalesState,
   ): Promise<void> {
-    const facts = Object.fromEntries(
-      Object.entries(state.customerFacts).filter(
-        ([, fact]) => fact.confidence === 1 && fact.scope === 'customer',
-      ),
-    );
+    const facts = durableCustomerFacts(state.customerFacts);
     if (!Object.keys(facts).length) return;
     const ttl =
       Number(this.config.get('SALES_CUSTOMER_MEMORY_TTL_DAYS', 90)) * 86400000;

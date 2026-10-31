@@ -37,6 +37,7 @@ export type SalesAgentDto = {
   objectionHandling: string | null;
   promptMode: SalesAgentPromptMode;
   customPrompt: string | null;
+  aiRuntimeMode: SalesAgentAiRuntimeMode;
   isActive: boolean;
   isPrimary: boolean;
   channelIds: string[];
@@ -44,12 +45,18 @@ export type SalesAgentDto = {
 };
 
 export type SalesAgentPromptMode = 'guided' | 'custom';
+export type SalesAgentAiRuntimeMode =
+  | 'inherit'
+  | 'ai_core'
+  | 'shadow'
+  | 'legacy';
 
 export type SalesAgentSummaryDto = {
   id: string;
   name: string;
   isActive: boolean;
   promptMode: SalesAgentPromptMode;
+  aiRuntimeMode?: SalesAgentAiRuntimeMode;
   isPrimary: boolean;
   channelIds: string[];
 };
@@ -83,6 +90,7 @@ export type UpdateSalesAgentPayload = Partial<{
   objectionHandling: string;
   promptMode: SalesAgentPromptMode;
   customPrompt: string;
+  aiRuntimeMode: SalesAgentAiRuntimeMode;
   isActive: boolean;
 }>;
 
@@ -111,6 +119,12 @@ export type PlaygroundSessionDto = {
   messages: PlaygroundMessageDto[];
 };
 
+export type PlaygroundProductImage = {
+  productId: string;
+  imageUrl: string;
+  caption: string;
+};
+
 export type PlaygroundSendResult = {
   session: PlaygroundSessionDto;
   lastAgentReply: {
@@ -118,10 +132,24 @@ export type PlaygroundSendResult = {
     escalate: boolean;
     usedCatalog: boolean;
     tools: AgentToolTrace[];
+    images?: PlaygroundProductImage[];
     orderId?: string;
+    orderRef?: string;
     checkoutUrl?: string;
     dryRun: boolean;
   };
+};
+
+export type AgentAnalyticsDto = {
+  windowDays: number;
+  sampleSize: number;
+  turnsReady: number;
+  turnsFailed: number;
+  handoffRate: number | null;
+  fallbackRate: number | null;
+  injectionBlocked: number;
+  latencyMs: { p50: number | null; p95: number | null };
+  lanes: Record<string, number>;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -206,6 +234,15 @@ export class AgentsApiService {
       this.http.post<PlaygroundSendResult>(
         `${environment.apiBaseUrl}/agents/playground/sessions/${sessionId}/messages`,
         { text, agentId },
+      ),
+    );
+  }
+
+  getAnalytics(agentId: string, days = 7) {
+    return firstValueFrom(
+      this.http.get<AgentAnalyticsDto>(
+        `${environment.apiBaseUrl}/agents/${agentId}/analytics`,
+        { params: { days } },
       ),
     );
   }

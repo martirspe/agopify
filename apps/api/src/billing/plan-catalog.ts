@@ -2,7 +2,8 @@ import { PlanTier } from '@prisma/client';
 
 /**
  * Optional features turned on from Integraciones; each plan lists the ones it includes. The sales
- * agent is the core product: the web store is an add-on from Crece up.
+ * agent is the sold product. Store/domain/tracking may stay entitled for early access but are not
+ * commercial promises in plan highlights until the storefront is officially released.
  */
 export type IntegrationKey = 'store' | 'custom_domain' | 'instagram' | 'tracking' | 'team' | 'tiktok_live';
 
@@ -116,12 +117,16 @@ export const TRIAL_LIMITS: PlanLimits = {
   integrations: ['store', 'instagram', 'custom_domain', 'team', 'tiktok_live'],
 };
 
-/** Features every plan has; shown once instead of repeating them in each card. */
+/**
+ * Shared value of every plan. Shown once (footnote / disclosure), never repeated
+ * as per-card highlights — cards only list what changes between plans.
+ */
 export const INCLUDED_IN_ALL_PLANS = [
-  'Vendedor IA que responde tu WhatsApp e Instagram al instante',
-  'Links de pago con tarjeta y Yape que tu vendedor envía en el chat',
-  'Pedidos, mensajes y métricas en un solo lugar',
-  'Sin contratos: pagas por mes o por adelantado con descuento',
+  'WhatsApp e Instagram con tu vendedor IA',
+  'Catálogo con precios y stock reales',
+  'Links de pago (tarjeta y Yape) en el chat',
+  'Pedidos y mensajes en la consola',
+  'Sin contratos ni cobros automáticos',
 ];
 
 /**
@@ -132,7 +137,7 @@ export const INCLUDED_IN_ALL_PLANS = [
 export const PLAN_NOTES = [
   'Un chat nuevo es una persona que te escribe por primera vez. Si esa persona vuelve a escribirte, no cuenta otra vez.',
   'Las respuestas con IA son las que tu vendedor escribe con inteligencia artificial. Si llegas al máximo del mes, sigue respondiendo con respuestas básicas de tu catálogo hasta el mes siguiente o hasta que sumes chats extra.',
-  'Los textos e imágenes con IA del editor de tu tienda tienen su propio límite mensual y no usan las respuestas de tu vendedor.',
+  'La tienda web aún no forma parte oficial del plan: si la ves en la consola es acceso anticipado, sin compromiso de funciones ni soporte dedicado.',
   'Meta cobra los mensajes de WhatsApp aparte, en tu cuenta de WhatsApp Business: cada número tiene 1 000 respuestas gratis al mes y luego paga unos S/ 0,10 por respuesta. Un chat de venta usa entre 6 y 10 respuestas.',
   'El dinero de tus ventas llega a tu cuenta de Mercado Pago. VendedorIA no cobra comisión por venta.',
   'Los precios incluyen IGV.',
@@ -153,14 +158,12 @@ export const PLAN_CATALOG: PlanDefinition[] = [
     seatQuota: 1,
     platformBadge: true,
     integrations: ['instagram'],
-    description: 'Para empezar a vender por WhatsApp e Instagram con tu vendedor IA.',
+    description: 'Poco volumen. Ideal para probar el vendedor IA.',
     note: null,
     highlights: [
-      '50 chats nuevos al mes',
-      'Hasta 750 respuestas con IA al mes',
-      'Hasta 25 productos en tu catálogo',
+      '50 chats / mes',
+      '25 productos',
       '1 usuario',
-      'Sin tienda web',
     ],
   },
   {
@@ -177,18 +180,12 @@ export const PLAN_CATALOG: PlanDefinition[] = [
     seatQuota: 2,
     platformBadge: false,
     integrations: ['store', 'instagram', 'custom_domain', 'team', 'tiktok_live'],
-    description: 'Para vender todos los días con tu tienda web, diseñada con IA en minutos.',
-    note: `Pruébalo ${PLAN_TRIAL_DAYS} días gratis, sin tarjeta. En la prueba tienes hasta 100 chats nuevos, 100 textos y 10 imágenes con IA; todo lo demás es igual.`,
+    description: 'El plan para vender todos los días.',
+    note: `${PLAN_TRIAL_DAYS} días gratis · sin tarjeta · 100 chats en la prueba`,
     highlights: [
-      'Tienda web con cobros con tarjeta y Yape',
-      'Diseña tu tienda con IA: 300 textos y 30 imágenes al mes',
-      '400 chats nuevos al mes',
-      'Hasta 6 000 respuestas con IA al mes',
-      'Hasta 100 productos en tu catálogo',
-      '5 cupones activos a la vez',
+      '400 chats / mes',
+      '100 productos',
       '2 usuarios',
-      'Tu dominio propio (www.tumarca.pe)',
-      'Tu tienda solo con tu marca',
     ],
   },
   {
@@ -205,17 +202,12 @@ export const PLAN_CATALOG: PlanDefinition[] = [
     seatQuota: 5,
     platformBadge: false,
     integrations: ['store', 'instagram', 'custom_domain', 'team', 'tracking', 'tiktok_live'],
-    description: 'Para negocios que invierten en anuncios y atienden en equipo.',
+    description: 'Más anuncios, más chats y equipo.',
     note: null,
     highlights: [
-      'Diseña tu tienda con IA: 1 000 textos y 100 imágenes al mes',
-      '1 200 chats nuevos al mes',
-      'Hasta 18 000 respuestas con IA al mes',
-      'Hasta 300 productos en tu catálogo',
-      '20 cupones activos a la vez',
+      '1 200 chats / mes',
+      '300 productos',
       '5 usuarios',
-      'Tu dominio propio (www.tumarca.pe)',
-      'Píxel de Meta y Google Analytics en tu tienda',
     ],
   },
   {
@@ -232,16 +224,12 @@ export const PLAN_CATALOG: PlanDefinition[] = [
     seatQuota: 15,
     platformBadge: false,
     integrations: ['store', 'instagram', 'custom_domain', 'team', 'tracking', 'tiktok_live'],
-    description: 'Para negocios con mucho volumen de chats y un catálogo grande.',
+    description: 'Alto volumen y soporte prioritario.',
     note: null,
     highlights: [
-      'Diseña tu tienda con IA: 3 000 textos y 150 imágenes al mes',
-      '4 000 chats nuevos al mes',
-      'Hasta 60 000 respuestas con IA al mes',
-      'Hasta 1 000 productos en tu catálogo',
-      'Cupones sin límite',
+      '4 000 chats / mes',
+      '1 000 productos',
       '15 usuarios',
-      'Tu dominio propio, píxel de Meta y Google Analytics',
       'Soporte prioritario',
     ],
   },
@@ -259,13 +247,11 @@ export const PLAN_CATALOG: PlanDefinition[] = [
     seatQuota: null,
     platformBadge: false,
     integrations: ['store', 'instagram', 'custom_domain', 'team', 'tracking', 'tiktok_live'],
-    description: 'Para negocios que necesitan más de lo que incluye Lidera.',
+    description: 'Límites y acompañamiento a tu medida.',
     note: null,
     highlights: [
-      'Más de 4 000 chats nuevos al mes',
-      'Productos, cupones y usuarios según tu negocio',
-      'Todas las integraciones',
-      'Te ayudamos a configurar tu vendedor y tu tienda',
+      'Chats, productos y usuarios según tu negocio',
+      'Acompañamiento para configurar tu vendedor',
     ],
   },
 ];

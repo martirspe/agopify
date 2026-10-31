@@ -249,7 +249,7 @@ export class ConsoleShellLayout {
     {
       id: 'start',
       label: 'Inicio',
-      hint: 'Checklist para vender',
+      hint: 'Primeros pasos',
       path: '/app/get-started',
       icon: 'rocket',
     },
@@ -270,7 +270,7 @@ export class ConsoleShellLayout {
     {
       id: 'test-seller',
       label: 'Probar vendedor',
-      hint: 'Ensaya sin escribir a clientes reales',
+      hint: 'Prueba el vendedor sin clientes reales',
       path: '/app/seller/profile',
       icon: 'bot',
     },
@@ -341,7 +341,7 @@ export class ConsoleShellLayout {
     {
       id: 'help',
       label: 'Ayuda',
-      hint: 'Guías para operar tu negocio',
+      hint: 'Ayuda de la consola',
       path: '/app/help',
       icon: 'circleHelp',
     },
@@ -363,7 +363,7 @@ export class ConsoleShellLayout {
       {
         id: 'integrations',
         label: 'Integraciones',
-        hint: 'Tienda web, dominio, Instagram, analítica y equipo',
+        hint: 'Canales, cobros, equipo y acceso anticipado a tienda',
         path: '/app/integrations',
         icon: 'plug',
       },
@@ -451,7 +451,7 @@ export class ConsoleShellLayout {
         );
       } else if (usage.planStatus === 'TRIAL' && daysLeft !== null) {
         this.quotaWarning.set(
-          `Te quedan ${daysLeft} días de prueba gratis. Te ayudamos a dejar todo listo en una sesión gratis por Zoom.`,
+          `Te quedan ${daysLeft} días de prueba gratis. Agenda una sesión de configuración si la necesitas.`,
         );
         this.quotaAction.set('onboarding');
       } else {

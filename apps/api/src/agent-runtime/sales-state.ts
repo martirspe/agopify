@@ -4,6 +4,11 @@ import type {
   CatalogProductView,
 } from './sales-agent-tools.service';
 import { matchDistrict } from './delivery-plan';
+import {
+  extractBuyerIntents,
+  toSalesStateIntent,
+} from './buyer-intents';
+import { applyTopicChange } from './memory-policy';
 
 export const SALES_STAGES = [
   'NEW',
@@ -32,6 +37,8 @@ export type SalesState = {
   version: 1;
   stage: SalesStage;
   intent: string;
+  /** Multi-intent snapshot for the latest buyer turn (primary first). */
+  intents: string[];
   turns: number;
   customerFacts: Record<string, ExplicitFact>;
   requirements: Record<string, ExplicitFact>;
@@ -46,6 +53,8 @@ export type SalesState = {
   missingInformation: string[];
   pendingLines: PendingLine[];
   orderId?: string;
+  /** SHA-256 of the last confirmed chat cart; pairs with Order.checkoutKey for idempotency. */
+  orderDraftHash?: string;
   paymentStatus?: string;
   lastAction: string;
   nextBestAction: string;
@@ -66,6 +75,7 @@ export function initialSalesState(): SalesState {
     version: 1,
     stage: 'NEW',
     intent: 'unknown',
+    intents: [],
     turns: 0,
     customerFacts: {},
     requirements: {},
@@ -97,7 +107,9 @@ export function readSalesState(value: unknown): SalesState {
   const raw = value as Partial<SalesState>;
   if (raw.version !== 1 || !SALES_STAGES.includes(raw.stage as SalesStage))
     return initialSalesState();
-  return { ...initialSalesState(), ...structuredClone(raw) };
+  const merged = { ...initialSalesState(), ...structuredClone(raw) };
+  if (!Array.isArray(merged.intents)) merged.intents = [];
+  return merged;
 }
 
 /** Conservative explicit extraction: never promote inferred demographics/preferences to facts. */
@@ -193,23 +205,35 @@ export function observeBuyer(
     /\b(?:siempre prefiero|suelo comprar|mi preferencia es)\s+([^.!?\n]{3,120})/iu,
   );
   if (preference) remember('explicitPreference', preference[1], 'customer');
-  if (
-    next.pendingLines.length ||
-    /\b(?:vivo en|estoy en|envio a|entrega en|distrito de|mi distrito es)\b/.test(
-      normalized,
-    )
-  ) {
+  {
     const place = matchDistrict(text).district;
-    if (place)
+    const placeCue =
+      next.pendingLines.length > 0 ||
+      next.missingInformation.includes('destination') ||
+      next.stage === 'CHECKOUT' ||
+      next.stage === 'PAYMENT_PENDING' ||
+      /\b(?:vivo en|estoy en|envio a|entrega en|distrito de|mi distrito es|soy de)\b/.test(
+        normalized,
+      ) ||
+      // Short place-only answers (e.g. "Miraflores") after the agent asked for city.
+      (Boolean(place) &&
+        normalized.split(/\s+/).length <= 4 &&
+        !/\b(busco|quiero|talla|precio|comprar)\b/.test(normalized));
+    if (place && placeCue) {
       remember(
         'destination',
         `${place.district}, ${place.province}, ${place.department}`,
+        'customer',
       );
+      next.missingInformation = next.missingInformation.filter(
+        (item) => item !== 'destination',
+      );
+    }
   }
   const address = text.match(
     /\b(?:mi direccion es|direccion:)\s*([^\n]{5,200})/iu,
   );
-  if (address) remember('address', address[1]);
+  if (address) remember('address', address[1], 'customer');
   for (const [key, expression] of Object.entries({
     brand: /\bmarca\s+([\p{L}\p{N}-]+)/u,
     material: /\bmaterial\s+([\p{L}-]+)/u,
@@ -226,7 +250,10 @@ export function observeBuyer(
     !/\b(humano|asesor|persona|reembolso)\b/.test(normalized)
   )
     remember('need', text.slice(0, 600));
+  const analysis = extractBuyerIntents(text);
+  next.intents = analysis.intents;
   if (
+    analysis.primary === 'objection' ||
     /\b(muy caro|demasiado caro|carisimo|fuera de mi presupuesto)\b/.test(
       normalized,
     )
@@ -235,22 +262,49 @@ export function observeBuyer(
     next.stage = 'OBJECTION_HANDLING';
     next.objections = [...new Set([...next.objections, 'price'])];
   } else if (
-    /\b(comprar|compro|lo quiero|la quiero|llevo|pagar|quiero (?:dos|tres|\d+))\b/.test(
-      normalized,
-    )
-  )
+    next.pendingLines.length ||
+    next.stage === 'CHECKOUT' ||
+    next.stage === 'PAYMENT_PENDING'
+  ) {
     next.intent = 'purchase';
-  else if (/\b(precio|cuesta|stock|disponib|talla|envio)\w*/.test(normalized))
-    next.intent = 'product_question';
-  else if (!/^(hola|gracias|ok)[!. ]*$/.test(normalized))
-    next.intent = 'product_search';
+  } else {
+    next.intent = toSalesStateIntent(analysis.primary);
+    if (
+      next.intent === 'unknown' &&
+      !/^(hola|gracias|ok)[!. ]*$/.test(normalized)
+    ) {
+      next.intent = 'product_search';
+    }
+  }
   if (
+    analysis.primary === 'rejection' ||
     /\b(ya no quiero|cancela la compra|no voy a comprar)\b/.test(normalized)
   ) {
     next.stage = 'LOST';
     next.intent = 'cancel';
     next.selectedProduct = undefined;
     next.pendingLines = [];
+  }
+  if (analysis.primary === 'human_request' || analysis.primary === 'complaint') {
+    next.stage = 'HUMAN_HANDOFF';
+    next.intent = 'handoff';
+    next.handoffReason = analysis.primary;
+  }
+  if (
+    analysis.primary === 'topic_change' ||
+    /\b(tambien quiero ver|cambiando de tema|ahora busco|otra cosa|quiero ver (?:tambien )?(?:mochilas|zapatillas|perfumes|polos|pantalones))\b/.test(
+      normalized,
+    )
+  ) {
+    Object.assign(next, applyTopicChange(next));
+    next.intents = analysis.intents;
+    if (
+      /\b(busco|buscando|necesito|quiero (?:un|una|unos|unas)|quiero ver)\b/.test(
+        normalized,
+      )
+    ) {
+      remember('need', text.slice(0, 600));
+    }
   }
   if (
     /\b(mejor el otro|otra opcion|cambio de opinion|no me gusta|descarta)\b/.test(
@@ -270,11 +324,15 @@ export function observeBuyer(
     next.pendingLines = [];
   }
   next.nextBestAction =
-    next.intent === 'purchase'
-      ? 'initiate_checkout'
-      : next.intent === 'price_objection'
-        ? 'handle_objection'
-        : 'search_products';
+    next.intent === 'handoff'
+      ? 'handoff_to_human'
+      : next.intent === 'purchase'
+        ? 'initiate_checkout'
+        : next.intent === 'price_objection'
+          ? 'handle_objection'
+          : analysis.intents.includes('shipping_inquiry')
+            ? 'quote_shipping'
+            : 'search_products';
   return next;
 }
 
@@ -291,16 +349,18 @@ export function resolveSalesReference(
   const ordinal = query.match(
     /\b(?:el |la )?(primer[oa]?|segund[oa]|tercer[oa]?|1ro|2do|3ro)\b/,
   );
-  if (ordinal)
-    return (
+  if (ordinal) {
+    const picked =
       ordered[
         /^(primer|1)/.test(ordinal[1])
           ? 0
           : /^(segund|2)/.test(ordinal[1])
             ? 1
             : 2
-      ] ?? null
-    );
+      ] ?? null;
+    // "el segundo en negro" keeps the ordinal product; color is stored as a requirement.
+    if (picked) return picked;
+  }
   const current = ordered.filter((p): p is CatalogProductView => Boolean(p));
   if (/\bmas barato\b/.test(query))
     return current.length
@@ -348,6 +408,7 @@ export function completeSalesTurn(
     escalate: boolean;
     orderId?: string;
     checkoutUrl?: string;
+    orderDraftHash?: string;
   },
   summaryThreshold: number,
 ): SalesState {
@@ -382,6 +443,7 @@ export function completeSalesTurn(
     next.selectedProduct.variantId = variant.data.variantId;
   if (result.orderId) {
     next.orderId = result.orderId;
+    if (result.orderDraftHash) next.orderDraftHash = result.orderDraftHash;
     next.pendingLines = [];
     next.missingInformation = [];
     next.stage = ['PAID', 'FULFILLING', 'SHIPPED', 'COMPLETED'].includes(

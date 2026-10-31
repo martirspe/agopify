@@ -21,12 +21,16 @@ export type SalesMetric = (typeof SALES_METRICS)[number];
 export type SalesExpectation = {
   facts?: Record<string, string>;
   intent?: string;
+  /** All buyer intents that must appear on salesState.intents (Stage 2 multi-question). */
+  intents?: string[];
   productIds?: string[];
   stage?: SalesStage;
   referenceId?: string;
   handoff?: boolean;
   allowedTools?: string[];
   progressed?: boolean;
+  /** Substrings that must appear in the reply (normalized loosely via includes). */
+  replyIncludes?: string[];
 };
 
 /** Scores annotated outputs. Null means no annotated opportunity, never an invented success. */
@@ -67,6 +71,18 @@ export function evaluateSalesTurn(
         .length / Math.max(1, Object.keys(expected.facts).length);
   if (expected.intent)
     score.intent_accuracy = state?.intent === expected.intent ? 1 : 0;
+  if (expected.intents?.length) {
+    const found = new Set(state?.intents ?? []);
+    score.intent_accuracy =
+      expected.intents.every((intent) => found.has(intent)) ? 1 : 0;
+  }
+  if (expected.replyIncludes?.length) {
+    const reply = result.replyText.toLowerCase();
+    score.context_retention =
+      expected.replyIncludes.filter((needle) =>
+        reply.includes(needle.toLowerCase()),
+      ).length / expected.replyIncludes.length;
+  }
   if (expected.productIds)
     score.product_accuracy =
       JSON.stringify(state?.recommendedProductIds ?? []) ===

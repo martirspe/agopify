@@ -19,6 +19,7 @@ import {
   CatalogProductView,
 } from './sales-agent-tools.service';
 import { catalogContext } from './catalog-context';
+import { recordSecurityEvent } from './security-events';
 
 class ReadToolArguments {
   @IsOptional() @IsString() @MaxLength(600) query?: string;
@@ -253,13 +254,51 @@ export class SalesToolRegistry {
           },
         },
       });
-      return { value: order ?? { error: 'ORDER_NOT_FOUND' } };
+      if (!order) {
+        const foreign = await this.prisma.order.findFirst({
+          where: { id: dto.orderId!, NOT: { tenantId } },
+          select: { id: true },
+        });
+        if (foreign) {
+          recordSecurityEvent({
+            code: 'cross_tenant_denied',
+            tenantId,
+            conversationId: context.conversationId,
+            resource: 'order',
+            detail: 'get_order_status',
+          });
+        } else {
+          recordSecurityEvent({
+            code: 'order_scope_denied',
+            tenantId,
+            conversationId: context.conversationId,
+            resource: 'order',
+            detail: 'get_order_status',
+          });
+        }
+        return { value: { error: 'ORDER_NOT_FOUND' } };
+      }
+      return { value: order };
     }
     const product = (
       await this.tools.getProducts(tenantId, [dto.productId!])
     )[0];
-    if (!product) return { value: { error: 'PRODUCT_NOT_FOUND' } };
-    if (name === 'get_product')
+    if (!product) {
+      const foreign = await this.prisma.product.findFirst({
+        where: { id: dto.productId!, NOT: { tenantId } },
+        select: { id: true },
+      });
+      if (foreign) {
+        recordSecurityEvent({
+          code: 'cross_tenant_denied',
+          tenantId,
+          conversationId: context.conversationId,
+          resource: 'product',
+          detail: name,
+        });
+      }
+      return { value: { error: 'PRODUCT_NOT_FOUND' } };
+    }    if (name === 'get_product')
       return {
         value: { id: product.id, ...catalogContext([product], '')[0] },
         products: [product],

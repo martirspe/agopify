@@ -23,6 +23,8 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vendedoria?schema=public
           JWT_ACCESS_SECRET: ci-access-secret-must-be-at-least-32-chars
           JWT_REFRESH_SECRET: ci-refresh-secret-must-be-at-least-32-chars
+      - name: Offline sales-engine eval (AI Core golden set)
+        run: npm run eval:sales -w @vendedoria/api
       - run: npm run theme:build
       - run: npm run test -w @vendedoria/api -- --runInBand
       - run: npm run theme:check

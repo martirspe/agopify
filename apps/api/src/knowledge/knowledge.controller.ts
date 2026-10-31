@@ -11,6 +11,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/auth.decorators';
 import type { AuthUserPayload } from '../common/types/auth-user';
 import {
+  ApplyKnowledgeTemplatesDto,
   CreateJourneyTemplateDto,
   CreateKnowledgeFaqDto,
   ImportKnowledgePasteDto,
@@ -24,6 +25,20 @@ import { KnowledgeService } from './knowledge.service';
 @Controller('knowledge')
 export class KnowledgeController {
   constructor(private readonly knowledgeService: KnowledgeService) {}
+
+  /** Topics + starter corporate policies (no tenant PII). */
+  @Get('policy-catalog')
+  policyCatalog() {
+    return this.knowledgeService.listPolicyCatalog();
+  }
+
+  @Post('policy-templates/apply')
+  applyPolicyTemplates(
+    @CurrentUser() user: AuthUserPayload,
+    @Body() dto: ApplyKnowledgeTemplatesDto,
+  ) {
+    return this.knowledgeService.applyPolicyTemplates(user.tenantId, dto);
+  }
 
   @Get('faqs')
   listFaqs(@CurrentUser() user: AuthUserPayload) {

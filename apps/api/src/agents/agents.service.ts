@@ -11,7 +11,12 @@ import {
   buildGuidedPersona,
   toPersonality,
 } from '../agent-runtime/sales-playbook';
+import { describeModeChange } from '../agent-runtime/migration-policy';
+import { recordSecurityEvent } from '../agent-runtime/security-events';
+import { assertManager } from '../common/roles';
+import type { AuthUserPayload } from '../common/types/auth-user';
 import { computeAgentQuality } from './agent-quality';
+import { aggregateSalesTurnAnalytics } from './agent-analytics';
 import {
   CreateSalesAgentDto,
   UpdateSalesAgentDto,
@@ -37,6 +42,7 @@ export class AgentsService {
         name: true,
         isActive: true,
         promptMode: true,
+        aiRuntimeMode: true,
         channels: { select: { id: true } },
       },
     });
@@ -45,6 +51,7 @@ export class AgentsService {
       name: agent.name,
       isActive: agent.isActive,
       promptMode: agent.promptMode,
+      aiRuntimeMode: agent.aiRuntimeMode,
       isPrimary: index === 0,
       channelIds: agent.channels.map((channel) => channel.id),
     }));
@@ -54,13 +61,34 @@ export class AgentsService {
     return this.toResponse(tenantId, await this.findPrimary(tenantId));
   }
 
-  async updatePrimary(tenantId: string, dto: UpdateSalesAgentDto) {
-    const agent = await this.findPrimary(tenantId);
-    return this.update(tenantId, agent.id, dto);
+  async updatePrimary(user: AuthUserPayload, dto: UpdateSalesAgentDto) {
+    const agent = await this.findPrimary(user.tenantId);
+    return this.update(user, agent.id, dto);
   }
 
   async get(tenantId: string, id: string) {
     return this.toResponse(tenantId, await this.findOwned(tenantId, id));
+  }
+
+  /**
+   * Per-agent operational metrics from durable sales turns (tenant-scoped).
+   * Does not expose message bodies or contact PII.
+   */
+  async analytics(tenantId: string, id: string, days = 7) {
+    await this.findOwned(tenantId, id);
+    const windowDays = Math.min(90, Math.max(1, Math.trunc(days) || 7));
+    const since = new Date(Date.now() - windowDays * 86_400_000);
+    const turns = await this.prisma.salesEngineTurn.findMany({
+      where: {
+        tenantId,
+        createdAt: { gte: since },
+        conversation: { channel: { salesAgentId: id } },
+      },
+      select: { status: true, trace: true },
+      orderBy: { createdAt: 'desc' },
+      take: 1000,
+    });
+    return aggregateSalesTurnAnalytics(turns, windowDays);
   }
 
   async create(tenantId: string, dto: CreateSalesAgentDto) {
@@ -70,30 +98,58 @@ export class AgentsService {
         `Puedes tener hasta ${MAX_AGENTS_PER_TENANT} vendedores.`,
       );
     }
+    // Fresh agent = blank slate (no persona copy) unless the merchant explicitly clones.
     const source = dto.copyFromId
       ? await this.findOwned(tenantId, dto.copyFromId)
-      : await this.findPrimary(tenantId).catch(() => null);
+      : null;
     const created = await this.prisma.salesAgent.create({
-      data: dto.copyFromId && source
+      data: source
         ? { ...this.copyableFields(source), tenantId, name: dto.name.trim() }
         : {
             tenantId,
             name: dto.name.trim(),
-            companyName: source?.companyName,
-            companyDescription: source?.companyDescription,
+            // Empty techniques → only the hard-coded sales method until configured.
+            salesTechniques: [],
+            aiRuntimeMode: 'ai_core',
           },
       include: { channels: { select: { id: true } } },
     });
     return this.toResponse(tenantId, created);
   }
 
-  async update(tenantId: string, id: string, dto: UpdateSalesAgentDto) {
-    await this.findOwned(tenantId, id);
+  async update(user: AuthUserPayload, id: string, dto: UpdateSalesAgentDto) {
+    const tenantId = user.tenantId;
+    const current = await this.findOwned(tenantId, id);
+    if (
+      dto.aiRuntimeMode !== undefined &&
+      dto.aiRuntimeMode !== current.aiRuntimeMode
+    ) {
+      // Motor changes are ops/migration controls — not day-to-day AGENT work.
+      assertManager(
+        user,
+        'Solo el dueño o un administrador puede cambiar el motor de inteligencia.',
+      );
+    }
     const updated = await this.prisma.salesAgent.update({
       where: { id },
       data: dto,
       include: { channels: { select: { id: true } } },
     });
+    if (
+      dto.aiRuntimeMode !== undefined &&
+      dto.aiRuntimeMode !== current.aiRuntimeMode
+    ) {
+      const change = describeModeChange(
+        current.aiRuntimeMode,
+        dto.aiRuntimeMode,
+      );
+      recordSecurityEvent({
+        code: 'ai_runtime_mode_changed',
+        tenantId,
+        resource: 'sales_agent',
+        detail: `${change.from}->${change.to}:${change.risk}:${user.membershipRole}`,
+      });
+    }
     return this.toResponse(tenantId, updated);
   }
 

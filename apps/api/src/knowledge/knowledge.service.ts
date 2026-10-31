@@ -1,18 +1,26 @@
 import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import type { KnowledgeTopic } from '@prisma/client';
 import { SalesSearchService } from '../agent-runtime/sales-search.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  ApplyKnowledgeTemplatesDto,
   CreateJourneyTemplateDto,
   CreateKnowledgeFaqDto,
   ImportKnowledgePasteDto,
   UpdateJourneyTemplateDto,
   UpdateKnowledgeFaqDto,
 } from './dto/knowledge.dto';
+import {
+  KNOWLEDGE_POLICY_TEMPLATES,
+  KNOWLEDGE_TOPIC_META,
+  topicLabel,
+} from './knowledge-topics';
 
 export type KnowledgeFaqView = {
   id: string;
   question: string;
   answer: string;
+  topic: string;
   tags: string[];
   source: string;
   reviewStatus: string;
@@ -39,6 +47,7 @@ export class KnowledgeService {
         tenantId,
         question: dto.question.trim(),
         answer: dto.answer.trim(),
+        topic: (dto.topic ?? 'GENERAL') as KnowledgeTopic,
         tags: this.normalizeTags(dto.tags),
         isPublished: dto.isPublished ?? true,
         reviewStatus: 'APPROVED',
@@ -58,11 +67,71 @@ export class KnowledgeService {
       data: {
         question: dto.question?.trim(),
         answer: dto.answer?.trim(),
+        topic: dto.topic as KnowledgeTopic | undefined,
         tags: dto.tags ? this.normalizeTags(dto.tags) : undefined,
         isPublished: dto.isPublished,
         reviewStatus: dto.reviewStatus,
       },
     });
+  }
+
+  /** Catalog of topics + starter policies (no secrets, no tenant data). */
+  listPolicyCatalog() {
+    return {
+      topics: KNOWLEDGE_TOPIC_META,
+      templates: KNOWLEDGE_POLICY_TEMPLATES.map((item) => ({
+        ...item,
+        topicLabel: topicLabel(item.topic),
+      })),
+    };
+  }
+
+  /**
+   * Publishes starter policy FAQs for the selected topics, skipping questions
+   * the tenant already has (case-insensitive). Does not overwrite merchant copy.
+   */
+  async applyPolicyTemplates(
+    tenantId: string,
+    dto: ApplyKnowledgeTemplatesDto,
+  ) {
+    const wanted = new Set(dto.topics);
+    const starters = KNOWLEDGE_POLICY_TEMPLATES.filter((item) =>
+      wanted.has(item.topic),
+    );
+    const existing = await this.prisma.knowledgeFaq.findMany({
+      where: { tenantId },
+      select: { question: true },
+    });
+    const known = new Set(
+      existing.map((item) => this.normalizeQuestion(item.question)),
+    );
+    const toCreate = starters.filter(
+      (item) => !known.has(this.normalizeQuestion(item.question)),
+    );
+    if (!toCreate.length) {
+      return { created: [] as KnowledgeFaqView[], skipped: starters.length };
+    }
+    const created = await this.prisma.$transaction(
+      toCreate.map((item, index) =>
+        this.prisma.knowledgeFaq.create({
+          data: {
+            tenantId,
+            question: item.question,
+            answer: item.answer,
+            topic: item.topic as KnowledgeTopic,
+            tags: [item.topic.toLowerCase(), 'plantilla'],
+            source: 'TEMPLATE',
+            reviewStatus: 'APPROVED',
+            isPublished: true,
+            sortOrder: index,
+          },
+        }),
+      ),
+    );
+    return {
+      created,
+      skipped: starters.length - created.length,
+    };
   }
 
   async deleteFaq(tenantId: string, faqId: string) {
@@ -92,6 +161,7 @@ export class KnowledgeService {
       return { created: [] as KnowledgeFaqView[], skipped: true };
     }
 
+    const topic = (dto.topic ?? 'GENERAL') as KnowledgeTopic;
     const created = await this.prisma.$transaction(
       pairs.slice(0, 40).map((pair, index) =>
         this.prisma.knowledgeFaq.create({
@@ -99,7 +169,8 @@ export class KnowledgeService {
             tenantId,
             question: pair.question,
             answer: pair.answer,
-            tags: ['import'],
+            topic,
+            tags: ['import', topic.toLowerCase()],
             source: 'PASTE_IMPORT',
             reviewStatus: 'DRAFT',
             isPublished: false,
@@ -220,6 +291,10 @@ export class KnowledgeService {
       .map((tag) => tag.trim().toLowerCase())
       .filter(Boolean)
       .slice(0, 12);
+  }
+
+  private normalizeQuestion(question: string) {
+    return question.trim().toLowerCase().replace(/\s+/g, ' ');
   }
 
   private parsePaste(

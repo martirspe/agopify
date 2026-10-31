@@ -13,6 +13,7 @@ import {
   PROMPT_MODES,
   SALES_TECHNIQUE_IDS,
 } from '../../agent-runtime/sales-playbook';
+import { AI_RUNTIME_MODES } from '../../agent-runtime/ai-runtime-mode';
 
 export class CreateSalesAgentDto {
   @ApiProperty({ example: 'Valeria' })
@@ -182,6 +183,15 @@ export class UpdateSalesAgentDto {
   @IsString()
   @MaxLength(12000)
   customPrompt?: string;
+
+  @ApiPropertyOptional({
+    enum: AI_RUNTIME_MODES,
+    description:
+      'AI Core routing: inherit uses SALES_ENGINE_MODE; ai_core forces durable inbox; legacy forces sync',
+  })
+  @IsOptional()
+  @IsIn([...AI_RUNTIME_MODES])
+  aiRuntimeMode?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

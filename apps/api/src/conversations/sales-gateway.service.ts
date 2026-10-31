@@ -13,6 +13,7 @@ import {
 } from '../agent-runtime/sales-agent-runtime.service';
 import { SalesConversationLock } from '../agent-runtime/sales-lock.service';
 import { SalesMemoryService } from '../agent-runtime/sales-memory.service';
+import { mergeCustomerMemory } from '../agent-runtime/memory-policy';
 import {
   readSalesState,
   observeBuyer,
@@ -27,6 +28,12 @@ import { PlanLimitsService } from '../billing/plan-limits.service';
 import { MediaService } from '../catalog/media.service';
 import { OrderEmailService } from '../checkout/order-email.service';
 import { InboxEventsService } from './inbox-events.service';
+import {
+  isShadowAiCore,
+  usesDurableAiCore,
+} from '../agent-runtime/ai-runtime-mode';
+import { sanitizeShadowArtifacts } from '../agent-runtime/shadow-delivery';
+import { recordSecurityEvent } from '../agent-runtime/security-events';
 
 @Injectable()
 export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
@@ -48,10 +55,22 @@ export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
     private readonly events: InboxEventsService,
     private readonly emails: OrderEmailService,
   ) {}
+  /** Global default when the agent uses `inherit`. Prefer `usesDurablePath`. */
   get enabled(): boolean {
-    return (
-      this.config.get('SALES_ENGINE_MODE', 'sales-engine-v2') ===
-      'sales-engine-v2'
+    return this.usesDurablePath('inherit');
+  }
+
+  usesDurablePath(agentAiRuntimeMode?: string | null): boolean {
+    return usesDurableAiCore(
+      this.config.get('SALES_ENGINE_MODE', 'sales-engine-v2'),
+      agentAiRuntimeMode,
+    );
+  }
+
+  isShadowPath(agentAiRuntimeMode?: string | null): boolean {
+    return isShadowAiCore(
+      this.config.get('SALES_ENGINE_MODE', 'sales-engine-v2'),
+      agentAiRuntimeMode,
     );
   }
   async isDuplicate(
@@ -169,6 +188,11 @@ export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
         include: { channel: true },
       });
       if (!conversation || conversation.channel.type === 'TIKTOK_LIVE') return;
+      const agentMode = await this.resolveAgentAiRuntimeMode(
+        tenantId,
+        conversation.channel.salesAgentId,
+      );
+      const shadow = this.isShadowPath(agentMode);
       const unfinished = await this.prisma.salesEngineTurn.findFirst({
         where: {
           tenantId,
@@ -185,6 +209,7 @@ export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
             unfinished.id,
             unfinished.response as unknown as AgentReplyResult,
             assertOwned,
+            shadow,
           );
         } else {
           // Obtaining the PG lock proves there is no live owner of this interrupted turn.
@@ -244,11 +269,12 @@ export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
       try {
         const assertActive = async () => {
           await assertOwned();
+          if (this.stopped) throw new Error('SALES_GATEWAY_STOPPED');
           const active = await this.prisma.conversation.findFirst({
             where: { id: conversationId, tenantId, agentEnabled: true },
             select: { id: true },
           });
-          if (!active || this.stopped) throw new Error('SALES_AGENT_PAUSED');
+          if (!active) throw new Error('SALES_AGENT_PAUSED');
         };
         const earlier = await this.prisma.message.findMany({
           where: {
@@ -305,16 +331,13 @@ export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
             await assertActive();
           }
         }
-        state.customerFacts = {
-          ...(await this.memory.loadCustomer(tenantId, customerKey)),
-          ...Object.fromEntries(
-            Object.entries(state.customerFacts).filter(
-              ([, fact]) =>
-                !fact.expiresAt ||
-                new Date(fact.expiresAt).getTime() > Date.now(),
-            ),
-          ),
-        };
+        {
+          const memoryFacts = await this.memory.loadCustomer(
+            tenantId,
+            customerKey,
+          );
+          Object.assign(state, mergeCustomerMemory(state, memoryFacts));
+        }
         if (state.stage === 'HUMAN_HANDOFF') {
           state.stage = 'DISCOVERY';
           state.handoffReason = undefined;
@@ -346,6 +369,7 @@ export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
           shownImageProductIds: context.shownImageProductIds,
           allowAi: await this.limits.canUseAi(tenantId),
           assertOwned: assertActive,
+          mode: shadow ? 'shadow' : 'production',
         });
         await assertActive();
         if (result.usedAi) await this.limits.recordAiReply(tenantId);
@@ -396,6 +420,7 @@ export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
           turn.id,
           result,
           assertActive,
+          shadow,
         );
         try {
           await this.infra.redis?.del(
@@ -425,7 +450,9 @@ export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
           pending.map((m) => m.id),
           error instanceof Error && error.message === 'SALES_AGENT_PAUSED'
             ? 'operator_pause'
-            : 'turn_failed',
+            : error instanceof Error && error.message === 'SALES_GATEWAY_STOPPED'
+              ? 'gateway_stopped'
+              : 'turn_failed',
         );
       }
     });
@@ -437,6 +464,7 @@ export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
     turnId: string,
     result: AgentReplyResult,
     assertOwned: () => Promise<void>,
+    shadow = false,
   ): Promise<void> {
     await assertOwned();
     const conversation = await this.prisma.conversation.findFirst({
@@ -468,6 +496,57 @@ export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
       data: { status: 'SENDING' },
     });
     if (!claimed.count) return;
+    // Shadow: persist the would-be reply for comparison; never call Meta.
+    if (shadow) {
+      const safe = sanitizeShadowArtifacts({
+        orderId: result.orderId,
+        checkoutUrl: result.checkoutUrl,
+      });
+      if (safe.blocked.length) {
+        recordSecurityEvent({
+          code: 'shadow_live_artifact_blocked',
+          tenantId,
+          conversationId,
+          resource: 'sales_engine_turn',
+          detail: safe.blocked.join(','),
+        });
+      }
+      await this.prisma.$transaction([
+        this.prisma.message.create({
+          data: {
+            conversationId,
+            direction: 'OUTBOUND',
+            authorType: 'SALES_AGENT',
+            body: result.replyText,
+            metadata: JSON.parse(
+              JSON.stringify({
+                shadow: true,
+                tools: result.tools,
+                usedCatalog: result.usedCatalog,
+                escalate: result.escalate,
+                orderId: safe.orderId,
+                checkoutUrl: safe.checkoutUrl,
+                engineTurnId: turnId,
+              }),
+            ) as Prisma.InputJsonValue,
+          },
+        }),
+        this.prisma.salesEngineTurn.updateMany({
+          where: { id: turnId, tenantId, status: 'SENDING' },
+          data: { status: 'SENT' },
+        }),
+      ]);
+      this.logger.log(
+        JSON.stringify({
+          event: 'sales_shadow_recorded',
+          tenantId,
+          conversationId,
+          turnId,
+        }),
+      );
+      this.events.publish(tenantId, conversationId);
+      return;
+    }
     const send = result.checkoutUrl
       ? await this.messenger.sendPaymentLink(conversation.channel, recipient, {
           text: result.replyText,
@@ -579,6 +658,7 @@ export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
     errorCode: string,
   ): Promise<void> {
     // No blind retry: a previous action may already have committed or Meta may have accepted a send.
+    // agentEnabled is never flipped here — only Inbox "Pausar IA" (or pause-on-handoff) may pause the agent.
     const current = await this.prisma.salesEngineTurn.findFirst({
       where: { id: turnId, tenantId },
     });
@@ -588,10 +668,13 @@ export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
       select: { salesState: true },
     });
     const state = readSalesState(row?.salesState);
-    state.stage = 'HUMAN_HANDOFF';
-    state.handoffReason = errorCode;
-    state.nextBestAction = 'handoff_to_human';
-    state.summary.nextStep = `operator_review:${errorCode}`;
+    const operatorPaused = errorCode === 'operator_pause';
+    if (!operatorPaused) {
+      state.stage = 'HUMAN_HANDOFF';
+      state.handoffReason = errorCode;
+      state.nextBestAction = 'handoff_to_human';
+      state.summary.nextStep = `operator_review:${errorCode}`;
+    }
     await this.prisma.$transaction([
       this.prisma.salesEngineTurn.updateMany({
         where: { id: turnId, tenantId },
@@ -607,10 +690,8 @@ export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
       this.prisma.conversation.updateMany({
         where: { id: conversationId, tenantId },
         data: {
-          agentEnabled: false,
-          status: 'PAUSED',
           markedUnattended: true,
-          salesState: state,
+          ...(!operatorPaused ? { salesState: state } : {}),
         },
       }),
     ]);
@@ -624,5 +705,24 @@ export class SalesGatewayService implements OnModuleInit, OnModuleDestroy {
         errorCode,
       }),
     );
+  }
+
+  private async resolveAgentAiRuntimeMode(
+    tenantId: string,
+    salesAgentId: string | null,
+  ): Promise<string> {
+    if (salesAgentId) {
+      const assigned = await this.prisma.salesAgent.findFirst({
+        where: { id: salesAgentId, tenantId },
+        select: { aiRuntimeMode: true },
+      });
+      if (assigned?.aiRuntimeMode) return assigned.aiRuntimeMode;
+    }
+    const primary = await this.prisma.salesAgent.findFirst({
+      where: { tenantId },
+      orderBy: { createdAt: 'asc' },
+      select: { aiRuntimeMode: true },
+    });
+    return primary?.aiRuntimeMode ?? 'inherit';
   }
 }

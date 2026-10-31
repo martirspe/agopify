@@ -1,4 +1,6 @@
 import { normalizeText } from './conversation-context';
+import { isRepeatedKnownQuestion } from './memory-policy';
+import { missingSubquestionCoverage } from './multi-question';
 import { CatalogProductView, moneyLabel } from './sales-agent-tools.service';
 import { SalesState } from './sales-state';
 
@@ -105,6 +107,17 @@ export function validateSalesResponse(
     )
       failures.add('unsupported_policy');
   }
+  // Arbitrary % discounts without a published FAQ/promotion fact are never allowed.
+  if (
+    /\b(?:\d{1,3}\s*%|cien\s+por\s+ciento)\s*(?:de\s+)?descuento\b|\bdescuento\s+(?:del\s+)?(?:\d{1,3}|noventa)\s*%\b/.test(
+      normalizeText(text),
+    ) &&
+    !policyAnswers.some((answer) =>
+      /\bdescuento\b/i.test(answer),
+    )
+  ) {
+    failures.add('unauthorized_discount');
+  }
   const positiveInventory = text
     .split(/\n|(?<=[.!?])\s+/)
     .some(
@@ -143,19 +156,22 @@ export function validateSalesResponse(
     if (!selected.some((p) => !p.stockUnlimited && p.stockQty === qty))
       failures.add('unsupported_inventory_quantity');
   }
-  if (state)
+  if (state) {
     for (const sentence of text.match(/¿[^?]*\?|[^.!?\n]*\?/g) ?? []) {
+      const normalizedSentence = normalizeText(sentence);
       for (const [key, regex] of Object.entries(QUESTION_KEYS))
         if (
           state.answeredQuestions[key] &&
-          regex.test(normalizeText(sentence)) &&
+          regex.test(normalizedSentence) &&
           !/\b(confirm|cambias|cambiar|sigue|correcto)\w*/.test(
-            normalizeText(sentence),
+            normalizedSentence,
           )
         )
           failures.add('repeated_question');
+      if (isRepeatedKnownQuestion(normalizedSentence, state))
+        failures.add('repeated_question');
     }
-  if (/\b(?:ya reserv)\w*/.test(normalizeText(text)))
+  }  if (/\b(?:ya reserv)\w*/.test(normalizeText(text)))
     failures.add('unsupported_action');
   if (
     /\b(?:ya cree|pedido creado)\w*/.test(normalizeText(text)) &&
@@ -169,5 +185,34 @@ export function validateSalesResponse(
     )
   )
     failures.add('unsupported_payment');
+  // Claiming the district is settled or offering a payment link without an order
+  // is how the model used to loop buyers who already answered.
+  if (
+    state?.pendingLines.length &&
+    !state.orderId &&
+    /\b(?:ya\s+tengo\s+todo|distrito\s+confirmad|confirmar\s+tu\s+distrito|link\s+(?:de\s+)?pago|pase\s+el\s+link|pasar\s+el\s+link)\b/.test(
+      normalizeText(text),
+    )
+  )
+    failures.add('unsupported_checkout_claim');
+  // Enforce compound inquiry coverage only (price+size+shipping, etc.), never during checkout.
+  const inquiryIntents = (state?.intents ?? []).filter((intent) =>
+    [
+      'price_inquiry',
+      'stock_inquiry',
+      'product_variant',
+      'shipping_inquiry',
+      'payment_inquiry',
+    ].includes(intent),
+  );
+  if (
+    inquiryIntents.length >= 2 &&
+    !state?.orderId &&
+    state?.stage !== 'PAYMENT_PENDING' &&
+    state?.stage !== 'CHECKOUT' &&
+    missingSubquestionCoverage(text, inquiryIntents).length
+  ) {
+    failures.add('unanswered_subquestion');
+  }
   return [...failures];
 }

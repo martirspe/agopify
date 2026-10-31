@@ -109,7 +109,7 @@
       <div class="thread-empty">
         <h2>Selecciona una conversación</h2>
         <p>
-          Revisa los mensajes, crea un pedido o responde personalmente. Al enviar una respuesta, la IA se pausa en esa conversación.
+          Revisa los mensajes, crea un pedido o responde personalmente. La IA sigue activa mientras miras el chat; solo se pausa si usas «Pausar IA».
         </p>
       </div>
     } @else {
@@ -290,7 +290,7 @@
         </div>
 
         <form class="composer" [formGroup]="composer" (ngSubmit)="send()">
-          <div class="composer__context tw:col-span-full tw:grid tw:gap-1 tw:text-caption" id="composer-help"><strong>{{ canSend() ? 'Tu respuesta' : 'Respuesta no disponible' }}</strong><span>{{ !canSend() ? 'La ventana de 24 horas está cerrada. Abre las opciones de plantilla para continuar.' : thread.agentEnabled ? 'Al enviarla, la IA se pausará y tu equipo tomará la conversación.' : 'Tu equipo atiende esta conversación. La IA seguirá pausada.' }}</span></div>
+          <div class="composer__context tw:col-span-full tw:grid tw:gap-1 tw:text-caption" id="composer-help"><strong>{{ canSend() ? 'Tu respuesta' : 'Respuesta no disponible' }}</strong><span>{{ !canSend() ? 'La ventana de 24 horas está cerrada. Abre las opciones de plantilla para continuar.' : thread.agentEnabled ? 'Puedes responder sin pausar la IA. Usa «Pausar IA» si quieres atender esta conversación solo tú.' : 'La IA está pausada en esta conversación. Usa «Reactivar IA» para que vuelva a responder sola.' }}</span></div>
           @if (canSend()) {
           <textarea
             formControlName="text"

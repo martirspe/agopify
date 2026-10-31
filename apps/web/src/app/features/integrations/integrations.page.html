@@ -73,7 +73,7 @@
             <p class="tw:m-0 tw:text-sm tw:text-muted">{{ card.nextStep }}</p>
             @if (card.actions; as actions) {
               <div class="tw:flex tw:flex-wrap tw:gap-2">@for (action of actions; track action.link) { <ds-button variant="secondary" [disabled]="action.disabled || busyKey() !== null" (click)="open(action.link)">{{ action.label }}</ds-button> }</div>
-              @if (!whatsappConfiguration()?.available) { <p class="tw:m-0 tw:text-caption tw:text-muted">La autorización con Meta aún no está disponible. Puedes usar credenciales propias si tu negocio ya tiene una app y un número activo en Cloud API.</p> }
+              @if (!whatsappConfiguration()?.available) { <p class="tw:m-0 tw:text-caption tw:text-muted">La autorización con Meta aún no está disponible. Puedes usar credenciales propias si tu negocio ya tiene una app y un número activo en WhatsApp.</p> }
             }
             @if (card.link; as link) { <ds-button variant="ghost" [label]="'Configurar ' + card.name" (click)="open(link)">{{ card.actions ? 'Ver estado y configuración' : 'Configurar conexión' }}</ds-button> }
           </ds-form-section></li>

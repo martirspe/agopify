@@ -80,7 +80,7 @@
           />
           <span>
             <strong>Copiar la configuración de {{ currentAgent()?.name }}</strong>
-            <small>Parte de su personalidad, técnicas y reglas; luego ajústalo.</small>
+            <small>Si no marcas, empieza sin copiar la configuración actual.</small>
           </span>
         </label> }
         <div class="inline-actions">
@@ -127,10 +127,9 @@
         <div class="seller__form">
           <section class="tw:console-card tw:grid tw:gap-4">
             <header class="block__head">
-              <h2>Preguntas frecuentes</h2>
+              <h2>Base de conocimiento del negocio</h2>
               <p>
-                Envíos, cambios, horarios, garantías: tus vendedores solo afirman
-                políticas que estén aquí. Se comparten entre todos tus vendedores.
+                Políticas de envíos, cambios, pagos y horarios para todos tus vendedores.
               </p>
             </header>
 
@@ -139,7 +138,36 @@
               <span>{{ draftFaqCount() }} en revisión</span>
             </div>
 
+            @if (missingPolicyTopics().length) {
+              <div class="import-box">
+                <h3>Temas pendientes</h3>
+                <p>
+                  Faltan: {{ missingPolicyLabels() }}. Puedes añadir textos iniciales y adaptarlos.
+                </p>
+                <ds-button
+                  type="button"
+                  [disabled]="knowledgeBusy()"
+                  (click)="applySuggestedPolicies()"
+                >
+                  Añadir textos iniciales
+                </ds-button>
+              </div>
+            }
+
             <div class="fields">
+              <label>
+                Tema
+                <ds-select>
+                  <select
+                    [value]="faqTopic()"
+                    (change)="onFaqTopic($any($event.target).value)"
+                  >
+                    @for (topic of knowledgeTopics(); track topic.id) {
+                      <option [value]="topic.id">{{ topic.label }}</option>
+                    }
+                  </select>
+                </ds-select>
+              </label>
               <label class="fields__full">
                 Pregunta
                 <input
@@ -161,7 +189,7 @@
               </label>
               <div class="inline-actions">
                 <ds-button type="button" [disabled]="knowledgeBusy()" (click)="addFaq()">
-                  Publicar pregunta
+                  Publicar entrada
                 </ds-button>
               </div>
             </div>
@@ -169,8 +197,8 @@
             <div class="import-box">
               <h3>Importar varias a la vez</h3>
               <p>
-                Pega texto en bloques (pregunta + respuesta) o líneas
-                <code>Q:</code> / <code>A:</code>. Se crean borradores que tú apruebas.
+                Pega bloques o líneas <code>Q:</code> / <code>A:</code>. Quedan como
+                borradores del tema seleccionado arriba hasta que las apruebes.
               </p>
               <textarea
                 rows="5"
@@ -188,16 +216,46 @@
               </ds-button>
             </div>
 
-            @if (faqs().length === 0) {
+            <div
+              class="tw:flex tw:flex-wrap tw:gap-2"
+              role="tablist"
+              aria-label="Filtrar por tema"
+            >
+              <button
+                type="button"
+                class="pill"
+                [class.pill--ok]="knowledgeFilter() === 'ALL'"
+                (click)="setKnowledgeFilter('ALL')"
+              >
+                Todas
+              </button>
+              @for (topic of knowledgeTopics(); track topic.id) {
+                <button
+                  type="button"
+                  class="pill"
+                  [class.pill--ok]="knowledgeFilter() === topic.id"
+                  (click)="setKnowledgeFilter(topic.id)"
+                >
+                  {{ topic.label }}
+                </button>
+              }
+            </div>
+
+            @if (filteredFaqs().length === 0) {
               <p class="empty-note">
-                Aún no hay preguntas frecuentes. Sin ellas tu vendedor no puede afirmar políticas.
+                @if (faqs().length === 0) {
+                  Aún no hay entradas. Sin políticas publicadas tu vendedor no puede afirmar envíos, cambios ni horarios.
+                } @else {
+                  No hay entradas en este tema. Cambia el filtro o publica una nueva.
+                }
               </p>
             } @else {
               <ul class="faq-list">
-                @for (faq of faqs(); track faq.id) {
+                @for (faq of filteredFaqs(); track faq.id) {
                   <li>
                     <div>
                       <div class="faq-list__meta">
+                        <span class="pill">{{ topicLabel(faq.topic) }}</span>
                         @if (faq.reviewStatus === 'DRAFT') {
                           <span class="pill pill--warn">Borrador</span>
                         } @else if (faq.isPublished) {
@@ -205,6 +263,9 @@
                         }
                         @if (faq.source === 'PASTE_IMPORT') {
                           <span class="pill">Importada</span>
+                        }
+                        @if (faq.source === 'TEMPLATE') {
+                          <span class="pill">Plantilla</span>
                         }
                       </div>
                       <strong>{{ faq.question }}</strong>
@@ -369,13 +430,9 @@
                   <p>Lo que hace reconocible a tu vendedor en cada mensaje.</p>
                 </header>
                 <div class="fields">
-                  <label>
+                  <label class="fields__full">
                     Estilo de comunicación
                     <input formControlName="communicationStyle" maxlength="200" placeholder="Cercano, profesional, juvenil…" />
-                  </label>
-                  <label>
-                    Estilo de venta
-                    <input formControlName="salesStyle" maxlength="200" placeholder="Consultivo, directo, experto…" />
                   </label>
                   <fieldset class="segmented fields__full">
                     <legend>Longitud de respuesta</legend>
@@ -398,14 +455,6 @@
                       <strong>Usar emojis</strong>
                       <small>Con moderación, para sonar más cercano.</small>
                     </span>
-                  </label>
-                  <label>
-                    Emojis preferidos
-                    <input formControlName="emojiPalette" maxlength="120" placeholder="✨ 🙌 💚" />
-                  </label>
-                  <label class="fields__full">
-                    Palabras a evitar
-                    <input formControlName="wordsToAvoid" maxlength="500" placeholder="barato, oferta limitada, garantía eterna…" />
                   </label>
                 </div>
               </section>
@@ -433,9 +482,7 @@
                 <header class="block__head">
                   <h2>Método de venta</h2>
                   <p>
-                    Tu vendedor siempre sigue un método probado: conecta, entiende la
-                    necesidad, recomienda pocas opciones, resuelve dudas y cierra con un
-                    siguiente paso claro. Nunca usa urgencia falsa ni presiona después de un “no”.
+                    Elige técnicas opcionales sobre el flujo de venta actual.
                   </p>
                 </header>
                 @for (group of techniquesByGroup(); track group.id) {
@@ -465,24 +512,8 @@
 
               <section class="tw:console-card tw:grid tw:gap-4">
                 <header class="block__head">
-                  <h2>Objeciones frecuentes</h2>
-                  <p>Cómo responder cuando el cliente duda. Tu vendedor lo dirá con sus palabras.</p>
-                </header>
-                <label>
-                  <textarea
-                    aria-label="Respuestas a objeciones"
-                    formControlName="objectionHandling"
-                    rows="7"
-                    maxlength="4000"
-                    placeholder="“Está caro”: resalta la calidad del material y que dura años; ofrece la opción de menor precio si existe.&#10;“¿Es confiable?”: pago seguro con Mercado Pago y cambios en 7 días.&#10;“Lo pienso”: pregunta qué le falta para decidir."
-                  ></textarea>
-                </label>
-              </section>
-
-              <section class="tw:console-card tw:grid tw:gap-4">
-                <header class="block__head">
                   <h2>Guiones por etapa</h2>
-                  <p>Frases o pasos que quieres que siga en cada etapa. Son una guía, no texto rígido.</p>
+                  <p>Frases o pasos por etapa. Opcional.</p>
                 </header>
                 <div (input)="$event.stopPropagation()" (change)="$event.stopPropagation()">
                   <div class="fields">
@@ -523,7 +554,7 @@
                 </div>
 
                 @if (journeys().length === 0) {
-                  <p class="empty-note">Sin guiones, tu vendedor usa solo el método base. Añade al menos uno de cierre.</p>
+                  <p class="empty-note">Aún no hay guiones. Puedes añadir uno para la etapa de cierre.</p>
                 } @else {
                   <ul class="faq-list">
                     @for (journey of journeys(); track journey.id) {
@@ -565,14 +596,14 @@
                     formControlName="rulesText"
                     rows="6"
                     maxlength="4000"
-                    placeholder="Siempre: confirmar talla y color antes de enviar el link de pago.&#10;Nunca: prometer fechas de entrega exactas."
+                    placeholder="Siempre: confirmar talla y color antes del link de pago.&#10;Nunca: prometer fechas exactas; no uses palabras como “barato” u “oferta limitada”."
                   ></textarea>
                 </label>
               </section>
 
               <section class="tw:console-card tw:grid tw:gap-4">
                 <header class="block__head">
-                  <h2>Límites duros</h2>
+                  <h2>Límites</h2>
                   <p>Se cumplen siempre, incluso con un prompt personalizado.</p>
                 </header>
                 <div class="fields">
@@ -624,6 +655,82 @@
             @case ('advanced') {
               <section class="tw:console-card tw:grid tw:gap-4">
                 <header class="block__head">
+                  <h2>Cómo responde</h2>
+                  <p>
+                    Usa el catálogo, la memoria de la conversación y las reglas de tu negocio.
+                    Precios, stock y envíos salen siempre de datos reales.
+                  </p>
+                </header>
+                <p class="note">
+                  <ds-icon name="shieldCheck" [size]="1" />
+                  Puedes probar respuestas con «Probar vendedor».
+                </p>
+              </section>
+
+              <section class="tw:console-card tw:grid tw:gap-4" aria-live="polite">
+                <header class="block__head block__head--row">
+                  <div>
+                    <h2>Actividad reciente</h2>
+                    <p>Resumen de los últimos 7 días en los canales de este vendedor. Sin contenido de chats.</p>
+                  </div>
+                  <ds-button
+                    type="button"
+                    variant="ghost"
+                    [disabled]="analyticsLoading() || !agentId()"
+                    (click)="loadAnalytics()"
+                  >
+                    Actualizar
+                  </ds-button>
+                </header>
+                @if (analyticsLoading() && !analytics()) {
+                  <p class="note">Cargando actividad…</p>
+                } @else if (analyticsFailed()) {
+                  <p class="note" role="alert">No pudimos cargar la actividad. Inténtalo de nuevo.</p>
+                } @else if (!analytics() || analytics()!.sampleSize === 0) {
+                  <p class="note">
+                    Aún no hay turnos registrados para este vendedor. Cuando atienda conversaciones
+                    en WhatsApp o Instagram, verás aquí tiempos de respuesta, derivaciones y fallos.
+                  </p>
+                } @else {
+                  <dl class="analytics-grid">
+                    <div>
+                      <dt>Turnos</dt>
+                      <dd>{{ analytics()!.sampleSize }}</dd>
+                    </div>
+                    <div>
+                      <dt>Completados</dt>
+                      <dd>{{ analytics()!.turnsReady }}</dd>
+                    </div>
+                    <div>
+                      <dt>Fallidos</dt>
+                      <dd>{{ analytics()!.turnsFailed }}</dd>
+                    </div>
+                    <div>
+                      <dt>Derivaciones</dt>
+                      <dd>{{ formatRate(analytics()!.handoffRate) }}</dd>
+                    </div>
+                    <div>
+                      <dt>Respuesta de respaldo</dt>
+                      <dd>{{ formatRate(analytics()!.fallbackRate) }}</dd>
+                    </div>
+                    <div>
+                      <dt>Mensajes bloqueados</dt>
+                      <dd>{{ analytics()!.injectionBlocked }}</dd>
+                    </div>
+                    <div>
+                      <dt>Tiempo medio</dt>
+                      <dd>{{ formatLatency(analytics()!.latencyMs.p50) }}</dd>
+                    </div>
+                    <div>
+                      <dt>Tiempo en picos</dt>
+                      <dd>{{ formatLatency(analytics()!.latencyMs.p95) }}</dd>
+                    </div>
+                  </dl>
+                }
+              </section>
+
+              <section class="tw:console-card tw:grid tw:gap-4">
+                <header class="block__head">
                   <h2>Modo de instrucciones</h2>
                   <p>Elige cómo se construyen las instrucciones de este vendedor.</p>
                 </header>
@@ -637,7 +744,7 @@
                     (click)="setPromptMode('guided')"
                   >
                     <strong>Guiado</strong>
-                    <span>Se arma con tu perfil, personalidad, técnicas y reglas. Recomendado.</span>
+                    <span>Se arma con tu perfil, personalidad, técnicas y reglas.</span>
                   </button>
                   <button
                     type="button"
@@ -653,7 +760,7 @@
                 </div>
                 <p class="note">
                   <ds-icon name="shieldCheck" [size]="1" />
-                  En ambos modos se mantienen los límites duros, el formato de WhatsApp y
+                  En ambos modos se mantienen los límites, el formato de WhatsApp y
                   los datos reales de catálogo, stock y link de pago.
                 </p>
               </section>
@@ -679,7 +786,7 @@
                     rows="18"
                     [attr.maxlength]="customPromptMax"
                     spellcheck="false"
-                    placeholder="ROL: Eres asesora de una tienda de perfumes nicho…&#10;&#10;MÉTODO:&#10;1. Pregunta para quién es y qué aromas le gustan.&#10;2. Recomienda máximo dos opciones del catálogo…&#10;&#10;CASOS ESPECIALES:&#10;- Si pide muestras: …"
+                    placeholder="Describe el rol, el tono y los casos especiales de tu negocio…"
                   ></textarea>
                 </label>
                 <p class="counter" [class.is-over]="customPromptLength() > customPromptMax">
@@ -708,7 +815,7 @@
                 @if (prompt(); as compiled) {
                   <pre class="prompt-preview">{{ compiled.effectivePrompt }}</pre>
                 } @else {
-                  <p class="empty-note">Genera la vista para revisar exactamente cómo piensa tu vendedor.</p>
+                  <p class="empty-note">Genera la vista para ver las instrucciones finales.</p>
                 }
               </section>
             }
@@ -725,10 +832,10 @@
           </div>
           <progress class="tw:setup-progress" aria-label="Avance de configuración del vendedor" [value]="qualityPercent()" max="100"></progress>
           <div><strong class="tw:text-body">{{ qualityLabel() }}</strong><p class="tw:mt-1 tw:mb-0 tw:text-caption tw:text-muted">{{ quality()?.completedFields ?? 0 }} de {{ quality()?.totalFields ?? 0 }} bloques completos{{ dirty() ? ' · Sin guardar' : '' }}</p></div>
-          <p class="tw:m-0 tw:text-caption tw:text-muted">Este avance mide la configuración. Revisa también tu catálogo y la conexión del canal antes de atender.</p>
+          <p class="tw:m-0 tw:text-caption tw:text-muted">Avance de los bloques de configuración de este vendedor.</p>
           @if (quality()?.missingHints?.length) {
             <div class="tw:grid tw:gap-2 tw:border-0 tw:border-t tw:border-solid tw:border-divider tw:pt-3">
-              <h3 class="tw:m-0 tw:text-caption tw:font-semibold">Qué falta por completar</h3>
+              <h3 class="tw:m-0 tw:text-caption tw:font-semibold">Pendiente</h3>
               <ul class="tw:m-0 tw:grid tw:gap-2 tw:pl-4 tw:text-caption tw:leading-relaxed tw:text-muted">
                 @for (hint of quality()!.missingHints; track hint) { <li>{{ hint }}</li> }
               </ul>

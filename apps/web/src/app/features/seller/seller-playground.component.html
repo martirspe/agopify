@@ -5,8 +5,8 @@
         <p class="playground__eyebrow">Conversación de prueba</p>
         <h2 id="playground-title">Probar a {{ agentName() }}</h2>
         <p>
-          Prueba cómo responde y qué datos consulta. No envía mensajes a clientes
-          ni crea pedidos reales; tampoco cuenta en tus métricas.
+          Misma respuesta que en WhatsApp o Instagram. No llega al cliente ni crea
+          pedidos reales; tampoco cuenta en tus métricas.
         </p>
       </div>
       <div class="playground__head-actions">
@@ -34,12 +34,12 @@
             <ds-icon name="sparkles" />
             <strong>Escribe como un comprador</strong>
             <p>
-              Prueba un saludo, una objeción (“está caro”) o “quiero comprar
-              [producto]” para ver cómo cierra con el link de pago de prueba.
+              Escribe como en el chat real: saludo, “mándame foto”, objeción o
+              “quiero comprar [producto]” hasta el botón de pago.
             </p>
             <div class="playground__suggestions">
               @for (suggestion of suggestions; track suggestion.label) {
-                <button type="button" (click)="sendSuggestion(suggestion.text)" [disabled]="sending() || loading() || !session()">
+                <button type="button" (click)="sendSuggestion(suggestion.text)" [disabled]="!canCompose()">
                   {{ suggestion.label }}
                 </button>
               }
@@ -53,11 +53,24 @@
               [class.pg-bubble--agent]="!isBuyer(message)"
             >
               <span class="pg-bubble__label">{{ isBuyer(message) ? 'Comprador' : 'Vendedor IA' }}</span>
-              <p>{{ message.body }}</p>
+              <p class="pg-bubble__text">{{ message.body }}</p>
+              @if (!isBuyer(message)) {
+                @for (image of messageImages(message); track image.url) {
+                  <figure class="pg-bubble__photo">
+                    <img [src]="image.url" [alt]="image.caption" loading="lazy" />
+                    @if (image.caption) {
+                      <figcaption>{{ image.caption }}</figcaption>
+                    }
+                  </figure>
+                }
+              }
               @if (!isBuyer(message) && hasPaymentButton(message)) {
-                <span class="pg-bubble__cta" title="En WhatsApp abre el link de pago">
+                <span class="pg-bubble__cta" title="En WhatsApp o Instagram abre el link de pago">
                   <ds-icon name="externalLink" [size]="0.85" /> Pagar pedido
                 </span>
+                @if (paymentFooter(message); as footer) {
+                  <span class="pg-bubble__cta-note">{{ footer }}</span>
+                }
               }
             </div>
           }
@@ -87,13 +100,19 @@
       <input
         id="playground-input"
         type="text"
+        autofocus
         [value]="draft()"
         (input)="onDraft($any($event.target).value)"
+        (keydown.enter)="$event.preventDefault(); send()"
         placeholder="Escribe como comprador…"
-        [disabled]="sending() || loading() || !session()"
+        [disabled]="!canCompose()"
         autocomplete="off"
       />
-      <ds-button type="submit" [disabled]="sending() || loading() || !session() || !draft().trim()">
+      <ds-button
+        type="button"
+        [disabled]="!canCompose() || !draft().trim()"
+        (click)="send()"
+      >
         {{ sending() ? 'Enviando…' : 'Enviar' }}
       </ds-button>
     </form>

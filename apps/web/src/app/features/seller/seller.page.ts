@@ -17,6 +17,7 @@ import { DsIconComponent } from '@vendedoria/ui';
 import { SellerPlaygroundComponent } from './seller-playground.component';
 import {
   AgentsApiService,
+  AgentAnalyticsDto,
   AgentQuality,
   SalesAgentDto,
   SalesAgentPromptDto,
@@ -28,6 +29,8 @@ import {
   JourneyTemplateDto,
   KnowledgeApiService,
   KnowledgeFaqDto,
+  KnowledgePolicyCatalogDto,
+  KnowledgeTopic,
 } from '../../core/api/knowledge-api.service';
 import {
   ChannelDto,
@@ -91,7 +94,8 @@ export class SellerPage {
   readonly channelsBusy = signal(false);
   readonly newAgentOpen = signal(false);
   readonly newAgentName = signal('');
-  readonly newAgentCopy = signal(true);
+  /** Opt-in clone; default is a blank agent with schema defaults. */
+  readonly newAgentCopy = signal(false);
   readonly agentBusy = signal(false);
 
   readonly prompt = signal<SalesAgentPromptDto | null>(null);
@@ -103,12 +107,17 @@ export class SellerPage {
   readonly importDraft = signal('');
   readonly faqQuestion = signal('');
   readonly faqAnswer = signal('');
+  readonly faqTopic = signal<KnowledgeTopic>('GENERAL');
+  readonly knowledgeFilter = signal<KnowledgeTopic | 'ALL'>('ALL');
+  readonly policyCatalog = signal<KnowledgePolicyCatalogDto | null>(null);
   readonly journeyTitle = signal('');
   readonly journeyStage = signal<JourneyStage>('DISCOVER');
   readonly journeyScript = signal('');
 
   readonly playgroundOpen = signal(false);
-
+  readonly analytics = signal<AgentAnalyticsDto | null>(null);
+  readonly analyticsLoading = signal(false);
+  readonly analyticsFailed = signal(false);
   readonly section = toSignal(
     this.route.paramMap.pipe(
       map((params) => asSellerSection(params.get('section')) ?? 'profile'),
@@ -219,6 +228,44 @@ export class SellerPage {
     () => this.journeys().filter((item) => item.isActive).length,
   );
 
+  readonly filteredFaqs = computed(() => {
+    const filter = this.knowledgeFilter();
+    const list = this.faqs();
+    return filter === 'ALL' ? list : list.filter((item) => item.topic === filter);
+  });
+
+  readonly knowledgeTopics = computed(() => {
+    const fromApi = this.policyCatalog()?.topics;
+    if (fromApi?.length) return fromApi;
+    return [
+      { id: 'GENERAL' as const, label: 'General', hint: '' },
+      { id: 'SHIPPING' as const, label: 'Envíos', hint: '' },
+      { id: 'RETURNS' as const, label: 'Cambios y devoluciones', hint: '' },
+      { id: 'PAYMENTS' as const, label: 'Pagos', hint: '' },
+      { id: 'HOURS' as const, label: 'Horarios', hint: '' },
+      { id: 'ABOUT' as const, label: 'Sobre el negocio', hint: '' },
+    ];
+  });
+
+  readonly missingPolicyTopics = computed(() => {
+    const catalog = this.policyCatalog();
+    if (!catalog) return [];
+    const covered = new Set(
+      this.faqs()
+        .filter((item) => item.isPublished && item.reviewStatus === 'APPROVED')
+        .map((item) => item.topic),
+    );
+    return catalog.topics.filter(
+      (topic) => topic.id !== 'GENERAL' && !covered.has(topic.id),
+    );
+  });
+
+  readonly missingPolicyLabels = computed(() =>
+    this.missingPolicyTopics()
+      .map((topic) => topic.label)
+      .join(', '),
+  );
+
   constructor() {
     void this.init();
     this.route.queryParamMap
@@ -231,6 +278,13 @@ export class SellerPage {
         if (!this.loading() && requested && requested !== this.agentId()) {
           void this.loadAgent(requested);
         }
+        if (
+          !this.loading() &&
+          asSellerSection(params.get('section')) === 'advanced' &&
+          this.agentId()
+        ) {
+          void this.loadAnalytics();
+        }
       });
   }
 
@@ -239,16 +293,18 @@ export class SellerPage {
     this.loadFailed.set(false);
     this.errorMessage.set(null);
     try {
-      const [agents, faqs, journeys, channels] = await Promise.all([
+      const [agents, faqs, journeys, channels, catalog] = await Promise.all([
         this.api.list(),
         this.knowledgeApi.listFaqs(),
         this.knowledgeApi.listJourneys(),
         this.messagingApi.listChannels().catch(() => [] as ChannelDto[]),
+        this.knowledgeApi.getPolicyCatalog().catch(() => null),
       ]);
       this.agents.set(agents);
       this.faqs.set(faqs);
       this.journeys.set(journeys);
       this.channels.set(channels);
+      this.policyCatalog.set(catalog);
       const requested = this.route.snapshot.queryParamMap.get('agent');
       const target = agents.find((agent) => agent.id === requested) ?? agents[0];
       if (target) {
@@ -269,16 +325,45 @@ export class SellerPage {
     this.agentLoading.set(true);
     this.agentLoadFailed.set(false);
     this.errorMessage.set(null);
+    this.analytics.set(null);
     try {
       const agent = await this.api.get(id);
       this.applyAgent(agent);
       this.prompt.set(null);
+      if (this.section() === 'advanced') {
+        void this.loadAnalytics();
+      }
     } catch {
       this.agentLoadFailed.set(true);
       this.errorMessage.set('No pudimos cargar este vendedor. Inténtalo de nuevo.');
     } finally {
       this.agentLoading.set(false);
     }
+  }
+
+  async loadAnalytics(): Promise<void> {
+    const id = this.agentId();
+    if (!id || this.analyticsLoading()) return;
+    this.analyticsLoading.set(true);
+    this.analyticsFailed.set(false);
+    try {
+      this.analytics.set(await this.api.getAnalytics(id, 7));
+    } catch {
+      this.analytics.set(null);
+      this.analyticsFailed.set(true);
+    } finally {
+      this.analyticsLoading.set(false);
+    }
+  }
+
+  formatRate(value: number | null): string {
+    if (value === null) return '—';
+    return `${Math.round(value * 100)}%`;
+  }
+
+  formatLatency(value: number | null): string {
+    if (value === null) return '—';
+    return `${value} ms`;
   }
 
   async selectAgent(id: string): Promise<void> {
@@ -316,6 +401,7 @@ export class SellerPage {
   toggleNewAgent(): void {
     this.newAgentOpen.update((open) => !open);
     this.newAgentName.set('');
+    this.newAgentCopy.set(false);
   }
 
   onNewAgentName(value: string): void {
@@ -346,7 +432,11 @@ export class SellerPage {
       await this.router.navigate(['/app/seller', 'profile'], {
         queryParams: { agent: created.id },
       });
-      this.successMessage.set(`${created.name} está listo. Asígnale un canal para que empiece a vender.`);
+      this.successMessage.set(
+        this.newAgentCopy()
+          ? `${created.name} está listo con la copia. Asígnale un canal para que empiece a vender.`
+          : `${created.name} está listo en blanco. Configúralo y asígnale un canal para vender.`,
+      );
     } catch (error) {
       this.errorMessage.set(
         this.apiMessage(error) ?? 'No se pudo crear el vendedor. Inténtalo otra vez.',
@@ -420,7 +510,7 @@ export class SellerPage {
     this.form.patchValue({
       personalityPreset: preset.id,
       communicationStyle: preset.communicationStyle,
-      salesStyle: preset.salesStyle,
+      salesStyle: '',
       responseLength: preset.responseLength,
       salesTechniques: [...preset.salesTechniques],
     });
@@ -522,6 +612,42 @@ export class SellerPage {
     this.faqQuestion.set(value);
   }
 
+  onFaqTopic(value: string): void {
+    if (
+      value === 'GENERAL' ||
+      value === 'SHIPPING' ||
+      value === 'RETURNS' ||
+      value === 'PAYMENTS' ||
+      value === 'HOURS' ||
+      value === 'ABOUT'
+    ) {
+      this.faqTopic.set(value);
+    }
+  }
+
+  setKnowledgeFilter(value: string): void {
+    if (value === 'ALL') {
+      this.knowledgeFilter.set('ALL');
+      return;
+    }
+    if (
+      value === 'GENERAL' ||
+      value === 'SHIPPING' ||
+      value === 'RETURNS' ||
+      value === 'PAYMENTS' ||
+      value === 'HOURS' ||
+      value === 'ABOUT'
+    ) {
+      this.knowledgeFilter.set(value);
+    }
+  }
+
+  topicLabel(topic: string): string {
+    return (
+      this.knowledgeTopics().find((item) => item.id === topic)?.label ?? 'General'
+    );
+  }
+
   onFaqAnswer(value: string): void {
     this.faqAnswer.set(value);
   }
@@ -559,11 +685,15 @@ export class SellerPage {
     this.knowledgeBusy.set(true);
     this.errorMessage.set(null);
     try {
-      const created = await this.knowledgeApi.createFaq({ question, answer });
+      const created = await this.knowledgeApi.createFaq({
+        question,
+        answer,
+        topic: this.faqTopic(),
+      });
       this.faqs.update((list) => [created, ...list]);
       this.faqQuestion.set('');
       this.faqAnswer.set('');
-      this.successMessage.set('Pregunta publicada. Tus vendedores ya pueden usarla.');
+      this.successMessage.set('Entrada publicada. Tus vendedores ya pueden usarla.');
       await this.refreshQuality();
     } catch {
       this.errorMessage.set('No se pudo guardar la pregunta frecuente.');
@@ -601,6 +731,36 @@ export class SellerPage {
     }
   }
 
+  async applySuggestedPolicies(): Promise<void> {
+    const missing = this.missingPolicyTopics().map((item) => item.id);
+    if (!missing.length) {
+      this.successMessage.set(
+        'Ya tienes al menos una entrada publicada en cada tema clave.',
+      );
+      return;
+    }
+    this.knowledgeBusy.set(true);
+    this.errorMessage.set(null);
+    try {
+      const result = await this.knowledgeApi.applyPolicyTemplates(missing);
+      if (!result.created.length) {
+        this.successMessage.set(
+          'Las plantillas de esos temas ya estaban en tu base.',
+        );
+        return;
+      }
+      this.faqs.update((list) => [...result.created, ...list]);
+      this.successMessage.set(
+        `Añadimos ${result.created.length} política${result.created.length === 1 ? '' : 's'} sugerida${result.created.length === 1 ? '' : 's'}. Revísalas y ajústalas a tu negocio.`,
+      );
+      await this.refreshQuality();
+    } catch {
+      this.errorMessage.set('No se pudieron añadir las políticas sugeridas.');
+    } finally {
+      this.knowledgeBusy.set(false);
+    }
+  }
+
   async importFaqs(): Promise<void> {
     const rawText = this.importDraft().trim();
     if (rawText.length < 8) {
@@ -610,7 +770,10 @@ export class SellerPage {
     this.knowledgeBusy.set(true);
     this.errorMessage.set(null);
     try {
-      const result = await this.knowledgeApi.importPaste(rawText);
+      const result = await this.knowledgeApi.importPaste(
+        rawText,
+        this.faqTopic(),
+      );
       if (result.skipped || !result.created.length) {
         this.errorMessage.set(
           'No detectamos preguntas. Usa bloques separados o líneas Q:/A:.',
@@ -717,14 +880,15 @@ export class SellerPage {
         audienceDescription: values.audienceDescription.trim() || undefined,
         rulesText: values.rulesText.trim() || undefined,
         communicationStyle: values.communicationStyle.trim() || undefined,
-        salesStyle: values.salesStyle.trim() || undefined,
-        emojiPalette: values.emojiPalette.trim() || undefined,
-        wordsToAvoid: values.wordsToAvoid.trim() || undefined,
+        // Removed from console — clear so they do not linger in the prompt.
+        salesStyle: '',
+        emojiPalette: '',
+        wordsToAvoid: '',
+        objectionHandling: '',
         initialMessage: values.initialMessage.trim() || undefined,
         purchaseConfirmMessage:
           values.purchaseConfirmMessage.trim() || undefined,
         handoffMessage: values.handoffMessage.trim() || undefined,
-        objectionHandling: values.objectionHandling.trim() || undefined,
         customPrompt: values.customPrompt.trim() || undefined,
       });
       this.applyAgent(updated);
@@ -836,13 +1000,8 @@ export class SellerPage {
       },
       {
         ok: values.communicationStyle.trim().length >= 4,
-        points: 15,
+        points: 20,
         hint: 'Define el estilo de comunicación',
-      },
-      {
-        ok: values.salesStyle.trim().length >= 4,
-        points: 15,
-        hint: 'Define el estilo de ventas',
       },
       {
         ok: values.initialMessage.trim().length >= 12,
@@ -889,9 +1048,9 @@ export class SellerPage {
     return {
       score: Math.min(
         completed.reduce((sum, item) => sum + item.points, 0),
-        240,
+        230,
       ),
-      max: 240,
+      max: 230,
       completedFields: completed.length,
       totalFields: checks.length,
       missingHints: missing.slice(0, 4),

@@ -8,6 +8,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DsButtonComponent, DsIconComponent, DsModalDirective } from '@vendedoria/ui';
 import {
   AgentsApiService,
@@ -39,6 +40,9 @@ export class SellerPlaygroundComponent implements OnInit {
   readonly lastTools = signal<AgentToolTrace[]>([]);
 
   readonly messages = computed(() => this.session()?.messages ?? []);
+  readonly canCompose = computed(
+    () => Boolean(this.session()) && !this.loading() && !this.sending(),
+  );
 
   readonly suggestions = [
     { label: 'Hola', text: 'Hola' },
@@ -61,8 +65,9 @@ export class SellerPlaygroundComponent implements OnInit {
         .reverse()
         .find((message) => message.authorType === 'SALES_AGENT');
       this.lastTools.set(this.asToolTraces(lastAgent?.toolTraces));
-    } catch {
-      this.error.set('No pudimos abrir la prueba. Guarda el vendedor y reintenta.');
+    } catch (error) {
+      this.session.set(null);
+      this.error.set(this.describeError(error, 'No pudimos abrir la prueba. Guarda el vendedor y reintenta.'));
     } finally {
       this.loading.set(false);
     }
@@ -74,14 +79,15 @@ export class SellerPlaygroundComponent implements OnInit {
 
   async reset(): Promise<void> {
     const session = this.session();
-    if (!session) return;
+    if (!session || this.sending()) return;
     this.sending.set(true);
     this.error.set(null);
     try {
       this.session.set(await this.api.resetPlaygroundSession(session.id));
       this.lastTools.set([]);
-    } catch {
-      this.error.set('No se pudo reiniciar la prueba.');
+      this.draft.set('');
+    } catch (error) {
+      this.error.set(this.describeError(error, 'No se pudo reiniciar la prueba.'));
     } finally {
       this.sending.set(false);
     }
@@ -91,10 +97,10 @@ export class SellerPlaygroundComponent implements OnInit {
     this.draft.set(value);
   }
 
-  async send(): Promise<void> {
+  async send(rawText?: string): Promise<void> {
     const session = this.session();
-    const text = this.draft().trim();
-    if (!session || !text) return;
+    const text = (rawText ?? this.draft()).trim();
+    if (!session || !text || this.sending() || this.loading()) return;
 
     this.sending.set(true);
     this.error.set(null);
@@ -104,12 +110,17 @@ export class SellerPlaygroundComponent implements OnInit {
         text,
         this.agentId() ?? undefined,
       );
-      this.session.set(result.session);
-      this.lastTools.set(result.lastAgentReply.tools);
+      if (result?.session) {
+        this.session.set(result.session);
+      }
+      this.lastTools.set(this.asToolTraces(result?.lastAgentReply?.tools));
       this.draft.set('');
-    } catch {
+    } catch (error) {
       this.error.set(
-        'No se pudo enviar. Revisa productos y preguntas frecuentes e inténtalo otra vez.',
+        this.describeError(
+          error,
+          'No se pudo enviar. Revisa tu conexión e inténtalo otra vez.',
+        ),
       );
     } finally {
       this.sending.set(false);
@@ -117,8 +128,7 @@ export class SellerPlaygroundComponent implements OnInit {
   }
 
   sendSuggestion(text: string): void {
-    this.draft.set(text);
-    void this.send();
+    void this.send(text);
   }
 
   isBuyer(message: PlaygroundMessageDto): boolean {
@@ -142,16 +152,61 @@ export class SellerPlaygroundComponent implements OnInit {
       case 'lookup_faq':
         return 'Pregunta frecuente';
       case 'create_order':
-        return 'Pedido';
+        return 'Pedido (prueba)';
       case 'create_payment_link':
-        return 'Link de pago';
+        return 'Link de pago (prueba)';
       case 'quote_shipping':
         return 'Envío';
+      case 'send_product_image':
+        return 'Foto de producto';
       case 'escalate':
         return 'Derivó a asesor';
       default:
         return 'Consulta del vendedor';
     }
+  }
+
+  /** Product photos the agent would send on WhatsApp after the text. */
+  messageImages(message: PlaygroundMessageDto): Array<{
+    url: string;
+    caption: string;
+  }> {
+    return this.asToolTraces(message.toolTraces).flatMap((tool) => {
+      if (tool.name !== 'send_product_image') return [];
+      const url = tool.data?.['imageUrl'];
+      if (typeof url !== 'string' || !url) return [];
+      const caption =
+        typeof tool.data?.['caption'] === 'string'
+          ? tool.data['caption']
+          : tool.summary;
+      return [{ url, caption }];
+    });
+  }
+
+  paymentFooter(message: PlaygroundMessageDto): string | null {
+    if (!this.hasPaymentButton(message)) return null;
+    const dry = this.asToolTraces(message.toolTraces).some(
+      (tool) =>
+        (tool.name === 'create_order' || tool.name === 'create_payment_link') &&
+        tool.data?.['dryRun'] === true,
+    );
+    return dry ? 'Pedido de prueba · no se cobra' : null;
+  }
+
+  private describeError(error: unknown, fallback: string): string {
+    if (!(error instanceof HttpErrorResponse)) return fallback;
+    if (error.status === 0) return 'Sin conexión con el servidor. ¿Está levantado el entorno?';
+    if (error.status === 401) return 'Tu sesión expiró. Vuelve a iniciar sesión.';
+    if (error.status === 404) return 'No encontramos la sesión de prueba. Pulsa Reintentar.';
+    if (error.status === 429) return 'Demasiados mensajes seguidos. Espera un momento.';
+    if (error.status >= 500) return 'El servidor no pudo responder. Inténtalo otra vez.';
+    const body = error.error;
+    if (body && typeof body === 'object' && 'message' in body) {
+      const message = (body as { message?: unknown }).message;
+      if (typeof message === 'string' && message.trim()) return message;
+      if (Array.isArray(message) && message.length) return String(message[0]);
+    }
+    return fallback;
   }
 
   private asToolTraces(value: unknown): AgentToolTrace[] {

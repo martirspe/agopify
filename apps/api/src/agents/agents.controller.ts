@@ -7,10 +7,12 @@ import {
   Patch,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/auth.decorators';
 import type { AuthUserPayload } from '../common/types/auth-user';
+import { RateLimit } from '../rate-limit/rate-limit.decorator';
 import { AgentsService } from './agents.service';
 import { PlaygroundService } from './playground.service';
 import {
@@ -55,7 +57,7 @@ export class AgentsController {
     @CurrentUser() user: AuthUserPayload,
     @Body() dto: UpdateSalesAgentDto,
   ) {
-    return this.agentsService.updatePrimary(user.tenantId, dto);
+    return this.agentsService.updatePrimary(user, dto);
   }
 
   @Get('playground/session')
@@ -88,6 +90,7 @@ export class AgentsController {
   }
 
   @Post('playground/sessions/:sessionId/messages')
+  @RateLimit('agent-playground-send', 20)
   sendPlaygroundMessage(
     @CurrentUser() user: AuthUserPayload,
     @Param('sessionId') sessionId: string,
@@ -112,7 +115,7 @@ export class AgentsController {
     @Param('id') id: string,
     @Body() dto: UpdateSalesAgentDto,
   ) {
-    return this.agentsService.update(user.tenantId, id, dto);
+    return this.agentsService.update(user, id, dto);
   }
 
   @Delete(':id')
@@ -135,5 +138,19 @@ export class AgentsController {
     @Param('id') id: string,
   ) {
     return this.agentsService.promptPreview(user.tenantId, id);
+  }
+
+  @Get(':id/analytics')
+  analytics(
+    @CurrentUser() user: AuthUserPayload,
+    @Param('id') id: string,
+    @Query('days') days?: string,
+  ) {
+    const parsed = days === undefined ? 7 : Number(days);
+    return this.agentsService.analytics(
+      user.tenantId,
+      id,
+      Number.isFinite(parsed) ? parsed : 7,
+    );
   }
 }

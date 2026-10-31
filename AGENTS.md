@@ -27,6 +27,7 @@ Multi-tenant SaaS: AI sales agents on WhatsApp/Instagram ("del hola al pago") pl
 ## Work routing
 - Load the least context: task → nearest `AGENTS.md` → one skill → affected files → direct dependencies. Expand only when evidence is missing; no repo-wide exploration by default.
 - Feature or bug fix: `.agents/skills/vendedoria-implement`
+- AI Core / multi-model sales brain evolution (hybrid over sales-engine-v2): `.agents/skills/vendedoria-ai-core` (with personal `vendedoria-ai-sales-engine` for lock/memory/tool invariants)
 - Prisma schema, migrations, tenant-scoped queries, test DB: `vendedoria-data`
 - Auth, webhooks, payments, Meta channel, public store endpoints: `vendedoria-security`
 - Console/store UI, design system, UX states: `vendedoria-ui`. First consult `docs/DESIGN-SYSTEM.md` (DSM); apply `docs/UX-UI-MASTER-SYSTEM.md` §75. Search → reuse → compose → extend before adding shared UI. Brand tokens and component contracts belong in packages, not features.

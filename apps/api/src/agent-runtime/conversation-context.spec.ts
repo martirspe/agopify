@@ -43,6 +43,23 @@ describe('confirmsPurchase', () => {
     expect(confirmsPurchase('si, pero en otro color', asked)).toBe(false);
     expect(confirmsPurchase('ok', [{ ...asked[0], paymentLink: true }])).toBe(false);
   });
+
+  it('reads an urgent yes after offering the payment link as a purchase', () => {
+    const offered = [{
+      role: 'agent' as const,
+      text: '¿Quieres que te pase el link para que puedas hacer el pago?',
+    }];
+    expect(confirmsPurchase('claro, al toke estoy apurado', offered)).toBe(true);
+    expect(confirmsPurchase('dale', offered)).toBe(true);
+  });
+});
+
+describe('wantsPhoto', () => {
+  it('detects natural image requests', () => {
+    expect(wantsPhoto('dame la imagen del producto aura lila')).toBe(true);
+    expect(wantsPhoto('Mándame una foto')).toBe(true);
+    expect(wantsPhoto('no quiero fotos')).toBe(false);
+  });
 });
 
 describe('conversationalIntent', () => {
@@ -109,6 +126,24 @@ describe('buildAgentContext', () => {
     ]);
     expect(context.shownImageProductIds).toEqual(['p1']);
     expect(lastRecommendedProductIds(context.history)).toEqual(['p1']);
+  });
+
+  it('tracks playground product photos from send_product_image traces', () => {
+    const context = buildAgentContext([
+      {
+        authorType: 'SALES_AGENT',
+        body: 'Te mando la foto',
+        metadata: {
+          tools: [
+            {
+              name: 'send_product_image',
+              data: { productId: 'p9', imageUrl: 'https://cdn.example/p9.webp' },
+            },
+          ],
+        },
+      },
+    ]);
+    expect(context.shownImageProductIds).toEqual(['p9']);
   });
 });
 

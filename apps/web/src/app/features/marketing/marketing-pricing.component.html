@@ -9,6 +9,15 @@
       <span><ds-icon name="check" [size]="1" /> Precios en soles con IGV</span
       ><span><ds-icon name="check" [size]="1" /> Sin comisión por venta de VendedorIA</span>
     </div>
+    <div class="pricing__shared" aria-label="Incluido en todos los planes">
+      <p class="pricing__shared-title">Todos los planes incluyen</p>
+      <ul class="pricing__shared-list">
+        @for (item of includedInAll; track item) {
+          <li><ds-icon name="check" [size]="1" /><span>{{ item }}</span></li>
+        }
+      </ul>
+      <p class="pricing__shared-hint">Entre planes solo cambia la capacidad.</p>
+    </div>
     <ul class="plans">
       @for (plan of plans; track plan.name) {
         <li class="plans__card" [class.plans__card--featured]="plan.featured">
@@ -24,7 +33,10 @@
             >{{ plan.featured ? 'Probar 14 días gratis' : 'Crear mi cuenta'
             }}<ds-icon name="arrowRight" [size]="1"
           /></a>
-          <p class="plans__note">{{ plan.note }}</p>
+          @if (plan.note) {
+            <p class="plans__note">{{ plan.note }}</p>
+          }
+          <p class="plans__capacity-label">Capacidad</p>
           <ul class="plans__list">
             @for (item of plan.highlights; track item) {
               <li>
@@ -36,10 +48,7 @@
       }
     </ul>
     <div class="pricing__footnote">
-      <p>
-        Todos los planes incluyen vendedor IA, pedidos y métricas. Las cuentas de Meta y Mercado
-        Pago se conectan por separado.
-      </p>
+      <p>Las cuentas de Meta y Mercado Pago se conectan por separado.</p>
       <a [routerLink]="links.billing"
         >Consultar condiciones de planes <ds-icon name="arrowRight" [size]="1"
       /></a>

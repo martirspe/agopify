@@ -162,6 +162,31 @@
   border-bottom-left-radius: var(--ds-radius-sm);
 }
 
+.pg-bubble__text {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.pg-bubble__photo {
+  margin: 0;
+  display: grid;
+  gap: var(--ds-space-1);
+}
+
+.pg-bubble__photo img {
+  display: block;
+  width: 100%;
+  max-width: 14rem;
+  border-radius: var(--ds-radius-sm);
+  object-fit: cover;
+  background: var(--ds-color-surface);
+}
+
+.pg-bubble__photo figcaption {
+  color: var(--ds-color-text-secondary);
+  font-size: var(--ds-type-xs);
+}
+
 .pg-bubble__cta {
   display: flex;
   align-items: center;
@@ -174,6 +199,11 @@
   color: var(--ds-color-text-primary);
   font-size: var(--ds-type-sm);
   font-weight: 700;
+}
+
+.pg-bubble__cta-note {
+  color: var(--ds-color-text-secondary);
+  font-size: var(--ds-type-xs);
 }
 
 .playground__explain {

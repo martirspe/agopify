@@ -275,7 +275,7 @@ export class SalesSearchService implements OnModuleInit, OnModuleDestroy {
           details: product.details,
           variants: product.variants.map((variant) => variantOptions(variant).map((option) => option.value)),
         })
-      : `${faq!.question}\n${faq!.answer}\n${faq!.tags.join(' ')}`;
+      : `${faq!.topic}\n${faq!.question}\n${faq!.answer}\n${faq!.tags.join(' ')}`;
     const chunks = text.match(/[\s\S]{1,4000}/g) ?? [];
     // Each chunk carries source/version/tenant metadata; hydration always returns the latest DB row.
     const vectors = await Promise.all(

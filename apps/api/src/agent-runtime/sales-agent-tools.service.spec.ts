@@ -396,9 +396,58 @@ describe('SalesAgentToolsService purchase intent', () => {
   it('does not read an order status question as a purchase', () => {
     expect(tools.wantsPurchase('¿Dónde está mi pedido?')).toBe(false);
     expect(tools.wantsPurchase('Quiero comprar un perfume')).toBe(true);
+    expect(tools.wantsPurchase('perfecto quiero comprarlo')).toBe(true);
     expect(tools.wantsPurchase('lo quiero')).toBe(true);
+    expect(tools.wantsPurchase('dame el link de pago porfavor')).toBe(true);
     expect(tools.wantsPurchase('el de color me interesa, me lo separas?')).toBe(true);
     expect(tools.wantsPurchase('ya, lo llevo')).toBe(true);
     expect(tools.wantsPurchase('lo voy a pensar')).toBe(false);
+  });
+
+  it('prefers FAQs whose topic matches the shipping question', () => {
+    const { matches } = tools.lookupFaqs('¿cuánto demora el envío a provincia?', [
+      {
+        id: 'gen',
+        question: '¿Quiénes son?',
+        answer: 'Somos una tienda online.',
+        tags: [],
+        topic: 'ABOUT',
+      },
+      {
+        id: 'ship',
+        question: '¿Hacen envíos?',
+        answer: 'Sí, a todo el Perú en 2 a 5 días hábiles.',
+        tags: [],
+        topic: 'SHIPPING',
+      },
+    ]);
+    expect(matches[0]?.id).toBe('ship');
+  });
+});
+
+describe('createOrderWithOptionalLink dry-run modes', () => {
+  const ordersService = { create: jest.fn() };
+  const dryTools = new SalesAgentToolsService(
+    null as never,
+    ordersService as never,
+    null as never,
+  );
+  const lineProduct = product('zentro', 12000);
+
+  it('never writes a real order in shadow or playground', async () => {
+    for (const mode of ['shadow', 'playground'] as const) {
+      ordersService.create.mockClear();
+      const result = await dryTools.createOrderWithOptionalLink({
+        tenantId: 'tenant-a',
+        mode,
+        lines: [{ product: lineProduct, quantity: 1 }],
+        conversationId: 'conv-1',
+        createPaymentLink: true,
+      });
+      expect(ordersService.create).not.toHaveBeenCalled();
+      expect(result.dryRun).toBe(true);
+      expect(result.orderId).toMatch(/^pg_order_/);
+      expect(result.checkoutUrl).toMatch(/^https:\/\/playground\.local\//);
+    }
   });
 });

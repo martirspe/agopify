@@ -84,14 +84,28 @@ function paymentLink(meta: Record<string, unknown>): Pick<ConversationTurn, 'pay
   return sent ? { paymentLink: true } : {};
 }
 
+/** Product photos already sent (live message metadata or playground tool traces). */
+function collectShownImages(meta: Record<string, unknown>, shown: Set<string>): void {
+  if (meta.kind === 'image' && typeof meta.productId === 'string') {
+    shown.add(meta.productId);
+  }
+  const tools = Array.isArray(meta.tools) ? meta.tools : [];
+  for (const tool of tools) {
+    const trace = asRecord(tool);
+    if (trace.name !== 'send_product_image') continue;
+    const productId = asRecord(trace.data).productId;
+    if (typeof productId === 'string') shown.add(productId);
+  }
+}
+
 /** Builds the agent context from stored messages in chronological order. */
 export function buildAgentContext(messages: StoredMessage[], limit = HISTORY_LIMIT): AgentContext {
   const history: ConversationTurn[] = [];
   const shown = new Set<string>();
   for (const message of messages) {
     const meta = asRecord(message.metadata);
+    collectShownImages(meta, shown);
     if (meta.kind === 'image') {
-      if (typeof meta.productId === 'string') shown.add(meta.productId);
       continue;
     }
     const text = message.body.slice(0, TURN_MAX_CHARS);
@@ -177,9 +191,11 @@ export function conversationalIntent(text: string): 'greeting' | 'closing' | 'ac
 }
 
 const AFFIRMATIVE =
-  /^(si+|claro|claro que si|ok|okey|oki|dale|ya|ya pues|ya dale|listo|va|de una|obvio|perfecto|bueno|porfa|por favor|si por favor|si porfa|si dale|si claro|si ya|sale)$/;
+  /^(si+|claro|claro que si|ok|okey|oki|dale|ya|ya pues|ya dale|listo|va|de una|obvio|perfecto|bueno|porfa|por favor|si por favor|si porfa|si dale|si claro|si ya|sale|claro al toke|al toke|de una pues)$/;
+const AFFIRMATIVE_PREFIX =
+  /^(si+|claro|dale|ya|listo|va|de una|obvio|perfecto|bueno|porfa|por favor|sale|al toke)(?:\s+(?:que\s+si|pues|porfa|por favor|al toke|estoy\s+apurad[oa]|rapido|ya))*$/;
 const CLOSING_QUESTION =
-  /\b(te\s+l[oa]s?\s+(prepar|separ|reserv|apart|envi|mand|pid)[oea]|l[oa]s?\s+(quieres|llevas|separo|preparo|reservo)|prepar[oe]\s+(el|tu)\s+pedido|proceder\s+con\s+(la\s+compra|el\s+pago)|llevarl[oa]s?|hacer\s+(el|tu)\s+pedido|te\s+animas)\b/;
+  /\b(te\s+l[oa]s?\s+(prepar|separ|reserv|apart|envi|mand|pid)[oea]|l[oa]s?\s+(quieres|llevas|separo|preparo|reservo)|prepar[oe]\s+(el|tu)\s+pedido|proceder\s+con\s+(la\s+compra|el\s+pago)|llevarl[oa]s?|hacer\s+(el|tu)\s+pedido|te\s+animas|pase\s+el\s+link|pasar\s+el\s+link|link\s+(?:para|de)\s+(?:que\s+)?(?:puedas\s+)?(?:hacer\s+)?(?:el\s+)?pago|te\s+paso\s+el\s+link)\b/;
 
 /** A bare "sí" / "dale" answering the seller's closing question ("¿te lo preparo?") is a purchase. */
 export function confirmsPurchase(text: string, history: ConversationTurn[]): boolean {
@@ -187,7 +203,7 @@ export function confirmsPurchase(text: string, history: ConversationTurn[]): boo
     .replace(/[\p{P}\p{S}\p{Extended_Pictographic}]/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-  if (!AFFIRMATIVE.test(reply)) return false;
+  if (!AFFIRMATIVE.test(reply) && !AFFIRMATIVE_PREFIX.test(reply)) return false;
   const last = [...history].reverse().find((turn) => turn.role === 'agent');
   return Boolean(last && !last.paymentLink && CLOSING_QUESTION.test(normalizeText(last.text)));
 }
@@ -209,7 +225,7 @@ export function wantsPhoto(text: string): boolean {
     }
     const asks = /^\s*(?:(?:una|unas|otra|otras)\s+)?(?:fotos?|fotitos?|imagen|imagenes)\b/.test(clause)
       || /\b(por favor|porfa)\b/.test(clause)
-      || /\b(manda\w*|envia\w*|muestra\w*|ensena\w*|pasa\w*|comparte\w*|quiero|quisiera|necesito|ver|tienes|tienen|hay|puedes|podrias)\b.{0,60}\b(fotos?|fotitos?|imagen|imagenes)\b/.test(clause)
+      || /\b(manda\w*|envia\w*|muestra\w*|ensena\w*|pasa\w*|dame|deme|comparte\w*|quiero|quisiera|necesito|ver|tienes|tienen|hay|puedes|podrias)\b.{0,60}\b(fotos?|fotitos?|imagen|imagenes)\b/.test(clause)
       || /\b(como se ve|ver como es)\b/.test(clause);
     if (asks) requested = true;
   }

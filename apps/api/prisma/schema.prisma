@@ -98,6 +98,17 @@ enum KnowledgeReviewStatus {
 enum KnowledgeSource {
   MANUAL
   PASTE_IMPORT
+  TEMPLATE
+}
+
+/// Business-knowledge topic for the tenant FAQ base (shared by all sellers).
+enum KnowledgeTopic {
+  GENERAL
+  SHIPPING
+  RETURNS
+  PAYMENTS
+  HOURS
+  ABOUT
 }
 
 enum StorefrontStatus {
@@ -608,6 +619,9 @@ model SalesAgent {
   /// `guided`: prompt compiled from the form; `custom`: customPrompt replaces the persona section.
   promptMode             String   @default("guided")
   customPrompt           String?
+  /// AI Core path: `inherit` uses SALES_ENGINE_MODE; `ai_core` forces durable inbox; `legacy` forces sync.
+  /// Production sales path is AI Core (durable). Other values kept for ops/tests only.
+  aiRuntimeMode          String   @default("ai_core")
   isActive               Boolean  @default(true)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
@@ -624,6 +638,8 @@ model KnowledgeFaq {
   tenantId     String
   question     String
   answer       String
+  /// Corporate knowledge bucket (policies, shipping, returns…).
+  topic        KnowledgeTopic        @default(GENERAL)
   tags         String[]              @default([])
   source       KnowledgeSource       @default(MANUAL)
   reviewStatus KnowledgeReviewStatus @default(APPROVED)
@@ -635,6 +651,7 @@ model KnowledgeFaq {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, isPublished, reviewStatus])
+  @@index([tenantId, topic])
 }
 
 model JourneyTemplate {

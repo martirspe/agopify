@@ -26,7 +26,7 @@
           <ds-form-section title="Gestión de la conexión"><p class="tw:m-0 tw:text-sm tw:text-muted">El dueño o un administrador del negocio puede conectar y desconectar WhatsApp.</p></ds-form-section>
         } @else if (mode() === 'manual') {
           @if (manualConnection) {
-            <ds-form-section title="Webhook de tu app de Meta" description="En Meta Developers, abre WhatsApp → Configuración y guarda estos datos en el webhook de tu app. Suscribe el campo messages.">
+            <ds-form-section title="Webhook de tu app de Meta" description="En tu app de Meta, configura el webhook con estos datos y el evento de mensajes.">
               @if (setupLoading()) { <p class="tw:m-0 tw:text-sm tw:text-muted" role="status">Consultando configuración…</p> }
               @if (setupFailed()) { <p class="tw:m-0 tw:text-sm tw:text-danger-text" role="alert">No pudimos consultar los datos del webhook.</p><ds-button variant="secondary" [disabled]="setupLoading() || saving()" (click)="loadManualSetup()">Reintentar</ds-button> }
               @if (manualWebhook(); as webhook) {
@@ -42,8 +42,8 @@
             <ds-form-section title="Credenciales propias"><p class="tw:m-0 tw:text-sm tw:text-muted">{{ configuration()?.manualMessage || 'La conexión con credenciales propias aún no está disponible. Contacta con soporte.' }}</p><ds-button variant="secondary" (click)="load()">Revisar disponibilidad</ds-button></ds-form-section>
           } @else {
             <form [formGroup]="manualForm" (ngSubmit)="connectManual()" class="tw:grid tw:gap-4">
-              <ds-form-section title="Conecta tu propia app de Meta" description="Usa una app y una cuenta de WhatsApp de tu negocio, con el número ya activo en Cloud API. Recomendamos un token de usuario del sistema con permisos de administración y mensajería de WhatsApp.">
-                <fieldset class="tw:m-0 tw:grid tw:min-w-0 tw:gap-4 tw:border-0 tw:p-0" [disabled]="saving()"><legend class="tw:sr-only">Credenciales de WhatsApp Cloud API</legend>
+              <ds-form-section title="Conecta tu propia app de Meta" description="App y número activos en WhatsApp. Usa un token con permisos de administración y mensajería.">
+                <fieldset class="tw:m-0 tw:grid tw:min-w-0 tw:gap-4 tw:border-0 tw:p-0" [disabled]="saving()"><legend class="tw:sr-only">Credenciales de WhatsApp</legend>
                   <label class="tw:grid tw:gap-2 tw:text-sm tw:font-semibold">ID de la app de Meta<input class="tw:console-field" inputmode="numeric" maxlength="30" formControlName="appId" [attr.aria-invalid]="manualForm.controls.appId.touched && manualForm.controls.appId.invalid" />@if (manualForm.controls.appId.touched && manualForm.controls.appId.invalid) { <small class="tw:text-caption tw:text-danger-text">Ingresa el ID numérico de tu app.</small> }</label>
                   <label class="tw:grid tw:gap-2 tw:text-sm tw:font-semibold">Secreto de la app<input class="tw:console-field" type="password" maxlength="32" autocomplete="new-password" formControlName="appSecret" [attr.aria-invalid]="manualForm.controls.appSecret.touched && manualForm.controls.appSecret.invalid" />@if (manualForm.controls.appSecret.touched && manualForm.controls.appSecret.invalid) { <small class="tw:text-caption tw:text-danger-text">Ingresa el secreto de 32 caracteres de tu app.</small> }</label>
                   <label class="tw:grid tw:gap-2 tw:text-sm tw:font-semibold">Token de acceso<input class="tw:console-field" type="password" maxlength="4096" autocomplete="new-password" formControlName="accessToken" [attr.aria-invalid]="manualForm.controls.accessToken.touched && manualForm.controls.accessToken.invalid" />@if (manualForm.controls.accessToken.touched && manualForm.controls.accessToken.invalid) { <small class="tw:text-caption tw:text-danger-text">Ingresa un token válido de tu app.</small> }</label>
@@ -84,8 +84,8 @@
         <ds-disclosure title="Si ya usas la app WhatsApp Business"><p>La conexión puede conservar el uso de la app mediante coexistencia cuando Meta lo habilite para tu cuenta y número. Sigue el flujo que te muestre Meta antes de confirmar.</p></ds-disclosure>
         <ds-disclosure title="Mensajes y permisos"><p>Puedes responder libremente durante las 24 horas posteriores al último mensaje del cliente. Fuera de ese plazo necesitas una plantilla aprobada por Meta. Obtén permiso para comunicaciones posteriores y respeta las solicitudes de baja.</p><p>Desconectar detiene la conexión con VendedorIA. Tu cuenta de WhatsApp sigue perteneciendo a tu negocio.</p></ds-disclosure>
       </div>
-      <aside class="tw:grid tw:min-w-0 tw:gap-4" aria-label="Diagnóstico de WhatsApp">
-        <ds-form-section title="Diagnóstico" description="Comprueba los permisos y la disponibilidad del número.">
+      <aside class="tw:grid tw:min-w-0 tw:gap-4" aria-label="Estado de WhatsApp">
+        <ds-form-section title="Estado de la conexión" description="Permisos y disponibilidad del número.">
           <ds-button dsSectionActions variant="ghost" [disabled]="diagnosticsLoading() || saving()" (click)="loadDiagnostics()">{{ diagnosticsLoading() ? 'Revisando…' : 'Actualizar' }}</ds-button>
           @if (diagnosticsFailed()) { <p class="tw:m-0 tw:text-sm tw:text-danger-text" role="alert">No pudimos actualizar el diagnóstico. Inténtalo de nuevo.</p> }
           @if (diagnosticsLoading()) { <p class="tw:m-0 tw:text-sm tw:text-muted" role="status">Revisando conexión…</p> }

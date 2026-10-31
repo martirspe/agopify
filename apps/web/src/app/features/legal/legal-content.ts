@@ -135,7 +135,7 @@ const terms: LegalDoc = {
       title: 'Vendedor IA',
       blocks: [
         p('El Vendedor IA responde con la información de tu catálogo, tus envíos y la configuración que tú defines. Está diseñado para no inventar precios, stock ni costos de envío y para avisar al Comprador cuando un dato no está disponible.'),
-        p('Aun así, la inteligencia artificial puede cometer errores o interpretar mal un mensaje. Por eso debes mantener tu catálogo actualizado, probar tu vendedor antes de activarlo y supervisar tus conversaciones. Cuando alguien de tu Equipo escribe en una conversación, el Vendedor IA se pausa en ella hasta que lo reactives.'),
+        p('Aun así, la inteligencia artificial puede cometer errores o interpretar mal un mensaje. Por eso debes mantener tu catálogo actualizado, probar tu vendedor antes de activarlo y supervisar tus conversaciones. Puedes pausar el Vendedor IA en una conversación con el control «Pausar IA» de la bandeja; seguirá pausado hasta que lo reactives.'),
         p('Las respuestas se redactan con proveedores de inteligencia artificial, como OpenAI. Si llegas al límite de respuestas con IA de tu plan, el vendedor sigue respondiendo con respuestas básicas de tu catálogo.'),
         p('No configures al Vendedor IA para negar que es un asistente automático cuando un Comprador lo pregunte, ni para pedir datos sensibles, como información de salud, claves o datos completos de tarjetas.'),
       ],

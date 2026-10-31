@@ -2,7 +2,11 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DsDisclosureComponent, DsIconComponent, DsLinkComponent } from '@vendedoria/ui';
 import { LEGAL_LINKS, PLATFORM_LEGAL } from '../legal/legal-identity';
-import { MARKETING_PLANS, MARKETING_QUESTIONS } from './marketing-content';
+import {
+  MARKETING_INCLUDED_IN_ALL,
+  MARKETING_PLANS,
+  MARKETING_QUESTIONS,
+} from './marketing-content';
 
 @Component({
   selector: 'app-marketing-pricing',
@@ -13,6 +17,7 @@ import { MARKETING_PLANS, MARKETING_QUESTIONS } from './marketing-content';
 })
 export class MarketingPricingComponent {
   readonly plans = MARKETING_PLANS;
+  readonly includedInAll = MARKETING_INCLUDED_IN_ALL;
   readonly questions = MARKETING_QUESTIONS;
   readonly year = new Date().getFullYear();
   readonly legal = PLATFORM_LEGAL;

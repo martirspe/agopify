@@ -3,17 +3,44 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+export type KnowledgeTopic =
+  | 'GENERAL'
+  | 'SHIPPING'
+  | 'RETURNS'
+  | 'PAYMENTS'
+  | 'HOURS'
+  | 'ABOUT';
+
 export type KnowledgeFaqDto = {
   id: string;
   question: string;
   answer: string;
+  topic: KnowledgeTopic;
   tags: string[];
-  source: 'MANUAL' | 'PASTE_IMPORT';
+  source: 'MANUAL' | 'PASTE_IMPORT' | 'TEMPLATE';
   reviewStatus: 'DRAFT' | 'APPROVED';
   isPublished: boolean;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
+};
+
+export type KnowledgeTopicMetaDto = {
+  id: KnowledgeTopic;
+  label: string;
+  hint: string;
+};
+
+export type KnowledgePolicyTemplateDto = {
+  topic: KnowledgeTopic;
+  topicLabel: string;
+  question: string;
+  answer: string;
+};
+
+export type KnowledgePolicyCatalogDto = {
+  topics: KnowledgeTopicMetaDto[];
+  templates: KnowledgePolicyTemplateDto[];
 };
 
 export type JourneyStage = 'DISCOVER' | 'RECOMMEND' | 'CLOSE' | 'SUPPORT';
@@ -40,9 +67,25 @@ export class KnowledgeApiService {
     );
   }
 
+  getPolicyCatalog() {
+    return firstValueFrom(
+      this.http.get<KnowledgePolicyCatalogDto>(`${this.base}/policy-catalog`),
+    );
+  }
+
+  applyPolicyTemplates(topics: KnowledgeTopic[]) {
+    return firstValueFrom(
+      this.http.post<{ created: KnowledgeFaqDto[]; skipped: number }>(
+        `${this.base}/policy-templates/apply`,
+        { topics },
+      ),
+    );
+  }
+
   createFaq(payload: {
     question: string;
     answer: string;
+    topic?: KnowledgeTopic;
     tags?: string[];
     isPublished?: boolean;
   }) {
@@ -56,6 +99,7 @@ export class KnowledgeApiService {
     payload: Partial<{
       question: string;
       answer: string;
+      topic: KnowledgeTopic;
       tags: string[];
       isPublished: boolean;
       reviewStatus: 'DRAFT' | 'APPROVED';
@@ -81,11 +125,11 @@ export class KnowledgeApiService {
     );
   }
 
-  importPaste(rawText: string) {
+  importPaste(rawText: string, topic?: KnowledgeTopic) {
     return firstValueFrom(
       this.http.post<{ created: KnowledgeFaqDto[]; skipped: boolean }>(
         `${this.base}/faqs/import-paste`,
-        { rawText },
+        { rawText, topic },
       ),
     );
   }

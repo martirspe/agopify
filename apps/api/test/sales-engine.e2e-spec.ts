@@ -296,13 +296,22 @@ describe('AI Sales Engine integration (e2e)', () => {
         where: { tenantId: tenantA, conversationId: c.id, status: 'UNKNOWN' },
       }),
     ).toBe(1);
+    // Delivery failures mark the thread for review but do not pause the agent;
+    // only Inbox "Pausar IA" (or pause-on-handoff) flips agentEnabled.
     expect(
       (
         await prisma.conversation.findFirstOrThrow({
           where: { id: c.id, tenantId: tenantA },
         })
       ).agentEnabled,
-    ).toBe(false);
+    ).toBe(true);
+    expect(
+      (
+        await prisma.conversation.findFirstOrThrow({
+          where: { id: c.id, tenantId: tenantA },
+        })
+      ).markedUnattended,
+    ).toBe(true);
     await inbound('interrupted', 'Hola');
     const interrupted = await prisma.conversation.findFirstOrThrow({
       where: { tenantId: tenantA, externalThreadId: 'interrupted' },

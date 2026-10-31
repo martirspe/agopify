@@ -88,17 +88,26 @@ function bestDistrict(haystack: string): {
   if (!longest.length) return { match: { district: null, candidates: [] }, located: false };
 
   const scored = longest.map((entry) => {
-    const rest = haystack.replace(entry.name, ' ');
+    // Strip every copy of the district name so "SJL (Lima, Lima)" does not leave a
+    // leftover "Lima" that falsely ties the district named Lima with equal score.
+    const rest = haystack.split(entry.name).join(' ');
     const score = (rest.includes(entry.province) ? 2 : 0) + (rest.includes(entry.department) ? 1 : 0);
     return { entry, score };
   });
   const best = Math.max(...scored.map((item) => item.score));
-  const top = scored.filter((item) => item.score === best).map((item) => item.entry.district);
+  let top = scored.filter((item) => item.score === best);
+  // Among a tie, the longer name is the place the buyer meant ("San Juan de Lurigancho"
+  // over the province-capital district "Lima" when both appear in the same message).
+  if (top.length > 1) {
+    const maxName = Math.max(...top.map((item) => item.entry.name.length));
+    top = top.filter((item) => item.entry.name.length === maxName);
+  }
+  const districts = top.map((item) => item.entry.district);
   return {
     match:
-      top.length === 1
-        ? { district: top[0], candidates: [] }
-        : { district: null, candidates: top.slice(0, MAX_CANDIDATES) },
+      districts.length === 1
+        ? { district: districts[0], candidates: [] }
+        : { district: null, candidates: districts.slice(0, MAX_CANDIDATES) },
     located: best > 0,
   };
 }

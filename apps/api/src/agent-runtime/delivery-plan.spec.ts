@@ -34,6 +34,24 @@ describe('matchDistrict', () => {
     );
   });
 
+  it('resolves the agent echo "District (Province, Department)" without tying on Lima', () => {
+    expect(matchDistrict('San Juan de Lurigancho (Lima, Lima)').district?.code).toBe(
+      '150132',
+    );
+    expect(
+      matchDistrict('San Juan de Lurigancho (Lima, Lima) es esta').district?.code,
+    ).toBe('150132');
+  });
+
+  it('resolves mixed Lima + SJL wording buyers use in one message', () => {
+    expect(
+      matchDistrict('para lima, sjl melecon checa zarate cdra 14').district?.code,
+    ).toBe('150132');
+    expect(matchDistrict('san juan de lurigancho, lima').district?.code).toBe(
+      '150132',
+    );
+  });
+
   it('reads the short names Lima buyers use, unless they name another province', () => {
     const surco = matchDistrict('surco').district;
     expect([surco?.district, surco?.province]).toEqual(['Santiago de Surco', 'Lima']);

@@ -1,35 +1,37 @@
 {
   "mode": "deterministic-offline",
-  "fixtureCount": 20,
-  "runtimeCases": 17,
+  "datasetVersion": "2026.10.30",
+  "dataset": "sales-engine",
+  "fixtureCount": 33,
+  "runtimeCases": 30,
   "integrationCases": 3,
   "metrics": {
     "context_retention": {
-      "samples": 3,
+      "samples": 9,
       "value": 1
     },
     "repeated_question_rate": {
-      "samples": 17,
+      "samples": 30,
       "value": 0
     },
     "intent_accuracy": {
-      "samples": 2,
+      "samples": 5,
       "value": 1
     },
     "product_accuracy": {
-      "samples": 4,
+      "samples": 5,
       "value": 1
     },
     "price_accuracy": {
-      "samples": 10,
+      "samples": 17,
       "value": 1
     },
     "inventory_accuracy": {
-      "samples": 15,
+      "samples": 25,
       "value": 1
     },
     "hallucination_rate": {
-      "samples": 17,
+      "samples": 30,
       "value": 0
     },
     "tool_selection_accuracy": {
@@ -37,19 +39,19 @@
       "value": 1
     },
     "state_transition_accuracy": {
-      "samples": 7,
+      "samples": 10,
       "value": 1
     },
     "reference_resolution_accuracy": {
-      "samples": 2,
+      "samples": 3,
       "value": 1
     },
     "handoff_accuracy": {
-      "samples": 14,
+      "samples": 27,
       "value": 1
     },
     "sales_progression": {
-      "samples": 2,
+      "samples": 4,
       "value": 1
     }
   },
@@ -241,6 +243,143 @@
     },
     {
       "id": "20-cross-tenant",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "inventory_accuracy": 1,
+        "product_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "21-multi-question",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "intent_accuracy": 1,
+        "context_retention": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "22-second-black",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "reference_resolution_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "23-correction",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "24-human-handoff",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "state_transition_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "25-grounded-price",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "intent_accuracy": 1,
+        "context_retention": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "26-unknown-warranty",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "inventory_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "27-question-dedupe",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "context_retention": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "28-topic-change",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "inventory_accuracy": 1,
+        "context_retention": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "29-returning-memory",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "context_retention": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "30-order-idempotency",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "intent_accuracy": 1,
+        "state_transition_accuracy": 1,
+        "handoff_accuracy": 1,
+        "sales_progression": 1
+      }
+    },
+    {
+      "id": "31-prompt-injection",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "context_retention": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "32-provider-degrade",
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "state_transition_accuracy": 1,
+        "handoff_accuracy": 1,
+        "sales_progression": 1
+      }
+    },
+    {
+      "id": "33-cross-tenant-offline",
       "metrics": {
         "repeated_question_rate": 0,
         "hallucination_rate": 0,

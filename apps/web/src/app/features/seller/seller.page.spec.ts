@@ -14,7 +14,14 @@ async function setupSeller() {
   TestBed.configureTestingModule({ imports: [SellerPage], providers: [
     provideRouter([]),
     { provide: AgentsApiService, useValue: api },
-    { provide: KnowledgeApiService, useValue: { listFaqs: async () => [], listJourneys: async () => [] } },
+    {
+      provide: KnowledgeApiService,
+      useValue: {
+        listFaqs: async () => [],
+        listJourneys: async () => [],
+        getPolicyCatalog: async () => ({ topics: [], templates: [] }),
+      },
+    },
     { provide: MessagingApiService, useValue: { listChannels: async () => [] } },
   ] });
   const fixture = TestBed.createComponent(SellerPage);
@@ -23,7 +30,7 @@ async function setupSeller() {
   page.agents.set([{ id: 'test-agent', name: 'Vendedor', isActive: true, isPrimary: true, promptMode: 'guided', channelIds: [] }]);
   page.agentId.set('test-agent');
   page.form.patchValue({ name: 'Vendedor', isActive: true });
-  page.quality.set({ score: 240, max: 240, completedFields: 13, totalFields: 13, missingHints: [] });
+  page.quality.set({ score: 230, max: 230, completedFields: 12, totalFields: 12, missingHints: [] });
   fixture.detectChanges();
   return { fixture, page, api };
 }
@@ -35,7 +42,7 @@ describe('seller configuration feedback', () => {
   it('does not label a complete configuration as sales readiness', async () => {
     const { fixture, page } = await setupSeller();
     expect(page.qualityLabel()).toBe('Configuración completa');
-    expect(fixture.nativeElement.textContent).toContain('Revisa también tu catálogo');
+    expect(fixture.nativeElement.textContent).toContain('Avance de los bloques de configuración');
     expect(fixture.nativeElement.textContent).not.toContain('Listo para vender');
   });
 

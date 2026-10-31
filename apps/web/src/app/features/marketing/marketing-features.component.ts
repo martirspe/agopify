@@ -24,7 +24,7 @@ export class MarketingFeaturesComponent {
     {
       icon: 'pause',
       title: 'Te da el control cuando lo necesitas',
-      text: 'Responde desde la consola y el vendedor se pausa en ese chat. Puedes retomar la automatización cuando quieras.',
+      text: 'Mira el chat en vivo y responde cuando quieras. La IA solo se pausa si usas «Pausar IA»; puedes reactivarla en un clic.',
     },
     {
       icon: 'users',

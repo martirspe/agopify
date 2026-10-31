@@ -28,6 +28,10 @@ Redis/ioredis y BullMQ existen en conversiones para recuperación y caché. Qdra
 - Las validaciones deterministas cubren hechos estructurados y preguntas conocidas; la veracidad de todo texto libre requiere evaluación con modelos reales. No se promete exactitud total.
 - Las migraciones son aditivas: no modifican datos históricos ni índices existentes. El backfill se ejecuta por tenant y no toca infraestructura productiva.
 
+## Checkout conversacional (distrito → pedido → link)
+
+El backend es dueño del paso de envío: mientras haya `pendingLines`, reanuda esas líneas en cada turno (incluido «dame el link» o un eco del distrito). `matchDistrict` desempata nombres empatados a favor del distrito más específico y elimina todas las apariciones del nombre al puntuar provincia/departamento, para que «San Juan de Lurigancho (Lima, Lima)» no empate con el distrito Lima. La pregunta de distrito es determinista (sin LLM) para evitar confirmaciones inventadas; el link de pago solo aparece tras `createOrderWithOptionalLink`.
+
 ## Arquitectura implementada
 
 Meta → firma existente → resolución del canal/tenant → constraint `Message.inboundKey` → inbox PostgreSQL (`enginePending`) + buffer Redis → ventana de silencio → lease Redis + advisory lock PostgreSQL → contexto/memoria → runtime existente + herramientas → validación → estado/outbox durable → envío Meta → confirmación/handoff.

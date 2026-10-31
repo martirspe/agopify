@@ -1,6 +1,7 @@
 import type { SalesAgent } from '@prisma/client';
 
-export const AGENT_QUALITY_MAX = 240;
+/** Field points (190) + published FAQ (25) + active journey (15). */
+export const AGENT_QUALITY_MAX = 230;
 
 type QualityKey =
   | 'name'
@@ -9,7 +10,6 @@ type QualityKey =
   | 'audienceDescription'
   | 'rulesText'
   | 'communicationStyle'
-  | 'salesStyle'
   | 'initialMessage'
   | 'purchaseConfirmMessage'
   | 'handoffMessage'
@@ -45,14 +45,8 @@ const QUALITY_FIELDS: QualityField[] = [
   },
   {
     key: 'communicationStyle',
-    points: 15,
+    points: 20,
     hint: 'Define el estilo de comunicación',
-    minLength: 4,
-  },
-  {
-    key: 'salesStyle',
-    points: 15,
-    hint: 'Define el estilo de ventas',
     minLength: 4,
   },
   {

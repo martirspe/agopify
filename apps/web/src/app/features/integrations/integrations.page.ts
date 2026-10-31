@@ -133,14 +133,14 @@ export class IntegrationsPage {
     const list: IntegrationCard[] = [
       {
         id: 'whatsapp',
-        name: 'WhatsApp Cloud API',
+        name: 'WhatsApp',
         category: 'Channel',
         status: this.whatsappConnected() ? 'connected' : 'ready',
         summary: this.whatsappConnected()
-          ? 'Número vinculado. Revisa el estado del canal antes de recibir mensajes.'
+          ? 'Número vinculado. Revisa el estado en Canales.'
           : 'Autoriza tu negocio con Meta o conecta las credenciales de tu propia app.',
         nextStep: this.whatsappConnected()
-          ? 'Revisa el estado del canal en Canales.'
+          ? 'Ver estado en Canales.'
           : 'Conecta WhatsApp para empezar a vender.',
         link: '/app/channels',
         actions: [

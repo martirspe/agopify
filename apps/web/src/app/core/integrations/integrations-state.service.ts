@@ -25,7 +25,7 @@ export const INTEGRATIONS: IntegrationInfo[] = [
     key: 'store',
     name: 'Tienda web',
     summary:
-      'Tu catálogo en una web propia donde tus clientes compran solos, con pago en línea o pedido por WhatsApp. Tu vendedor IA comparte el enlace de cada producto.',
+      'Acceso anticipado. Aún no forma parte oficial del plan ni del soporte dedicado. Tu vendedor IA sigue siendo el producto principal.',
     path: '/app/store',
     navLabel: 'Tienda web',
     icon: 'store',
@@ -43,7 +43,7 @@ export const INTEGRATIONS: IntegrationInfo[] = [
   {
     key: 'custom_domain',
     name: 'Dominio propio',
-    summary: 'Tu tienda en tu propia dirección, por ejemplo www.tumarca.pe, con candado de seguridad incluido.',
+    summary: 'Acceso anticipado para la tienda web. Dirección propia (p. ej. www.tumarca.pe) cuando actives la tienda.',
     path: '/app/domain',
     navLabel: 'Dominio',
     icon: 'globe',
@@ -52,7 +52,7 @@ export const INTEGRATIONS: IntegrationInfo[] = [
   {
     key: 'tracking',
     name: 'Píxel y Analytics',
-    summary: 'Conecta el píxel de Meta y Google Analytics para medir visitas, carritos y compras de tu tienda.',
+    summary: 'Acceso anticipado. Píxel de Meta y Google Analytics para la tienda cuando esté activa.',
     path: '/app/tracking',
     navLabel: 'Analítica',
     icon: 'chartLine',

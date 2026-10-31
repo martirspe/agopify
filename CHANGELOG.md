@@ -2,6 +2,29 @@
 
 ## [Unreleased]
 
+- Consola: textos listos para producción (sin guía operativa, jerga interna ni copy de prueba en formularios y pantallas del merchant).
+- Comercial: planes y marketing enfocados en el vendedor IA; la tienda web queda como «próximamente / acceso anticipado», sin promesa oficial en el precio del plan.
+- Planes: lo común (WhatsApp, Instagram, catálogo, cobros) se muestra una sola vez; cada tarjeta solo lista capacidad (chats, productos, usuarios).
+- AI Core v2: modo Sombra; carriles fast/standard/complex; respuestas a multi-pregunta (precio + talla + envío) sin inventar tarifas; golden set ampliado (escenarios A/C/D/G/H/J); motores por vendedor en consola.
+- AI Core Stage 3 (memoria): dedupe de preguntas sobre hechos confirmados; memoria de cliente recurrente con merge tenant-scoped; cambio de tema que conserva hechos del cliente; golden 27–29.
+- AI Core Stage 4 (ventas L2): `order_draft_hash` e idempotencia de pedidos de chat vía `Order.checkoutKey` (sin pedidos duplicados en reintentos); golden 30.
+- AI Core Stage 5 (resiliencia): bloqueo de inyección de prompt; eventos de seguridad cross-tenant; fallback de modelo con degradación controlada; arreglo del playground para enviar mensajes de prueba; golden 31–33.
+- AI Core Stage 6: eval offline en CI; dataset versionado; panel de actividad del vendedor (latencia, derivaciones, degradaciones) sin contenido de chats.
+- AI Core Stage 7: migración progresiva sombra → canary → agentes seleccionados; estado de migración por tenant; auditoría de cambio de motor; rollback seguro documentado.
+- AI Core Stage 8: endurecimiento — motor solo dueño/admin, límite de playground, sanitización de artefactos de pago en modo sombra.
+- Playground fiel al canal: misma respuesta que WhatsApp/Instagram (fotos, pausa, copy); pedidos solo de prueba; checklist de prueba en producción.
+- Nuevo vendedor arranca en blanco (valores por defecto); copiar del actual es opcional.
+- Consola del vendedor: se quitan campos que no sumaban (estilo de venta, paleta de emojis, palabras a evitar, texto de objeciones) y se reducen las técnicas a 5 énfasis opcionales; el método base del runtime ya cubre el resto.
+- Conocimiento del negocio: las FAQ se organizan por tema (envíos, cambios, pagos, horarios, negocio); plantillas de políticas sugeridas; el vendedor prioriza respuestas del tema correcto sin un RAG paralelo.
+- Motor de ventas: AI Core es el camino de producto por defecto (`ai_core`); se retira de la consola el selector de motor y el panel de migración progresiva (sin clientes en producción aún).
+- Base de datos: historial de migraciones Prisma consolidado de nuevo en una sola `0001_init` alineada al schema actual.
+- Productos: exportar paquete ZIP (`catalog.json` + fotos) listo para reimportar; el CSV filtrado se mantiene como exportación de lista.
+- Productos: editor reorganizado en jerarquía (Identidad → Fotos → Precio → Inventario/entrega → Opciones → Descripción detallada); solo campos operativos para tienda y agente; precio tachado y publicación en el panel; sin ficha estructurada (FAQs, beneficios, etc.).
+
+- Inbox: la IA ya no se pausa al mirar el chat en vivo ni al responder o enviar una plantilla. Solo «Pausar IA» (o «Pausar la IA al derivar») detiene las respuestas automáticas; fallos de turno marcan la conversación sin atender sin apagar el agente.
+
+- Agente vendedor: cierre del hola al pago más estable. Resuelve distritos como «San Juan de Lurigancho (Lima, Lima)» sin empatar con el distrito Lima, reconoce «quiero comprarlo» / pedido de link de pago, reanuda el checkout pendiente en vez de volver a preguntar el distrito, y no deja que el modelo invente un distrito confirmado o un link antes de crear el pedido.
+
 - WhatsApp: credenciales propias vuelven a quedar disponibles junto a «Conectar con Meta». En desarrollo, `http://localhost` ya no bloquea el formulario; `CHANNEL_CREDENTIALS_KEY` se genera en setup local y en `deploy.sh` cuando falta en producción; la disponibilidad manual no depende de Embedded Signup ni de una inyección opcional, y se puede cambiar de modalidad mientras Meta se prepara.
 
 - Consola: Rosaline 1.1.0 disponible para todos los rubros en la selección de plantillas; mantiene el diseño Bold Modern y se guarda como borrador mediante el flujo existente.

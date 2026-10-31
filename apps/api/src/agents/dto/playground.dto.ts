@@ -18,6 +18,6 @@ export class SendPlaygroundMessageDto {
   @ApiPropertyOptional({ description: 'Sales agent to test; defaults to the primary one' })
   @IsOptional()
   @IsString()
-  @MaxLength(40)
+  @MaxLength(64)
   agentId?: string;
 }

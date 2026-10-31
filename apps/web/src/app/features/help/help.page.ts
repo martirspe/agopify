@@ -20,14 +20,14 @@ type HelpTopic = {
 export class HelpPage {
   readonly topics: HelpTopic[] = [
     {
-      title: 'Prepara tu primer pedido',
-      body: 'Configura tu vendedor, agrega un producto con precio y conecta WhatsApp para recibir conversaciones.',
+      title: 'Configura lo esencial',
+      body: 'Vendedor, un producto con precio y WhatsApp conectado.',
       link: '/app/get-started',
       cta: 'Ir a Empezar',
     },
     {
-      title: 'Vendedor IA y pruebas',
-      body: 'Personalidad, preguntas frecuentes y límites. Prueba tu vendedor sin afectar tus métricas.',
+      title: 'Vendedor IA',
+      body: 'Personalidad, preguntas frecuentes y límites. Puedes probar el vendedor sin clientes reales.',
       link: '/app/seller',
       cta: 'Configurar vendedor',
     },

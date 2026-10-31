@@ -100,10 +100,16 @@ export class OrdersService {
     return order;
   }
 
+  /**
+   * Backend-owned chat/console order create. Optional `idempotency` reuses
+   * Order.checkoutKey + requestHash (same pattern as web checkout) so retries
+   * and concurrent sales-engine turns never double-charge the same draft.
+   */
   async create(
     tenantId: string,
     dto: CreateOrderDto,
     shipping?: OrderShipping,
+    idempotency?: { checkoutKey: string; requestHash: string },
   ) {
     if (dto.conversationId) {
       const conversation = await this.prisma.conversation.findFirst({
@@ -111,6 +117,22 @@ export class OrdersService {
       });
       if (!conversation) {
         throw new NotFoundException('Conversación no encontrada.');
+      }
+    }
+
+    if (idempotency) {
+      const replay = await this.findChatReplay(
+        tenantId,
+        idempotency.checkoutKey,
+        idempotency.requestHash,
+      );
+      if (replay) {
+        if (dto.createPaymentLink && !replay.payments[0]?.checkoutUrl) {
+          return this.createPaymentLink(tenantId, replay.id, {
+            sendLinkToChat: dto.sendLinkToChat ?? Boolean(dto.conversationId),
+          });
+        }
+        return replay;
       }
     }
 
@@ -163,23 +185,53 @@ export class OrdersService {
       channel = conversation?.channel.type ?? 'MANUAL';
     }
 
-    const order = await this.prisma.order.create({
-      data: {
-        tenantId,
-        conversationId: dto.conversationId,
-        status: 'DRAFT',
-        channel,
-        currency,
-        subtotalCents,
-        shippingCents,
-        totalCents,
-        ...(shipping ? { delivery: shipping.delivery } : {}),
-        customerName,
-        customerPhone,
-        items: { create: items },
-      },
-      include: ORDER_INCLUDE,
-    });
+    let order;
+    try {
+      order = await this.prisma.order.create({
+        data: {
+          tenantId,
+          conversationId: dto.conversationId,
+          status: 'DRAFT',
+          channel,
+          currency,
+          subtotalCents,
+          shippingCents,
+          totalCents,
+          ...(shipping ? { delivery: shipping.delivery } : {}),
+          ...(idempotency
+            ? {
+                checkoutKey: idempotency.checkoutKey,
+                requestHash: idempotency.requestHash,
+              }
+            : {}),
+          customerName,
+          customerPhone,
+          items: { create: items },
+        },
+        include: ORDER_INCLUDE,
+      });
+    } catch (error) {
+      if (
+        idempotency &&
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const replay = await this.findChatReplay(
+          tenantId,
+          idempotency.checkoutKey,
+          idempotency.requestHash,
+        );
+        if (replay) {
+          if (dto.createPaymentLink && !replay.payments[0]?.checkoutUrl) {
+            return this.createPaymentLink(tenantId, replay.id, {
+              sendLinkToChat: dto.sendLinkToChat ?? Boolean(dto.conversationId),
+            });
+          }
+          return replay;
+        }
+      }
+      throw error;
+    }
 
     if (dto.conversationId) {
       await this.prisma.message.create({
@@ -200,6 +252,24 @@ export class OrdersService {
     }
 
     return order;
+  }
+
+  private async findChatReplay(
+    tenantId: string,
+    checkoutKey: string,
+    requestHash: string,
+  ) {
+    const existing = await this.prisma.order.findUnique({
+      where: { checkoutKey },
+      include: ORDER_INCLUDE,
+    });
+    if (!existing) return null;
+    if (existing.tenantId !== tenantId || existing.requestHash !== requestHash) {
+      throw new BadRequestException(
+        'Este borrador de pedido ya se registró con otros datos.',
+      );
+    }
+    return existing;
   }
 
   async createPaymentLink(

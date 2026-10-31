@@ -39,6 +39,18 @@ import {
   buildAgentPrompt,
   toPersonality,
 } from './sales-playbook';
+import { AiModelRouter } from './models/ai-model.router';
+import type { AiChatMessage, AiToolDefinition } from './models/ai-model.types';
+import {
+  multiQuestionPromptGuide,
+  selectProcessingLane,
+} from './processing-lanes';
+import { factualLinesForIntents } from './multi-question';
+import {
+  detectPromptInjection,
+  PROMPT_INJECTION_REFUSAL,
+} from './prompt-injection';
+import { recordSecurityEvent } from './security-events';
 
 /** How a catalog browse is presented in the reply. */
 type BrowseView = {
@@ -89,6 +101,8 @@ export type AgentReplyResult = {
   /** Order reference shown next to the payment button. */
   orderRef?: string;
   checkoutUrl?: string;
+  /** Server-computed cart hash for chat-order idempotency (scenario I). */
+  orderDraftHash?: string;
   /** The reply was written by OpenAI (counts toward the plan's AI replies). */
   usedAi?: boolean;
   salesState?: SalesState;
@@ -166,6 +180,7 @@ export class SalesAgentRuntimeService {
     private readonly tools: SalesAgentToolsService,
     private readonly knowledge: KnowledgeService,
     @Optional() private readonly registry?: SalesToolRegistry,
+    @Optional() private readonly models?: AiModelRouter,
   ) {}
 
   async generateReply(params: ReplyParams): Promise<AgentReplyResult> {
@@ -200,19 +215,21 @@ export class SalesAgentRuntimeService {
     ];
     const agent = await this.resolveAgent(params.tenantId, params.agentId);
     const apiKey = this.config.get<string>('OPENAI_API_KEY');
-    if (!agent?.isActive || !apiKey || !params.allowAi) return { text: questions[0], usedAi: false };
+    if (!agent?.isActive || !apiKey || !params.allowAi || !this.models) return { text: questions[0], usedAi: false };
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST', headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(8000),
-        body: JSON.stringify({ model: this.config.get<string>('OPENAI_MODEL', 'gpt-4o-mini'), max_tokens: 30, response_format: { type: 'json_object' }, messages: [
+      const result = await this.models.generate({
+        task: 'structured_json',
+        apiKey,
+        maxTokens: 30,
+        jsonObject: true,
+        timeoutMs: 8000,
+        messages: [
           { role: 'system', content: `${buildAgentPrompt(toPersonality(agent))}\nSelecciona únicamente el índice de la pregunta de aclaración más adecuada. Devuelve {"questionIndex":0}. No generes texto ni ejecutes acciones.` },
           { role: 'user', content: JSON.stringify({ text: params.inboundText, history: promptHistory(params.history ?? []), questions }) },
-        ] }),
+        ],
       });
-      if (!response.ok) return { text: questions[0], usedAi: false };
-      const payload = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
-      const selection = JSON.parse(payload.choices?.[0]?.message?.content ?? '{}') as { questionIndex?: number };
+      if (!result?.message.content) return { text: questions[0], usedAi: false };
+      const selection = JSON.parse(result.message.content) as { questionIndex?: number };
       const index = selection.questionIndex;
       return { text: typeof index === 'number' && Number.isInteger(index) && questions[index] ? questions[index] : questions[0], usedAi: true };
     } catch {
@@ -256,7 +273,8 @@ export class SalesAgentRuntimeService {
       return { replyText: agent.handoffMessage ?? 'El equipo revisará tu consulta y te responderá por aquí.', escalate: true, usedCatalog: false, pauseOnHandoff: agent.pauseOnHandoff, tools: [this.tools.escalateTrace(this.tools.wantsHuman(params.inboundText) ? 'buyer_request' : 'order_complaint')], images: [] };
     }
 
-    if (!agent.isActive && mode === 'production') {
+    // Same pause behaviour on live channels, playground and shadow — fidelity for tests.
+    if (!agent.isActive) {
       return {
         replyText:
           'El vendedor IA está pausado. Un humano te atenderá en breve.',
@@ -265,6 +283,33 @@ export class SalesAgentRuntimeService {
         pauseOnHandoff: true,
         tools: [this.tools.escalateTrace('vendedor inactivo')],
         images: [],
+      };
+    }
+
+    if (detectPromptInjection(params.inboundText)) {
+      recordSecurityEvent({
+        code: 'prompt_injection_blocked',
+        tenantId: params.tenantId,
+        conversationId: params.conversationId,
+        resource: 'sales_reply',
+      });
+      return {
+        replyText: this.applyTone(agent, PROMPT_INJECTION_REFUSAL),
+        escalate: false,
+        usedCatalog: false,
+        pauseOnHandoff: agent.pauseOnHandoff,
+        tools: [
+          {
+            name: 'lookup_faq',
+            status: 'skipped',
+            summary: 'Intento de inyección de prompt bloqueado',
+            data: { promptInjection: true },
+          },
+        ],
+        images: [],
+        ...(state
+          ? { trace: { lane: 'fast', validation: 'deterministic', promptInjection: true } }
+          : {}),
       };
     }
 
@@ -290,6 +335,7 @@ export class SalesAgentRuntimeService {
           data: { awaitingDelivery: true, lines: pendingLines },
         }] : [],
         images: [],
+        ...(state ? { trace: { lane: 'fast', validation: 'deterministic' } } : {}),
       };
     }
     const contextProducts = contextIds
@@ -318,6 +364,14 @@ export class SalesAgentRuntimeService {
       this.tools.wantsPurchase(params.inboundText) ||
       confirmsPurchase(params.inboundText, history) ||
       (districtReply && Boolean(contextPick));
+    const processingLane = selectProcessingLane({
+      conversationalIntent: intent,
+      intents: state?.intents ?? [],
+      hasResolvedReference: Boolean(reference),
+      pendingDeliveryQuestion: Boolean(pendingLines.length) && !buying,
+      buying,
+      humanOrComplaint: false,
+    });
     if (state?.orderId && buying) {
       const existing = await this.tools.existingOrder(params.tenantId, params.conversationId, state.orderId);
       if (existing && existing.status !== 'CANCELLED') {
@@ -404,11 +458,30 @@ export class SalesAgentRuntimeService {
     let orderId: string | undefined;
     let orderRef: string | undefined;
     let checkoutUrl: string | undefined;
+    let orderDraftHash: string | undefined;
     let pending: PendingChoice = null;
     const cartLines = this.tools.orderLinesFromRefs(refs, products);
     let lines: OrderLine[] = [];
     if (buying && !this.tools.wantsHuman(params.inboundText)) {
       lines = cartLines;
+      // Prefer the checkout already in progress over re-guessing the product from
+      // a short message like "dame el link" or "quiero comprarlo".
+      if (!lines.length && pendingLines.length) {
+        const resumed = this.tools.orderLinesFromPending(pendingLines, products);
+        if (resumed.length) {
+          lines = resumed;
+          matches = resumed.map((line) => line.product);
+          searchTrace = {
+            ...searchTrace,
+            data: {
+              ...searchTrace.data,
+              matchIds: matches.map((item) => item.id),
+              count: matches.length,
+              fromConversation: true,
+            },
+          };
+        }
+      }
       if (!lines.length) {
         const target = districtReply
           ? contextPick
@@ -453,6 +526,14 @@ export class SalesAgentRuntimeService {
     }
 
     let delivery: DeliveryPlan | null = null;
+    const deliveryTextHint = [
+      params.inboundText,
+      state?.requirements.destination?.value,
+    ]
+      .filter(Boolean)
+      .join('\n');
+    // Keep the checkout alive: while lines wait for a district, always resume them
+    // (even if this turn only says "pásame el link" or repeats the district).
     if (
       !lines.length &&
       !pending &&
@@ -461,24 +542,21 @@ export class SalesAgentRuntimeService {
     ) {
       const resumed = this.tools.orderLinesFromPending(pendingLines, products);
       if (resumed.length) {
-        const plan = planDelivery({
+        lines = resumed;
+        delivery = planDelivery({
           rules: await this.tools.shippingRules(params.tenantId),
-          text: [params.inboundText, state?.requirements.destination?.value].filter(Boolean).join('\n'),
+          text: deliveryTextHint,
           subtotalCents: this.tools.subtotalCents(resumed),
         });
-        if (plan.kind !== 'ask' || plan.candidates.length) {
-          lines = resumed;
-          delivery = plan;
-          matches = resumed.map((line) => line.product);
-          searchTrace = {
-            ...searchTrace,
-            data: {
-              ...searchTrace.data,
-              matchIds: matches.map((item) => item.id),
-              count: matches.length,
-            },
-          };
-        }
+        matches = resumed.map((line) => line.product);
+        searchTrace = {
+          ...searchTrace,
+          data: {
+            ...searchTrace.data,
+            matchIds: matches.map((item) => item.id),
+            count: matches.length,
+          },
+        };
       }
     } else if (
       lines.length &&
@@ -487,7 +565,7 @@ export class SalesAgentRuntimeService {
     ) {
       delivery = planDelivery({
         rules: await this.tools.shippingRules(params.tenantId),
-        text: [params.inboundText, state?.requirements.destination?.value].filter(Boolean).join('\n'),
+        text: deliveryTextHint,
         subtotalCents: this.tools.subtotalCents(lines),
         ignore: lines.flatMap((line) =>
           [line.product.name, line.variant?.label ?? '']
@@ -553,6 +631,7 @@ export class SalesAgentRuntimeService {
       orderId = commerce.orderId;
       orderRef = commerce.orderRef;
       checkoutUrl = commerce.checkoutUrl;
+      orderDraftHash = commerce.orderDraftHash;
       if (checkoutUrl && delivery) {
         deliveryText = this.deliveryText(delivery, lines);
       }
@@ -570,6 +649,27 @@ export class SalesAgentRuntimeService {
     const images = cartOrder
       ? []
       : this.pickImages(matches, photoAsked);
+
+    // District disambiguation and "where do we ship?" are owned by the backend: skip the
+    // model so it cannot invent a confirmed address or a payment link mid-checkout.
+    if (pending?.kind === 'delivery' && !checkoutUrl) {
+      return {
+        replyText: this.applyTone(agent, pending.question),
+        escalate: false,
+        usedCatalog: matches.length > 0,
+        pauseOnHandoff: agent.pauseOnHandoff,
+        tools: traces,
+        images: [],
+        orderId,
+        orderRef,
+        checkoutUrl,
+        orderDraftHash,
+        usedAi: false,
+        ...(state
+          ? { trace: { lane: 'fast', validation: 'deterministic' } }
+          : {}),
+      };
+    }
 
     if (openAiKey) {
       try {
@@ -636,10 +736,9 @@ export class SalesAgentRuntimeService {
                 .filter(Boolean)
                 .join('\n\n')
             : ai.replyText;
-          if (
-            pending?.kind === 'delivery' &&
-            !normalizeText(replyText).includes('distrito')
-          ) {
+          // Never let the model invent a confirmed district or payment link: the
+          // authoritative delivery question (or the already-built checkout) owns that step.
+          if (pending?.kind === 'delivery' && !checkoutUrl) {
             replyText = pending.question;
           }
           const complaint = this.tools.isOrderComplaint(params.inboundText);
@@ -656,8 +755,16 @@ export class SalesAgentRuntimeService {
             orderId,
             orderRef,
             checkoutUrl,
+            orderDraftHash,
             usedAi: true,
-            trace: { validation: 'passed', inputTokens: ai.usage?.prompt_tokens ?? 0, outputTokens: ai.usage?.completion_tokens ?? 0, retrievedProductIds: matches.map((p) => p.id), retrievedFaqIds: faqMatches.map((faq) => faq.id) },
+            trace: {
+              lane: processingLane,
+              validation: 'passed',
+              inputTokens: ai.usage?.prompt_tokens ?? 0,
+              outputTokens: ai.usage?.completion_tokens ?? 0,
+              retrievedProductIds: matches.map((p) => p.id),
+              retrievedFaqIds: faqMatches.map((faq) => faq.id),
+            },
           };
         }
       } catch (error) {
@@ -683,13 +790,22 @@ export class SalesAgentRuntimeService {
         browse: browse?.view ?? null,
         mode,
         requestedSize: state?.requirements.size?.value,
+        intents: state?.intents ?? [],
       }),
       tools: traces,
       images,
       orderId,
       orderRef,
       checkoutUrl,
-      ...(state ? { trace: { validation: openAiKey ? 'fallback' : 'deterministic' } } : {}),
+      orderDraftHash,
+      ...(state
+        ? {
+            trace: {
+              lane: processingLane,
+              validation: openAiKey ? 'fallback' : 'deterministic',
+            },
+          }
+        : {}),
     };
     if (state && !matches.length && !checkoutUrl && !browse && state.requirements.need) fallback.replyText = 'Con los datos que me diste no encontré una opción disponible. Puedo ayudarte a revisar alternativas.';
     return fallback;
@@ -930,8 +1046,20 @@ export class SalesAgentRuntimeService {
     browse: BrowseView | null;
     mode: AgentRuntimeMode;
     requestedSize?: string;
+    intents?: string[];
   }): Omit<AgentReplyResult, 'tools' | 'images' | 'orderId' | 'checkoutUrl'> {
     const { agent } = params;
+    const multiFacts = factualLinesForIntents({
+      intents: params.intents ?? [],
+      product: params.catalogMatches[0] ?? null,
+      requestedSize: params.requestedSize,
+    });
+    const withMulti = (body: string) =>
+      multiFacts.length
+        ? this.applyTone(agent, `${multiFacts.join(' ')}\n${body}`, {
+            keepLines: true,
+          })
+        : this.applyTone(agent, body);
 
     if (params.cartOrder) {
       const lines = params.catalogMatches.map((product) => `• ${product.name}`);
@@ -950,10 +1078,8 @@ export class SalesAgentRuntimeService {
       const confirm =
         agent.purchaseConfirmMessage ??
         'Perfecto. Aquí tienes el link de pago para completar tu compra:';
-      const dryNote =
-        params.mode === 'playground'
-          ? '(Prueba: este link es simulado y no aparece en Pedidos.)'
-          : null;
+      // Dry-run modes still use the live buyer-facing copy; the channel/UI shows
+      // the payment button separately (URL never appears in replyText).
       const { summary, note } = params.deliveryText;
       return {
         escalate: false,
@@ -961,7 +1087,7 @@ export class SalesAgentRuntimeService {
         pauseOnHandoff: agent.pauseOnHandoff,
         replyText: this.applyTone(
           agent,
-          [summary, note, dryNote, confirm].filter(Boolean).join('\n\n'),
+          [summary, note, confirm].filter(Boolean).join('\n\n'),
           { keepLines: true },
         ),
       };
@@ -1048,6 +1174,16 @@ export class SalesAgentRuntimeService {
     }
 
     if (params.catalogMatches.length > 0) {
+      if (multiFacts.length >= 2) {
+        return {
+          escalate: false,
+          usedCatalog: true,
+          pauseOnHandoff: agent.pauseOnHandoff,
+          replyText: this.applyTone(agent, multiFacts.join(' '), {
+            keepLines: true,
+          }),
+        };
+      }
       const lines = params.catalogMatches.map((product) => {
         const blurb = product.descriptionShort
           ? ` — ${product.descriptionShort}`
@@ -1087,8 +1223,7 @@ export class SalesAgentRuntimeService {
         escalate: false,
         usedCatalog: true,
         pauseOnHandoff: agent.pauseOnHandoff,
-        replyText: this.applyTone(
-          agent,
+        replyText: withMulti(
           `${greeting}${intro}\n${lines.join('\n')}${faqNote}${moreHint}\n${closeHint}`,
         ),
       };
@@ -1227,53 +1362,56 @@ export class SalesAgentRuntimeService {
         ? 'El cliente solicitó fotos: las fotos disponibles de los productos que pongas en productNames se envían después de tu mensaje. No pegues enlaces de imágenes.'
         : 'El cliente no solicitó fotos: no se enviará ninguna imagen. productNames identifica los productos de tu respuesta, no autoriza enviar fotos. No digas que envías fotos.',
       'Comparte la url de un producto solo si el cliente pide más detalles o ver la tienda; no la pegues en cada mensaje.',
-      params.mode === 'playground'
-        ? 'Estás en playground de prueba: sé claro si algo es simulado.'
-        : '',
+      multiQuestionPromptGuide(params.salesState?.intents ?? []),
+      // Playground/shadow must reuse the same prompt as production so merchants
+      // preview channel behaviour; commerce stays dry-run via tools, not copy.
       'Devuelve SOLO JSON válido: {"replyText":"...","productNames":["nombre exacto, como aparece en catalog, de cada producto que recomiendas o del que hablas en replyText"],"escalate":false,"usedCatalog":true}. productNames va vacío si replyText no habla de un producto concreto. escalate=true solo si el cliente pide hablar con una persona o reclama por un pedido que ya hizo (no llega, llegó mal): en ese caso discúlpate, pide su número de pedido y dile que el equipo lo revisa y le escribe por aquí. Ofrecer confirmar un dato con el equipo no es escalar.',
     ]
       .filter(Boolean)
       .join('\n');
 
-    type ModelMessage = { role: string; content?: string | null; tool_calls?: Array<{ id: string; type: string; function: { name: string; arguments: string } }>; tool_call_id?: string };
     const current = {
       inboundText: params.inboundText, catalog: catalogJson,
       ...(params.browse ? { catalogOverview: { totalProducts: params.browse.overview.total, categories: params.browse.overview.categories.slice(0, 12).map((item) => ({ category: item.label, products: item.count })) }, storeUrl: params.browse.overview.storeUrl } : {}),
       faqs: params.faqMatches, journeyScripts: params.journeys, paymentLinkReady: Boolean(params.checkoutUrl),
     };
-    const messages: ModelMessage[] = params.salesState ? contextMessages(system, current, params.salesState, params.history, Number(this.config.get('SALES_CONTEXT_TOKEN_BUDGET', 16000)), Number(this.config.get('SALES_RECENT_MESSAGES_LIMIT', 20))) : [
+    const messages: AiChatMessage[] = params.salesState ? contextMessages(system, current, params.salesState, params.history, Number(this.config.get('SALES_CONTEXT_TOKEN_BUDGET', 16000)), Number(this.config.get('SALES_RECENT_MESSAGES_LIMIT', 20))) : [
       { role: 'system', content: system }, ...promptHistory(params.history).map((turn) => ({ role: turn.role === 'buyer' ? 'user' : 'assistant', content: turn.text })), { role: 'user', content: JSON.stringify(current) },
     ];
+    if (!this.models) return null;
     let content: string | null | undefined;
     let usage: { prompt_tokens?: number; completion_tokens?: number; prompt_tokens_details?: { cached_tokens?: number } } | undefined;
     for (let round = 0; round < 3; round++) {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${params.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: params.model,
-        temperature: 0.4,
-        max_tokens: MAX_OUTPUT_TOKENS,
-        response_format: { type: 'json_object' },
-        messages,
-        ...(params.salesState && this.registry && round < 2 ? { tools: this.registry.definitions(), tool_choice: 'auto', parallel_tool_calls: false } : {}),
-      }),
-      signal: AbortSignal.timeout(12000),
+    const generated = await this.models.generate({
+      task: 'sales_reply',
+      apiKey: params.apiKey,
+      model: params.model,
+      temperature: 0.4,
+      maxTokens: MAX_OUTPUT_TOKENS,
+      jsonObject: true,
+      timeoutMs: 12000,
+      messages,
+      ...(params.salesState && this.registry && round < 2
+        ? {
+            tools: this.registry.definitions() as AiToolDefinition[],
+            toolChoice: 'auto' as const,
+            parallelToolCalls: false,
+          }
+        : {}),
     });
 
-    if (!response.ok) {
+    if (!generated) {
       return null;
     }
 
-    const payload = (await response.json()) as {
-      choices?: Array<{ message?: ModelMessage }>;
-      usage?: { prompt_tokens?: number; completion_tokens?: number; prompt_tokens_details?: { cached_tokens?: number } };
+    const message = generated.message;
+    usage = {
+      prompt_tokens: (usage?.prompt_tokens ?? 0) + (generated.usage?.promptTokens ?? 0),
+      completion_tokens: (usage?.completion_tokens ?? 0) + (generated.usage?.completionTokens ?? 0),
+      prompt_tokens_details: generated.usage?.cachedPromptTokens != null
+        ? { cached_tokens: generated.usage.cachedPromptTokens }
+        : usage?.prompt_tokens_details,
     };
-    const message = payload.choices?.[0]?.message;
-    usage = { prompt_tokens: (usage?.prompt_tokens ?? 0) + (payload.usage?.prompt_tokens ?? 0), completion_tokens: (usage?.completion_tokens ?? 0) + (payload.usage?.completion_tokens ?? 0), prompt_tokens_details: payload.usage?.prompt_tokens_details };
     if (message?.tool_calls?.length && this.registry && params.salesState) {
       if (message.tool_calls.length > 3 || round === 2) return null;
       messages.push(message);

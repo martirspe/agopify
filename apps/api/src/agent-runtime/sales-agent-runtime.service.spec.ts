@@ -4,6 +4,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { buildAgentContext, ConversationTurn } from './conversation-context';
 import { SalesAgentRuntimeService } from './sales-agent-runtime.service';
 import { CatalogProductView, SalesAgentToolsService } from './sales-agent-tools.service';
+import { initialSalesState } from './sales-state';
+import { createTestAiModelRouter } from './models/ai-model.test-utils';
 
 const product: CatalogProductView = {
   id: 'product-1', handle: 'perfume-prueba', name: 'Perfume de prueba',
@@ -38,14 +40,20 @@ describe('sales agent buyer replies', () => {
       carrierRates: { olva: [900, 1200, 1600, 2200, 2800] },
     });
     jest.spyOn(tools, 'createOrderWithOptionalLink').mockResolvedValue({ traces: [] });
+    const config = {
+      get: (key: string, fallback?: unknown) =>
+        key === 'OPENAI_API_KEY' && aiEnabled ? 'fixture-key' : fallback,
+    } as unknown as ConfigService;
     runtime = new SalesAgentRuntimeService(
       { salesAgent: { findFirst: findAgent } } as unknown as PrismaService,
-      { get: (key: string) => key === 'OPENAI_API_KEY' && aiEnabled ? 'fixture-key' : undefined } as unknown as ConfigService,
+      config,
       tools,
       { getRuntimeKnowledge: async () => ({ faqs: [], journeys: [
         { title: 'Cierre', stage: 'CLOSE', scriptText: closeScript },
         { title: 'Descubrir', stage: 'DISCOVER', scriptText: discoverScript },
       ] }) } as unknown as KnowledgeService,
+      undefined,
+      createTestAiModelRouter(config),
     );
     fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
@@ -122,6 +130,86 @@ describe('sales agent buyer replies', () => {
       lines: [expect.objectContaining({ product })], delivery: expect.objectContaining({ kind: 'quote' }),
     }));
     expect(reply.images).toEqual([]);
+  });
+
+  it('keeps checkout alive through SJL district wording and a later payment-link ask', async () => {
+    const waiting: ConversationTurn[] = [{
+      role: 'agent',
+      text: 'Hay varios distritos con ese nombre:\n• Lima (Lima, Lima)\n• San Juan de Lurigancho (Lima, Lima)\n¿Cuál es el tuyo?',
+      productIds: [product.id],
+      pendingDelivery: { lines: [{ productId: product.id, variantId: null, quantity: 1 }] },
+    }];
+    const state = initialSalesState();
+    state.pendingLines = [{ productId: product.id, variantId: null, quantity: 1 }];
+    state.selectedProduct = { productId: product.id };
+    state.stage = 'CHECKOUT';
+    state.missingInformation = ['destination'];
+    state.intent = 'purchase';
+
+    jest.spyOn(tools, 'createOrderWithOptionalLink').mockResolvedValue({
+      traces: [
+        { name: 'create_order', status: 'ok', summary: 'Pedido creado' },
+        { name: 'create_payment_link', status: 'ok', summary: 'Link listo', data: { checkoutUrl: 'https://pay.test/x' } },
+      ],
+      orderId: 'ord-1',
+      orderRef: 'A-1',
+      checkoutUrl: 'https://pay.test/x',
+    });
+
+    const confirmed = await runtime.generateReply({
+      tenantId: 'tenant-1',
+      inboundText: 'San Juan de Lurigancho (Lima, Lima)',
+      history: waiting,
+      salesState: state,
+    });
+    expect(tools.createOrderWithOptionalLink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        delivery: expect.objectContaining({
+          kind: 'quote',
+          place: expect.objectContaining({ district: 'San Juan de Lurigancho' }),
+        }),
+      }),
+    );
+    expect(confirmed.checkoutUrl).toBe('https://pay.test/x');
+    expect(confirmed.escalate).toBe(false);
+
+    const afterLink = {
+      ...confirmed.salesState!,
+      pendingLines: [],
+      orderId: 'ord-1',
+      stage: 'PAYMENT_PENDING' as const,
+    };
+    (tools.createOrderWithOptionalLink as jest.Mock).mockClear();
+    jest.spyOn(tools, 'existingOrder').mockResolvedValue({
+      id: 'ord-1',
+      orderRef: 'A-1',
+      status: 'PENDING_PAYMENT',
+      checkoutUrl: 'https://pay.test/x',
+    });
+    const again = await runtime.generateReply({
+      tenantId: 'tenant-1',
+      inboundText: 'dame el link de pago porfavor',
+      history: [
+        ...waiting,
+        { role: 'buyer', text: 'San Juan de Lurigancho (Lima, Lima)' },
+        { role: 'agent', text: 'Listo, va el perfume.', paymentLink: true, productIds: [product.id] },
+      ],
+      salesState: afterLink,
+    });
+    expect(again.escalate).toBe(false);
+    expect(again.checkoutUrl).toBe('https://pay.test/x');
+    expect(again.replyText.toLowerCase()).not.toContain('varios distritos');
+  });
+
+  it('starts checkout from "quiero comprarlo" without handing off', async () => {
+    const reply = await runtime.generateReply({
+      tenantId: 'tenant-1',
+      inboundText: 'perfecto quiero comprarlo',
+      history,
+    });
+    expect(reply.escalate).toBe(false);
+    expect(reply.replyText).toContain('distrito');
+    expect(tools.createOrderWithOptionalLink).not.toHaveBeenCalled();
   });
 
   it('uses a buyer-facing closing question in fallback instead of the internal script', async () => {

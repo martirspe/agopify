@@ -18,6 +18,7 @@ import {
   aggregateSalesEvaluations,
   evaluateSalesTurn,
 } from './sales-evaluation';
+import { createTestAiModelRouter } from './models/ai-model.test-utils';
 
 export const shoe = (
   id: string,
@@ -77,18 +78,54 @@ describe('AI Sales Engine regression/evaluation', () => {
         checkoutUrl: 'https://example.test/pay',
         dryRun: true,
       });
+    const config = { get: (_key: string, value: unknown) => value } as ConfigService;
     runtime = new SalesAgentRuntimeService(
       {
         salesAgent: { findFirst: jest.fn().mockResolvedValue(null) },
       } as unknown as PrismaService,
-      { get: (_key: string, value: unknown) => value } as ConfigService,
+      config,
       tools,
       {
         getRuntimeKnowledge: async () => ({ faqs: [], journeys: [] }),
       } as unknown as KnowledgeService,
+      undefined,
+      createTestAiModelRouter(config),
     );
   });
   afterEach(() => jest.restoreAllMocks());
+
+  it('B: validator rejects re-asking destination already in customer memory', () => {
+    const state = observeBuyer(
+      initialSalesState(),
+      'Me llamo Ana. Vivo en Miraflores, Lima',
+      'm1',
+    );
+    expect(state.answeredQuestions.destination).toContain('Miraflores');
+    expect(
+      validateSalesResponse(
+        '¿Para qué distrito te envío?',
+        [products[0].name],
+        products,
+        state,
+      ),
+    ).toContain('repeated_question');
+  });
+
+  it('E: topic change keeps name/destination while clearing product selection', () => {
+    let state = observeBuyer(
+      initialSalesState(),
+      'Me llamo Ana. Busco zapatillas talla 40. Vivo en Miraflores, Lima',
+      'm1',
+    );
+    state.selectedProduct = { productId: 'one' };
+    state.recommendedProductIds = ['one', 'two'];
+    state = observeBuyer(state, 'Ahora busco mochilas', 'm2');
+    expect(state.selectedProduct).toBeUndefined();
+    expect(state.customerFacts.name?.value).toBe('Ana');
+    expect(state.customerFacts.destination?.value).toContain('Miraflores');
+    expect(state.requirements.size).toBeUndefined();
+    expect(state.requirements.need?.value.toLowerCase()).toContain('mochilas');
+  });
 
   it('A/F: retains size, color and budget without history and without asking them again', async () => {
     const state = observeBuyer(
@@ -160,6 +197,36 @@ describe('AI Sales Engine regression/evaluation', () => {
     expect(tools.createOrderWithOptionalLink).toHaveBeenCalled();
     expect(result.salesState?.stage).toBe('PAYMENT_PENDING');
     expect(result.salesState?.selectedProduct?.variantId).toBe('one-v40');
+  });
+
+  it('I: completeSalesTurn keeps orderDraftHash so retries reuse the same draft', () => {
+    const state = observeBuyer(
+      initialSalesState(),
+      'Quiero comprar Zapatilla negra Uno talla 40',
+      'm1',
+    );
+    const hash = 'a'.repeat(64);
+    const next = completeSalesTurn(
+      state,
+      {
+        tools: [
+          {
+            name: 'create_order',
+            status: 'ok',
+            summary: 'Pedido',
+            data: { orderId: 'ord-1', orderDraftHash: hash, replayed: false },
+          },
+        ],
+        escalate: false,
+        orderId: 'ord-1',
+        checkoutUrl: 'https://pay.example/1',
+        orderDraftHash: hash,
+      },
+      5,
+    );
+    expect(next.orderId).toBe('ord-1');
+    expect(next.orderDraftHash).toBe(hash);
+    expect(next.stage).toBe('PAYMENT_PENDING');
   });
   it('H: never creates an order for an exhausted product', async () => {
     const exhausted = {

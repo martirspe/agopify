@@ -19,6 +19,10 @@ import {
 } from '../integrations/integration-state';
 import { normalizeText, PendingLine } from './conversation-context';
 import type { DeliveryPlan } from './delivery-plan';
+import {
+  chatOrderCheckoutKey,
+  computeOrderDraftHash,
+} from './order-draft-hash';
 
 export type DeliveryQuote = Extract<DeliveryPlan, { kind: 'quote' }>;
 
@@ -329,7 +333,8 @@ export type ProductRef = {
   fromCart: boolean;
 };
 
-export type AgentRuntimeMode = 'production' | 'playground';
+/** `shadow` = AI Core evaluation without customer send or live commerce. */
+export type AgentRuntimeMode = 'production' | 'playground' | 'shadow';
 
 export type AgentToolName =
   | 'search_catalog'
@@ -338,7 +343,9 @@ export type AgentToolName =
   | 'create_order'
   | 'create_payment_link'
   | 'quote_shipping'
-  | 'escalate';
+  | 'escalate'
+  /** Playground / audit: product photo that Meta would send after the text. */
+  | 'send_product_image';
 // Read tools and backend state traces share the existing audit contract.
 
 export type AgentToolTrace = {
@@ -748,6 +755,7 @@ export class SalesAgentToolsService {
       question: string;
       answer: string;
       tags: string[];
+      topic?: string | null;
     }>,
     retrievedIds: string[] = [],
   ): {
@@ -759,11 +767,12 @@ export class SalesAgentToolsService {
       .split(/\s+/)
       .map((token) => token.replace(/[^\p{L}\p{N}]/gu, ''))
       .filter((token) => token.length > 2);
+    const topicHint = this.inferFaqTopic(query);
 
     const scored = faqs
       .map((faq) => {
         const haystack =
-          `${faq.question} ${faq.answer} ${faq.tags.join(' ')}`.toLowerCase();
+          `${faq.topic ?? ''} ${faq.question} ${faq.answer} ${faq.tags.join(' ')}`.toLowerCase();
         const score = tokens.reduce(
           (acc, token) => (haystack.includes(token) ? acc + 1 : acc),
           0,
@@ -773,7 +782,16 @@ export class SalesAgentToolsService {
         )
           ? 2
           : 0;
-        return { faq, score: score + questionBoost + (retrievedIds.includes(faq.id) ? 5 : 0) };
+        const topicBoost =
+          topicHint && faq.topic === topicHint ? 3 : 0;
+        return {
+          faq,
+          score:
+            score +
+            questionBoost +
+            topicBoost +
+            (retrievedIds.includes(faq.id) ? 5 : 0),
+        };
       })
       .filter((item) => item.score > 0)
       .sort((a, b) => b.score - a.score)
@@ -917,7 +935,9 @@ export class SalesAgentToolsService {
     /** Reference the buyer sees for the order (code or short id). */
     orderRef?: string;
     checkoutUrl?: string;
+    orderDraftHash?: string;
     dryRun: boolean;
+    replayed?: boolean;
   }> {
     const lines = params.lines.map((line) => ({
       ...line,
@@ -937,9 +957,36 @@ export class SalesAgentToolsService {
     const label = lines
       .map((line) => `${line.quantity}× ${line.title}`)
       .join(', ');
+    const conversationId = params.conversationId?.trim() || null;
+    const orderDraftHash = conversationId
+      ? computeOrderDraftHash({
+          tenantId: params.tenantId,
+          conversationId,
+          currency,
+          lines: lines.map((line) => ({
+            productId: line.product.id,
+            variantId: line.variant?.id ?? null,
+            quantity: line.quantity,
+            unitCents: line.unitCents,
+          })),
+          shippingCents: shipping?.cents ?? 0,
+          districtCode: params.delivery?.place?.code ?? null,
+        })
+      : undefined;
+    const idempotency =
+      conversationId && orderDraftHash
+        ? {
+            checkoutKey: chatOrderCheckoutKey(
+              params.tenantId,
+              conversationId,
+              orderDraftHash,
+            ),
+            requestHash: orderDraftHash,
+          }
+        : undefined;
 
-    if (params.mode === 'playground') {
-      const fakeOrderId = `pg_order_${lines[0].product.handle}`;
+    if (params.mode === 'playground' || params.mode === 'shadow') {
+      const fakeOrderId = `pg_order_${(orderDraftHash ?? lines[0].product.handle).slice(0, 16)}`;
       const fakeUrl = params.createPaymentLink
         ? `https://playground.local/checkout/${fakeOrderId}`
         : undefined;
@@ -953,6 +1000,7 @@ export class SalesAgentToolsService {
             orderId: fakeOrderId,
             totalCents,
             currency,
+            orderDraftHash: orderDraftHash ?? null,
           },
         },
       ];
@@ -968,15 +1016,22 @@ export class SalesAgentToolsService {
         traces,
         orderId: fakeOrderId,
         checkoutUrl: fakeUrl,
+        orderDraftHash,
         dryRun: true,
       };
     }
 
     try {
+      const before = idempotency
+        ? await this.prisma.order.findUnique({
+            where: { checkoutKey: idempotency.checkoutKey },
+            select: { id: true },
+          })
+        : null;
       const order = await this.ordersService.create(
         params.tenantId,
         {
-          conversationId: params.conversationId ?? undefined,
+          conversationId: conversationId ?? undefined,
           customerName: params.customerName ?? undefined,
           customerPhone: params.customerPhone ?? undefined,
           currency,
@@ -991,19 +1046,25 @@ export class SalesAgentToolsService {
           sendLinkToChat: false,
         },
         shipping,
+        idempotency,
       );
+      const replayed = Boolean(before && before.id === order.id);
 
       const payment = order.payments?.[0];
       const traces: AgentToolTrace[] = [
         {
           name: 'create_order',
           status: 'ok',
-          summary: `Pedido creado: ${label}`,
+          summary: replayed
+            ? `Pedido reutilizado (mismo borrador): ${label}`
+            : `Pedido creado: ${label}`,
           data: {
             dryRun: false,
             orderId: order.id,
             totalCents: order.totalCents,
             currency: order.currency,
+            orderDraftHash,
+            replayed,
           },
         },
       ];
@@ -1013,12 +1074,15 @@ export class SalesAgentToolsService {
           name: 'create_payment_link',
           status: payment?.checkoutUrl ? 'ok' : 'error',
           summary: payment?.checkoutUrl
-            ? 'Link de pago generado para el comprador'
+            ? replayed
+              ? 'Link de pago existente reutilizado'
+              : 'Link de pago generado para el comprador'
             : 'No se pudo generar el link de pago',
           data: {
             dryRun: false,
             paymentId: payment?.id,
             checkoutUrl: payment?.checkoutUrl ?? null,
+            replayed,
           },
         });
       }
@@ -1028,7 +1092,9 @@ export class SalesAgentToolsService {
         orderId: order.id,
         orderRef: orderReference(order),
         checkoutUrl: payment?.checkoutUrl ?? undefined,
+        orderDraftHash,
         dryRun: false,
+        replayed,
       };
     } catch (error) {
       return {
@@ -1067,6 +1133,26 @@ export class SalesAgentToolsService {
     };
   }
 
+  /** Cheap topic hint so shipping/returns questions prefer matching FAQ buckets. */
+  private inferFaqTopic(query: string): string | null {
+    if (/\b(envi[oa]|delivery|despacho|courier|olva|shalom|provincia)\b/.test(query)) {
+      return 'SHIPPING';
+    }
+    if (/\b(devoluci|cambio|cambiar|reembolso|garant[ií]a)\b/.test(query)) {
+      return 'RETURNS';
+    }
+    if (/\b(pago|yape|tarjeta|transferencia|cobro|mercadopago)\b/.test(query)) {
+      return 'PAYMENTS';
+    }
+    if (/\b(horario|atienden|abierto|cierran)\b/.test(query)) {
+      return 'HOURS';
+    }
+    if (/\b(qui[eé]nes son|donde quedan|ubicaci[oó]n|tienda f[ií]sica)\b/.test(query)) {
+      return 'ABOUT';
+    }
+    return null;
+  }
+
   escalateTrace(reason: string): AgentToolTrace {
     return {
       name: 'escalate',
@@ -1093,7 +1179,7 @@ export class SalesAgentToolsService {
   }
 
   wantsPurchase(text: string): boolean {
-    return /\b(?:comprar|hacer\s+(un|el|mi|este)\s+pedido|pagar|checkout|link\s+de\s+pago|quiero\s+(ese|este|esa|esta|el|la)|lo\s+quiero|la\s+quiero|l[oa]\s+(llevo|compro|pido)|(separ|reserv|apart)(a|as|ame|alo|ala|amelo|amela|ar)|me\s+l[oa]\s+(separas|reservas|envias|mandas))\b/.test(
+    return /\b(?:comprar(?:lo|la|los|las)?|hacer\s+(un|el|mi|este)\s+pedido|pagar(?:lo|la)?|checkout|link\s+de\s+pago|(?:pasa|pasame|manda|mandame|envia|enviame|dame)\s+(?:el\s+)?link|quiero\s+(ese|este|esa|esta|el|la)|lo\s+quiero|la\s+quiero|l[oa]\s+(llevo|compro|pido)|(separ|reserv|apart)(a|as|ame|alo|ala|amelo|amela|ar)|me\s+l[oa]\s+(separas|reservas|envias|mandas)|al\s+toke|de\s+una|ya\s+pues)\b/.test(
       normalizeText(text),
     );
   }

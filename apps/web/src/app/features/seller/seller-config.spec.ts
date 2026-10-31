@@ -2,7 +2,11 @@ import { resolveSellerPreset, SELLER_PRESETS } from './seller-config';
 
 describe('personality profile selection', () => {
   const preset = SELLER_PRESETS[0];
-  const settings = { ...preset, promptMode: 'guided' };
+  const settings = {
+    ...preset,
+    promptMode: 'guided',
+    personalityPreset: preset.id,
+  };
   it('recognizes an unchanged preset regardless of technique ordering', () => {
     expect(resolveSellerPreset({ ...settings, salesTechniques: [...settings.salesTechniques].reverse() })).toBe(preset.id);
   });

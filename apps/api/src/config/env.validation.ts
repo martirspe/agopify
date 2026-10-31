@@ -19,8 +19,14 @@ const AWS_REGION = /^[a-z]{2}(-[a-z]+)+-\d$/;
 const TURNSTILE_KEY = /^[\w-]{20,128}$/;
 
 class EnvironmentVariables {
-  @IsOptional() @IsIn(['legacy', 'sales-engine-v2'])
+  /** `ai-core` ≈ durable path; `shadow` = durable process without customer send. */
+  @IsOptional() @IsIn(['legacy', 'sales-engine-v2', 'ai-core', 'shadow'])
   SALES_ENGINE_MODE?: string;
+  /** Chat provider id registered in agent-runtime/models (default openai). */
+  @IsOptional() @IsIn(['openai'])
+  SALES_MODEL_PROVIDER?: string;
+  @IsOptional() @IsIn(['openai'])
+  SALES_MODEL_FALLBACK_PROVIDER?: string;
   @IsOptional() @IsInt() @Min(0) @Max(10000)
   SALES_DEBOUNCE_MS?: number;
   @IsOptional() @IsInt() @Min(10) @Max(80)

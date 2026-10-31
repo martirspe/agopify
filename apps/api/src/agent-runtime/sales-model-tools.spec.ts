@@ -8,6 +8,7 @@ import {
 } from './sales-agent-tools.service';
 import { SalesToolRegistry } from './sales-tool-registry.service';
 import { initialSalesState, observeBuyer } from './sales-state';
+import { createTestAiModelRouter } from './models/ai-model.test-utils';
 
 describe('bounded model tool calling and grounding', () => {
   const product: CatalogProductView = {
@@ -70,19 +71,21 @@ describe('bounded model tool calling and grounding', () => {
         trace: { name: 'get_price', status: 'ok', summary: 'fixture' },
         products: [structuredClone(product)],
       });
+    const config = {
+      get: (key: string, fallback: unknown) =>
+        key === 'OPENAI_API_KEY' ? 'fixture' : fallback,
+    } as ConfigService;
     runtime = new SalesAgentRuntimeService(
       {
         salesAgent: { findFirst: jest.fn().mockResolvedValue(null) },
       } as unknown as PrismaService,
-      {
-        get: (key: string, fallback: unknown) =>
-          key === 'OPENAI_API_KEY' ? 'fixture' : fallback,
-      } as ConfigService,
+      config,
       tools,
       {
         getRuntimeKnowledge: async () => ({ faqs: [], journeys: [] }),
       } as unknown as KnowledgeService,
       { definitions: () => [], execute } as unknown as SalesToolRegistry,
+      createTestAiModelRouter(config),
     );
     fetchSpy = jest.spyOn(global, 'fetch');
   });

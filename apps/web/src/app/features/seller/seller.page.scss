@@ -88,6 +88,34 @@ select {
   gap: var(--ds-space-4);
 }
 
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: var(--ds-space-3);
+  margin: 0;
+
+  div {
+    display: grid;
+    gap: var(--ds-space-1);
+    padding: var(--ds-space-3);
+    border: 1px solid var(--ds-color-border);
+    border-radius: var(--ds-radius-md);
+    background: var(--ds-color-surface);
+  }
+
+  dt {
+    margin: 0;
+    font-size: var(--ds-type-sm);
+    color: var(--ds-color-text-secondary);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--ds-type-lg, 1.125rem);
+    font-weight: 600;
+  }
+}
+
 .preset-grid,
 .mode-grid {
   display: grid;
@@ -118,6 +146,12 @@ select {
 
 .preset:hover {
   border-color: color-mix(in srgb, var(--ds-color-ink) 30%, var(--ds-color-border));
+}
+
+.preset:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .preset.is-active {

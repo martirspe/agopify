@@ -6,7 +6,7 @@ import { MARKETING_PLANS } from './marketing-content';
 export const MARKETING_ORIGIN = 'https://marrso.com';
 export const MARKETING_TITLE = 'VendedorIA | Tu vendedor IA en WhatsApp e Instagram';
 export const MARKETING_DESCRIPTION =
-  'Convierte conversaciones en pedidos con tu vendedor IA en WhatsApp e Instagram. Catálogo, cobros y tienda web en un solo lugar. Prueba 14 días sin tarjeta.';
+  'Convierte conversaciones en pedidos con tu vendedor IA en WhatsApp e Instagram. Catálogo y cobros en el chat. Prueba 14 días sin tarjeta.';
 
 /** Runs in the Angular injection context and also during prerendering. */
 export function installMarketingSeo(): () => void {

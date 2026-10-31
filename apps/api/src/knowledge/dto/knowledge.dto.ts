@@ -1,4 +1,6 @@
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
   IsArray,
   IsBoolean,
   IsIn,
@@ -8,6 +10,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { KNOWLEDGE_TOPICS } from '../knowledge-topics';
 
 export class CreateKnowledgeFaqDto {
   @ApiProperty({ example: '¿Hacen envíos a provincia?' })
@@ -21,6 +24,11 @@ export class CreateKnowledgeFaqDto {
   @MinLength(4)
   @MaxLength(2000)
   answer!: string;
+
+  @ApiPropertyOptional({ enum: KNOWLEDGE_TOPICS, default: 'GENERAL' })
+  @IsOptional()
+  @IsIn([...KNOWLEDGE_TOPICS])
+  topic?: (typeof KNOWLEDGE_TOPICS)[number];
 
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()
@@ -49,6 +57,11 @@ export class UpdateKnowledgeFaqDto {
   @MaxLength(2000)
   answer?: string;
 
+  @ApiPropertyOptional({ enum: KNOWLEDGE_TOPICS })
+  @IsOptional()
+  @IsIn([...KNOWLEDGE_TOPICS])
+  topic?: (typeof KNOWLEDGE_TOPICS)[number];
+
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsArray()
@@ -75,6 +88,24 @@ export class ImportKnowledgePasteDto {
   @MinLength(8)
   @MaxLength(20000)
   rawText!: string;
+
+  @ApiPropertyOptional({ enum: KNOWLEDGE_TOPICS, default: 'GENERAL' })
+  @IsOptional()
+  @IsIn([...KNOWLEDGE_TOPICS])
+  topic?: (typeof KNOWLEDGE_TOPICS)[number];
+}
+
+export class ApplyKnowledgeTemplatesDto {
+  @ApiProperty({
+    enum: KNOWLEDGE_TOPICS,
+    isArray: true,
+    example: ['SHIPPING', 'RETURNS', 'PAYMENTS'],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(KNOWLEDGE_TOPICS.length)
+  @IsIn([...KNOWLEDGE_TOPICS], { each: true })
+  topics!: Array<(typeof KNOWLEDGE_TOPICS)[number]>;
 }
 
 export class CreateJourneyTemplateDto {
