@@ -19,55 +19,99 @@ apps/store   Tienda pública por tenant (SSR, `{slug}.dominio`)
 packages/*   Design system, tokens y contratos compartidos
 ```
 
-## Desarrollo (todo en Docker)
+## Desarrollo (Docker)
 
-Requisito: Docker Desktop con Compose v2. No hace falta Node ni Postgres en el host.
+Todo el día a día corre en Docker. No hace falta instalar Node ni Postgres en el host.
+
+### Requisitos
+
+- Docker Desktop (Compose v2) en marcha
+- En la raíz del repo: `package.json` y `docker-compose.dev.yml` (para `npm run …`)
+
+### Primer arranque / día a día
 
 ```bash
-npm run dev            # mínimo: postgres + api + consola
-npm run dev:store      # + tienda en :4300
-npm run dev:redis      # + Redis (opcional; REDIS_URL en apps/api/.env)
-npm run docker:logs    # logs de api y web
-npm run docker:ps
-npm run docker:down
-npm run test:docker    # tests unitarios + e2e en una base aislada vendedoria_test
+npm run dev
 ```
 
-| Servicio | URL |
-|----------|-----|
-| Consola | http://localhost:4201 |
-| API | http://localhost:3100/api/v1/health · Swagger http://localhost:3100/docs |
-| Postgres | `localhost:5432` (`postgres` / `postgres` / db `vendedoria`) |
-| Tiendas | http://{slug}.localhost:4300 (solo con `npm run dev:store`) |
+Eso:
 
-- Los puertos no chocan con selecta (3000/4200/5433): ambos stacks pueden correr a la vez.
-- Usa siempre `localhost`: los puertos solo escuchan en loopback y, en desarrollo, `http://127.0.0.1:*` (enlaces de Docker Desktop) redirige a `http://localhost:*` con la misma ruta.
-- Guardar un archivo recarga la API (Nest watch) y la consola (`ng serve` con sondeo).
-- Cambios en dependencias (`package.json`): `npm run dev` de nuevo (el one-shot `deps` ejecuta `npm ci`).
-- Migraciones nuevas: `docker compose -f docker-compose.dev.yml exec api npx prisma migrate dev --name <nombre>`.
-- Una sola vez, tras migrar del stack anterior: `npm run docker:clean-legacy` (conserva la base).
-- Operadores de la plataforma (SUPERADMIN / ADMIN): `docker compose -f docker-compose.dev.yml exec api npm run create-admin` (interactivo; `-- --help` muestra las opciones). Entran por `POST /api/v1/platform/auth/login`, con una sesión separada de la de los negocios. Alta de todos los tipos de usuario: [`docs/USUARIOS.md`](./docs/USUARIOS.md).
-- Meta webhook: `GET/POST /api/v1/webhooks/meta/whatsapp`
+1. Crea o completa `apps/api/.env` desde `.env.example` (secretos locales aleatorios si faltan).
+2. Levanta **solo** lo necesario: Postgres + API + consola (`web`).  
+   `deps` es un one-shot (`npm ci` + Prisma generate) y sale; no queda un contenedor de más corriendo.
+3. Aplica migraciones (`0001_init` en base vacía) y arranca Nest / Angular con recarga en caliente.
+
+Cuando `docker compose ps` muestre `api` y `web` healthy:
+
+| Qué | URL |
+|-----|-----|
+| Consola | http://localhost:4201 |
+| API / health | http://localhost:3100/api/v1/health |
+| Swagger | http://localhost:3100/docs |
+| Postgres (host) | `localhost:5432` — usuario/clave/db: `postgres` / `postgres` / `vendedoria` |
+
+Usa siempre **`localhost`** (no `127.0.0.1` en el navegador): los puertos escuchan en loopback y los enlaces de Docker Desktop redirigen a `localhost`.
+
+### Servicios opcionales
+
+No son obligatorios para vender por WhatsApp ni para la consola:
+
+| Comando | Qué añade | Cuándo |
+|---------|-----------|--------|
+| `npm run dev:store` | Tienda en http://`{slug}`.localhost:4300 | Probar storefront / checkout web |
+| `npm run dev:redis` | Redis | Recuperación / caché conversion; luego `REDIS_URL=redis://redis:6379/0` en `apps/api/.env` y reinicia el API |
+| `npm run dev:all` | Tienda + Redis | Stack completo local |
+| Profile `recommendations-vector` | Qdrant | Búsqueda semántica (sin él basta el full-text de Postgres) |
+
+```bash
+docker compose -f docker-compose.dev.yml --profile recommendations-vector up -d qdrant
+# y en apps/api/.env: QDRANT_URL=http://qdrant:6333
+```
+
+### Comandos útiles
+
+```bash
+npm run docker:ps      # estado
+npm run docker:logs    # api + web (añade store si lo levantaste: npm run docker:logs -- store)
+npm run docker:down    # apaga el stack (incluye perfiles)
+npm run test:docker    # unit + e2e en DB aislada vendedoria_test (stack core debe estar up)
+```
+
+### Configuración local
+
+- Variables: `apps/api/.env` (plantilla: [`.env.example`](./.env.example)). Docker sobrescribe `PORT`, `DATABASE_URL`, `CORS_ORIGIN` y URLs públicas dentro del contenedor.
+- `OPENAI_API_KEY` opcional: sin clave el vendedor usa respuestas deterministas; con clave, playground y canales usan el modelo.
+- Meta / Turnstile / Mercado Pago: solo si pruebas esas integraciones (ver comentarios en `.env.example`).
+
+### Flujo habitual de código
+
+- Guardar un archivo recarga API (Nest `--watch`) y consola (`ng serve` con sondeo; necesario en Docker Desktop/Windows).
+- Tras cambiar `package.json` / lock: `npm run dev` otra vez para que `deps` rehaga `npm ci`.
+- Migración nueva:  
+  `docker compose -f docker-compose.dev.yml exec api npx prisma migrate dev --name <snake_case>`
+- Operador de plataforma (SUPERADMIN/ADMIN):  
+  `docker compose -f docker-compose.dev.yml exec api npm run create-admin`  
+  Detalle de usuarios: [`docs/USUARIOS.md`](./docs/USUARIOS.md).
+- Una sola vez si vienes del stack Docker antiguo: `npm run docker:clean-legacy` (conserva el volumen de Postgres).
+- Puertos distintos de selecta (3000/4200/5433): ambos proyectos pueden correr a la vez.
+
+### Smoke rápido tras levantar
+
+1. Abre la consola → registro o login.
+2. Completa el vendedor (Empezar / perfil).
+3. **Playground** del vendedor: un saludo y una pregunta de catálogo.
+4. (Opcional) Canales → simular mensaje entrante → Inbox → pedido / link de pago.
 
 ## Producción (Docker)
 
-Un comando en el VPS, igual que Reclamo Fácil y gohabix: [`docs/DEPLOY.md`](./docs/DEPLOY.md).
+Guía completa: [`docs/DEPLOY.md`](./docs/DEPLOY.md).
 
 ```bash
 cp .env.production.example .env   # dominio, CERTBOT_EMAIL y CLOUDFLARE_API_TOKEN
 bash scripts/deploy.sh            # actualizar: bash scripts/deploy.sh --pull
 ```
 
-Web comercial en `marrso.com`, consola en `app.marrso.com` y tiendas en `{slug}.marrso.com`. Fotos en S3/CloudFront y correos con SES (opcional): infraestructura en Terraform (`infra/terraform/`), guía paso a paso en [docs/TERRAFORM.md](docs/TERRAFORM.md).
-
-### Local WhatsApp slice smoke test
-
-1. Register/login in the web app
-2. Open **Vendedor** → completa personalidad, welcome y handoff (mira el score 0–200)
-3. Open **Canales** → save Phone Number ID + access token (or placeholders for local sim)
-4. Use **Simular mensaje entrante**
-5. Open **Mensajes** → Crear pedido → genera link de pago
-6. Open **Pedidos** → Simular pago (mock) o webhook Mercado Pago
+Fotos S3/CloudFront y SES (opcional): Terraform en `infra/terraform/`, guía en [`docs/TERRAFORM.md`](./docs/TERRAFORM.md).
 
 ## Build
 

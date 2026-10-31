@@ -1,11 +1,8 @@
 # VendedorIA — desarrollo local con recarga en caliente.
+# Instrucciones: README.md → «Desarrollo (Docker)».
 #
-# Por defecto solo lo necesario: postgres + api + consola (web).
-# Opcional: --profile store | redis | recommendations-vector
-#
-# Uso: npm run dev
-#      npm run dev:store   (añade tienda)
-#      npm run docker:down | docker:logs | docker:ps | test:docker
+# Por defecto: postgres + api + consola. Opcional: store | redis | recommendations-vector.
+# Uso: npm run dev | dev:store | dev:redis | dev:all | docker:down | docker:logs | test:docker
 
 name: vendedoria-dev
 

@@ -38,7 +38,7 @@ Multi-tenant SaaS: AI sales agents on WhatsApp/Instagram ("del hola al pago") pl
 - Docker/deploy: `docker-compose*.yml`, `Dockerfile`, `docker/nginx/`, `scripts/docker.mjs`, `scripts/deploy.sh`, `docs/DEPLOY.md`.
 
 ## Canonical commands (repo root)
-- `npm run dev` (postgres + api + console only) · `npm run dev:store` / `dev:redis` / `dev:all` · `npm run docker:logs` · `npm run docker:down`
+- Dev Docker: see `README.md` → Desarrollo. Canonical: `npm run dev` (postgres + api + console). Optional: `dev:store` / `dev:redis` / `dev:all`.
 - `npm run test:docker` (api unit + e2e on isolated `vendedoria_test`; dev stack must be up)
 - `npm run build:api` · `npm run build:web` · `npm run build:store`
 - `npm run lint` (api eslint with `--fix` + web dev build; it rewrites files)

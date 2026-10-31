@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 - Config: `.env.example` / `.env.production.example` recortados a lo necesario para arrancar; features opcionales comentadas; knobs `SALES_*` de tuning viven en defaults de código (`SALES_ENGINE_MODE` default `ai-core`).
-- Docker dev: `npm run dev` solo levanta postgres + api + consola; tienda y Redis van en perfiles (`dev:store`, `dev:redis`, `dev:all`).
+- Docker dev: `npm run dev` solo levanta postgres + api + consola; tienda y Redis van en perfiles (`dev:store`, `dev:redis`, `dev:all`). Guía de arranque en `README.md`.
 - Consola: textos listos para producción (sin guía operativa, jerga interna ni copy de prueba en formularios y pantallas del merchant).
 - Comercial: planes y marketing enfocados en el vendedor IA; la tienda web queda como «próximamente / acceso anticipado», sin promesa oficial en el precio del plan.
 - Planes: lo común (WhatsApp, Instagram, catálogo, cobros) se muestra una sola vez; cada tarjeta solo lista capacidad (chats, productos, usuarios).
