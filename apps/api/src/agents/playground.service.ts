@@ -155,6 +155,29 @@ export class PlaygroundService {
         typeof (error as { code: unknown }).code === 'string'
           ? (error as { code: string }).code
           : null;
+      const meta =
+        error &&
+        typeof error === 'object' &&
+        'meta' in error &&
+        error.meta &&
+        typeof error.meta === 'object'
+          ? (error.meta as Record<string, unknown>)
+          : null;
+      // Prefer Prisma meta (column/table) over message scrubbing — messages often
+      // contain quoted identifiers that the scrubber erased entirely.
+      const metaHint = meta
+        ? [
+            meta.code,
+            meta.message,
+            meta.column_name,
+            meta.table,
+            meta.modelName,
+            meta.field_name,
+          ]
+            .filter((value) => typeof value === 'string' && value.length > 0)
+            .map((value) => String(value).slice(0, 120))
+            .join(' | ')
+        : null;
       this.logger.warn(
         JSON.stringify({
           event: 'playground_turn_failed',
@@ -162,10 +185,15 @@ export class PlaygroundService {
           sessionId: session.id,
           errorClass: error instanceof Error ? error.name : 'unknown',
           prismaCode,
-          // Short, non-PII hint (e.g. missing column) — never log buyer text.
+          metaHint: metaHint || null,
+          // Short, non-PII hint — strip quoted literals, keep structure.
           errorHint:
             error instanceof Error
-              ? error.message.replace(/".*?"/g, '"…"').slice(0, 180)
+              ? error.message
+                  .replace(/`[^`]+`/g, '`…`')
+                  .replace(/"[^"]+"/g, '"…"')
+                  .replace(/\s+/g, ' ')
+                  .slice(0, 220)
               : null,
         }),
       );

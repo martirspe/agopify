@@ -17,7 +17,7 @@
 - Consola del vendedor: se quitan campos que no sumaban (estilo de venta, paleta de emojis, palabras a evitar, texto de objeciones) y se reducen las técnicas a 5 énfasis opcionales; el método base del runtime ya cubre el resto.
 - Conocimiento del negocio: las FAQ se organizan por tema (envíos, cambios, pagos, horarios, negocio); plantillas de políticas sugeridas; el vendedor prioriza respuestas del tema correcto sin un RAG paralelo.
 - Motor de ventas: AI Core es el camino de producto por defecto (`ai_core`); se retira de la consola el selector de motor y el panel de migración progresiva (sin clientes en producción aún).
-- Base de datos: historial Prisma unificado de nuevo en una sola `0001_init` (schema actual) con baseline seguro (`scripts/prisma-baseline-squash.sh`) que no borra datos en producción; columnas `aiRuntimeMode` / `KnowledgeFaq.topic` cubiertas por ensure idempotente.
+- Base de datos: historial Prisma unificado de nuevo en una sola `0001_init` (schema actual) con baseline seguro (`scripts/prisma-baseline-squash.sh`) que no borra datos en producción; columnas `aiRuntimeMode` / `KnowledgeFaq.topic` y SQL custom de búsqueda (`catalog_search_document` + triggers) cubiertos por ensure idempotente.
 - Playground: logs de fallo con código Prisma y hint sin PII; `messageId` único por turno de prueba.
 - Productos: exportar paquete ZIP (`catalog.json` + fotos) listo para reimportar; el CSV filtrado se mantiene como exportación de lista.
 - Productos: editor reorganizado en jerarquía (Identidad → Fotos → Precio → Inventario/entrega → Opciones → Descripción detallada); solo campos operativos para tienda y agente; precio tachado y publicación en el panel; sin ficha estructurada (FAQs, beneficios, etc.).

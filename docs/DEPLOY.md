@@ -133,7 +133,7 @@ bash scripts/prisma-baseline-squash.sh   # ensure columnas + baseline; no DROP S
 bash scripts/deploy.sh
 ```
 
-El script aplica ALTERs idempotentes si faltan columnas recientes, comprueba que el schema coincida con `schema.prisma` y deja una sola fila `0001_init` aplicada. No lo vuelvas a correr salvo un nuevo squash.
+El script aplica ALTERs idempotentes si faltan columnas recientes, restaura SQL custom (búsqueda full-text `catalog_search_document`, triggers del outbox y semillas de `CatalogCategory`), comprueba que el schema coincida con `schema.prisma` y deja una sola fila `0001_init` aplicada. No lo vuelvas a correr salvo un nuevo squash.
 
 Cambios de schema **después** de este squash: migraciones aditivas nuevas (`prisma migrate dev`), nunca reeditar `0001_init` a mano.
 
