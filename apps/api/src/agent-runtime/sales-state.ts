@@ -8,6 +8,7 @@ import {
   extractBuyerIntents,
   toSalesStateIntent,
 } from './buyer-intents';
+import { isOpenProductNeed } from './conversation-understanding';
 import { applyTopicChange } from './memory-policy';
 import {
   isBundleProduct,
@@ -288,16 +289,45 @@ export function observeBuyer(
     next.intent = 'handoff';
     next.handoffReason = analysis.primary;
   }
+  const switchingProductThread =
+    isOpenProductNeed(text) &&
+    Boolean(
+      next.selectedProduct ||
+        next.pendingLines.length ||
+        next.recommendedProductIds.length ||
+        next.orderId ||
+        [
+          'CHECKOUT',
+          'PAYMENT_PENDING',
+          'PRODUCT_SELECTED',
+          'RECOMMENDATION',
+          'HUMAN_HANDOFF',
+        ].includes(next.stage),
+    );
   if (
     analysis.primary === 'topic_change' ||
+    switchingProductThread ||
     /\b(tambien quiero ver|cambiando de tema|ahora busco|otra cosa|quiero ver (?:tambien )?(?:mochilas|zapatillas|perfumes|polos|pantalones))\b/.test(
       normalized,
     )
   ) {
     Object.assign(next, applyTopicChange(next));
+    // A new need leaves any prior unpaid chat order with the operator; this thread shops again.
+    next.orderId = undefined;
+    next.orderDraftHash = undefined;
+    next.paymentStatus = undefined;
+    if (
+      next.stage === 'HUMAN_HANDOFF' ||
+      next.stage === 'PAYMENT_PENDING' ||
+      next.stage === 'CHECKOUT'
+    ) {
+      next.stage = 'DISCOVERY';
+    }
     next.intents = analysis.intents;
     if (
-      /\b(?:busco|buscando|necesito|quiero ver)\b/.test(normalized) ||
+      /\b(?:busco|buscando|necesito|quiero ver|quiero comprar)\b/.test(
+        normalized,
+      ) ||
       /\bquiero (?:unos|unas|una|un) \S/.test(normalized)
     ) {
       remember('need', text.slice(0, 600));

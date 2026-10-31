@@ -3,6 +3,7 @@ import {
   confirmsPurchase,
   detectAgentPendingAsk,
   filterStandaloneProducts,
+  isOpenProductNeed,
   parseBuyerQuantity,
   pickSellerRecommendation,
   preferNonBundleProducts,
@@ -32,6 +33,19 @@ const product = (id: string, name: string, cents = 15000) => ({
 });
 
 describe('conversation understanding', () => {
+  it('detects open catalog needs without treating anaphora as a new search', () => {
+    expect(isOpenProductNeed('Quiero comprar un desodorante para mujer')).toBe(
+      true,
+    );
+    expect(isOpenProductNeed('Busco un café molido')).toBe(true);
+    expect(isOpenProductNeed('Necesito zapatillas negras')).toBe(true);
+    expect(isOpenProductNeed('quiero comprar Perfume de prueba')).toBe(true);
+    expect(isOpenProductNeed('perfecto quiero comprarlo')).toBe(false);
+    expect(isOpenProductNeed('Lo quiero')).toBe(false);
+    expect(isOpenProductNeed('dame el link de pago')).toBe(false);
+    expect(isOpenProductNeed('Si')).toBe(false);
+  });
+
   it('detects prepare-purchase and choose-option asks', () => {
     expect(
       detectAgentPendingAsk([

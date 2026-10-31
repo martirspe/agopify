@@ -212,6 +212,50 @@ describe('sales agent buyer replies', () => {
     expect(tools.createOrderWithOptionalLink).not.toHaveBeenCalled();
   });
 
+  it('searches instead of ordering on an open product need after a prior checkout', async () => {
+    const deodorant: CatalogProductView = {
+      ...product,
+      id: 'deo-1',
+      handle: 'deo-mujer',
+      name: 'Desodorante floral',
+      descriptionShort: 'Para mujer · 150 ml',
+      imageUrl: 'https://example.com/deo.jpg',
+    };
+    jest.spyOn(tools, 'listAvailableProducts').mockResolvedValue([product, deodorant]);
+    const state = initialSalesState();
+    state.pendingLines = [{ productId: product.id, variantId: null, quantity: 1 }];
+    state.selectedProduct = { productId: product.id };
+    state.stage = 'CHECKOUT';
+    state.orderId = 'ord-old';
+    state.requirements.destination = {
+      value: 'San Juan de Lurigancho, Lima, Lima',
+      source: 'buyer',
+      confidence: 1,
+      timestamp: new Date().toISOString(),
+      scope: 'conversation',
+    };
+    const reply = await runtime.generateReply({
+      tenantId: 'tenant-1',
+      inboundText: 'Quiero comprar un desodorante para mujer',
+      history: [
+        {
+          role: 'agent',
+          text: '¿A qué distrito te lo enviamos?',
+          productIds: [product.id],
+          pendingDelivery: {
+            lines: [{ productId: product.id, variantId: null, quantity: 1 }],
+          },
+        },
+      ],
+      salesState: state,
+    });
+    expect(tools.createOrderWithOptionalLink).not.toHaveBeenCalled();
+    expect(reply.escalate).toBe(false);
+    expect(reply.orderId).toBeUndefined();
+    expect(reply.replyText.toLowerCase()).not.toContain('pedido quedó registrado');
+    expect(reply.replyText.toLowerCase()).toMatch(/desodorant|floral|preparo/);
+  });
+
   it('hands off after order when payment link is unavailable', async () => {
     const waiting: ConversationTurn[] = [{
       role: 'agent',

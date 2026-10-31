@@ -118,6 +118,27 @@ export function looksLikeOptionPick(text: string): boolean {
 }
 
 /**
+ * Buyer starts a new catalog need ("quiero comprar un X", "busco Y") rather than
+ * confirming the current SKU ("comprarlo", "lo quiero", "dame el link").
+ * Multinicho: structural patterns only — no category vocabulary.
+ */
+export function isOpenProductNeed(text: string): boolean {
+  const n = scrubBuyerReply(text);
+  if (!n) return false;
+  if (
+    /\b(?:comprar(?:lo|la|los|las)|l[oa]s?\s+quiero|l[oa]s?\s+(?:llevo|compro|pido)|dame\s+(?:el\s+)?link|pasame\s+(?:el\s+)?link|envia(?:me)?\s+(?:el\s+)?link)\b/.test(
+      n,
+    )
+  ) {
+    return false;
+  }
+  if (/\b(?:busco|buscando|necesito)\b/.test(n)) return true;
+  if (/\bquiero\s+comprar(?:me)?\s+\S+/.test(n)) return true;
+  if (/\bquiero\s+(?:unos|unas|una|un)\s+\S+/.test(n)) return true;
+  return false;
+}
+
+/**
  * Buyer asks the seller to choose among options already shown
  * ("cuál me recomiendas de todos", "tú cuál eliges", "cuál es mejor").
  * Niche-agnostic — does not name product categories.

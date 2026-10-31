@@ -14,6 +14,8 @@ Architecture priority #3: **determinism first** for references, yes/no to closin
 4. Runtime pins `matches` to the selected/anchored product when buying or in `PRODUCT_SELECTED`  
 5. LLM/deterministic reply — prompt forbids re-asking “qué producto buscas” if a product is already chosen  
 
+**Open product need** (`isOpenProductNeed`: “quiero comprar un X”, “busco Y”, “necesito Z”): starts catalog discovery. It must **not** resume a prior pending checkout / remembered district into an order. Anaphora checkout (“comprarlo”, “lo quiero”, “dame el link”) stays on the current SKU. A named SKU in the same phrase (“quiero comprar Perfume X”) may enter checkout; quoted shipping still asks confirmation before creating the order.
+
 ## Pending seller asks
 
 | Ask | Detected from last agent message |

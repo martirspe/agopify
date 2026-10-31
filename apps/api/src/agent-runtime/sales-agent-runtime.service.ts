@@ -26,6 +26,7 @@ import {
   asksSellerRecommendation,
   filterStandaloneProducts,
   isBundleProduct,
+  isOpenProductNeed,
   pickSellerRecommendation,
   preferNonBundleProducts,
   standaloneCategoryHint,
@@ -252,7 +253,13 @@ export class SalesAgentRuntimeService {
     const history = (params.history ?? []).slice(-Number(params.salesState ? this.config.get('SALES_RECENT_MESSAGES_LIMIT', HISTORY_LIMIT) : HISTORY_LIMIT));
     const firstTurn = !history.some((turn) => turn.role === 'agent');
     const state = params.salesState;
-    const pendingLines = state?.pendingLines.length ? state.pendingLines : awaitingDelivery(history);
+    const openProductNeed = isOpenProductNeed(params.inboundText);
+    // A new catalog need must not resume a previous district/checkout thread from history.
+    const pendingLines = openProductNeed
+      ? []
+      : state?.pendingLines.length
+        ? state.pendingLines
+        : awaitingDelivery(history);
     const contextIds = [
       ...new Set([
         ...lastRecommendedProductIds(history),
@@ -474,12 +481,17 @@ export class SalesAgentRuntimeService {
         scope: 'conversation',
       };
     }
+    // "quiero comprar un X" is discovery; "quiero comprar Perfume X" (named SKU) may checkout.
+    const namedPurchaseTarget = openProductNeed
+      ? this.tools.identifyProduct(params.inboundText, products, refs)
+      : null;
     const buying =
       !turn.declinesOffer &&
-      ((state?.intent === 'purchase') ||
-        this.tools.wantsPurchase(params.inboundText) ||
-        turn.confirmsPurchase ||
-        (districtReply && Boolean(contextPick)));
+      (turn.confirmsPurchase ||
+        (districtReply && Boolean(contextPick)) ||
+        (((!openProductNeed || Boolean(namedPurchaseTarget)) &&
+          (state?.intent === 'purchase' ||
+            this.tools.wantsPurchase(params.inboundText)))));
     const processingLane = selectProcessingLane({
       conversationalIntent: intent,
       intents: state?.intents ?? [],
@@ -707,6 +719,7 @@ export class SalesAgentRuntimeService {
     let checkoutUrl: string | undefined;
     let orderDraftHash: string | undefined;
     let paymentLinkUnavailable = false;
+    let resumedCheckout = false;
     let pending: PendingChoice = null;
     const cartLines = this.tools.orderLinesFromRefs(refs, products);
     let lines: OrderLine[] = [];
@@ -714,10 +727,11 @@ export class SalesAgentRuntimeService {
       lines = cartLines;
       // Prefer the checkout already in progress over re-guessing the product from
       // a short message like "dame el link" or "quiero comprarlo".
-      if (!lines.length && pendingLines.length) {
+      if (!lines.length && pendingLines.length && !openProductNeed) {
         const resumed = this.tools.orderLinesFromPending(pendingLines, products);
         if (resumed.length) {
           lines = resumed;
+          resumedCheckout = true;
           matches = resumed.map((line) => line.product);
           searchTrace = {
             ...searchTrace,
@@ -732,18 +746,21 @@ export class SalesAgentRuntimeService {
       }
       if (!lines.length) {
         const selected =
-          state?.selectedProduct
+          !openProductNeed && state?.selectedProduct
             ? products.find((p) => p.id === state.selectedProduct?.productId)
             : null;
         // After "¿te lo preparo?" / "sí", prefer the already chosen product over a fresh search.
         const target = districtReply
           ? contextPick
           : (reference ??
+            namedPurchaseTarget ??
             selected ??
-            contextPick ??
+            (!openProductNeed ? contextPick : null) ??
             this.tools.identifyProduct(params.inboundText, products, refs) ??
-            (matches.length === 1 ? matches[0] : null) ??
-            (fromContext && contextProducts.length === 1
+            (!openProductNeed && matches.length === 1 ? matches[0] : null) ??
+            (!openProductNeed &&
+            fromContext &&
+            contextProducts.length === 1
               ? contextProducts[0]
               : null));
         if (!target) {
@@ -788,15 +805,18 @@ export class SalesAgentRuntimeService {
       .join('\n');
     // Keep the checkout alive: while lines wait for a district, always resume them
     // (even if this turn only says "pásame el link" or repeats the district).
+    // Never resume after an open product need — that starts a new catalog thread.
     if (
       !lines.length &&
       !pending &&
       pendingLines.length &&
+      !openProductNeed &&
       !this.tools.wantsHuman(params.inboundText)
     ) {
       const resumed = this.tools.orderLinesFromPending(pendingLines, products);
       if (resumed.length) {
         lines = resumed;
+        resumedCheckout = true;
         delivery = planDelivery({
           rules: await this.tools.shippingRules(params.tenantId),
           text: deliveryTextHint,
@@ -830,6 +850,35 @@ export class SalesAgentRuntimeService {
     }
     if (delivery?.kind === 'ask') {
       pending = { kind: 'delivery', question: this.deliveryQuestion(delivery) };
+    }
+    // Remembered destination must not auto-create an order on the first SKU lock.
+    // Named SKU + no shipping config (kind none) may commit; quoted shipping still needs confirm.
+    const mayCommitOrder =
+      cartLines.length > 0 ||
+      resumedCheckout ||
+      districtReply ||
+      turn.confirmsPurchase ||
+      (Boolean(namedPurchaseTarget) && delivery?.kind === 'none');
+    if (
+      lines.length &&
+      delivery &&
+      delivery.kind !== 'ask' &&
+      !mayCommitOrder
+    ) {
+      const place =
+        delivery.kind === 'quote' && delivery.place
+          ? ` para ${delivery.place.district}`
+          : '';
+      pending = {
+        kind: 'delivery',
+        question: `¿Te lo preparo${place}?`,
+      };
+      delivery = {
+        kind: 'ask',
+        pickupAddress:
+          delivery.kind === 'quote' ? delivery.pickupAddress : null,
+        candidates: [],
+      };
     }
     if (state && delivery?.kind === 'quote') delivery.address = state.requirements.address?.value ?? (/\b(?:calle|avenida|av\.|jiron|jr\.)\s+.+\d/i.test(params.inboundText) ? params.inboundText : null);
     traces.push(searchTrace);
@@ -869,7 +918,7 @@ export class SalesAgentRuntimeService {
       traces.push(this.tools.deliveryTrace(delivery, lines));
     }
     let deliveryText: DeliveryText = { summary: null, note: null };
-    if (lines.length && delivery?.kind !== 'ask') {
+    if (lines.length && delivery?.kind !== 'ask' && mayCommitOrder) {
       await params.assertOwned?.();
       const commerce = await this.tools.createOrderWithOptionalLink({
         tenantId: params.tenantId,
