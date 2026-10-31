@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Config: `.env.example` / `.env.production.example` alineados al stack actual (`SALES_ENGINE_MODE=ai-core`, media S3/CDN, Turnstile, Meta Embedded Signup, Redis/Qdrant, TikTok); `setup-local` completa claves nuevas sin pisar secretos.
 - Consola: textos listos para producción (sin guía operativa, jerga interna ni copy de prueba en formularios y pantallas del merchant).
 - Comercial: planes y marketing enfocados en el vendedor IA; la tienda web queda como «próximamente / acceso anticipado», sin promesa oficial en el precio del plan.
 - Planes: lo común (WhatsApp, Instagram, catálogo, cobros) se muestra una sola vez; cada tarjeta solo lista capacidad (chats, productos, usuarios).
