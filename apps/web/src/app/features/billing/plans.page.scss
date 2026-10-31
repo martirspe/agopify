@@ -1,3 +1,9 @@
 .plan-grid {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--ds-console-context-sidebar-width)), 1fr));
 }
+
+.plan-card--current {
+  border-radius: var(--ds-radius-md);
+  outline: 1px solid color-mix(in srgb, var(--ds-color-ink) 22%, transparent);
+  outline-offset: 0;
+}

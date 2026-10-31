@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Consola / Planes: vista de consumo y comparación alineada al design system; el formulario de pago del plan se abre en un modal centrado con fondo oscurecido y difuminado (`modal-frame`).
 - AI Core: si el negocio no tiene medios de pago (Mercado Pago) para el link en el chat, el pedido se registra igual y se deriva a un asesor (`payment_provider_missing`); el agente ya no inventa ni promete el link ni agradece una compra sin cobro.
 - AI Core: “quiero comprar un X” / “busco Y” abre búsqueda nueva y no reanuda un checkout anterior ni crea pedido con el distrito guardado; el cobro espera confirmación explícita.
 - Conocimiento del negocio: los filtros de tema usan el chip de filtro de la consola (borde, radio y estado seleccionado del sistema), en lugar de pastillas locales.

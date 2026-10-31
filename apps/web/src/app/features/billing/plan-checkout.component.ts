@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  ElementRef,
   Injector,
   afterNextRender,
   inject,
@@ -13,7 +12,7 @@ import {
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DsButtonComponent, DsIconComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsIconComponent, DsModalDirective } from '@vendedoria/ui';
 import { LEGAL_LINKS } from '../legal/legal-identity';
 import {
   BillingApiService,
@@ -51,7 +50,7 @@ const REJECTION_MESSAGES: Record<string, string> = {
 @Component({
   selector: 'app-plan-checkout',
   standalone: true,
-  imports: [ReactiveFormsModule, DsButtonComponent, DsIconComponent],
+  imports: [ReactiveFormsModule, DsButtonComponent, DsIconComponent, DsModalDirective],
   templateUrl: './plan-checkout.component.html',
   styleUrl: './plan-checkout.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,7 +58,6 @@ const REJECTION_MESSAGES: Record<string, string> = {
 export class PlanCheckoutComponent {
   private readonly api = inject(BillingApiService);
   private readonly injector = inject(Injector);
-  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   readonly checkout = input.required<PlanCheckout>();
   readonly purchase = input.required<PlanPurchase>();
@@ -96,7 +94,6 @@ export class PlanCheckoutComponent {
       this.unmountBrick();
     });
     afterNextRender(() => {
-      this.host.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
       void this.init();
     });
   }
@@ -118,7 +115,7 @@ export class PlanCheckoutComponent {
   }
 
   close(): void {
-    if (this.busy()) return;
+    if (this.busy() || this.processing()) return;
     this.closed.emit();
   }
 

@@ -1,17 +1,16 @@
-:host {
-  display: block;
-  scroll-margin-top: var(--ds-space-5);
-}
-
 .checkout {
+  width: min(34rem, 100%);
+  max-height: calc(100dvh - 2 * var(--ds-space-4));
+  overflow-y: auto;
   display: grid;
   gap: var(--ds-space-4);
-  max-width: 34rem;
-  padding: var(--ds-space-4);
-  border: 1px solid color-mix(in srgb, var(--ds-color-primary) 55%, var(--ds-color-border));
+  padding: var(--ds-space-5);
+  border: 0;
   border-radius: var(--ds-radius-lg);
   background: var(--ds-color-surface);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ds-color-primary) 35%, transparent);
+  color: var(--ds-color-text-primary);
+  box-shadow: var(--ds-shadow-dropdown);
+  animation: checkout-rise var(--ds-motion-base) var(--ds-ease-out);
 }
 
 .checkout__header {
@@ -24,13 +23,16 @@
 .checkout__eyebrow {
   margin: 0 0 var(--ds-space-1);
   color: var(--ds-color-text-secondary);
-  font-size: 0.8rem;
+  font-size: var(--ds-type-caption);
   font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .checkout__header h2 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: var(--ds-type-lg);
+  letter-spacing: -0.02em;
 }
 
 .checkout__amount {
@@ -38,6 +40,7 @@
   margin-top: var(--ds-space-1);
   font-size: 1.5rem;
   letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
 }
 
 .checkout__close {
@@ -46,15 +49,20 @@
   width: var(--ds-touch-target);
   height: var(--ds-touch-target);
   border: 1px solid var(--ds-color-border);
-  border-radius: 999px;
+  border-radius: var(--ds-radius-sm);
   background: transparent;
   color: var(--ds-color-text-secondary);
   cursor: pointer;
 }
 
+.checkout__close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .checkout__close:focus-visible,
 .methods button:focus-visible {
-  outline: 2px solid var(--ds-color-primary);
+  outline: 2px solid var(--ds-color-focus-ring);
   outline-offset: 2px;
 }
 
@@ -64,9 +72,10 @@
   align-items: flex-start;
   margin: 0;
   padding: var(--ds-space-3) var(--ds-space-4);
+  border: 1px solid color-mix(in srgb, var(--ds-color-danger) 20%, transparent);
   border-radius: var(--ds-radius-md);
-  background: color-mix(in srgb, var(--ds-color-danger) 12%, white);
-  color: var(--ds-color-danger);
+  background: color-mix(in srgb, var(--ds-color-danger) 10%, var(--ds-color-surface));
+  color: var(--ds-color-danger-text);
 }
 
 .checkout__processing {
@@ -74,8 +83,9 @@
   gap: var(--ds-space-3);
   align-items: center;
   padding: var(--ds-space-4);
+  border: 1px solid color-mix(in srgb, var(--ds-color-info) 20%, transparent);
   border-radius: var(--ds-radius-md);
-  background: color-mix(in srgb, var(--ds-color-info) 12%, white);
+  background: color-mix(in srgb, var(--ds-color-info) 10%, var(--ds-color-surface));
 }
 
 .checkout__processing p {
@@ -98,9 +108,20 @@
   }
 }
 
+@keyframes checkout-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.98);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .spinner {
     animation-duration: 2s;
+  }
+
+  .checkout {
+    animation: none;
   }
 }
 
@@ -118,7 +139,7 @@
   min-height: var(--ds-touch-target);
   border: 1px solid var(--ds-color-border);
   border-radius: var(--ds-radius-md);
-  background: #fff;
+  background: var(--ds-color-surface);
   color: var(--ds-color-text-primary);
   font: inherit;
   font-weight: 700;
@@ -142,13 +163,13 @@
 .yape p {
   margin: 0;
   color: var(--ds-color-text-secondary);
-  font-size: 0.9rem;
+  font-size: var(--ds-type-sm);
 }
 
 .yape label {
   display: grid;
   gap: var(--ds-space-2);
-  font-size: 0.9rem;
+  font-size: var(--ds-type-sm);
   font-weight: 600;
 }
 
@@ -156,9 +177,9 @@
   min-height: var(--ds-touch-target);
   padding: var(--ds-control-padding-block) var(--ds-control-padding-inline);
   border: 1px solid var(--ds-color-border);
-  border-radius: var(--ds-radius-md);
+  border-radius: var(--ds-radius-sm);
   font: inherit;
-  background: #fff;
+  background: var(--ds-color-surface);
 }
 
 .yape input.ng-invalid.ng-touched {
@@ -168,8 +189,8 @@
 .checkout__hint {
   display: flex;
   gap: var(--ds-space-2);
-  align-items: center;
+  align-items: flex-start;
   margin: 0;
   color: var(--ds-color-text-secondary);
-  font-size: 0.8rem;
+  font-size: var(--ds-type-caption);
 }
