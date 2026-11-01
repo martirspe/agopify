@@ -58,21 +58,35 @@ describe('Conversion tenant isolation (e2e)', () => {
                 name: `Shoe ${suffix}`,
                 basePriceCents: 5000,
                 categories: ['Shoes'],
-                isPublishedOnStore: true,
+                status: 'ACTIVE',
+                channelListings: {
+                  create: [
+                    { channel: 'STORE', isPublished: true, publishedAt: new Date() },
+                    { channel: 'WHATSAPP', isPublished: true },
+                    { channel: 'INSTAGRAM', isPublished: true },
+                  ],
+                },
               },
               {
                 handle: 'care',
                 name: `Care ${suffix}`,
                 basePriceCents: 1000,
                 categories: ['Shoes'],
-                isPublishedOnStore: true,
+                status: 'ACTIVE',
+                channelListings: {
+                  create: [
+                    { channel: 'STORE', isPublished: true, publishedAt: new Date() },
+                    { channel: 'WHATSAPP', isPublished: true },
+                    { channel: 'INSTAGRAM', isPublished: true },
+                  ],
+                },
               },
               {
                 handle: 'private',
                 name: `Private ${suffix}`,
                 basePriceCents: 1000,
                 categories: ['Shoes'],
-                isPublishedOnStore: false,
+                status: 'DRAFT',
               },
             ],
           },

@@ -46,7 +46,7 @@ const isolated = process.env.RUN_ISOLATED_COMMERCE_TESTS === '1';
         brandColor: '#203040', accentColor: '#506070', seoTitle: 'Mi título SEO', pickupAddress: 'Dirección de prueba',
         templateContent: { version: 1, sections: { hero: { title: 'Mi portada', text: '' }, announcement: { text: 'Aviso propio' } }, theme: { primary: '#102030' } },
       } },
-      products: { create: { handle: 'real-product', name: 'Producto propio', basePriceCents: 12000, stockQty: 7, categories: ['Mi categoría'], isPublishedOnStore: true } },
+      products: { create: { handle: 'real-product', name: 'Producto propio', basePriceCents: 12000, stockQty: 7, categories: ['Mi categoría'], status: 'ACTIVE', channelListings: { create: [{ channel: 'STORE', isPublished: true, publishedAt: new Date() }, { channel: 'WHATSAPP', isPublished: true }, { channel: 'INSTAGRAM', isPublished: true }] } } },
       orders: { create: { status: 'PAID', totalCents: 12000, subtotalCents: 12000, customerName: 'Cliente de prueba', customerEmail: 'buyer@example.invalid', items: { create: { title: 'Compra anterior', unitCents: 12000, totalCents: 12000 } } } },
     } });
     tenantIds.push(tenant.id);
@@ -146,7 +146,7 @@ const isolated = process.env.RUN_ISOLATED_COMMERCE_TESTS === '1';
     await prisma.tenant.update({ where: { id: auth.tenantId }, data: { planTier: 'SCALE', planTrial: false, planExpiresAt: new Date(Date.now() + 86_400_000) } });
     expect((await request('POST', '/integrations/store/enable', {})).statusCode).toBe(200);
     expect((await request('GET', '/store')).statusCode).toBe(200);
-    expect((await request('POST', '/catalog/products', { handle: 'merchant-product', name: 'Producto real', basePriceCents: 12000, stockQty: 8, isPublishedOnStore: true })).statusCode).toBe(201);
+    expect((await request('POST', '/catalog/products', { handle: 'merchant-product', name: 'Producto real', basePriceCents: 12000, stockQty: 8, status: 'ACTIVE', channelListings: [{ channel: 'STORE', isPublished: true }, { channel: 'WHATSAPP', isPublished: true }, { channel: 'INSTAGRAM', isPublished: true }] })).statusCode).toBe(201);
     expect((await request('PATCH', '/store', { displayName: 'Tienda de prueba', industry: 'moda', template: 'stride', whatsappPhone: '51900000000', contactEmail: 'merchant@example.test', sellerType: 'INDIVIDUAL', legalName: 'Comercio de prueba', dni: '00000000', legalAddress: 'Dirección de prueba', legalDistrict: 'Lima', complaintsBookUrl: 'https://example.test/reclamos' })).statusCode).toBe(200);
     await prisma.storefront.update({ where: { tenantId: auth.tenantId }, data: { pickupEnabled: true, pickupAddress: 'Dirección de prueba' } });
     const view = (await request('GET', '/store/editor')).json<StoreEditorView>();

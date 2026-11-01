@@ -1038,6 +1038,59 @@
   }
 }
 
+/* Trial countdown — full-bleed content; glow lives on the rail (::after), not here. */
+@utility console-trial-notice {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
+  /* Gap above the divider so the last footer chip (Ajustes) never kisses the rule. */
+  margin: 0.5rem 0 0;
+  padding: 0.75rem 0.75rem 0.625rem;
+  border-block-start: 1px solid var(--ds-console-nav-border);
+  background: transparent;
+}
+
+@utility console-trial-notice__label {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding-inline: 0.25rem;
+  color: var(--ds-console-nav-text-active);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+@utility console-trial-notice__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  background: #fff;
+  color: #0a0a0a !important;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1;
+  text-decoration: none;
+  box-sizing: border-box;
+  transition: background-color var(--ds-motion-fast) var(--ds-ease-out);
+
+  &:hover {
+    background: #f3f3f3;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ds-color-focus-ring);
+    outline-offset: 2px;
+  }
+}
+
 @utility console-navigation {
   position: relative;
   scrollbar-width: thin;
@@ -1058,20 +1111,42 @@
   &:hover::-webkit-scrollbar-thumb {
     background-color: var(--ds-console-scrollbar-rail-thumb-hover);
   }
- /* Brand ambient glow at foot of rail ( plan glow → VendedorIA lime). */
+  /*
+   Trial foot glow — same technique as Admin: soft radial from bottom-left,
+   olive wash behind footer + trial (sampled ~rgb(75,102,21) → brand primary mixed into nav).
+   Idle rail keeps a faint wash; [data-trial] intensifies like the subscribe panel.
+ */
   &::after {
     content: '';
     pointer-events: none;
     position: absolute;
+    z-index: 0;
     inset-inline: 0;
     bottom: 0;
-    height: 9rem;
+    height: 16rem;
     background: radial-gradient(
-      120% 80% at 20% 100%,
-      color-mix(in srgb, var(--ds-color-primary) 22%, transparent) 0%,
-      transparent 70%
+      180% 110% at 18% 108%,
+      color-mix(in srgb, var(--ds-color-primary) 42%, var(--ds-console-nav-bg)) 0%,
+      color-mix(in srgb, var(--ds-color-primary) 22%, transparent) 32%,
+      color-mix(in srgb, var(--ds-color-primary) 8%, transparent) 52%,
+      transparent 72%
     );
-    opacity: 0.85;
+    opacity: 0.28;
+    transition: opacity var(--ds-motion-base) var(--ds-ease-out);
+  }
+
+  &[data-trial]::after {
+    opacity: 0.92;
+  }
+
+  &[data-collapsed]::after {
+    height: 12rem;
+    background: radial-gradient(
+      220% 100% at 50% 110%,
+      color-mix(in srgb, var(--ds-color-primary) 36%, var(--ds-console-nav-bg)) 0%,
+      color-mix(in srgb, var(--ds-color-primary) 12%, transparent) 40%,
+      transparent 68%
+    );
   }
   /*
  Collapsed rail — measured:

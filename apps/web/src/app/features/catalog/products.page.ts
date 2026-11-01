@@ -1,5 +1,3 @@
-import { DsActionBarComponent, DsCheckboxComponent } from '@vendedoria/ui';
-import { DsSelectComponent } from '@vendedoria/ui';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -15,17 +13,29 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map, startWith } from 'rxjs';
-import { DsButtonComponent, DsConfirmService, DsModalDirective } from '@vendedoria/ui';
-import { DsEmptyStateComponent } from '@vendedoria/ui';
-import { DsIconComponent } from '@vendedoria/ui';
-import { DsBannerComponent, DsPageHeaderComponent } from '@vendedoria/ui';
+import {
+  DsButtonComponent,
+  DsCheckboxComponent,
+  DsConfirmService,
+  DsEmptyStateComponent,
+  DsFormSectionComponent,
+  DsIconComponent,
+  DsBannerComponent,
+  DsModalDirective,
+  DsPageHeaderComponent,
+  DsSaveBarComponent,
+  DsSelectComponent,
+} from '@vendedoria/ui';
 import {
   CatalogApiService,
+  CollectionDto,
   ComponentInput,
   MediaInput,
+  ProductChannelKind,
   ProductDetails,
   ProductDto,
   ProductKind,
+  ProductStatus,
   ServiceMode,
 } from '../../core/api/catalog-api.service';
 import { IntegrationsStateService } from '../../core/integrations/integrations-state.service';
@@ -71,7 +81,11 @@ function toCents(amount: number): number {
 @Component({
   selector: 'app-products-page',
   standalone: true,
-  imports: [DsActionBarComponent, DsCheckboxComponent, DsSelectComponent,
+  imports: [
+    DsCheckboxComponent,
+    DsSelectComponent,
+    DsFormSectionComponent,
+    DsSaveBarComponent,
     NgTemplateOutlet,
     ReactiveFormsModule,
     FormsModule,
@@ -109,8 +123,8 @@ export class ProductsPage {
         const size = Number(params.get('porPagina'));
         const page = Number(params.get('pagina'));
         return { kind: value && KIND_FILTERS.includes(value) ? value : 'todos', query: (params.get('q') ?? '').slice(0, 200),
-          status: oneOf('estado', ['todos', 'disponibles', 'pausados'], 'todos'),
-          publication: oneOf('tienda', ['todos', 'visibles', 'ocultos'], 'todos'),
+          status: oneOf('estado', ['todos', 'activo', 'borrador', 'archivado', 'disponibles', 'pausados'], 'todos'),
+          publication: oneOf('tienda', ['todos', 'visibles', 'ocultos', 'whatsapp', 'instagram'], 'todos'),
           inventory: oneOf('inventario', ['todos', 'agotados'] as const, 'todos'),
           sort: oneOf('orden', ['recientes', 'antiguos', 'nombre', 'nombre-desc'], 'recientes'),
           page: Number.isSafeInteger(page) && page > 0 ? page : 1, pageSize: [25, 50, 100].includes(size) ? size : 25 };
@@ -134,19 +148,33 @@ export class ProductsPage {
   readonly filteredProducts = computed(() => filterCatalog(this.products(), this.listState()));
   readonly catalogSummary = computed(() => ({
     total: this.products().length,
-    paused: this.products().filter(product => !product.isAvailable).length,
+    paused: this.products().filter(product => (product.status ?? (product.isAvailable ? 'ACTIVE' : 'DRAFT')) !== 'ACTIVE').length,
     soldOut: this.products().filter(product => catalogStock(product) === 0).length,
-    hidden: this.products().filter(product => !product.isPublishedOnStore).length,
+    hidden: this.products().filter(product => !(product.channelListings?.some((row) => row.channel === 'STORE' && row.isPublished) ?? product.isPublishedOnStore)).length,
   }));
   readonly activeListFilters = computed(() => {
     const state = this.listState();
     const filters: Array<{ key: string; label: string }> = [];
     if (state.query) filters.push({ key: 'q', label: `Búsqueda: ${state.query}` });
-    if (state.status !== 'todos') filters.push({ key: 'estado', label: state.status === 'disponibles' ? 'Habilitados para vender' : 'No disponibles' });
-    if (state.publication !== 'todos') filters.push({ key: 'tienda', label: state.publication === 'visibles' ? 'Visibles en tienda' : 'Ocultos en tienda' });
+    if (state.status !== 'todos') {
+      const statusLabel =
+        state.status === 'activo' || state.status === 'disponibles' ? 'Activos'
+        : state.status === 'archivado' ? 'Archivados'
+        : 'Borradores';
+      filters.push({ key: 'estado', label: statusLabel });
+    }
+    if (state.publication !== 'todos') {
+      const pubLabel =
+        state.publication === 'visibles' ? 'En tienda web'
+        : state.publication === 'whatsapp' ? 'En WhatsApp'
+        : state.publication === 'instagram' ? 'En Instagram'
+        : 'Ocultos en tienda';
+      filters.push({ key: 'tienda', label: pubLabel });
+    }
     if (state.inventory === 'agotados') filters.push({ key: 'inventario', label: 'Sin stock' });
     return filters;
   });
+  readonly collections = signal<CollectionDto[]>([]);
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredProducts().length / this.listState().pageSize)));
   readonly currentPage = computed(() => Math.min(this.listState().page, this.totalPages()));
   readonly listStart = computed(() => this.filteredProducts().length ? (this.currentPage() - 1) * this.listState().pageSize + 1 : 0);
@@ -244,10 +272,12 @@ export class ProductsPage {
     serviceMode: ['' as ServiceMode | ''],
     price: [0, [Validators.required, Validators.min(0)]],
     currency: ['PEN', Validators.required],
-    isAvailable: [true],
+    status: ['DRAFT' as ProductStatus],
+    channelStore: [false],
+    channelWhatsapp: [false],
+    channelInstagram: [false],
     stockUnlimited: [true],
     stockQty: [0, [Validators.min(0)]],
-    isPublishedOnStore: [false],
     compareAtPrice: [null as number | null, [Validators.min(0)]],
     brand: ['', [Validators.maxLength(60)]],
     sku: ['', [Validators.maxLength(60)]],
@@ -324,7 +354,7 @@ export class ProductsPage {
   /** Warn when store visibility is on without a main photo. */
   readonly storePhotoWarning = computed(
     () =>
-      this.formValues().isPublishedOnStore &&
+      this.formValues().channelStore &&
       !this.media().some((item) => item.kind === 'image'),
   );
 
@@ -351,6 +381,23 @@ export class ProductsPage {
     price: this.formatPrice(Math.round(Number(this.formValues().price || 0) * 100), this.formValues().currency),
     image: this.media().find(item => item.kind === 'image')?.url,
   }));
+  readonly editorTitle = computed(() => {
+    const name = this.formValues().name.trim();
+    if (name) return name;
+    return this.isEditing() ? 'Editar producto' : 'Agregar producto';
+  });
+  private readonly draftDirty = signal(false);
+  private readonly formTick = toSignal(
+    this.productForm.valueChanges.pipe(startWith(null)),
+    { initialValue: null },
+  );
+  readonly editorPending = computed(() => {
+    this.formTick();
+    return this.productForm.dirty || this.draftDirty();
+  });
+  private touchEditor(): void {
+    this.draftDirty.set(true);
+  }
 
   focusEditorField(id: string): void {
     if (id === 'handle') this.showHandle.set(true);
@@ -425,7 +472,12 @@ export class ProductsPage {
     this.loadFailed.set(false);
     this.errorMessage.set(null);
     try {
-      this.products.set(await this.api.list());
+      const [products, collections] = await Promise.all([
+        this.api.list(),
+        this.api.listCollections().catch(() => [] as CollectionDto[]),
+      ]);
+      this.products.set(products);
+      this.collections.set(collections);
     } catch {
       this.loadFailed.set(true);
       this.errorMessage.set(
@@ -478,10 +530,12 @@ export class ProductsPage {
       serviceMode: '',
       price: 0,
       currency: 'PEN',
-      isAvailable: true,
+      status: 'DRAFT',
+      channelStore: false,
+      channelWhatsapp: false,
+      channelInstagram: false,
       stockUnlimited: true,
       stockQty: 0,
-      isPublishedOnStore: false,
       compareAtPrice: null,
       brand: '',
       sku: '',
@@ -497,6 +551,7 @@ export class ProductsPage {
       montage: false,
     });
     this.productForm.controls.stockQty.disable({ emitEvent: false });
+    this.draftDirty.set(false);
     this.editorOpen.set(true);
   }
 
@@ -577,10 +632,12 @@ export class ProductsPage {
       serviceMode: product.serviceMode ?? '',
       price: product.basePriceCents / 100,
       currency: product.currency,
-      isAvailable: product.isAvailable,
+      status: product.status ?? (product.isAvailable ? 'ACTIVE' : 'DRAFT'),
+      channelStore: product.channelListings?.some((row) => row.channel === 'STORE' && row.isPublished) ?? product.isPublishedOnStore,
+      channelWhatsapp: product.channelListings?.some((row) => row.channel === 'WHATSAPP' && row.isPublished) ?? false,
+      channelInstagram: product.channelListings?.some((row) => row.channel === 'INSTAGRAM' && row.isPublished) ?? false,
       stockUnlimited: product.stockUnlimited,
       stockQty: product.stockQty ?? 0,
-      isPublishedOnStore: product.isPublishedOnStore,
       compareAtPrice:
         product.compareAtPriceCents === null ? null : product.compareAtPriceCents / 100,
       brand: product.brand ?? '',
@@ -608,6 +665,8 @@ export class ProductsPage {
     this.categoryId.set(product.categoryId ?? '');
     this.attributeValues.set({ ...(product.attributeValues ?? {}) });
     this.variantPage.set(0);
+    this.draftDirty.set(false);
+    this.productForm.markAsPristine();
     this.editorOpen.set(true);
   }
 
@@ -618,6 +677,7 @@ export class ProductsPage {
     this.editingId.set(null);
     this.variantDrafts.set([]);
     this.media.set([]);
+    this.draftDirty.set(false);
   }
 
   toggleDetails(enabled: boolean): void {
@@ -633,6 +693,7 @@ export class ProductsPage {
 
   toggleSet(enabled: boolean): void {
     this.setEnabled.set(enabled);
+    this.touchEditor();
     if (enabled) {
       this.variantsEnabled.set(false);
       if (!this.components().length) this.addComponent();
@@ -643,18 +704,22 @@ export class ProductsPage {
     const used = new Set(this.components().map((row) => row.productId));
     const next = this.pieceOptions().find((product) => !used.has(product.id));
     this.components.update((list) => [...list, { productId: next?.id ?? '', quantity: 1 }]);
+    this.touchEditor();
   }
 
   updateComponent(index: number, patch: Partial<ComponentInput>): void {
     this.components.update((list) => list.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+    this.touchEditor();
   }
 
   removeComponent(index: number): void {
     this.components.update((list) => list.filter((_, i) => i !== index));
+    this.touchEditor();
   }
 
   updateMedia(index: number, patch: Partial<MediaDraft>): void {
     this.media.update((list) => list.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+    this.touchEditor();
   }
 
   moveMedia(index: number, delta: -1 | 1): void {
@@ -665,6 +730,7 @@ export class ProductsPage {
       [next[index], next[target]] = [next[target], next[index]];
       return next;
     });
+    this.touchEditor();
   }
 
   async onFiles(input: HTMLInputElement): Promise<void> {
@@ -684,6 +750,7 @@ export class ProductsPage {
         const image = await resizeImage(file);
         const { url } = await this.api.uploadMedia(image.contentType, image.data);
         this.media.update((list) => [...list, { url, kind: 'image', alt: '', caption: '' }]);
+        this.touchEditor();
       }
     } catch (error) {
       this.errorMessage.set(
@@ -715,6 +782,7 @@ export class ProductsPage {
 
   toggleVariants(enabled: boolean): void {
     this.variantsEnabled.set(enabled);
+    this.touchEditor();
     if (enabled && this.variantDrafts().length === 0) {
       this.addVariant();
     }
@@ -729,6 +797,7 @@ export class ProductsPage {
   setCategory(id: string): void {
     this.categoryId.set(id); this.attributeValues.set({});
     this.detailsEnabled.set(id === 'fragrances');
+    this.touchEditor();
     if (!this.variantDrafts().length) {
       const suggested = this.selectedCategory()?.attributes.filter((attribute) => attribute.variant && attribute.required) ?? [];
       this.axes.set(suggested.slice(0, 5).map((attribute) => ({ name: attribute.name, values: '' })));
@@ -737,12 +806,14 @@ export class ProductsPage {
 
   setAttribute(key: string, value: string): void {
     this.attributeValues.update((values) => ({ ...values, [key]: value }));
+    this.touchEditor();
   }
 
   addAxis(): void {
     if (this.axes().length < 5) {
       this.axes.update((axes) => [...axes, { name: '', values: '' }]);
       this.axesPending.set(true);
+      this.touchEditor();
     }
   }
 
@@ -755,10 +826,12 @@ export class ProductsPage {
     this.axes.update((axes) => axes.map((axis, i) => i === index ? { ...axis, ...patch } : axis));
     this.axesPending.set(true);
     this.variantError.set(null);
+    this.touchEditor();
   }
 
   removeAxis(index: number): void {
     this.axes.update((axes) => axes.filter((_, i) => i !== index));
+    this.touchEditor();
     if (!this.axes().length) {
       this.variantDrafts.set([]); this.variantsEnabled.set(false); this.axesPending.set(false); this.resetVariantView(); return;
     }
@@ -915,12 +988,14 @@ export class ProductsPage {
   removeVariant(index: number): void {
     this.variantDrafts.update((list) => list.filter((_, i) => i !== index));
     this.variantPage.set(Math.min(this.variantPage(), Math.max(0, Math.ceil(this.matchingVariants().length / 25) - 1)));
+    this.touchEditor();
   }
 
   updateVariant(index: number, patch: Partial<VariantDraft>): void {
     this.variantDrafts.update((list) =>
       list.map((item, i) => (i === index ? { ...item, ...patch } : item)),
     );
+    this.touchEditor();
   }
 
   onVariantPriceInput(index: number, value: string): void {
@@ -944,12 +1019,14 @@ export class ProductsPage {
     }
     if (!this.media().some((item) => item.url === url)) {
       this.media.update((list) => [...list, { url, kind: 'image', alt: '', caption: '' }]);
+      this.touchEditor();
     }
     this.mediaDraft.set('');
   }
 
   removeMediaUrl(index: number): void {
     this.media.update((list) => list.filter((_, i) => i !== index));
+    this.touchEditor();
   }
 
   onCategoryDraftInput(value: string): void {
@@ -982,7 +1059,10 @@ export class ProductsPage {
   }
 
   private storeFields(values: {
-    isPublishedOnStore: boolean;
+    status: ProductStatus;
+    channelStore: boolean;
+    channelWhatsapp: boolean;
+    channelInstagram: boolean;
     compareAtPrice: number | null;
     brand: string;
   }) {
@@ -990,11 +1070,28 @@ export class ProductsPage {
       values.compareAtPrice === null || String(values.compareAtPrice) === ''
         ? null
         : toCents(Number(values.compareAtPrice));
+    const channelListings: Array<{ channel: ProductChannelKind; isPublished: boolean }> = [
+      { channel: 'STORE', isPublished: values.channelStore },
+      { channel: 'WHATSAPP', isPublished: values.channelWhatsapp },
+      { channel: 'INSTAGRAM', isPublished: values.channelInstagram },
+    ];
     return {
-      isPublishedOnStore: values.isPublishedOnStore,
+      status: values.status,
+      channelListings,
       compareAtPriceCents: compareAt && compareAt > 0 ? compareAt : null,
       brand: values.brand.trim() || null,
     };
+  }
+
+  private optionDefinitionsFromDrafts(): Array<{ name: string; values: string[] }> {
+    if (!this.variantsEnabled() || this.setEnabled()) return [];
+    return this.axes().map((axis) => ({
+      name: axis.name.trim(),
+      values: axis.values
+        .split(/[\n,]/)
+        .map((value) => value.trim())
+        .filter(Boolean),
+    }));
   }
 
   async saveProduct(): Promise<void> {
@@ -1085,10 +1182,10 @@ export class ProductsPage {
             categories: this.parseCategories(values.categoriesText),
             basePriceCents: toCents(values.price),
             currency: values.currency,
-            isAvailable: values.isAvailable,
             stockUnlimited: stockless || values.stockUnlimited,
             stockQty: stockless || values.stockUnlimited ? null : Number(values.stockQty),
             variants,
+            optionDefinitions: this.optionDefinitionsFromDrafts(),
             ...extras,
             ...this.storeFields(values),
           })
@@ -1100,17 +1197,18 @@ export class ProductsPage {
             categories: this.parseCategories(values.categoriesText),
             basePriceCents: toCents(values.price),
             currency: values.currency,
-            isAvailable: values.isAvailable,
             stockUnlimited: stockless || values.stockUnlimited,
             stockQty: stockless || values.stockUnlimited
               ? undefined
               : Number(values.stockQty),
             variants,
+            optionDefinitions: this.optionDefinitionsFromDrafts(),
             ...extras,
             ...this.storeFields(values),
           });
       this.editorOpen.set(false);
       this.editingId.set(null);
+      this.draftDirty.set(false);
       this.successMessage.set(
         editingId
           ? `"${saved.name}" actualizado.`
@@ -1176,8 +1274,37 @@ export class ProductsPage {
     return variants ? `${base} · ${variants} var.` : base;
   }
 
+  productStatus(product: ProductDto): ProductStatus {
+    return product.status ?? (product.isAvailable ? 'ACTIVE' : 'DRAFT');
+  }
+
+  statusLabel(product: ProductDto): string {
+    const status = this.productStatus(product);
+    if (status === 'ACTIVE') return 'Activo';
+    if (status === 'ARCHIVED') return 'Archivado';
+    return 'Borrador';
+  }
+
+  kindLabel(kind: ProductKind): string {
+    if (kind === 'SERVICE') return 'Servicio';
+    if (kind === 'DIGITAL') return 'Producto digital';
+    return 'Producto físico';
+  }
+
+  channelSummary(product: ProductDto): string {
+    if (this.productStatus(product) !== 'ACTIVE') return 'Sin publicar';
+    const listings = product.channelListings;
+    const published = (channel: ProductChannelKind, legacy?: boolean) =>
+      listings?.some((row) => row.channel === channel && row.isPublished) ?? Boolean(legacy);
+    const labels: string[] = [];
+    if (published('WHATSAPP')) labels.push('WhatsApp');
+    if (published('INSTAGRAM')) labels.push('Instagram');
+    if (this.storeActive() && published('STORE', product.isPublishedOnStore)) labels.push('Tienda');
+    return labels.length ? labels.join(' · ') : 'Sin canales';
+  }
+
   availabilityLabel(product: ProductDto): string {
-    if (!product.isAvailable) return 'No disponible';
+    if (this.productStatus(product) !== 'ACTIVE') return 'No disponible';
     return catalogStock(product) === 0 ? 'Sin stock' : 'Disponible';
   }
 

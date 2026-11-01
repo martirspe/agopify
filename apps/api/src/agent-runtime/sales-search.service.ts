@@ -1,3 +1,4 @@
+import { derivedIsAvailable } from '../catalog/product-visibility';
 import { variantOptions } from '../catalog/variant-options';
 import {
   Injectable,
@@ -248,7 +249,7 @@ export class SalesSearchService implements OnModuleInit, OnModuleDestroy {
           })
         : null;
     const active =
-      product?.isAvailable ??
+      (product ? derivedIsAvailable(product.status) : undefined) ??
       Boolean(faq?.isPublished && faq.reviewStatus === 'APPROVED');
     const id = pointId(tenantId, documentType, sourceId);
     const sourceFilter = {

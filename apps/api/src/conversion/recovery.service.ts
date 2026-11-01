@@ -18,7 +18,8 @@ import {
   StoreAccess,
   StorefrontPublicService,
 } from '../storefront/storefront-public.service';
-import { toProductDetail } from '../storefront/storefront-mapper';
+import { storefrontProductWhere } from '../catalog/product-visibility';
+import { toProductDetail, toStoreProductRecord } from '../storefront/storefront-mapper';
 import {
   ConversionSettingsDto,
   RecoveryCaptureDto,
@@ -376,9 +377,8 @@ export class RecoveryService {
   ): Promise<{ lines: RecoveryCartLine[]; changed: boolean }> {
     const products = await this.prisma.product.findMany({
       where: {
-        tenantId,
+        ...storefrontProductWhere(tenantId),
         handle: { in: items.map((item) => item.handle) },
-        isPublishedOnStore: true,
       },
       include: PRODUCT_INCLUDE,
     });
@@ -389,7 +389,7 @@ export class RecoveryService {
         changed = true;
         return [];
       }
-      const product = toProductDetail(record, []);
+      const product = toProductDetail(toStoreProductRecord(record), []);
       const variant = product.variants.find((v) => v.id === item.variantId);
       if (
         !product.isAvailable ||

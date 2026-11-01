@@ -68,7 +68,19 @@ describe('Storefront tenant isolation (e2e)', () => {
               name: `Producto ${item.handle}`,
               basePriceCents: 1000,
               categories: [item.category],
-              isPublishedOnStore: item.published,
+              // Hidden-on-store products stay ACTIVE and sellable on chat; only STORE listing differs.
+              status: 'ACTIVE' as const,
+              channelListings: {
+                create: [
+                  {
+                    channel: 'STORE' as const,
+                    isPublished: item.published,
+                    publishedAt: item.published ? new Date() : null,
+                  },
+                  { channel: 'WHATSAPP' as const, isPublished: true },
+                  { channel: 'INSTAGRAM' as const, isPublished: true },
+                ],
+              },
             })),
           },
         },
@@ -165,13 +177,21 @@ describe('Storefront tenant isolation (e2e)', () => {
   it('filters the complete catalog, scopes facets and sorts by displayed variant prices', async () => {
     await prisma.product.createMany({ data: Array.from({ length: 52 }, (_, index) => ({
       tenantId: tenantAId, handle: `facet-${index}`, name: `Camisa ${index}`, basePriceCents: 9000 + index,
-      isPublishedOnStore: true, brand: 'Marca A', categories: ['Moda > Mujer > Camisas'],
+      status: 'ACTIVE' as const, brand: 'Marca A', categories: ['Moda > Mujer > Camisas'],
       details: { attributes: [{ name: 'Material', value: 'Algodón' }], benefits: ['Frescura'] },
     })) });
+    const facetProducts = await prisma.product.findMany({ where: { tenantId: tenantAId, handle: { startsWith: 'facet-' } }, select: { id: true } });
+    await prisma.productChannelListing.createMany({ data: facetProducts.flatMap(({ id }) =>
+      (['STORE', 'WHATSAPP', 'INSTAGRAM'] as const).map((channel) => ({ productId: id, channel, isPublished: true, publishedAt: new Date() }))) });
     await prisma.product.updateMany({ where: { tenantId: tenantBId }, data: { brand: 'Solo otro negocio' } });
     const withVariants = await prisma.product.create({ data: {
       tenantId: tenantAId, handle: 'facet-variants', name: 'Camisa con opciones', basePriceCents: 99999,
-      isPublishedOnStore: true, brand: 'Marca A', categories: ['Moda > Mujer > Camisas'],
+      status: 'ACTIVE', brand: 'Marca A', categories: ['Moda > Mujer > Camisas'],
+      channelListings: { create: [
+        { channel: 'STORE', isPublished: true, publishedAt: new Date() },
+        { channel: 'WHATSAPP', isPublished: true },
+        { channel: 'INSTAGRAM', isPublished: true },
+      ] },
       variants: { create: [
         { option1Name: 'Talla', option1Value: 'M', option2Name: 'Color', option2Value: 'Rojo', priceCents: 1500 },
         { option1Name: 'Talla', option1Value: 'L', option2Name: 'Color', option2Value: 'Azul', priceCents: 2000 },

@@ -1,4 +1,5 @@
 import { createHash, randomBytes, randomInt } from 'node:crypto';
+import { storefrontProductWhere } from '../catalog/product-visibility';
 import { variantOptions } from '../catalog/variant-options';
 import {
   BadRequestException,
@@ -976,13 +977,13 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
     }
     const handles = [...new Set(items.map((item) => item.handle))];
     const products = await db.product.findMany({
-      where: { tenantId, handle: { in: handles }, isPublishedOnStore: true },
+      where: { ...storefrontProductWhere(tenantId), handle: { in: handles } },
       include: { variants: true, _count: { select: { components: true } } },
     });
     const lines: ResolvedLine[] = [];
     for (const item of merged.values()) {
       const product = products.find((p) => p.handle === item.handle);
-      if (!product || !product.isAvailable) {
+      if (!product) {
         throw new ConflictException(
           'Un producto de tu carrito ya no está disponible. Actualiza tu carrito.',
         );

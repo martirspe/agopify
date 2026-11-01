@@ -251,13 +251,17 @@ export type PublicProductCard = {
   name: string;
   descriptionShort: string | null;
   brand: string | null;
+  /** Denormalized collection titles (search/facets); prefer `collections` when present. */
   categories: string[];
+  /** Merchant collections linked to the product when the API includes them. */
+  collections?: Array<{ handle: string; title: string }>;
   currency: string;
   priceCents: number;
   /** True when variants have different prices; `priceCents` is then the lowest. */
   priceVaries: boolean;
   compareAtPriceCents: number | null;
   imageUrl: string | null;
+  /** Computed sellability (active status + stock/variants), not lifecycle. */
   isAvailable: boolean;
   hasVariants: boolean;
   /** `SERVICE`: booked and paid, never shipped and without stock. `DIGITAL`: delivered by access link once paid. */

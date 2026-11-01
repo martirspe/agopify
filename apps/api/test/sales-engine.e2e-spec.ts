@@ -101,6 +101,14 @@ describe('AI Sales Engine integration (e2e)', () => {
               basePriceCents: 15000,
               stockUnlimited: false,
               stockQty: 2,
+              status: 'ACTIVE',
+              channelListings: {
+                create: [
+                  { channel: 'STORE', isPublished: true, publishedAt: new Date() },
+                  { channel: 'WHATSAPP', isPublished: true },
+                  { channel: 'INSTAGRAM', isPublished: true },
+                ],
+              },
               variants: {
                 create: {
                   option1Name: 'Talla',
@@ -431,7 +439,7 @@ describe('AI Sales Engine integration (e2e)', () => {
       ).toBe(16000);
       await prisma.product.updateMany({
         where: { tenantId: tenantA, id: productA },
-        data: { isAvailable: false },
+        data: { status: 'DRAFT' },
       });
       expect(await tools.getProducts(tenantA, [productA, productB])).toEqual(
         [],
@@ -442,7 +450,7 @@ describe('AI Sales Engine integration (e2e)', () => {
       ).not.toContain(productA);
       await prisma.product.updateMany({
         where: { tenantId: tenantA, id: productA },
-        data: { isAvailable: true, basePriceCents: 15000 },
+        data: { status: 'ACTIVE', basePriceCents: 15000 },
       });
       // Remove test points only, never a shared collection.
       await nativeFetch(

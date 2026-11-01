@@ -33,10 +33,12 @@ export type ExportProduct = {
   serviceMode: string | null;
   digitalAccessUrl: string | null;
   digitalInstructions: string | null;
-  isAvailable: boolean;
+  /** Lifecycle: DRAFT | ACTIVE | ARCHIVED. */
+  status: string;
   stockUnlimited: boolean;
   stockQty: number | null;
-  isPublishedOnStore: boolean;
+  /** One row per sales channel (STORE, WHATSAPP, INSTAGRAM). */
+  channelListings: Array<{ channel: string; isPublished: boolean }>;
   brand: string | null;
   sku: string | null;
   line: string | null;
@@ -220,7 +222,13 @@ export function buildCatalogExport(
       categories: product.categories,
       category: product.categories[0] ?? null,
       priceCents: product.basePriceCents,
-      active: product.isAvailable,
+      // active stays for packages read by older versions; status and channelListings are the source of truth.
+      active: product.status === 'ACTIVE',
+      status: product.status,
+      channelListings: product.channelListings.map((row) => ({
+        channel: row.channel,
+        isPublished: row.isPublished,
+      })),
       content,
     };
     if (product.kind && product.kind !== 'PRODUCT') {

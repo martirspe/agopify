@@ -203,7 +203,7 @@ describe('Catalog import (e2e)', () => {
 
     const products = await prisma.product.findMany({
       where: { tenantId: owner.tenantId },
-      include: { media: true, components: { include: { component: true } } },
+      include: { media: true, channelListings: true, components: { include: { component: true } } },
     });
     const byHandle = new Map(products.map((p) => [p.handle, p]));
     expect(byHandle.get('colonia')).toMatchObject({
@@ -212,7 +212,9 @@ describe('Catalog import (e2e)', () => {
       stockQty: 5,
       sku: 'C1',
     });
-    expect(byHandle.get('sin-precio')?.isPublishedOnStore).toBe(false);
+    expect(
+      byHandle.get('sin-precio')?.channelListings.some((l) => l.channel === 'STORE' && l.isPublished),
+    ).toBe(false);
     const set = byHandle.get('set-duo')!;
     expect(set.stockUnlimited).toBe(true);
     expect(set.components.map((c) => c.component.handle).sort()).toEqual([
@@ -269,15 +271,25 @@ describe('Catalog import (e2e)', () => {
         handle: 'viejo',
         name: 'Viejo',
         basePriceCents: 900,
-        isPublishedOnStore: true,
+        status: 'ACTIVE',
+        channelListings: {
+          create: [
+            { channel: 'STORE', isPublished: true, publishedAt: new Date() },
+            { channel: 'WHATSAPP', isPublished: true },
+            { channel: 'INSTAGRAM', isPublished: true },
+          ],
+        },
       },
     });
     const { result } = await importAs(owner, { fullSync: true });
     expect(result.hidden).toBe(1);
     const viejo = await prisma.product.findFirstOrThrow({
       where: { tenantId: owner.tenantId, handle: 'viejo' },
+      include: { channelListings: true },
     });
-    expect(viejo.isPublishedOnStore).toBe(false);
+    expect(
+      viejo.channelListings.some((l) => l.channel === 'STORE' && l.isPublished),
+    ).toBe(false);
   });
 
   it('never touches another business and rejects photos it did not upload', async () => {

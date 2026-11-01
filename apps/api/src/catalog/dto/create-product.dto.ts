@@ -391,7 +391,34 @@ export class ProductComponentInputDto {
 
 export const PRODUCT_KINDS = ['PRODUCT', 'SERVICE', 'DIGITAL'] as const;
 export const SERVICE_MODES = ['onsite', 'home', 'online'] as const;
+export const PRODUCT_STATUSES = ['DRAFT', 'ACTIVE', 'ARCHIVED'] as const;
+export const PRODUCT_CHANNELS = ['STORE', 'WHATSAPP', 'INSTAGRAM'] as const;
 export type ServiceMode = (typeof SERVICE_MODES)[number];
+
+export class ChannelListingDto {
+  @ApiProperty({ enum: PRODUCT_CHANNELS })
+  @IsIn(PRODUCT_CHANNELS)
+  channel!: (typeof PRODUCT_CHANNELS)[number];
+
+  @ApiProperty()
+  @IsBoolean()
+  isPublished!: boolean;
+}
+
+export class OptionDefinitionDto {
+  @ApiProperty({ example: 'Color' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(60)
+  name!: string;
+
+  @ApiProperty({ type: [String], example: ['Negro', 'Blanco'] })
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsString({ each: true })
+  @MaxLength(200, { each: true })
+  values!: string[];
+}
 
 /** Fields shared by create and update for templates, sets, inventory and services. */
 export class ProductExtrasDto {
@@ -523,11 +550,21 @@ export class CreateProductDto extends ProductExtrasDto {
   @MaxLength(5000)
   descriptionFull?: string;
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Legacy free labels; prefer collectionIds. Synced from collections when memberships are set.',
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   categories?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Merchant collection IDs for this product' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(24)
+  @IsString({ each: true })
+  collectionIds?: string[];
 
   @ApiProperty({ example: 8900, description: 'Price in cents' })
   @IsInt()
@@ -539,7 +576,32 @@ export class CreateProductDto extends ProductExtrasDto {
   @IsString()
   currency?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: PRODUCT_STATUSES, default: 'DRAFT' })
+  @IsOptional()
+  @IsIn(PRODUCT_STATUSES)
+  status?: (typeof PRODUCT_STATUSES)[number];
+
+  @ApiPropertyOptional({
+    type: [ChannelListingDto],
+    description: 'Per-channel visibility; only ACTIVE products may publish',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(3)
+  @ValidateNested({ each: true })
+  @Type(() => ChannelListingDto)
+  channelListings?: ChannelListingDto[];
+
+  @ApiPropertyOptional({ type: [OptionDefinitionDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(5)
+  @ValidateNested({ each: true })
+  @Type(() => OptionDefinitionDto)
+  optionDefinitions?: OptionDefinitionDto[];
+
+  /** @deprecated Prefer status=DRAFT|ACTIVE. Mapped for one release. */
+  @ApiPropertyOptional({ deprecated: true })
   @IsOptional()
   @IsBoolean()
   isAvailable?: boolean;
@@ -572,7 +634,8 @@ export class CreateProductDto extends ProductExtrasDto {
   @IsString({ each: true })
   mediaUrls?: string[];
 
-  @ApiPropertyOptional({ description: 'Visible in the tenant web store' })
+  /** @deprecated Prefer channelListings STORE. Mapped for one release. */
+  @ApiPropertyOptional({ deprecated: true })
   @IsOptional()
   @IsBoolean()
   isPublishedOnStore?: boolean;

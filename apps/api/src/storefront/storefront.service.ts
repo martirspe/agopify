@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma, Storefront } from '@prisma/client';
+import { Prisma, ProductChannelKind, ProductStatus, Storefront } from '@prisma/client';
+import { storefrontProductWhere } from '../catalog/product-visibility';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateStorefrontDto } from './dto/update-storefront.dto';
 import { sellerIdentityComplete } from './seller-identity';
@@ -201,9 +202,37 @@ export class StorefrontService {
   async showAvailableProducts(tenantId: string): Promise<StorefrontSettingsView> {
     await this.assertEnabled(tenantId);
     const storefront = await this.ensure(tenantId);
-    await this.prisma.product.updateMany({
-      where: { tenantId, isAvailable: true, isPublishedOnStore: false },
-      data: { isPublishedOnStore: true },
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      // Active products whose STORE listing exists but is hidden.
+      await tx.productChannelListing.updateMany({
+        where: {
+          channel: ProductChannelKind.STORE,
+          isPublished: false,
+          product: { tenantId, status: ProductStatus.ACTIVE },
+        },
+        data: { isPublished: true, publishedAt: now },
+      });
+      // Active products that never had a STORE listing.
+      const missing = await tx.product.findMany({
+        where: {
+          tenantId,
+          status: ProductStatus.ACTIVE,
+          channelListings: { none: { channel: ProductChannelKind.STORE } },
+        },
+        select: { id: true },
+      });
+      if (missing.length) {
+        await tx.productChannelListing.createMany({
+          data: missing.map(({ id }) => ({
+            productId: id,
+            channel: ProductChannelKind.STORE,
+            isPublished: true,
+            publishedAt: now,
+          })),
+          skipDuplicates: true,
+        });
+      }
     });
     return this.view(tenantId, storefront);
   }
@@ -245,11 +274,12 @@ export class StorefrontService {
       }),
       this.prisma.product.count({ where: { tenantId } }),
       this.prisma.product.count({
-        where: { tenantId, isPublishedOnStore: true },
+        where: {
+          tenantId,
+          channelListings: { some: { channel: ProductChannelKind.STORE, isPublished: true } },
+        },
       }),
-      this.prisma.product.count({
-        where: { tenantId, isPublishedOnStore: true, isAvailable: true },
-      }),
+      this.prisma.product.count({ where: storefrontProductWhere(tenantId) }),
     ]);
     const checklist: StorefrontChecklistItem[] = [
       {

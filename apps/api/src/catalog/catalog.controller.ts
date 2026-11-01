@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ProductStatus } from '@prisma/client';
 import type { FastifyReply } from 'fastify';
 import { CurrentUser, Public } from '../common/decorators/auth.decorators';
 import type { AuthUserPayload } from '../common/types/auth-user';
@@ -10,6 +11,13 @@ import {
   CatalogImportCommitDto,
   CatalogImportPreviewDto,
 } from './dto/catalog-import.dto';
+import {
+  ChangeProductStatusDto,
+  CollectionProductsDto,
+  CreateCollectionDto,
+  ReplaceChannelListingsDto,
+  UpdateCollectionDto,
+} from './dto/collection.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { InventoryUpdateDto, MediaUploadDto } from './dto/inventory.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -35,6 +43,49 @@ export class CatalogController {
     return this.catalogService.categories();
   }
 
+  @Get('collections')
+  listCollections(@CurrentUser() user: AuthUserPayload) {
+    return this.catalogService.listCollections(user.tenantId);
+  }
+
+  @Post('collections')
+  createCollection(
+    @CurrentUser() user: AuthUserPayload,
+    @Body() dto: CreateCollectionDto,
+  ) {
+    return this.catalogService.createCollection(user.tenantId, dto);
+  }
+
+  @Patch('collections/:collectionId')
+  updateCollection(
+    @CurrentUser() user: AuthUserPayload,
+    @Param('collectionId') collectionId: string,
+    @Body() dto: UpdateCollectionDto,
+  ) {
+    return this.catalogService.updateCollection(user.tenantId, collectionId, dto);
+  }
+
+  @Delete('collections/:collectionId')
+  removeCollection(
+    @CurrentUser() user: AuthUserPayload,
+    @Param('collectionId') collectionId: string,
+  ) {
+    return this.catalogService.removeCollection(user.tenantId, collectionId);
+  }
+
+  @Put('collections/:collectionId/products')
+  setCollectionProducts(
+    @CurrentUser() user: AuthUserPayload,
+    @Param('collectionId') collectionId: string,
+    @Body() dto: CollectionProductsDto,
+  ) {
+    return this.catalogService.setCollectionProducts(
+      user.tenantId,
+      collectionId,
+      dto,
+    );
+  }
+
   @Post('products')
   create(@CurrentUser() user: AuthUserPayload, @Body() dto: CreateProductDto) {
     return this.catalogService.create(user.tenantId, dto);
@@ -55,6 +106,32 @@ export class CatalogController {
     @Body() dto: UpdateProductDto,
   ) {
     return this.catalogService.update(user.tenantId, productId, dto);
+  }
+
+  @Patch('products/:productId/status')
+  changeStatus(
+    @CurrentUser() user: AuthUserPayload,
+    @Param('productId') productId: string,
+    @Body() dto: ChangeProductStatusDto,
+  ) {
+    return this.catalogService.changeStatus(
+      user.tenantId,
+      productId,
+      dto.status as ProductStatus,
+    );
+  }
+
+  @Put('products/:productId/channel-listings')
+  replaceChannelListings(
+    @CurrentUser() user: AuthUserPayload,
+    @Param('productId') productId: string,
+    @Body() dto: ReplaceChannelListingsDto,
+  ) {
+    return this.catalogService.replaceChannelListings(
+      user.tenantId,
+      productId,
+      dto.channelListings,
+    );
   }
 
   @Delete('products/:productId')

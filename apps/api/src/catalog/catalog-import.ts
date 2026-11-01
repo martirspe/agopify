@@ -2,6 +2,13 @@ import { Prisma, ProductKind } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { ProductDetailsDto, ProductExtrasDto } from './dto/create-product.dto';
+import {
+  PRODUCT_CHANNELS,
+  PRODUCT_STATUSES,
+  type ChannelListingInput,
+  type ProductChannelValue,
+  type ProductStatusValue,
+} from './product-visibility';
 import { CARRIER_TIERS, MAX_CARRIER_RATE_CENTS } from '../storefront/shipping';
 import {
   INDUSTRIES,
@@ -89,7 +96,12 @@ export type ImportProduct = {
   seoDescription: string | null;
   sortOrder: number;
   priceCents: number | null;
+  /** Sellable lifecycle: status ACTIVE, or the legacy active flag. */
   active: boolean;
+  /** Lifecycle written by the package (status), else derived from the legacy active flag. */
+  status?: ProductStatusValue;
+  /** Channel visibility written by the package; null when it carries none (new products publish by default). */
+  channelListings?: ChannelListingInput[] | null;
   /** Carries its own stock (simple product or closed set sold under its own SKU). */
   holdsStock: boolean;
   /** Units from the package inventory; null when the package does not list the SKU. */
@@ -117,6 +129,25 @@ export type ParsedCatalog = {
 };
 
 type Raw = Record<string, unknown>;
+
+/** Package status wins; packages written before it only carry the boolean active. */
+function readStatus(raw: Raw): ProductStatusValue {
+  const value = typeof raw['status'] === 'string' ? raw['status'].trim().toUpperCase() : '';
+  if ((PRODUCT_STATUSES as readonly string[]).includes(value)) return value as ProductStatusValue;
+  return raw['active'] === false ? 'DRAFT' : 'ACTIVE';
+}
+
+function readListings(value: unknown): ChannelListingInput[] | null {
+  if (!Array.isArray(value)) return null;
+  const byChannel = new Map<ProductChannelValue, boolean>();
+  for (const row of value) {
+    if (!isObject(row) || typeof row['isPublished'] !== 'boolean') continue;
+    const channel = typeof row['channel'] === 'string' ? row['channel'].trim().toUpperCase() : '';
+    if ((PRODUCT_CHANNELS as readonly string[]).includes(channel))
+      byChannel.set(channel as ProductChannelValue, row['isPublished']);
+  }
+  return [...byChannel].map(([channel, isPublished]) => ({ channel, isPublished }));
+}
 
 const isObject = (value: unknown): value is Raw =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -381,6 +412,7 @@ export function parseCatalogPackage(text: string): ParsedCatalog {
     }
 
     const sku = holder ? e.singleSku : null;
+    const status = readStatus(raw);
     const categories = Array.isArray(raw['categories'])
       ? clips(raw['categories'], 60).slice(0, 12)
       : [clip(raw['category'], 60)].filter(
@@ -417,7 +449,9 @@ export function parseCatalogPackage(text: string): ParsedCatalog {
       seoDescription: clip(content['summary'], 160),
       sortOrder: Math.min(index, 9999),
       priceCents: typeof price === 'number' ? price : null,
-      active: raw['active'] !== false,
+      active: status === 'ACTIVE',
+      status,
+      channelListings: readListings(raw['channelListings']),
       holdsStock: !stockless && holder,
       stockQty: holder && sku !== null ? (stockOf.get(sku) ?? null) : null,
       images,

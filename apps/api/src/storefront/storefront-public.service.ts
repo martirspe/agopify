@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { publicTheme } from './theme-release';
-import { Prisma } from '@prisma/client';
+import { Prisma, ProductChannelKind, ProductStatus } from '@prisma/client';
 import { catalogSearchWhere } from '../catalog/catalog-search';
+import { storefrontProductWhere } from '../catalog/product-visibility';
 import type {
   ProductKind,
   PublicProductDetail,
@@ -28,7 +29,7 @@ import {
   slugFromHost,
   storefrontBaseDomain,
 } from './storefront-host';
-import { toCatalogProduct, toCatalogCard, toProductDetail } from './storefront-mapper';
+import { toCatalogProduct, toCatalogCard, toProductDetail, toStoreProductRecord } from './storefront-mapper';
 import { catalogFilterSql, catalogPriceSql, loadCatalogFacets, parseCatalogFilters } from './catalog-filters';
 import { verifyPreviewToken } from './storefront-preview';
 import { readTemplateContent } from './store-templates';
@@ -54,8 +55,11 @@ export const PRODUCT_INCLUDE = {
           name: true,
           sku: true,
           details: true,
-          isAvailable: true,
-          isPublishedOnStore: true,
+          status: true,
+          channelListings: {
+            where: { channel: ProductChannelKind.STORE },
+            select: { isPublished: true },
+          },
           stockUnlimited: true,
           stockQty: true,
         },
@@ -63,6 +67,11 @@ export const PRODUCT_INCLUDE = {
     },
   },
 } satisfies Prisma.ProductInclude;
+
+/** Raw-SQL twin of `storefrontProductWhere` (status ACTIVE + published STORE listing) for alias `p`. */
+const STORE_VISIBLE_SQL = Prisma.sql`p.status = 'ACTIVE'::"ProductStatus" AND EXISTS (
+  SELECT 1 FROM "ProductChannelListing" l
+  WHERE l."productId" = p.id AND l.channel = 'STORE'::"ProductChannelKind" AND l."isPublished" = true)`;
 
 const MAX_PAGE_SIZE = 48;
 const MAX_CATALOG = 48;
@@ -238,21 +247,21 @@ export class StorefrontPublicService {
   /** Bounded featured collection; the complete catalog uses paginated products. */
   async catalog(access: StoreAccess): Promise<StoreCatalogProduct[]> {
     const products = await this.prisma.product.findMany({
-      where: { tenantId: access.tenantId, isPublishedOnStore: true },
+      where: storefrontProductWhere(access.tenantId),
       include: PRODUCT_INCLUDE,
       orderBy: this.orderBy('featured'),
       take: MAX_CATALOG,
     });
-    return products.map(toCatalogProduct);
+    return products.map((product) => toCatalogProduct(toStoreProductRecord(product)));
   }
 
   async catalogProduct(access: StoreAccess, handle: string): Promise<StoreCatalogProduct> {
     const product = await this.prisma.product.findFirst({
-      where: { tenantId: access.tenantId, handle, isPublishedOnStore: true },
+      where: { ...storefrontProductWhere(access.tenantId), handle },
       include: PRODUCT_INCLUDE,
     });
     if (!product) throw new NotFoundException('Product not found');
-    return toCatalogProduct(product);
+    return toCatalogProduct(toStoreProductRecord(product));
   }
 
   async checkout(tenantId: string): Promise<StorefrontCheckout> {
@@ -280,8 +289,8 @@ export class StorefrontPublicService {
     const search = query.q?.trim().slice(0, 80);
     const filters = parseCatalogFilters(query.filters);
     const base = search ? catalogSearchWhere(access.tenantId, search.split(/\s+/), {
-      published: true, kind: query.kind,
-    }).where : Prisma.sql`p."tenantId" = ${access.tenantId} AND p."isPublishedOnStore" = true
+      status: ProductStatus.ACTIVE, channel: ProductChannelKind.STORE, kind: query.kind,
+    }).where : Prisma.sql`p."tenantId" = ${access.tenantId} AND ${STORE_VISIBLE_SQL}
       ${query.kind ? Prisma.sql`AND p.kind = ${query.kind}::"ProductKind"` : Prisma.empty}`;
     const where = Prisma.sql`${base} ${catalogFilterSql(filters, query.category)}
       ${query.minPriceCents !== undefined ? Prisma.sql`AND ${catalogPriceSql} >= ${query.minPriceCents}` : Prisma.empty}
@@ -289,7 +298,7 @@ export class StorefrontPublicService {
     const sort = query.sort === 'price-asc' ? Prisma.sql`${catalogPriceSql} ASC`
       : query.sort === 'price-desc' ? Prisma.sql`${catalogPriceSql} DESC`
       : query.sort === 'newest' ? Prisma.sql`p."createdAt" DESC`
-      : Prisma.sql`p."isAvailable" DESC, p."sortOrder" ASC, p."updatedAt" DESC`;
+      : Prisma.sql`CASE WHEN p.status = 'ACTIVE' THEN 0 ELSE 1 END, p."sortOrder" ASC, p."updatedAt" DESC`;
     const [hits, counts, facets] = await Promise.all([
       this.prisma.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT p.id FROM "Product" p
         WHERE ${where} ORDER BY ${sort}, p.id LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}`),
@@ -298,12 +307,12 @@ export class StorefrontPublicService {
       loadCatalogFacets(this.prisma, base),
     ]);
     const products = await this.prisma.product.findMany({
-      where: { tenantId: access.tenantId, isPublishedOnStore: true, id: { in: hits.map((hit) => hit.id) } },
+      where: { ...storefrontProductWhere(access.tenantId), id: { in: hits.map((hit) => hit.id) } },
       include: PRODUCT_INCLUDE,
     });
     const positions = new Map(hits.map((hit, index) => [hit.id, index]));
     products.sort((a, b) => positions.get(a.id)! - positions.get(b.id)!);
-    return { items: products.map(toCatalogCard), total: counts[0]?.total ?? 0, page, pageSize, facets };
+    return { items: products.map((product) => toCatalogCard(toStoreProductRecord(product))), total: counts[0]?.total ?? 0, page, pageSize, facets };
   }
 
   async getProduct(
@@ -311,7 +320,7 @@ export class StorefrontPublicService {
     handle: string,
   ): Promise<PublicProductDetail> {
     const product = await this.prisma.product.findFirst({
-      where: { tenantId: access.tenantId, handle, isPublishedOnStore: true },
+      where: { ...storefrontProductWhere(access.tenantId), handle },
       include: PRODUCT_INCLUDE,
     });
     if (!product) {
@@ -319,8 +328,7 @@ export class StorefrontPublicService {
     }
     const related = await this.prisma.product.findMany({
       where: {
-        tenantId: access.tenantId,
-        isPublishedOnStore: true,
+        ...storefrontProductWhere(access.tenantId),
         id: { not: product.id },
         ...(product.categories.length
           ? { categories: { hasSome: product.categories } }
@@ -330,12 +338,12 @@ export class StorefrontPublicService {
       orderBy: this.orderBy('featured'),
       take: 8,
     });
-    return toProductDetail(product, related);
+    return toProductDetail(toStoreProductRecord(product), related.map(toStoreProductRecord));
   }
 
   async sitemap(access: StoreAccess): Promise<SitemapEntry[]> {
     const products = await this.prisma.product.findMany({
-      where: { tenantId: access.tenantId, isPublishedOnStore: true },
+      where: storefrontProductWhere(access.tenantId),
       select: { handle: true, updatedAt: true },
       orderBy: { updatedAt: 'desc' },
       take: 5000,
@@ -351,7 +359,10 @@ export class StorefrontPublicService {
   ): Promise<{ categories: string[]; kinds: ProductKind[] }> {
     const [row] = await this.prisma.$queryRaw<Array<{ categories: string[]; kinds: ProductKind[] }>>(Prisma.sql`
       WITH published AS (
-        SELECT categories, kind FROM "Product" WHERE "tenantId" = ${tenantId} AND "isPublishedOnStore" = true
+        SELECT categories, kind FROM "Product" WHERE "tenantId" = ${tenantId} AND status = 'ACTIVE'
+          AND EXISTS (
+            SELECT 1 FROM "ProductChannelListing" l
+            WHERE l."productId" = "Product".id AND l.channel = 'STORE'::"ProductChannelKind" AND l."isPublished" = true)
       ) SELECT
         ARRAY(SELECT DISTINCT trim(c) FROM published, unnest(categories) c WHERE trim(c) <> '' ORDER BY trim(c)) AS categories,
         ARRAY(SELECT DISTINCT kind::text FROM published ORDER BY kind::text) AS kinds`);
@@ -369,7 +380,8 @@ export class StorefrontPublicService {
       case 'price-desc':
         return [{ basePriceCents: 'desc' }, { name: 'asc' }];
       default:
-        return [{ isAvailable: 'desc' }, { sortOrder: 'asc' }, { updatedAt: 'desc' }];
+        // The store only lists ACTIVE products, so merchant order is enough.
+        return [{ sortOrder: 'asc' }, { updatedAt: 'desc' }];
     }
   }
 }

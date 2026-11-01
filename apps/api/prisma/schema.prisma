@@ -129,6 +129,20 @@ enum ProductKind {
   DIGITAL
 }
 
+/// Product lifecycle separate from channel visibility and inventory.
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+/// Sales surfaces a product can be listed on (not Meta Channel rows).
+enum ProductChannelKind {
+  STORE
+  WHATSAPP
+  INSTAGRAM
+}
+
 enum OrderChannel {
   WEB
   WHATSAPP
@@ -206,6 +220,7 @@ model Tenant {
   channels           Channel[]
   whatsappSignupSessions WhatsAppSignupSession[]
   products           Product[]
+  collections        Collection[]
   conversations      Conversation[]
   orders             Order[]
   payments           Payment[]
@@ -719,6 +734,7 @@ model Product {
   name                String
   descriptionShort    String?
   descriptionFull     String?
+  /// Denormalized collection titles for search/facets; membership is CollectionProduct.
   categories          String[] @default([])
   categoryId          String?
   attributeValues     Json?
@@ -734,10 +750,9 @@ model Product {
   digitalAccessUrl    String?
   /// Digital only: how to use the access (passwords are not stored here).
   digitalInstructions String?
-  isAvailable         Boolean  @default(true)
+  status              ProductStatus @default(DRAFT)
   stockUnlimited      Boolean  @default(true)
   stockQty            Int?
-  isPublishedOnStore  Boolean  @default(false)
   compareAtPriceCents Int?
   brand               String?
   sku                 String?
@@ -751,22 +766,86 @@ model Product {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  category    CatalogCategory?   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  variants    ProductVariant[]
-  media       ProductMedia[]
-  orderItems  OrderItem[]
+  tenant           Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category         CatalogCategory?        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  variants         ProductVariant[]
+  media            ProductMedia[]
+  optionDefinitions ProductOption[]
+  channelListings  ProductChannelListing[]
+  collectionLinks  CollectionProduct[]
+  orderItems       OrderItem[]
   /// Pieces of this product when it is sold as a set.
-  components  ProductComponent[] @relation("SetComponents")
+  components       ProductComponent[]      @relation("SetComponents")
   /// Sets that include this product as a piece.
-  componentOf ProductComponent[] @relation("ComponentOf")
-  liveOffers LiveOffer[]
+  componentOf      ProductComponent[]      @relation("ComponentOf")
+  liveOffers       LiveOffer[]
 
   @@unique([tenantId, handle])
   @@index([tenantId])
   @@index([tenantId, categoryId])
-  @@index([tenantId, isPublishedOnStore])
-  @@index([tenantId, isAvailable, sortOrder, updatedAt])
+  @@index([tenantId, status, sortOrder, updatedAt])
+}
+
+/// Axis definitions for a product; sellable combinations remain on ProductVariant.
+model ProductOption {
+  id        String @id @default(cuid())
+  productId String
+  name      String
+  position  Int    @default(0)
+  /// Ordered distinct values for this axis.
+  values    Json
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, name])
+  @@index([productId, position])
+}
+
+/// Per-channel visibility; only ACTIVE products may have isPublished = true.
+model ProductChannelListing {
+  id          String             @id @default(cuid())
+  productId   String
+  channel     ProductChannelKind
+  isPublished Boolean            @default(false)
+  publishedAt DateTime?
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, channel])
+  @@index([productId, isPublished])
+  @@index([channel, isPublished])
+}
+
+/// Merchant-owned commercial grouping (not the shared CatalogCategory taxonomy).
+model Collection {
+  id          String   @id @default(cuid())
+  tenantId    String
+  handle      String
+  title       String
+  description String?
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant   Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  products CollectionProduct[]
+
+  @@unique([tenantId, handle])
+  @@index([tenantId, isPublished, sortOrder])
+}
+
+model CollectionProduct {
+  id           String @id @default(cuid())
+  collectionId String
+  productId    String
+  sortOrder    Int    @default(0)
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  product    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, productId])
+  @@index([productId])
 }
 
 model ProductVariant {

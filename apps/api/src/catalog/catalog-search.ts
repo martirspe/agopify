@@ -1,12 +1,16 @@
-import { Prisma, ProductKind } from '@prisma/client';
+import { Prisma, ProductChannelKind, ProductKind, ProductStatus } from '@prisma/client';
 
 /** Bound transferred rows, not the number of products eligible for a search. */
 export const CATALOG_CANDIDATES = 12;
 
 type SearchDb = { $queryRaw: <T>(query: Prisma.Sql) => Promise<T> };
 type SearchOptions = {
+  /** @deprecated Prefer channel=STORE + status ACTIVE */
   published?: boolean;
+  /** @deprecated Prefer status ACTIVE + channel listing */
   available?: boolean;
+  status?: ProductStatus;
+  channel?: ProductChannelKind;
   category?: string;
   kind?: ProductKind;
   maxPriceCents?: number;
@@ -16,15 +20,25 @@ type SearchOptions = {
 export const catalogDocument = Prisma.sql`catalog_search_document(
   p.name, p.brand, p.line, p.categories, p."descriptionShort", p."descriptionFull", p.details)`;
 
+function channelListingSql(channel: ProductChannelKind) {
+  return Prisma.sql`AND EXISTS (
+    SELECT 1 FROM "ProductChannelListing" l
+    WHERE l."productId" = p.id AND l.channel = ${channel}::"ProductChannelKind" AND l."isPublished" = true)`;
+}
+
 export function catalogSearchWhere(tenantId: string, tokens: string[], options: SearchOptions = {}) {
   const words = tokens.slice(0, 12).map((word) => word.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^\p{L}\p{N}]/gu, '').slice(0, 50)).filter(Boolean);
   // Values are always bound parameters; tsquery syntax never comes from user input.
   const query = Prisma.sql`to_tsquery('spanish', ${words.map((word) => `${word}:*`).join(' | ') || 'vendedoriaemptyquery'})`;
+  const status = options.status
+    ?? (options.available || options.published ? ProductStatus.ACTIVE : undefined);
+  const channel = options.channel
+    ?? (options.published ? ProductChannelKind.STORE : undefined);
   const where = Prisma.sql`p."tenantId" = ${tenantId}
     AND ${catalogDocument} @@ ${query}
-    ${options.available ? Prisma.sql`AND p."isAvailable" = true` : Prisma.empty}
-    ${options.published ? Prisma.sql`AND p."isPublishedOnStore" = true` : Prisma.empty}
+    ${status ? Prisma.sql`AND p.status = ${status}::"ProductStatus"` : Prisma.empty}
+    ${channel ? channelListingSql(channel) : Prisma.empty}
     ${options.category ? Prisma.sql`AND ${options.category} = ANY(p.categories)` : Prisma.empty}
     ${options.kind ? Prisma.sql`AND p.kind = ${options.kind}::"ProductKind"` : Prisma.empty}
     ${options.maxPriceCents !== undefined ? Prisma.sql`AND (

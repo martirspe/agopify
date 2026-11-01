@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Consola: aviso de prueba gratis en el pie del riel (texto factual + CTA «Suscribirse»), sin banner invasivo en el contenido; los avisos de plan vencido o cuota siguen en el workspace.
+- Consola / Productos: lista y editor alineados al patrón de ficha de producto (columna principal + riel de Estado / Publicación / Organización), con `ds-form-section`, barra de guardado y columnas Producto · Estado · Inventario · Canales · Precio; marca, SKU y línea en Organización.
+- Catálogo: estado de producto (`DRAFT` / `ACTIVE` / `ARCHIVED`) separado de la publicación por canal (tienda web, WhatsApp, Instagram); opciones de variante como ejes (`ProductOption`) y colecciones de negocio de primer nivel (`Collection`). Migración `0003_product_status_channels` convierte los flags `isAvailable` / `isPublishedOnStore`. El agente solo ofrece productos activos publicados en el canal de la conversación; la tienda solo lista activos con canal tienda publicado.
 - Consola / Inicio: asistente en hoja blanca fija paralela al frame principal (inset 4px, radio 16, ancho 356, gap 4px); al abrir arranca en dock; expandir cubre el panel main (íconos maximize/minimize).
 - Consola / Inicio: Dictar en el composer (`mic` + barra Cancelar/waveform/Listo con Web Speech API en es-PE).
 - Consola / Inicio: sugerencias solo con foco en el campo de escritura; menú + anclado al botón (home y panel del asistente).

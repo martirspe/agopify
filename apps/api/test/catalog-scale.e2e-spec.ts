@@ -21,9 +21,13 @@ describe('Indexed tenant catalog with 10,000 products (e2e)', () => {
     }
     tenantId = tenantIds[0];
     await db.$executeRaw(Prisma.sql`INSERT INTO "Product"
-      (id, "tenantId", handle, name, "basePriceCents", categories, "isPublishedOnStore", "updatedAt")
+      (id, "tenantId", handle, name, "basePriceCents", categories, status, "updatedAt")
       SELECT ${run} || '-' || n, ${tenantId}, 'fixture-' || n, 'Artículo ' || n, 1000,
-        ARRAY['Pruebas'], true, now() FROM generate_series(1, 10000) n`);
+        ARRAY['Pruebas'], 'ACTIVE'::"ProductStatus", now() FROM generate_series(1, 10000) n`);
+    await db.$executeRaw(Prisma.sql`INSERT INTO "ProductChannelListing"
+      (id, "productId", channel, "isPublished", "publishedAt")
+      SELECT ${run} || '-' || c.channel || '-' || n, ${run} || '-' || n, c.channel::"ProductChannelKind", true, now()
+        FROM generate_series(1, 10000) n CROSS JOIN (VALUES ('STORE'), ('WHATSAPP'), ('INSTAGRAM')) AS c(channel)`);
     targetId = `${run}-10000`;
     await db.product.update({ where: { id: targetId }, data: {
       name: 'Lámpara Boreal', details: { keywords: ['farol'], compatibility: ['USB-C'], exclusions: ['No incluye adaptador'] },
@@ -77,7 +81,10 @@ describe('Indexed tenant catalog with 10,000 products (e2e)', () => {
     expect(product.kind).toBe('DIGITAL');
     expect(JSON.stringify(product)).not.toContain('private-access');
     await expect(store.catalogProduct(access, 'other-lamp')).rejects.toThrow('Product not found');
-    await db.product.update({ where: { id: targetId }, data: { isPublishedOnStore: false } });
+    await db.productChannelListing.update({
+      where: { productId_channel: { productId: targetId, channel: 'STORE' } },
+      data: { isPublished: false },
+    });
     await expect(store.catalogProduct(access, 'fixture-10000')).rejects.toThrow('Product not found');
   });
 });

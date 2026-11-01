@@ -58,6 +58,7 @@ Jump table from domain to paths. API paths are under `apps/api/src/`, console pa
 - Shipping settings are business-wide (`/shipping`, used by the agent and the store) but their columns still live on the `Storefront` row, created on first use by `storefront/storefront-row.ts`.
 - CI builds API, web and store, installs the lockfile with `npm ci`, and runs API unit, theme/schema/runtime, console and store Angular tests. API/database E2E remains local Docker verification on the isolated test database.
 - Product and Selecta home purchase buttons add to the saved cart and await persistence before checkout. Explicit direct-selection URLs and LIVE checkout remain route-scoped.
+- Constitution catalog “disponibilidad booleana” is implemented as `Product.status` (DRAFT/ACTIVE/ARCHIVED) plus per-channel `ProductChannelListing` (STORE/WHATSAPP/INSTAGRAM). Public/agent `isAvailable` is computed sellability; merchant collection labels are `Collection` + denormalized `Product.categories`.
 - Themes v1 are declarative packages over reviewed compiled platform renderers, with pinned ABI/releases and additive migration; no arbitrary plugin execution or free-form page builder. Legacy built-in content keys remain shared across presentations; snapshots without identity cannot reconstruct their original template. See `docs/THEMES.md`.
 
 - Conversion uses Redis/BullMQ for recovery and optional Qdrant for catalog affinity; PostgreSQL remains authoritative. PostGIS is not used: neither recovery nor recommendations needs geolocation. Webhook ingestion remains synchronous.

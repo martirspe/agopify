@@ -154,6 +154,7 @@ describe('AI Sales Engine regression/evaluation', () => {
       [],
       [],
       'Busco zapatillas negras talla 40 máximo 180',
+      undefined,
     );
     expect(result.salesState?.recommendedProductIds).toEqual(['one', 'two']);
     const evaluation = evaluateSalesTurn(result, products, {

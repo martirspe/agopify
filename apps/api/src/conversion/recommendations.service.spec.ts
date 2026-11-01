@@ -9,10 +9,10 @@ import { RecommendationsService } from './recommendations.service';
 
 describe('RecommendationsService', () => {
   it('hydrates cached rankings with tenant-scoped current availability and price', async () => {
-    const product = (handle: string, isAvailable = true) => ({
+    const product = (handle: string, status = 'ACTIVE') => ({
       handle,
       name: handle,
-      isAvailable,
+      status,
       categories: ['Shoes'],
       basePriceCents: 2500,
       compareAtPriceCents: null,
@@ -29,7 +29,7 @@ describe('RecommendationsService', () => {
           .fn()
           .mockResolvedValue([
             product('current-price'),
-            product('gone', false),
+            product('gone', 'DRAFT'),
           ]),
       },
       storeBehaviorEvent: { findMany: jest.fn() },
@@ -54,7 +54,8 @@ describe('RecommendationsService', () => {
       expect.objectContaining({
         where: expect.objectContaining({
           tenantId: 'tenant-a',
-          isPublishedOnStore: true,
+          status: 'ACTIVE',
+          channelListings: { some: { channel: 'STORE', isPublished: true } },
         }),
       }),
     );

@@ -23,7 +23,6 @@ import {
   IntegrationsStateService,
 } from '../core/integrations/integrations-state.service';
 import {
-  DsBannerComponent,
   DsIconComponent,
   DsIconName,
   DsMenuComponent,
@@ -31,7 +30,6 @@ import {
 } from '@vendedoria/ui';
 import { SELLER_SECTIONS } from '../features/seller/seller-config';
 import { initialsOf } from '../features/profile/profile-utils';
-import { environment } from '../../environments/environment';
 import { CONSOLE_CONTEXTS, contextForUrl, isContextLinkActive, normalizeSearch, type ContextLink } from './console-context';
 import { ConsoleRailTooltipDirective } from './console-rail-tooltip.directive';
 import { ConsoleAssistantLayoutService } from './console-assistant-layout.service';
@@ -71,7 +69,6 @@ type PaletteAction = {
     DsIconComponent,
     DsModalDirective,
     DsMenuComponent,
-    DsBannerComponent,
     ConsoleRailTooltipDirective,
   ],
   templateUrl: './console-shell.layout.html',
@@ -108,10 +105,16 @@ export class ConsoleShellLayout {
     { id: 'vendedor', label: 'Vendedor IA' }, { id: 'conexiones', label: 'Conexiones' },
     { id: 'ajustes', label: 'Ajustes' },
   ] as const;
+  /** Hard limits / expired plan — content banner. Trial uses the rail notice. */
   readonly quotaWarning = signal<string | null>(null);
-  /** Early in the trial the banner offers the setup session instead of the plans. */
-  readonly quotaAction = signal<'plans' | 'onboarding'>('plans');
-  readonly onboardingUrl = environment.onboardingUrl;
+  /** Compact trial countdown pinned in the navigation rail. */
+  readonly trialDaysLeft = signal<number | null>(null);
+  readonly trialLabel = computed(() => {
+    const days = this.trialDaysLeft();
+    if (days === null) return null;
+    if (days <= 1) return 'La prueba termina hoy';
+    return `La prueba termina en ${days} días`;
+  });
 
   readonly userName = computed(() => {
     const profile = this.account.profile();
@@ -452,19 +455,15 @@ export class ConsoleShellLayout {
   async loadQuotaWarning(): Promise<void> {
     try {
       const usage = await this.billing.getUsage();
-      this.quotaAction.set('plans');
       const daysLeft = usage.planExpiresAt
         ? Math.ceil((new Date(usage.planExpiresAt).getTime() - Date.now()) / 86_400_000)
         : null;
+      this.trialDaysLeft.set(
+        usage.planStatus === 'TRIAL' && daysLeft !== null ? Math.max(0, daysLeft) : null,
+      );
       if (usage.planStatus === 'EXPIRED') {
         this.quotaWarning.set(
           'Tu plan venció: tu vendedor IA no atiende chats nuevos. Renueva tu plan para volver a la normalidad.',
-        );
-      } else if (usage.planStatus === 'TRIAL' && daysLeft !== null && daysLeft <= 7) {
-        this.quotaWarning.set(
-          daysLeft <= 1
-            ? 'Tu prueba gratis termina hoy. Elige un plan para que tu vendedor IA siga atendiendo chats nuevos.'
-            : `Tu prueba gratis termina en ${daysLeft} días. Elige un plan para no detener tus ventas.`,
         );
       } else if (usage.conversationAtLimit) {
         this.quotaWarning.set(
@@ -483,15 +482,11 @@ export class ConsoleShellLayout {
         this.quotaWarning.set(
           `Usaste ${usage.conversationsUsed} de tus ${usage.conversationQuota} chats nuevos de este mes.`,
         );
-      } else if (usage.planStatus === 'TRIAL' && daysLeft !== null) {
-        this.quotaWarning.set(
-          `Te quedan ${daysLeft} días de prueba gratis. Agenda una sesión de configuración si la necesitas.`,
-        );
-        this.quotaAction.set('onboarding');
       } else {
         this.quotaWarning.set(null);
       }
     } catch {
+      this.trialDaysLeft.set(null);
       this.quotaWarning.set(null);
     }
   }

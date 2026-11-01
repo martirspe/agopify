@@ -10,10 +10,12 @@ describe('catalog search boundaries', () => {
   });
 
   it('binds tenant and search text instead of interpolating SQL', () => {
-    const { where } = catalogSearchWhere("tenant' OR true --", ["foo'); DROP TABLE Product; --"], { published: true });
+    const { where } = catalogSearchWhere("tenant' OR true --", ["foo'); DROP TABLE Product; --"], { status: 'ACTIVE', channel: 'STORE' });
     expect(where.values).toContain("tenant' OR true --");
     expect(where.sql).not.toContain('DROP TABLE');
     expect(where.sql).toContain('"tenantId" = ?');
-    expect(where.sql).toContain('"isPublishedOnStore" = true');
+    expect(where.sql).toContain('p.status = ?');
+    expect(where.sql).toContain('"ProductChannelListing"');
+    expect(where.values).toEqual(expect.arrayContaining(['ACTIVE', 'STORE']));
   });
 });

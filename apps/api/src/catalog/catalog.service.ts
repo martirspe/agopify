@@ -4,31 +4,41 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, ProductKind } from '@prisma/client';
+import {
+  Prisma,
+  ProductChannelKind,
+  ProductKind,
+  ProductStatus,
+} from '@prisma/client';
 import { PlanLimitsService } from '../billing/plan-limits.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  ChannelListingDto,
   CreateProductDto,
+  OptionDefinitionDto,
   ProductComponentInputDto,
   ProductExtrasDto,
   ProductVariantInputDto,
 } from './dto/create-product.dto';
+import {
+  CollectionProductsDto,
+  CreateCollectionDto,
+  UpdateCollectionDto,
+} from './dto/collection.dto';
 import { InventoryUpdateDto } from './dto/inventory.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { MediaService } from './media.service';
 import { categorySchema, classificationDetails, validateAttributeValues } from './catalog-classification';
+import {
+  PRODUCT_RELATIONS_INCLUDE,
+  presentProduct,
+  slugifyHandle,
+  type ChannelListingInput,
+  type OptionDefinitionInput,
+} from './product-visibility';
 import { combinationKey, MAX_VARIANTS, normalizeOption, variantOptions, type OptionRecord } from './variant-options';
 
-const PRODUCT_INCLUDE = {
-  variants: true,
-  media: { orderBy: { sortOrder: 'asc' } },
-  components: {
-    orderBy: { id: 'asc' },
-    include: {
-      component: { select: { id: true, name: true, handle: true, sku: true } },
-    },
-  },
-} satisfies Prisma.ProductInclude;
+const PRODUCT_INCLUDE = PRODUCT_RELATIONS_INCLUDE;
 
 const MAX_MEDIA = 12;
 
@@ -65,17 +75,146 @@ export class CatalogService {
     private readonly media: MediaService,
   ) {}
 
-  list(tenantId: string) {
-    return this.prisma.product.findMany({
+  async list(tenantId: string) {
+    const products = await this.prisma.product.findMany({
       where: { tenantId },
       include: PRODUCT_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
+    return products.map((product) => presentProduct(product));
   }
 
   async categories() {
     const categories = await this.prisma.catalogCategory.findMany({ orderBy: { name: 'asc' } });
     return categories.map((category) => categorySchema(categories, category.id));
+  }
+
+  listCollections(tenantId: string) {
+    return this.prisma.collection.findMany({
+      where: { tenantId },
+      include: { _count: { select: { products: true } } },
+      orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
+    });
+  }
+
+  async createCollection(tenantId: string, dto: CreateCollectionDto) {
+    try {
+      return await this.prisma.collection.create({
+        data: {
+          tenantId,
+          handle: slugifyHandle(dto.handle),
+          title: dto.title.trim(),
+          description: dto.description?.trim() || null,
+          sortOrder: dto.sortOrder ?? 0,
+          isPublished: dto.isPublished ?? true,
+        },
+      });
+    } catch (error) {
+      throw this.mapConflict(error);
+    }
+  }
+
+  async updateCollection(tenantId: string, collectionId: string, dto: UpdateCollectionDto) {
+    await this.requireCollection(tenantId, collectionId);
+    try {
+      const collection = await this.prisma.collection.update({
+        where: { id: collectionId },
+        data: {
+          handle: dto.handle === undefined ? undefined : slugifyHandle(dto.handle),
+          title: dto.title?.trim(),
+          description:
+            dto.description === undefined ? undefined : dto.description?.trim() || null,
+          sortOrder: dto.sortOrder,
+          isPublished: dto.isPublished,
+        },
+      });
+      await this.refreshCollectionTitles(tenantId, collectionId);
+      return collection;
+    } catch (error) {
+      throw this.mapConflict(error);
+    }
+  }
+
+  async removeCollection(tenantId: string, collectionId: string) {
+    await this.requireCollection(tenantId, collectionId);
+    const links = await this.prisma.collectionProduct.findMany({
+      where: { collectionId },
+      select: { productId: true },
+    });
+    await this.prisma.collection.delete({ where: { id: collectionId } });
+    for (const { productId } of links) {
+      await this.syncProductCategories(this.prisma, productId);
+    }
+    return { deleted: true };
+  }
+
+  async setCollectionProducts(tenantId: string, collectionId: string, dto: CollectionProductsDto) {
+    await this.requireCollection(tenantId, collectionId);
+    const unique = [...new Set(dto.productIds)];
+    const owned = await this.prisma.product.count({
+      where: { tenantId, id: { in: unique } },
+    });
+    if (owned !== unique.length) throw new BadRequestException('Algún producto no existe en este negocio.');
+    const previous = await this.prisma.collectionProduct.findMany({
+      where: { collectionId },
+      select: { productId: true },
+    });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.collectionProduct.deleteMany({ where: { collectionId } });
+      if (unique.length) {
+        await tx.collectionProduct.createMany({
+          data: unique.map((productId, sortOrder) => ({
+            collectionId,
+            productId,
+            sortOrder,
+          })),
+        });
+      }
+    });
+    const touched = new Set([...previous.map((row) => row.productId), ...unique]);
+    for (const productId of touched) {
+      await this.syncProductCategories(this.prisma, productId);
+    }
+    return this.prisma.collection.findFirstOrThrow({
+      where: { id: collectionId, tenantId },
+      include: { _count: { select: { products: true } } },
+    });
+  }
+
+  async changeStatus(tenantId: string, productId: string, status: ProductStatus) {
+    await this.getById(tenantId, productId);
+    return this.prisma.$transaction(async (tx) => {
+      if (status !== ProductStatus.ACTIVE) {
+        await tx.productChannelListing.updateMany({
+          where: { productId },
+          data: { isPublished: false, publishedAt: null },
+        });
+      }
+      const product = await tx.product.update({
+        where: { id: productId },
+        data: { status },
+        include: PRODUCT_INCLUDE,
+      });
+      return presentProduct(product);
+    });
+  }
+
+  async replaceChannelListings(
+    tenantId: string,
+    productId: string,
+    listings: ChannelListingInput[],
+  ) {
+    const product = await this.getById(tenantId, productId);
+    return this.prisma.$transaction(async (tx) => {
+      await this.writeChannelListings(tx, productId, product.status, listings, {
+        rejectInactivePublish: true,
+      });
+      const updated = await tx.product.findFirstOrThrow({
+        where: { id: productId, tenantId },
+        include: PRODUCT_INCLUDE,
+      });
+      return presentProduct(updated);
+    });
   }
 
   private assertVariants(variants: ProductVariantInputDto[] | undefined) {
@@ -145,7 +284,9 @@ export class CatalogService {
         const kind = dto.kind ?? ProductKind.PRODUCT;
         const stockless = kind !== ProductKind.PRODUCT;
         const classification = await this.classificationData(tx, dto, kind, dto.variants ?? []);
-        this.assertDigitalAccess(kind, dto.digitalAccessUrl, dto.isAvailable ?? true);
+        const status = this.resolveStatus(dto, ProductStatus.DRAFT);
+        const listings = this.resolveListings(dto, []);
+        this.assertDigitalAccess(kind, dto.digitalAccessUrl, status === ProductStatus.ACTIVE);
         const product = await tx.product.create({
           data: {
             tenantId,
@@ -153,14 +294,13 @@ export class CatalogService {
             name: dto.name,
             descriptionShort: dto.descriptionShort,
             descriptionFull: dto.descriptionFull,
-            categories: dto.categories ?? [],
+            categories: [],
             basePriceCents: dto.basePriceCents,
             currency: dto.currency ?? 'PEN',
-            isAvailable: dto.isAvailable ?? true,
+            status,
             stockUnlimited: stockless ? true : (dto.stockUnlimited ?? true),
             stockQty: stockless ? null : dto.stockQty,
             ...this.kindData(dto, kind),
-            isPublishedOnStore: dto.isPublishedOnStore ?? false,
             compareAtPriceCents: dto.compareAtPriceCents ?? null,
             brand: dto.brand?.trim() || null,
             sortOrder: dto.sortOrder ?? 0,
@@ -177,6 +317,21 @@ export class CatalogService {
               : undefined,
           },
         });
+        await this.writeOptionDefinitions(
+          tx,
+          product.id,
+          this.resolveOptionDefinitions(dto.optionDefinitions, dto.variants),
+        );
+        await this.writeChannelListings(tx, product.id, status, listings, {
+          rejectInactivePublish: true,
+        });
+        await this.writeCollectionMembership(
+          tx,
+          tenantId,
+          product.id,
+          dto.collectionIds,
+          dto.categories,
+        );
         await this.writeMedia(tx, product.id, dto);
         if (stockless)
           await this.assertStocklessShape(
@@ -193,10 +348,11 @@ export class CatalogService {
           dto.components,
           dto.variants?.length ?? 0,
         );
-        return tx.product.findUniqueOrThrow({
+        const created = await tx.product.findUniqueOrThrow({
           where: { id: product.id },
           include: PRODUCT_INCLUDE,
         });
+        return presentProduct(created);
       });
     } catch (error) {
       throw this.mapConflict(error);
@@ -209,12 +365,15 @@ export class CatalogService {
     if (dto.expectedUpdatedAt && Date.parse(dto.expectedUpdatedAt) !== before.updatedAt.getTime()) throw new ConflictException('El producto cambió mientras lo editabas. Vuelve a abrirlo antes de guardar.');
     const kind = dto.kind ?? before.kind;
     const stockless = kind !== ProductKind.PRODUCT;
-    this.assertDigitalAccess(kind, dto.digitalAccessUrl === undefined ? before.digitalAccessUrl : dto.digitalAccessUrl,
-      dto.isAvailable ?? before.isAvailable);
+    const nextStatus = this.resolveStatus(dto, before.status);
+    this.assertDigitalAccess(
+      kind,
+      dto.digitalAccessUrl === undefined ? before.digitalAccessUrl : dto.digitalAccessUrl,
+      nextStatus === ProductStatus.ACTIVE,
+    );
     let updated;
     try {
       updated = await this.prisma.$transaction(async (tx) => {
-        // Serialize edits to the same product, including set recipes and combination keys.
         await tx.$queryRaw`SELECT "id" FROM "Product" WHERE "id" = ${productId} AND "tenantId" = ${tenantId} FOR UPDATE`;
         const current = await tx.product.findFirstOrThrow({ where: { id: productId, tenantId }, include: PRODUCT_INCLUDE });
         if (current.updatedAt.getTime() !== before.updatedAt.getTime()) throw new ConflictException('El producto cambió mientras lo editabas. Vuelve a abrirlo antes de guardar.');
@@ -229,6 +388,36 @@ export class CatalogService {
         }
         if (dto.basePriceCents !== undefined && !dto.variants) {
           await tx.productVariant.updateMany({ where: { productId, priceInherited: true }, data: { priceCents: dto.basePriceCents } });
+        }
+        const optionDefs = dto.optionDefinitions !== undefined || dto.variants
+          ? this.resolveOptionDefinitions(
+              dto.optionDefinitions,
+              dto.variants ?? current.variants.map((variant) => ({
+                ...variant,
+                options: variantOptions(variant),
+              })),
+            )
+          : undefined;
+        if (optionDefs) await this.writeOptionDefinitions(tx, productId, optionDefs);
+        const listings = this.resolveListings(dto, current.channelListings);
+        if (
+          dto.channelListings !== undefined ||
+          dto.isPublishedOnStore !== undefined ||
+          nextStatus !== current.status
+        ) {
+          await this.writeChannelListings(tx, productId, nextStatus, listings, {
+            rejectInactivePublish:
+              dto.channelListings !== undefined || dto.isPublishedOnStore === true,
+          });
+        }
+        if (dto.collectionIds !== undefined || dto.categories !== undefined) {
+          await this.writeCollectionMembership(
+            tx,
+            tenantId,
+            productId,
+            dto.collectionIds,
+            dto.categories,
+          );
         }
         await this.writeMedia(tx, productId, dto, true);
         const variantCount = dto.variants
@@ -260,10 +449,9 @@ export class CatalogService {
             name: dto.name,
             descriptionShort: dto.descriptionShort,
             descriptionFull: dto.descriptionFull,
-            categories: dto.categories,
             basePriceCents: dto.basePriceCents,
             currency: dto.currency,
-            isAvailable: dto.isAvailable,
+            status: nextStatus,
             ...(stockless
               ? { stockUnlimited: true, stockQty: null }
               : {
@@ -271,7 +459,6 @@ export class CatalogService {
                   stockQty: dto.stockQty === null ? null : dto.stockQty,
                 }),
             ...this.kindData(dto, kind),
-            isPublishedOnStore: dto.isPublishedOnStore,
             compareAtPriceCents: dto.compareAtPriceCents,
             brand: this.optionalText(dto.brand),
             sortOrder: dto.sortOrder,
@@ -291,7 +478,7 @@ export class CatalogService {
       tenantId,
       photoUrls(before).filter((url) => !kept.has(url)),
     );
-    return updated;
+    return presentProduct(updated);
   }
 
   async getById(tenantId: string, productId: string) {
@@ -302,7 +489,7 @@ export class CatalogService {
     if (!product) {
       throw new NotFoundException('Producto no encontrado.');
     }
-    return product;
+    return presentProduct(product);
   }
 
   /** Order lines keep their title and price snapshot; set pieces must leave their sets first. */
@@ -380,7 +567,7 @@ export class CatalogService {
         },
         stockUnlimited: true,
         stockQty: true,
-        isAvailable: true,
+        status: true,
         variants: {
           select: {
             id: true,
@@ -732,5 +919,191 @@ export class CatalogService {
       isAvailable: variant.isAvailable ?? true,
       stockQty: stockless ? null : (variant.stockQty ?? null),
     };
+  }
+
+  private resolveStatus(
+    dto: { status?: ProductStatus | string; isAvailable?: boolean },
+    fallback: ProductStatus,
+  ): ProductStatus {
+    if (dto.status) return dto.status as ProductStatus;
+    if (dto.isAvailable === true) return ProductStatus.ACTIVE;
+    if (dto.isAvailable === false) return ProductStatus.DRAFT;
+    return fallback;
+  }
+
+  private resolveListings(
+    dto: {
+      channelListings?: ChannelListingDto[];
+      isPublishedOnStore?: boolean;
+    },
+    current: Array<{ channel: ProductChannelKind; isPublished: boolean }>,
+  ): ChannelListingInput[] {
+    if (dto.channelListings) {
+      const byChannel = new Map<ProductChannelKind, boolean>();
+      for (const row of dto.channelListings) {
+        byChannel.set(row.channel as ProductChannelKind, row.isPublished);
+      }
+      return (Object.values(ProductChannelKind) as ProductChannelKind[]).map((channel) => ({
+        channel: channel as ChannelListingInput['channel'],
+        isPublished: byChannel.get(channel) ?? false,
+      }));
+    }
+    const fromCurrent = (Object.values(ProductChannelKind) as ProductChannelKind[]).map((channel) => ({
+      channel: channel as ChannelListingInput['channel'],
+      isPublished: current.some((row) => row.channel === channel && row.isPublished),
+    }));
+    if (dto.isPublishedOnStore === undefined) return fromCurrent;
+    return fromCurrent.map((row) =>
+      row.channel === 'STORE'
+        ? { ...row, isPublished: dto.isPublishedOnStore! }
+        : row,
+    );
+  }
+
+  private resolveOptionDefinitions(
+    definitions: OptionDefinitionDto[] | undefined,
+    variants: OptionRecord[] | undefined,
+  ): OptionDefinitionInput[] {
+    if (definitions?.length) {
+      return definitions.map((definition) => ({
+        name: definition.name.trim(),
+        values: [...new Set(definition.values.map((value) => value.trim()).filter(Boolean))],
+      }));
+    }
+    const axes = new Map<string, { name: string; values: Set<string> }>();
+    for (const variant of variants ?? []) {
+      for (const option of variantOptions(variant)) {
+        const key = normalizeOption(option.name);
+        const axis = axes.get(key) ?? { name: option.name.trim(), values: new Set<string>() };
+        axis.values.add(option.value.trim());
+        axes.set(key, axis);
+      }
+    }
+    return [...axes.values()].map((axis) => ({
+      name: axis.name,
+      values: [...axis.values],
+    }));
+  }
+
+  private async writeOptionDefinitions(
+    tx: Tx,
+    productId: string,
+    definitions: OptionDefinitionInput[],
+  ) {
+    await tx.productOption.deleteMany({ where: { productId } });
+    if (!definitions.length) return;
+    await tx.productOption.createMany({
+      data: definitions.map((definition, position) => ({
+        productId,
+        name: definition.name,
+        position,
+        values: definition.values as Prisma.InputJsonValue,
+      })),
+    });
+  }
+
+  private async writeChannelListings(
+    tx: Tx,
+    productId: string,
+    status: ProductStatus,
+    listings: ChannelListingInput[],
+    opts: { rejectInactivePublish?: boolean } = {},
+  ) {
+    const canPublish = status === ProductStatus.ACTIVE;
+    if (opts.rejectInactivePublish && !canPublish && listings.some((row) => row.isPublished)) {
+      throw new BadRequestException(
+        'Activa el producto antes de publicarlo en un canal de venta.',
+      );
+    }
+    await tx.productChannelListing.deleteMany({ where: { productId } });
+    const now = new Date();
+    await tx.productChannelListing.createMany({
+      data: (Object.values(ProductChannelKind) as ProductChannelKind[]).map((channel) => {
+        const match = listings.find((row) => row.channel === channel);
+        const isPublished = canPublish && !!match?.isPublished;
+        return {
+          productId,
+          channel,
+          isPublished,
+          publishedAt: isPublished ? now : null,
+        };
+      }),
+    });
+  }
+
+  private async writeCollectionMembership(
+    tx: Tx,
+    tenantId: string,
+    productId: string,
+    collectionIds: string[] | undefined,
+    legacyTitles: string[] | undefined,
+  ) {
+    let ids = collectionIds;
+    if (ids === undefined && legacyTitles !== undefined) {
+      ids = [];
+      for (const title of legacyTitles.map((value) => value.trim()).filter(Boolean)) {
+        const handle = slugifyHandle(title);
+        const existing = await tx.collection.findFirst({
+          where: { tenantId, OR: [{ title }, { handle }] },
+        });
+        const collection =
+          existing ??
+          (await tx.collection.create({
+            data: { tenantId, handle, title, isPublished: true },
+          }));
+        ids.push(collection.id);
+      }
+    }
+    if (ids === undefined) return;
+    const unique = [...new Set(ids)];
+    if (unique.length) {
+      const owned = await tx.collection.count({
+        where: { tenantId, id: { in: unique } },
+      });
+      if (owned !== unique.length) {
+        throw new BadRequestException('Alguna colección no existe en este negocio.');
+      }
+    }
+    await tx.collectionProduct.deleteMany({ where: { productId } });
+    if (unique.length) {
+      await tx.collectionProduct.createMany({
+        data: unique.map((collectionId, sortOrder) => ({
+          collectionId,
+          productId,
+          sortOrder,
+        })),
+      });
+    }
+    await this.syncProductCategories(tx, productId);
+  }
+
+  private async syncProductCategories(db: Tx | PrismaService, productId: string) {
+    const links = await db.collectionProduct.findMany({
+      where: { productId },
+      include: { collection: { select: { title: true } } },
+      orderBy: { sortOrder: 'asc' },
+    });
+    await db.product.update({
+      where: { id: productId },
+      data: { categories: links.map((link) => link.collection.title) },
+    });
+  }
+
+  private async refreshCollectionTitles(tenantId: string, collectionId: string) {
+    const links = await this.prisma.collectionProduct.findMany({
+      where: { collectionId, collection: { tenantId } },
+      select: { productId: true },
+    });
+    for (const { productId } of links) {
+      await this.syncProductCategories(this.prisma, productId);
+    }
+  }
+
+  private async requireCollection(tenantId: string, collectionId: string) {
+    const collection = await this.prisma.collection.findFirst({
+      where: { id: collectionId, tenantId },
+    });
+    if (!collection) throw new NotFoundException('Colección no encontrada.');
+    return collection;
   }
 }

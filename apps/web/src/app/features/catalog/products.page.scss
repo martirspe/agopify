@@ -85,6 +85,17 @@
   color: var(--ds-color-text-primary);
 }
 
+.publish__rail {
+  align-content: start;
+}
+
+@media (min-width: 1024px) {
+  .publish__rail {
+    position: sticky;
+    top: var(--ds-space-4);
+  }
+}
+
 .pub-card--row {
   grid-template-columns: 1fr auto;
   align-items: center;

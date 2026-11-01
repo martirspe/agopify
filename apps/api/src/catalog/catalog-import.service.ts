@@ -3,7 +3,7 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, ProductChannelKind, ProductStatus } from '@prisma/client';
 import { PlanLimitsService } from '../billing/plan-limits.service';
 import { assertManager } from '../common/roles';
 import type { AuthUserPayload } from '../common/types/auth-user';
@@ -32,6 +32,7 @@ import {
 } from './dto/catalog-import.dto';
 import { MediaUploadDto } from './dto/inventory.dto';
 import { MediaService } from './media.service';
+import { listingPublished } from './product-visibility';
 
 const MANAGER_MESSAGE =
   'Solo el dueño o un administrador puede importar o exportar el catálogo.';
@@ -127,6 +128,7 @@ export class CatalogImportService {
         orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
         include: {
           media: { orderBy: { sortOrder: 'asc' } },
+          channelListings: { select: { channel: true, isPublished: true } },
           variants: { select: { id: true } },
           components: {
             orderBy: { id: 'asc' },
@@ -158,10 +160,10 @@ export class CatalogImportService {
       serviceMode: row.serviceMode,
       digitalAccessUrl: row.digitalAccessUrl,
       digitalInstructions: row.digitalInstructions,
-      isAvailable: row.isAvailable,
+      status: row.status,
       stockUnlimited: row.stockUnlimited,
       stockQty: row.stockQty,
-      isPublishedOnStore: row.isPublishedOnStore,
+      channelListings: row.channelListings,
       brand: row.brand,
       sku: row.sku,
       line: row.line,
@@ -318,7 +320,7 @@ export class CatalogImportService {
           handle: true,
           name: true,
           basePriceCents: true,
-          isPublishedOnStore: true,
+          channelListings: { where: { channel: ProductChannelKind.STORE }, select: { channel: true, isPublished: true } },
           stockUnlimited: true,
           stockQty: true,
           kind: true,
@@ -347,7 +349,7 @@ export class CatalogImportService {
       handle: row.handle,
       name: row.name,
       basePriceCents: row.basePriceCents,
-      isPublishedOnStore: row.isPublishedOnStore,
+      isPublishedOnStore: listingPublished(row.channelListings, ProductChannelKind.STORE),
       stockUnlimited: row.stockUnlimited,
       stockQty: row.stockQty,
       kind: row.kind,
@@ -423,21 +425,42 @@ export class CatalogImportService {
             seoDescription: p.seoDescription,
             sortOrder: p.sortOrder,
           };
+          // New products: status and channels from the package, else sellable when active and priced.
+          const status = (p.status ?? (p.active ? 'ACTIVE' : 'DRAFT')) as ProductStatus;
+          const listings = (Object.values(ProductChannelKind) as ProductChannelKind[]).map((channel) => {
+            const wanted = p.channelListings?.find((row) => row.channel === channel)?.isPublished;
+            const base = channel === ProductChannelKind.STORE ? item.commerce.isPublishedOnStore === true : true;
+            return { channel, isPublished: status === ProductStatus.ACTIVE && base && (wanted ?? true) };
+          });
+          const storePublished = !item.current
+            ? listings.some((row) => row.channel === ProductChannelKind.STORE && row.isPublished)
+            : item.commerce.isPublishedOnStore === true;
           let id: string;
           if (item.current) {
             id = item.current.id;
             const previous = await tx.product.findFirst({
               where: { id, tenantId },
-              select: { details: true },
+              select: { details: true, status: true },
             });
+            const { isPublishedOnStore: publishOnStore, ...fields } = item.commerce;
+            // Publishing needs an ACTIVE product: a draft with a new price goes live, an archived one stays retired.
+            const publish = publishOnStore === true && previous?.status !== ProductStatus.ARCHIVED;
             await tx.product.updateMany({
               where: { id, tenantId },
               data: {
                 ...content,
                 details: keepConsoleDetails(previous?.details, content.details),
-                ...item.commerce,
+                ...fields,
+                ...(publish ? { status: ProductStatus.ACTIVE } : {}),
               },
             });
+            if (publish) {
+              await tx.productChannelListing.upsert({
+                where: { productId_channel: { productId: id, channel: ProductChannelKind.STORE } },
+                create: { productId: id, channel: ProductChannelKind.STORE, isPublished: true, publishedAt: new Date() },
+                update: { isPublished: true, publishedAt: new Date() },
+              });
+            }
             if (item.commerce.basePriceCents !== undefined) {
               await tx.productVariant.updateMany({ where: { productId: id, priceInherited: true }, data: { priceCents: item.commerce.basePriceCents } });
             }
@@ -451,18 +474,24 @@ export class CatalogImportService {
                 tenantId,
                 handle: p.handle,
                 currency: 'PEN',
-                isAvailable: true,
+                status,
                 basePriceCents: item.commerce.basePriceCents ?? 0,
-                isPublishedOnStore: item.commerce.isPublishedOnStore ?? false,
                 stockUnlimited: item.commerce.stockUnlimited ?? true,
                 stockQty: item.commerce.stockQty ?? null,
+                channelListings: {
+                  create: listings.map((row) => ({
+                    channel: row.channel,
+                    isPublished: row.isPublished,
+                    publishedAt: row.isPublished ? new Date() : null,
+                  })),
+                },
               },
               select: { id: true },
             });
             id = row.id;
             created += 1;
           }
-          if (item.commerce.isPublishedOnStore) published += 1;
+          if (storePublished) published += 1;
           const media = item.media.flatMap((m) => {
             const url = m.url ?? stored.get(m.hash);
             return url
@@ -515,9 +544,12 @@ export class CatalogImportService {
         }
 
         if (plan.hide.length) {
-          await tx.product.updateMany({
-            where: { tenantId, id: { in: plan.hide.map((row) => row.id) } },
-            data: { isPublishedOnStore: false },
+          await tx.productChannelListing.updateMany({
+            where: {
+              channel: ProductChannelKind.STORE,
+              product: { tenantId, id: { in: plan.hide.map((row) => row.id) } },
+            },
+            data: { isPublished: false, publishedAt: null },
           });
         }
 

@@ -108,7 +108,14 @@ describe('LIVE sales (isolated PostgreSQL)', () => {
         basePriceCents: 17900,
         stockUnlimited: false,
         stockQty: 1,
-        isPublishedOnStore: true,
+        status: 'ACTIVE',
+        channelListings: {
+          create: [
+            { channel: 'STORE', isPublished: true, publishedAt: new Date() },
+            { channel: 'WHATSAPP', isPublished: true },
+            { channel: 'INSTAGRAM', isPublished: true },
+          ],
+        },
       },
     });
     productId = product.id;

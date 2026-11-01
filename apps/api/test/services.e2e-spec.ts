@@ -77,7 +77,12 @@ describe('Services in the catalog and the web checkout (e2e)', () => {
       basePriceCents: 5000,
       stockUnlimited: false,
       stockQty: 10,
-      isPublishedOnStore: true,
+      status: 'ACTIVE',
+      channelListings: [
+        { channel: 'STORE', isPublished: true },
+        { channel: 'WHATSAPP', isPublished: true },
+        { channel: 'INSTAGRAM', isPublished: true },
+      ],
     });
     goodId = good.id;
   });
@@ -101,7 +106,12 @@ describe('Services in the catalog and the web checkout (e2e)', () => {
       serviceMode: 'onsite',
       stockUnlimited: false,
       stockQty: 3,
-      isPublishedOnStore: true,
+      status: 'ACTIVE',
+      channelListings: [
+        { channel: 'STORE', isPublished: true },
+        { channel: 'WHATSAPP', isPublished: true },
+        { channel: 'INSTAGRAM', isPublished: true },
+      ],
       variants: [
         {
           option1Name: 'Duración',
@@ -255,7 +265,12 @@ describe('Services in the catalog and the web checkout (e2e)', () => {
       digitalInstructions: 'Descarga el PDF.',
       stockUnlimited: false,
       stockQty: 3,
-      isPublishedOnStore: true,
+      status: 'ACTIVE',
+      channelListings: [
+        { channel: 'STORE', isPublished: true },
+        { channel: 'WHATSAPP', isPublished: true },
+        { channel: 'INSTAGRAM', isPublished: true },
+      ],
     });
     expect(
       await prisma.product.findUniqueOrThrow({ where: { id: ebook.id } }),

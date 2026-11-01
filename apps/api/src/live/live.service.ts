@@ -8,7 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LiveCampaign, LiveReservation, Prisma } from '@prisma/client';
+import { LiveCampaign, LiveReservation, Prisma, ProductChannelKind } from '@prisma/client';
 import { createHmac } from 'node:crypto';
 import {
   distinctUntilChanged,
@@ -21,6 +21,7 @@ import {
 } from 'rxjs';
 import { SalesAgentRuntimeService } from '../agent-runtime/sales-agent-runtime.service';
 import { PlanLimitsService } from '../billing/plan-limits.service';
+import { derivedIsAvailable, listingPublished } from '../catalog/product-visibility';
 import { assertManager } from '../common/roles';
 import { AuthUserPayload } from '../common/types/auth-user';
 import { activeCustomDomain } from '../integrations/integration-state';
@@ -50,7 +51,7 @@ import { StorefrontPublicService } from '../storefront/storefront-public.service
 
 const OFFER_INCLUDE = {
   product: {
-    include: { variants: true, components: { include: { component: true } } },
+    include: { variants: true, channelListings: true, components: { include: { component: true } } },
   },
   variant: true,
 } satisfies Prisma.LiveOfferInclude;
@@ -110,7 +111,7 @@ export class LiveService {
       throw new BadRequestException('Elige un vendedor activo de tu negocio.');
     const products = await this.prisma.product.findMany({
       where: { tenantId, id: { in: dto.products.map((p) => p.productId) } },
-      include: { variants: true, components: { include: { component: true } } },
+      include: { variants: true, channelListings: true, components: { include: { component: true } } },
     });
     const unique = new Set<string>();
     for (const input of dto.products) {
@@ -118,8 +119,8 @@ export class LiveService {
       const variant = product?.variants.find((v) => v.id === input.variantId);
       if (
         !product ||
-        !product.isAvailable ||
-        !product.isPublishedOnStore ||
+        !derivedIsAvailable(product.status) ||
+        !listingPublished(product.channelListings, ProductChannelKind.STORE) ||
         product.kind !== 'PRODUCT' ||
         product.currency !== 'PEN' ||
         (product.variants.length
@@ -872,8 +873,8 @@ export class LiveService {
     );
     if (
       endsAt <= Date.now() ||
-      !offer.product.isAvailable ||
-      !offer.product.isPublishedOnStore ||
+      !derivedIsAvailable(offer.product.status) ||
+      !listingPublished(offer.product.channelListings, ProductChannelKind.STORE) ||
       offer.product.currency !== 'PEN' ||
       (offer.variantId && !offer.variant?.isAvailable)
     )
@@ -971,7 +972,7 @@ export class LiveService {
     if (product.components.length)
       return Math.min(
         ...product.components.map((c) =>
-          !c.component.isAvailable
+          !derivedIsAvailable(c.component.status)
             ? 0
             : c.component.stockUnlimited
               ? Number.MAX_SAFE_INTEGER
@@ -992,8 +993,8 @@ export class LiveService {
       : null;
     const available =
       offer.enabled &&
-      offer.product.isAvailable &&
-      offer.product.isPublishedOnStore &&
+      derivedIsAvailable(offer.product.status) &&
+      listingPublished(offer.product.channelListings, ProductChannelKind.STORE) &&
       (!offer.variantId || offer.variant?.isAvailable) &&
       (!expiresAt || expiresAt > new Date());
     return {

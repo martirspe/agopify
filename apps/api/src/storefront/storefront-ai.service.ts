@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { Storefront } from '@prisma/client';
 import { PlanLimitsService } from '../billing/plan-limits.service';
 import { MediaService } from '../catalog/media.service';
+import { storefrontProductWhere } from '../catalog/product-visibility';
 import { isIntegrationActive } from '../integrations/integration-state';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -383,7 +384,7 @@ export class StorefrontAiService {
     storefront: Pick<Storefront, 'displayName' | 'tagline' | 'industry'>,
   ): Promise<TextAiBusiness> {
     const products = await this.prisma.product.findMany({
-      where: { tenantId, isPublishedOnStore: true },
+      where: storefrontProductWhere(tenantId),
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
       select: { name: true, categories: true },
       take: 60,

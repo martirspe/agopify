@@ -10,7 +10,10 @@ describe('Sales tool registry boundaries', () => {
   const registry = new SalesToolRegistry(
     { getProducts: products } as unknown as SalesAgentToolsService,
     {} as KnowledgeService,
-    { order: { findFirst: order } } as unknown as PrismaService,
+    {
+      order: { findFirst: order },
+      product: { findFirst: jest.fn().mockResolvedValue(null) },
+    } as unknown as PrismaService,
     {
       get: (_: string, defaultValue: unknown) => defaultValue,
     } as ConfigService,
@@ -39,7 +42,7 @@ describe('Sales tool registry boundaries', () => {
       'check_inventory',
       { productId: 'foreign' },
     );
-    expect(products).toHaveBeenCalledWith('a', ['foreign']);
+    expect(products).toHaveBeenCalledWith('a', ['foreign'], undefined);
     expect(result.value).toEqual({ error: 'PRODUCT_NOT_FOUND' });
   });
   it('does not expose another buyer order even within the same tenant', async () => {

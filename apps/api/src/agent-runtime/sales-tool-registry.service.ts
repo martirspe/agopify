@@ -105,6 +105,7 @@ export class SalesToolRegistry {
   async execute(
     context: {
       tenantId: string;
+      channelId?: string | null;
       conversationId?: string | null;
       authoritativeSubtotal?: number;
     },
@@ -178,6 +179,7 @@ export class SalesToolRegistry {
   private async read(
     context: {
       tenantId: string;
+      channelId?: string | null;
       conversationId?: string | null;
       authoritativeSubtotal?: number;
     },
@@ -195,6 +197,7 @@ export class SalesToolRegistry {
         [],
         [],
         dto.query,
+        context.channelId,
       );
       const matches = this.tools
         .searchCatalog(dto.query!, products)
@@ -283,7 +286,7 @@ export class SalesToolRegistry {
       return { value: order };
     }
     const product = (
-      await this.tools.getProducts(tenantId, [dto.productId!])
+      await this.tools.getProducts(tenantId, [dto.productId!], context.channelId)
     )[0];
     if (!product) {
       const foreign = await this.prisma.product.findFirst({

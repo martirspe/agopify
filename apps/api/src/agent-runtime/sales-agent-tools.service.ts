@@ -1,7 +1,13 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma, type ProductKind } from '@prisma/client';
+import { Prisma, ProductChannelKind, ProductStatus, type ProductKind } from '@prisma/client';
 import { CATALOG_CANDIDATES, maximumPrice, searchCatalogIds } from '../catalog/catalog-search';
+import {
+  channelProductWhere,
+  conversationChannelKind,
+  derivedIsAvailable,
+  listingPublished,
+} from '../catalog/product-visibility';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrderShipping, OrdersService } from '../orders/orders.service';
 import { orderReference, releaseOrder } from '../orders/settlement';
@@ -272,7 +278,20 @@ const FEATURED_ORDER = [
 ];
 const PRODUCT_VIEW_INCLUDE = {
   variants: true,
-  components: { select: { quantity: true, component: { select: { isAvailable: true, stockUnlimited: true, stockQty: true } } } },
+  channelListings: { select: { channel: true, isPublished: true } },
+  components: {
+    select: {
+      quantity: true,
+      component: {
+        select: {
+          status: true,
+          stockUnlimited: true,
+          stockQty: true,
+          channelListings: { select: { channel: true, isPublished: true } },
+        },
+      },
+    },
+  },
   media: {
     where: { kind: 'image' },
     orderBy: { sortOrder: 'asc' as const },
@@ -467,10 +486,14 @@ export class SalesAgentToolsService {
     referencedHandles: string[] = [],
     contextIds: string[] = [],
     inboundText = '',
+    channelId?: string | null,
   ): Promise<CatalogProductView[]> {
+    const channel = await this.channelKind(tenantId, channelId);
+    const visible = channelProductWhere(tenantId, channel);
     const tokens = queryTokens(inboundText).filter((token) => !BROWSE_WORDS.has(token));
     const [lexicalIds, semanticIds] = await Promise.all([searchCatalogIds(this.prisma, tenantId, tokens, {
-      available: true,
+      status: ProductStatus.ACTIVE,
+      channel,
       maxPriceCents: maximumPrice(inboundText),
     }), this.semantic?.candidates(tenantId, inboundText, 'product') ?? Promise.resolve([])]);
     const ids = [...new Set([...lexicalIds, ...semanticIds])].sort((a, b) => {
@@ -485,14 +508,14 @@ export class SalesAgentToolsService {
     ];
     const [products, referenced, base] = await Promise.all([
       this.prisma.product.findMany({
-        where: { tenantId, isAvailable: true, ...(tokens.length ? { id: { in: ids } } : {}) },
+        where: { ...visible, ...(tokens.length ? { id: { in: ids } } : {}) },
         include: PRODUCT_VIEW_INCLUDE,
         take: CATALOG_CANDIDATES,
         orderBy: FEATURED_ORDER,
       }),
       pinned.length
         ? this.prisma.product.findMany({
-            where: { tenantId, isAvailable: true, OR: pinned },
+            where: { ...visible, OR: pinned },
             include: PRODUCT_VIEW_INCLUDE,
             take: 40,
           })
@@ -528,9 +551,10 @@ export class SalesAgentToolsService {
   }
 
   /** Hydration for function calls/references; a vector payload never supplies facts. */
-  async getProducts(tenantId: string, ids: string[]): Promise<CatalogProductView[]> {
+  async getProducts(tenantId: string, ids: string[], channelId?: string | null): Promise<CatalogProductView[]> {
+    const channel = await this.channelKind(tenantId, channelId);
     const [rows, base] = await Promise.all([
-      this.prisma.product.findMany({ where: { tenantId, id: { in: ids.slice(0, 12) }, isAvailable: true }, include: PRODUCT_VIEW_INCLUDE }),
+      this.prisma.product.findMany({ where: { ...channelProductWhere(tenantId, channel), id: { in: ids.slice(0, 12) } }, include: PRODUCT_VIEW_INCLUDE }),
       this.storeBase(tenantId),
     ]);
     return rows.map((row) => this.toStoreView(row, base));
@@ -660,11 +684,16 @@ export class SalesAgentToolsService {
   }
 
   /** Category counts of the whole available catalog, used to summarize it instead of listing it. */
-  async catalogOverview(tenantId: string): Promise<CatalogOverview> {
+  async catalogOverview(tenantId: string, channelId?: string | null): Promise<CatalogOverview> {
+    const channel = await this.channelKind(tenantId, channelId);
     const [rows, storeUrl] = await Promise.all([
       this.prisma.$queryRaw<Array<{ total: number; categories: Array<{ label: string; names: string[]; count: number }> }>>(Prisma.sql`
         WITH available AS (
-          SELECT categories FROM "Product" WHERE "tenantId" = ${tenantId} AND "isAvailable" = true
+          SELECT categories FROM "Product" p
+          WHERE p."tenantId" = ${tenantId} AND p.status = 'ACTIVE'::"ProductStatus"
+            AND EXISTS (
+              SELECT 1 FROM "ProductChannelListing" l
+              WHERE l."productId" = p.id AND l.channel = ${channel}::"ProductChannelKind" AND l."isPublished" = true)
         ), facets AS (
           SELECT lower(translate(trim(category), 'áéíóúüñ', 'aeiouun')) AS key,
             min(trim(category)) AS label, array_agg(DISTINCT category) AS names, count(*)::int AS count
@@ -736,11 +765,11 @@ export class SalesAgentToolsService {
    */
   async browseProducts(
     tenantId: string,
-    options: { categoryNames?: string[]; excludeIds?: string[] },
+    options: { categoryNames?: string[]; excludeIds?: string[]; channelId?: string | null },
   ): Promise<{ products: CatalogProductView[]; remaining: number }> {
+    const channel = await this.channelKind(tenantId, options.channelId);
     const where = {
-      tenantId,
-      isAvailable: true,
+      ...channelProductWhere(tenantId, channel),
       ...(options.categoryNames?.length
         ? { categories: { hasSome: options.categoryNames } }
         : {}),
@@ -786,16 +815,42 @@ export class SalesAgentToolsService {
     ).replace(/\/$/, '');
   }
 
+  /** Conversation channel -> catalog channel; no channel (playground) behaves as WhatsApp. */
+  private async channelKind(tenantId: string, channelId?: string | null): Promise<ProductChannelKind> {
+    if (!channelId) return ProductChannelKind.WHATSAPP;
+    const channel = await this.prisma.channel.findFirst({
+      where: { id: channelId, tenantId },
+      select: { type: true },
+    });
+    return conversationChannelKind(channel?.type);
+  }
+
   private toStoreView(
-    product: Parameters<SalesAgentToolsService['toView']>[0] & {
-      isPublishedOnStore: boolean;
+    product: Omit<Parameters<SalesAgentToolsService['toView']>[0], 'isAvailable' | 'components'> & {
+      status: ProductStatus;
+      channelListings: Array<{ channel: ProductChannelKind; isPublished: boolean }>;
+      components?: Array<{
+        quantity: number;
+        component: { status: ProductStatus; stockUnlimited: boolean; stockQty: number | null };
+      }>;
     },
     base: string | null,
   ): CatalogProductView {
     return {
-      ...this.toView(product),
+      ...this.toView({
+        ...product,
+        isAvailable: derivedIsAvailable(product.status),
+        components: product.components?.map((row) => ({
+          quantity: row.quantity,
+          component: {
+            isAvailable: derivedIsAvailable(row.component.status),
+            stockUnlimited: row.component.stockUnlimited,
+            stockQty: row.component.stockQty,
+          },
+        })),
+      }),
       productUrl:
-        base && product.isPublishedOnStore
+        base && listingPublished(product.channelListings, ProductChannelKind.STORE)
           ? `${base}/producto/${encodeURIComponent(product.handle)}`
           : null,
     };

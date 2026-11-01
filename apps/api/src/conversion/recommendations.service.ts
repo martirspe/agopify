@@ -7,7 +7,8 @@ import {
   PRODUCT_INCLUDE,
   StoreAccess,
 } from '../storefront/storefront-public.service';
-import { toProductCard } from '../storefront/storefront-mapper';
+import { storefrontProductWhere } from '../catalog/product-visibility';
+import { toProductCard, toStoreProductRecord } from '../storefront/storefront-mapper';
 import { BehaviorEventDto, RecommendationQueryDto } from './dto/conversion.dto';
 import { ConversionInfrastructure } from './conversion-infrastructure.service';
 import { RecommendationVectors } from './recommendation-vector.service';
@@ -38,9 +39,8 @@ export class RecommendationsService {
     if (access.isPreview) return { recorded: false };
     const product = await this.prisma.product.findFirst({
       where: {
-        tenantId: access.tenantId,
+        ...storefrontProductWhere(access.tenantId),
         handle: dto.handle,
-        isPublishedOnStore: true,
       },
       select: { handle: true },
     });
@@ -108,9 +108,8 @@ export class RecommendationsService {
       async () => {
         const seeds = await this.prisma.product.findMany({
           where: {
-            tenantId,
+            ...storefrontProductWhere(tenantId),
             handle: { in: seedHandles },
-            isPublishedOnStore: true,
           },
           select: {
             id: true,
@@ -130,7 +129,8 @@ export class RecommendationsService {
             >(Prisma.sql`
         SELECT p.handle, COUNT(DISTINCT o.id) AS count
         FROM "Order" o JOIN "OrderItem" i ON i."orderId" = o.id JOIN "Product" p ON p.id = i."productId"
-        WHERE o."tenantId" = ${tenantId} AND p."tenantId" = ${tenantId} AND p."isPublishedOnStore" = true
+        WHERE o."tenantId" = ${tenantId} AND p."tenantId" = ${tenantId} AND p.status = 'ACTIVE'
+          AND EXISTS (SELECT 1 FROM "ProductChannelListing" l WHERE l."productId" = p.id AND l.channel = 'STORE' AND l."isPublished" = true)
           AND o.status IN ('PAID', 'FULFILLING', 'SHIPPED', 'COMPLETED') AND o."createdAt" > NOW() - INTERVAL '90 days'
           AND EXISTS (SELECT 1 FROM "OrderItem" seed WHERE seed."orderId" = o.id AND seed."productId" IN (${Prisma.join(ids)}))
         GROUP BY p.handle ORDER BY count DESC, p.handle LIMIT 80
@@ -140,9 +140,7 @@ export class RecommendationsService {
         const vectorHandles = await this.vectors.rank(tenantId, seeds);
         const candidates = await this.prisma.product.findMany({
           where: {
-            tenantId,
-            isPublishedOnStore: true,
-            isAvailable: true,
+            ...storefrontProductWhere(tenantId),
             handle: { notIn: currentHandles },
             OR: [
               {
@@ -207,9 +205,8 @@ export class RecommendationsService {
     const records = ranked.length
       ? await this.prisma.product.findMany({
           where: {
-            tenantId,
+            ...storefrontProductWhere(tenantId),
             handle: { in: ranked.map((r) => r.handle) },
-            isPublishedOnStore: true,
           },
           include: PRODUCT_INCLUDE,
         })
@@ -217,7 +214,7 @@ export class RecommendationsService {
     const items = ranked.flatMap((rank) => {
       const record = records.find((p) => p.handle === rank.handle);
       if (!record || currentHandles.includes(record.handle)) return [];
-      const product = toProductCard(record);
+      const product = toProductCard(toStoreProductRecord(record));
       return product.isAvailable ? [{ product, reason: rank.reason }] : [];
     });
     return { items: items.slice(0, query.context === 'checkout' ? 1 : 4) };

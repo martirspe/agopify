@@ -1,4 +1,5 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma, ProductStatus } from '@prisma/client';
+import { derivedIsAvailable } from '../catalog/product-visibility';
 import { variantOptions } from '../catalog/variant-options';
 import type {
   PublicMedia,
@@ -362,4 +363,44 @@ export function toCatalogProduct(
     seoTitle: product.seoTitle,
     seoDescription: product.seoDescription,
   };
+}
+
+type StoreRecordSource = {
+  status: ProductStatus;
+  components?: Array<{
+    quantity: number;
+    component: { status: ProductStatus; channelListings?: Array<{ isPublished: boolean }> };
+  }>;
+};
+
+type WithStoreFlags<P extends StoreRecordSource> = Omit<P, 'components'> & {
+  isAvailable: boolean;
+  components: P['components'] extends Array<infer R>
+    ? Array<
+        R extends { component: infer C }
+          ? Omit<R, 'component'> & {
+              component: C & { isAvailable: boolean; isPublishedOnStore: boolean };
+            }
+          : never
+      >
+    : never;
+};
+
+/**
+ * Prisma product (status + STORE listings) to the mapper input: sellability comes
+ * from the lifecycle status and a set piece links to its page only when published.
+ */
+export function toStoreProductRecord<P extends StoreRecordSource>(product: P): WithStoreFlags<P> {
+  return {
+    ...product,
+    isAvailable: derivedIsAvailable(product.status),
+    components: (product.components ?? []).map((row) => ({
+      ...row,
+      component: {
+        ...row.component,
+        isAvailable: derivedIsAvailable(row.component.status),
+        isPublishedOnStore: row.component.channelListings?.some((listing) => listing.isPublished) ?? false,
+      },
+    })),
+  } as unknown as WithStoreFlags<P>;
 }

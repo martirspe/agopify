@@ -3,6 +3,7 @@ import {
   ArrayMaxSize,
   IsArray,
   IsBoolean,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -15,7 +16,13 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { ProductExtrasDto, ProductVariantInputDto } from './create-product.dto';
+import {
+  ChannelListingDto,
+  OptionDefinitionDto,
+  PRODUCT_STATUSES,
+  ProductExtrasDto,
+  ProductVariantInputDto,
+} from './create-product.dto';
 
 export class UpdateProductDto extends ProductExtrasDto {
   @ApiPropertyOptional({ description: 'Optimistic edit version returned as updatedAt' })
@@ -52,6 +59,13 @@ export class UpdateProductDto extends ProductExtrasDto {
   @IsString({ each: true })
   categories?: string[];
 
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(24)
+  @IsString({ each: true })
+  collectionIds?: string[];
+
   @ApiPropertyOptional({ example: 8900 })
   @IsOptional()
   @IsInt()
@@ -63,7 +77,29 @@ export class UpdateProductDto extends ProductExtrasDto {
   @IsString()
   currency?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: PRODUCT_STATUSES })
+  @IsOptional()
+  @IsIn(PRODUCT_STATUSES)
+  status?: (typeof PRODUCT_STATUSES)[number];
+
+  @ApiPropertyOptional({ type: [ChannelListingDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(3)
+  @ValidateNested({ each: true })
+  @Type(() => ChannelListingDto)
+  channelListings?: ChannelListingDto[];
+
+  @ApiPropertyOptional({ type: [OptionDefinitionDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(5)
+  @ValidateNested({ each: true })
+  @Type(() => OptionDefinitionDto)
+  optionDefinitions?: OptionDefinitionDto[];
+
+  /** @deprecated Prefer status. */
+  @ApiPropertyOptional({ deprecated: true })
   @IsOptional()
   @IsBoolean()
   isAvailable?: boolean;
@@ -93,7 +129,8 @@ export class UpdateProductDto extends ProductExtrasDto {
   @IsString({ each: true })
   mediaUrls?: string[];
 
-  @ApiPropertyOptional()
+  /** @deprecated Prefer channelListings. */
+  @ApiPropertyOptional({ deprecated: true })
   @IsOptional()
   @IsBoolean()
   isPublishedOnStore?: boolean;

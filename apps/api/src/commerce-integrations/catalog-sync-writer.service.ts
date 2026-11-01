@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, ProductChannelKind, ProductStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { NormalizedProduct } from './commerce-platform.types';
 import { handleForExternalProduct } from './product-normalizer';
@@ -39,6 +39,8 @@ export class CatalogSyncWriterService {
     );
 
     const stockUnlimited = product.availableQuantity == null;
+    const status =
+      product.status === 'active' && product.isAvailable ? ProductStatus.ACTIVE : ProductStatus.DRAFT;
     const data = {
       name: product.title,
       descriptionShort: product.shortDescription?.slice(0, 280) ?? null,
@@ -49,7 +51,6 @@ export class CatalogSyncWriterService {
       currency: product.currency?.slice(0, 3).toUpperCase() || 'PEN',
       brand: product.brand ?? null,
       sku: product.sku ?? null,
-      isAvailable: product.status === 'active' && product.isAvailable,
       stockUnlimited,
       stockQty: stockUnlimited ? null : Math.max(0, product.availableQuantity ?? 0),
       attributeValues: product.attributes as Prisma.InputJsonValue,
@@ -63,12 +64,13 @@ export class CatalogSyncWriterService {
         const unchanged =
           current.name === data.name &&
           current.basePriceCents === data.basePriceCents &&
-          current.isAvailable === data.isAvailable &&
+          (current.status === ProductStatus.ARCHIVED || current.status === status) &&
           current.stockQty === data.stockQty;
         if (!unchanged) {
           await this.prisma.product.update({
             where: { id: current.id },
-            data,
+            // An archived product stays archived: the merchant retired it on purpose.
+            data: current.status === ProductStatus.ARCHIVED ? data : { ...data, status },
           });
         }
         await this.touchMapping(existingMap.id, product);
@@ -88,7 +90,14 @@ export class CatalogSyncWriterService {
         tenantId,
         handle,
         ...data,
-        isPublishedOnStore: false,
+        status,
+        // Imported products are sellable in chats right away; the store stays opt-in.
+        channelListings: {
+          create: (Object.values(ProductChannelKind) as ProductChannelKind[]).map((channel) => {
+            const isPublished = status === ProductStatus.ACTIVE && channel !== ProductChannelKind.STORE;
+            return { channel, isPublished, publishedAt: isPublished ? new Date() : null };
+          }),
+        },
       },
     });
 

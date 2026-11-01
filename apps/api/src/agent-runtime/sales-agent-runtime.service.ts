@@ -285,7 +285,7 @@ export class SalesAgentRuntimeService {
     const [agentRow, runtimeKnowledge, overview] = await Promise.all([
       this.resolveAgent(params.tenantId, params.agentId, params.channelId),
       this.knowledge.getRuntimeKnowledge(params.tenantId, state ? params.inboundText : undefined),
-      this.tools.catalogOverview(params.tenantId),
+      this.tools.catalogOverview(params.tenantId, params.channelId),
     ]);
     const browseIntent = this.tools.browseRequest(params.inboundText, overview);
     const photoAskedEarly = wantsPhoto(params.inboundText);
@@ -317,6 +317,7 @@ export class SalesAgentRuntimeService {
       refs.map((ref) => ref.handle),
       contextIds,
       searchText,
+      params.channelId,
     );
 
     const agent = toPersonality(agentRow);
@@ -697,6 +698,7 @@ export class SalesAgentRuntimeService {
             params.inboundText,
             overview,
             history,
+            params.channelId,
           )
         : refs.length ||
             buying ||
@@ -709,6 +711,7 @@ export class SalesAgentRuntimeService {
               params.inboundText,
               overview,
               history,
+              params.channelId,
             );
     if (releasingCheckout && state && (openProductNeed || catalogBrowse)) {
       state.selectedProduct = undefined;
@@ -747,7 +750,7 @@ export class SalesAgentRuntimeService {
     if (state?.intent === 'price_objection' && contextProducts.length) {
       const anchor = contextProducts.find((p) => p.id === state.selectedProduct?.productId) ?? contextProducts[0];
       const query = `${state.requirements.need?.value ?? anchor.categories.join(' ')} máximo ${(anchor.basePriceCents - 1) / 100}`;
-      const alternatives = await this.tools.listAvailableProducts(params.tenantId, [], [], query);
+      const alternatives = await this.tools.listAvailableProducts(params.tenantId, [], [], query, params.channelId);
       matches = this.tools.searchCatalog(query, alternatives).matches.filter((p) => p.basePriceCents < anchor.basePriceCents && !contextIds.includes(p.id));
       searchTrace = { name: 'search_catalog', status: matches.length ? 'ok' : 'skipped', summary: 'Alternativas con menor precio consultadas', data: { matchIds: matches.map((p) => p.id), count: matches.length } };
     }
@@ -1228,6 +1231,7 @@ export class SalesAgentRuntimeService {
           mode,
           salesState: state,
           tenantId: params.tenantId,
+          channelId: params.channelId,
           conversationId: params.conversationId,
           toolTraces: traces,
           authoritativeSubtotal: lines.length ? this.tools.subtotalCents(lines) : undefined,
@@ -1364,6 +1368,7 @@ export class SalesAgentRuntimeService {
     text: string,
     overview: CatalogOverview,
     history: ConversationTurn[],
+    channelId?: string | null,
   ): Promise<{ view: BrowseView; trace: AgentToolTrace } | null> {
     const request = this.tools.browseRequest(text, overview);
     if (!request) return null;
@@ -1406,6 +1411,7 @@ export class SalesAgentRuntimeService {
     const page = await this.tools.browseProducts(tenantId, {
       categoryNames: category?.names,
       excludeIds,
+      channelId,
     });
     const label = category?.label ?? null;
     return {
@@ -1915,6 +1921,7 @@ export class SalesAgentRuntimeService {
     mode: AgentRuntimeMode;
     salesState?: SalesState;
     tenantId: string;
+    channelId?: string | null;
     conversationId?: string | null;
     toolTraces: AgentToolTrace[];
     authoritativeSubtotal?: number;
@@ -2068,7 +2075,7 @@ export class SalesAgentRuntimeService {
       for (const call of message.tool_calls) {
         let args: unknown;
         try { args = JSON.parse(call.function.arguments); } catch { args = null; }
-        const tool = await this.registry.execute({ tenantId: params.tenantId, conversationId: params.conversationId, authoritativeSubtotal: params.authoritativeSubtotal }, call.function.name, args);
+        const tool = await this.registry.execute({ tenantId: params.tenantId, channelId: params.channelId, conversationId: params.conversationId, authoritativeSubtotal: params.authoritativeSubtotal }, call.function.name, args);
         params.toolTraces.push(tool.trace);
         if (tool.products) for (const product of tool.products) {
           if (isSoldOut(product)) continue;
@@ -2103,7 +2110,7 @@ export class SalesAgentRuntimeService {
     if (typeof parsed.replyText !== 'string' || typeof parsed.escalate !== 'boolean' || typeof parsed.usedCatalog !== 'boolean') return null;
     if (params.salesState) {
       if (params.catalogMatches.length) {
-        const fresh = await this.tools.getProducts(params.tenantId, params.catalogMatches.map((p) => p.id));
+        const fresh = await this.tools.getProducts(params.tenantId, params.catalogMatches.map((p) => p.id), params.channelId);
         params.catalogMatches.splice(0, params.catalogMatches.length, ...fresh);
       }
       const failures = validateSalesResponse(

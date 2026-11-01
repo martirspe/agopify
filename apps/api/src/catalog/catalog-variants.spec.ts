@@ -6,12 +6,31 @@ import { CatalogService } from './catalog.service';
 describe('catalog variant validation and persistence', () => {
   const variant = { options: [{ name: 'Color', value: 'Negro' }, { name: 'Talla', value: '38' }], priceCents: 10000, sku: 'SHOE-1', stockQty: 2 };
   const setup = () => {
-    const current = { id: 'p', kind: 'PRODUCT', digitalAccessUrl: null, isAvailable: true, updatedAt: new Date('2026-10-05T12:00:00Z'), categoryId: null, attributeValues: null, basePriceCents: 10000, variants: [], components: [], media: [] };
+    const current = {
+      id: 'p',
+      kind: 'PRODUCT',
+      digitalAccessUrl: null,
+      status: 'ACTIVE',
+      updatedAt: new Date('2026-10-05T12:00:00Z'),
+      categoryId: null,
+      attributeValues: null,
+      basePriceCents: 10000,
+      variants: [],
+      components: [],
+      media: [],
+      channelListings: [],
+      optionDefinitions: [],
+      collectionLinks: [],
+    };
     const tx = {
       $queryRaw: jest.fn().mockResolvedValue([]),
       product: { create: jest.fn().mockResolvedValue(current), findFirstOrThrow: jest.fn().mockResolvedValue(current), findUniqueOrThrow: jest.fn().mockResolvedValue(current), update: jest.fn().mockResolvedValue(current) },
       productVariant: { count: jest.fn().mockResolvedValue(0), deleteMany: jest.fn(), updateMany: jest.fn().mockResolvedValue({ count: 1 }), create: jest.fn(), createMany: jest.fn() },
       productComponent: { count: jest.fn().mockResolvedValue(0) },
+      productOption: { deleteMany: jest.fn(), createMany: jest.fn() },
+      productChannelListing: { deleteMany: jest.fn(), createMany: jest.fn() },
+      collectionProduct: { deleteMany: jest.fn(), createMany: jest.fn(), findMany: jest.fn().mockResolvedValue([]) },
+      collection: { findFirst: jest.fn(), create: jest.fn(), count: jest.fn().mockResolvedValue(0) },
     };
     const prisma = { $transaction: jest.fn((fn: (client: typeof tx) => unknown) => fn(tx)), product: { findFirst: jest.fn().mockResolvedValue(current) } };
     const limits = { assertCanCreateProduct: jest.fn() };

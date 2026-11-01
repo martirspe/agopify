@@ -68,9 +68,26 @@ export type MediaInput = { url: string; kind?: 'image' | 'related'; alt?: string
 export type ComponentInput = { productId: string; quantity: number };
 
 export type ProductKind = 'PRODUCT' | 'SERVICE' | 'DIGITAL';
+export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
+export type ProductChannelKind = 'STORE' | 'WHATSAPP' | 'INSTAGRAM';
 export type CatalogAttribute = { key: string; name: string; group?: string; required?: boolean; variant?: boolean; values?: string[]; maxLength?: number };
 export type CatalogCategory = { id: string; name: string; kind: ProductKind; parentId: string | null; path: { id: string; name: string }[]; attributes: CatalogAttribute[] };
 export type ServiceMode = 'onsite' | 'home' | 'online';
+export type ChannelListingDto = {
+  channel: ProductChannelKind;
+  isPublished: boolean;
+  publishedAt?: string | null;
+};
+export type OptionDefinitionDto = { id?: string; name: string; position?: number; values: string[] };
+export type CollectionDto = {
+  id: string;
+  handle: string;
+  title: string;
+  description?: string | null;
+  sortOrder: number;
+  isPublished: boolean;
+  _count?: { products: number };
+};
 
 type ProductExtrasPayload = {
   categoryId?: string | null;
@@ -112,14 +129,21 @@ export type ProductDto = {
   descriptionShort: string | null;
   descriptionFull: string | null;
   categories: string[];
+  collectionIds?: string[];
+  collections?: Array<{ id: string; handle: string; title: string; isPublished: boolean }>;
   basePriceCents: number;
   currency: string;
   kind: ProductKind;
   durationMinutes: number | null;
   serviceMode: ServiceMode | null;
+  status: ProductStatus;
+  /** Derived from status === ACTIVE for one release. */
   isAvailable: boolean;
   stockUnlimited: boolean;
   stockQty: number | null;
+  channelListings?: ChannelListingDto[];
+  optionDefinitions?: OptionDefinitionDto[];
+  /** Derived from STORE channel listing for one release. */
   isPublishedOnStore: boolean;
   compareAtPriceCents: number | null;
   brand: string | null;
@@ -157,8 +181,12 @@ export type CreateProductPayload = ProductExtrasPayload & {
   descriptionShort?: string;
   descriptionFull?: string;
   categories?: string[];
+  collectionIds?: string[];
   basePriceCents: number;
   currency?: string;
+  status?: ProductStatus;
+  channelListings?: Array<{ channel: ProductChannelKind; isPublished: boolean }>;
+  optionDefinitions?: Array<{ name: string; values: string[] }>;
   isAvailable?: boolean;
   stockUnlimited?: boolean;
   stockQty?: number;
@@ -176,8 +204,12 @@ export type UpdateProductPayload = ProductExtrasPayload & {
   descriptionShort?: string;
   descriptionFull?: string;
   categories?: string[];
+  collectionIds?: string[];
   basePriceCents?: number;
   currency?: string;
+  status?: ProductStatus;
+  channelListings?: Array<{ channel: ProductChannelKind; isPublished: boolean }>;
+  optionDefinitions?: Array<{ name: string; values: string[] }>;
   isAvailable?: boolean;
   stockUnlimited?: boolean;
   stockQty?: number | null;
@@ -256,6 +288,36 @@ export class CatalogApiService {
 
   categories(): Promise<CatalogCategory[]> {
     return firstValueFrom(this.http.get<CatalogCategory[]>(`${this.root}/categories`));
+  }
+
+  listCollections(): Promise<CollectionDto[]> {
+    return firstValueFrom(this.http.get<CollectionDto[]>(`${this.root}/collections`));
+  }
+
+  createCollection(payload: {
+    handle: string;
+    title: string;
+    description?: string;
+    isPublished?: boolean;
+  }): Promise<CollectionDto> {
+    return firstValueFrom(this.http.post<CollectionDto>(`${this.root}/collections`, payload));
+  }
+
+  changeStatus(productId: string, status: ProductStatus): Promise<ProductDto> {
+    return firstValueFrom(
+      this.http.patch<ProductDto>(`${this.base}/${productId}/status`, { status }),
+    );
+  }
+
+  replaceChannelListings(
+    productId: string,
+    channelListings: Array<{ channel: ProductChannelKind; isPublished: boolean }>,
+  ): Promise<ProductDto> {
+    return firstValueFrom(
+      this.http.put<ProductDto>(`${this.base}/${productId}/channel-listings`, {
+        channelListings,
+      }),
+    );
   }
 
   /** `data` is base64 without the data-URL prefix; the browser resizes before upload. */
