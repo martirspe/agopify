@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChannelsPage } from './channels.page';
 import { MessagingApiService, ChannelDto } from '../../core/api/messaging-api.service';
+import { IntegrationsStateService } from '../../core/integrations/integrations-state.service';
 import { MetaWhatsAppSignupService } from './meta-whatsapp-signup.service';
 
 const channel: ChannelDto = { id: 'channel', type: 'WHATSAPP', externalId: '111111', displayName: 'Business', healthStatus: 'CONNECTED', connectionMode: 'NEW_WABA_NUMBER', lastActiveAt: null, metadata: null };
@@ -11,7 +13,15 @@ const session = { sessionId: 'session', state: 'synthetic-state', expiresAt: new
 async function setup(canManage = true, available = true) {
   const api = { listChannels: vi.fn().mockResolvedValue([]), getWhatsAppDiagnostics: vi.fn().mockResolvedValue(diagnostics), getWhatsAppSignupConfiguration: vi.fn().mockResolvedValue({ canManage, available, manualAvailable: true, appId: 'app', graphVersion: 'v26.0', message: 'Contacta con soporte.' }), startWhatsAppSignup: vi.fn().mockResolvedValue(session), authorizeWhatsAppSignup: vi.fn().mockResolvedValue({ phones: [phone] }), completeWhatsAppSignup: vi.fn().mockResolvedValue({ channel }), cancelWhatsAppSignup: vi.fn().mockResolvedValue({}), disconnectWhatsApp: vi.fn().mockResolvedValue({}), connectWhatsAppManual: vi.fn(), getWhatsAppManualSetup: vi.fn(), activateWhatsAppManual: vi.fn() };
   const meta = { load: vi.fn().mockResolvedValue(undefined), login: vi.fn().mockResolvedValue('synthetic-code'), cancel: vi.fn() };
-  await TestBed.configureTestingModule({ imports: [ChannelsPage], providers: [{ provide: MessagingApiService, useValue: api }, { provide: MetaWhatsAppSignupService, useValue: meta }] }).compileComponents();
+  await TestBed.configureTestingModule({
+    imports: [ChannelsPage],
+    providers: [
+      provideRouter([{ path: '**', component: ChannelsPage }]),
+      { provide: MessagingApiService, useValue: api },
+      { provide: MetaWhatsAppSignupService, useValue: meta },
+      { provide: IntegrationsStateService, useValue: { isActive: () => false, refresh: async () => [] } },
+    ],
+  }).compileComponents();
   const fixture = TestBed.createComponent(ChannelsPage); await fixture.whenStable(); fixture.detectChanges();
   return { page: fixture.componentInstance, fixture, api, meta };
 }

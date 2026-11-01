@@ -1,12 +1,26 @@
 :host {
-  display: block;
-  height: calc(100dvh - var(--ds-touch-target) - 2 * var(--ds-space-8) - var(--ds-space-6));
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   min-height: 0;
+  height: 100%;
+}
+
+.messages {
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.messages > ds-page-header {
+  /* Cancel workspace padding so Mensajes matches Productos flush chrome. */
+  margin-block-end: var(--ds-space-3);
 }
 
 .inbox {
   display: grid;
   grid-template-columns: minmax(var(--ds-console-context-sidebar-width), calc(var(--ds-console-context-sidebar-width) + var(--ds-space-12))) minmax(0, 1fr);
+  min-height: 0;
   height: 100%;
   border: 1px solid var(--ds-color-border);
   border-radius: var(--ds-radius-lg);

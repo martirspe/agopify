@@ -9,7 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { LiveApiService, TikTokStatus } from '../../core/api/live-api.service';
-import { DsButtonComponent, DsConfirmService, DsActionBarComponent, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent, DsEmptyStateComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsConfirmService, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent, DsEmptyStateComponent } from '@vendedoria/ui';
 import { DsIconComponent } from '@vendedoria/ui';
 import type { IntegrationKey } from '../../core/api/billing-api.service';
 import { IntegrationState, IntegrationsApiService } from '../../core/api/integrations-api.service';
@@ -62,7 +62,7 @@ type IntegrationCard = {
 @Component({
   selector: 'app-integrations-page',
   standalone: true,
-  imports: [DatePipe, DsButtonComponent, DsIconComponent, DsActionBarComponent, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent, DsEmptyStateComponent],
+  imports: [DatePipe, DsButtonComponent, DsIconComponent, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent, DsEmptyStateComponent],
   templateUrl: './integrations.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -253,7 +253,9 @@ export class IntegrationsPage {
       this.integrations.set(enable ? await this.api.enable(card.key) : await this.api.disable(card.key));
       this.actionSuccess.set(
         enable
-          ? `${card.name} está activa. La encuentras en el menú como «${card.navLabel}».`
+          ? card.sidebar === false
+            ? `${card.name} está activa. Configúrala en Canales.`
+            : `${card.name} está activa. La encuentras en el menú como «${card.navLabel}».`
           : `Desactivaste ${card.name}.`,
       );
       if (card.key === 'tiktok_live') await this.refreshTikTok();

@@ -1,17 +1,30 @@
-<section class="discounts tw:w-full tw:min-w-0">
+<ds-page-frame>
+  @if (editing() !== null && (editing() === 'new' || hasChanges() || saving())) {
+    <ds-save-bar
+      dsPageFrameSave
+      class="ds-page-frame__save"
+      formId="discount-form"
+      [pending]="editing() === 'new' || hasChanges()"
+      [busy]="saving()"
+      [label]="editing() === 'new' ? 'Crear descuento' : 'Guardar cambios'"
+      [pendingText]="editing() === 'new' ? 'Descuento sin guardar' : 'Cambios sin guardar'"
+    >
+      <ds-button type="button" variant="ghost" [disabled]="saving()" (click)="cancel()">Descartar</ds-button>
+    </ds-save-bar>
+  }
   <ds-page-header
     icon="ticketPercent"
     [title]="editing() === null ? 'Descuentos' : editing() === 'new' ? 'Crear descuento' : 'Editar descuento'"
-    [description]="editing() !== null ? 'Define el beneficio, quién puede usarlo y durante cuánto tiempo.' : 'Gestiona códigos y promociones automáticas para tu tienda.'"
   >
     <div dsPageActions>
       @if (editing() !== null) {
-        <ds-button variant="secondary" [disabled]="saving()" (click)="cancel()"><ds-icon name="chevronLeft" [size]="1" /> Volver a descuentos</ds-button>
+        <ds-button variant="ghost" [disabled]="saving()" (click)="cancel()"><ds-icon name="chevronLeft" [size]="1" /> Volver</ds-button>
       } @else if (!loading() && !loadFailed() && active() && coupons().length) {
         <ds-button [disabled]="!!busyId()" (click)="openCreatePicker()"><ds-icon name="plus" [size]="1" /> Crear descuento</ds-button>
       }
     </div>
   </ds-page-header>
+  <div class="ds-page-frame__body discounts tw:w-full tw:min-w-0">
 
   @if (errorMessage() && !loadFailed(); as error) { <div class="tw:feedback tw:feedback-danger" role="alert"><ds-icon name="alert" /><span>{{ error }}</span></div> }
   @if (successMessage(); as success) { <div class="tw:feedback tw:feedback-success" role="status"><ds-icon name="check" /><span>{{ success }}</span></div> }
@@ -29,12 +42,7 @@
   }
 
   @if (editing() !== null) {
-    <form class="discount-editor" [formGroup]="form" (ngSubmit)="save()">
-      <ds-action-bar label="Acciones de descuentos">
-        <span dsActionStatus class="tw:px-2">{{ saving() ? 'Guardando descuento…' : editing() === 'new' ? 'Descuento sin guardar' : hasChanges() ? 'Cambios sin guardar' : 'Sin cambios' }}</span>
-        <ds-button type="button" variant="ghost" [disabled]="saving()" (click)="cancel()">Descartar</ds-button>
-        <ds-button type="submit" [disabled]="saving() || (editing() !== 'new' && !hasChanges())">{{ saving() ? 'Guardando…' : editing() === 'new' ? 'Crear descuento' : 'Guardar cambios' }}</ds-button>
-      </ds-action-bar>
+    <form id="discount-form" class="discount-editor" [formGroup]="form" (ngSubmit)="save()">
       <fieldset class="tw:m-0 tw:min-w-0 tw:border-0 tw:p-0" [disabled]="saving()"><legend class="tw:sr-only">Configuración del descuento</legend><div class="discount-editor__grid">
         <div class="discount-editor__main">
           <ds-form-section title="Identificación" description="Elige cómo se aplica y cómo lo reconocerá tu equipo.">
@@ -141,4 +149,5 @@
       <p>El pedido debe cumplir los productos, requisitos de compra, fechas y límites que hayas definido. Puedes pausar un descuento desde la lista.</p>
     </ds-disclosure></div>
   }
-</section>
+  </div>
+</ds-page-frame>

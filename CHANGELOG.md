@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Consola: chrome de Productos extendido al resto — `ds-page-frame` (overlay de cápsula dirty) en formularios (ajustes, envíos, perfil, tienda, vendedor, inventario, descuentos); índices con header 52 px full-bleed y acciones a la derecha (sin cápsula ni descripción en la franja).
+- Consola: Mensajes con cabecera flush arriba del inbox; Tienda/Ajustes sin franja vacía sobre el header en desktop; Canales con título/ícono alineados al rail (`radio`) y WhatsApp como sección del cuerpo.
+- Consola / Canales: hub de chat (WhatsApp + Instagram) en una sola entrada del rail; Instagram ya no inyecta ítem hermano; TikTok LIVE sigue como destino propio al activarse; `/app/instagram` redirige a Canales.
 - Consola / Productos: «Eliminar producto» sale del header (ya no compite con Guardar) y queda como acción destructiva secundaria al pie del riel de organización.
 - Consola / Productos: ficha de publicación con header completo sticky del main (ancho del panel, migas + volver) y overlay; cápsula de guardado centrada en ese header y fija al hacer scroll (geometría Admin), visible solo con cambios; Descartar restaura el último estado cargado.
 - Consola / Productos: barra de guardado contextual en cápsula flotante centrada (solo con cambios; geometría Admin: 36 px, pill, Descartar/Guardar compactos), con Descartar que restaura el último estado cargado; sustituye la barra inferior del editor.

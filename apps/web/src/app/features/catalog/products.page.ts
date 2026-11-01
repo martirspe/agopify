@@ -25,6 +25,7 @@ import {
   DsPageHeaderComponent,
   DsSaveBarComponent,
   DsSelectComponent,
+  DsStickyEdgeDirective,
 } from '@vendedoria/ui';
 import {
   CatalogApiService,
@@ -96,6 +97,7 @@ function toCents(amount: number): number {
     DsModalDirective,
     DsBannerComponent,
     DsPageHeaderComponent,
+    DsStickyEdgeDirective,
   ],
   templateUrl: './products.page.html',
   styleUrl: './products.page.scss',

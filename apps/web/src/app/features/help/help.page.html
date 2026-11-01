@@ -1,5 +1,6 @@
-<section class="help tw:mx-auto tw:min-w-0">
-  <ds-page-header title="Ayuda rápida" icon="circleHelp" description="Temas frecuentes para configurar y vender con VendedorIA." />
+<section class="help tw:grid tw:w-full tw:min-w-0 tw:gap-5">
+  <ds-page-header title="Ayuda rápida" icon="circleHelp" />
+  <div class="tw:mx-auto tw:w-full tw:min-w-0 tw:max-w-page">
 
   <ul class="help__list tw:md:grid-cols-2">
     @for (topic of topics; track topic.link) {
@@ -20,4 +21,5 @@
       <p>Pulsa <kbd>Ctrl</kbd> + <kbd>K</kbd> en cualquier pantalla de la consola para saltar a una sección.</p>
     </div>
   </aside>
+  </div>
 </section>

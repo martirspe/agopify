@@ -1,13 +1,50 @@
-<section class="tw:mx-auto tw:grid tw:w-full tw:min-w-0 tw:max-w-form tw:gap-5">
-  <ds-page-header title="WhatsApp Business" icon="whatsapp" description="Conecta el número de tu negocio con Meta o con las credenciales de tu propia app." />
+<section class="tw:grid tw:w-full tw:min-w-0 tw:gap-5">
+  <ds-page-header title="Canales" icon="radio" />
+  <div class="tw:mx-auto tw:grid tw:w-full tw:min-w-0 tw:max-w-form tw:gap-5">
+  <div class="tw:grid tw:gap-2 tw:sm:grid-cols-2" role="tablist" aria-label="Canales de venta por chat">
+    <button
+      type="button"
+      role="tab"
+      class="tw:flex tw:min-h-touch tw:items-center tw:gap-3 tw:rounded-md tw:border tw:border-solid tw:border-border tw:bg-surface tw:px-4 tw:py-3 tw:text-left tw:transition-colors"
+      [class.tw:border-ink]="tab() === 'whatsapp'"
+      [class.tw:bg-canvas]="tab() === 'whatsapp'"
+      [attr.aria-selected]="tab() === 'whatsapp'"
+      (click)="selectTab('whatsapp')"
+    >
+      <ds-icon name="whatsapp" [size]="1.15" />
+      <span class="tw:min-w-0 tw:grid tw:gap-0.5">
+        <strong class="tw:text-sm tw:font-semibold">WhatsApp</strong>
+        <span class="tw:text-caption tw:text-muted">{{ whatsappConnected() ? 'Conectado' : 'Listo para conectar' }}</span>
+      </span>
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="tw:flex tw:min-h-touch tw:items-center tw:gap-3 tw:rounded-md tw:border tw:border-solid tw:border-border tw:bg-surface tw:px-4 tw:py-3 tw:text-left tw:transition-colors"
+      [class.tw:border-ink]="tab() === 'instagram'"
+      [class.tw:bg-canvas]="tab() === 'instagram'"
+      [attr.aria-selected]="tab() === 'instagram'"
+      (click)="selectTab('instagram')"
+    >
+      <ds-icon name="instagram" [size]="1.15" />
+      <span class="tw:min-w-0 tw:grid tw:gap-0.5">
+        <strong class="tw:text-sm tw:font-semibold">Instagram</strong>
+        <span class="tw:text-caption tw:text-muted">{{ instagramActive() ? 'Activo en el plan' : 'Actívalo en Integraciones' }}</span>
+      </span>
+    </button>
+  </div>
+
+  @if (tab() === 'instagram') {
+    <app-instagram-channel-panel />
+  } @else {
   @if (errorMessage(); as error) { <div class="tw:feedback tw:feedback-danger" role="alert"><ds-icon name="alert" /><span>{{ error }}</span></div> }
   @if (successMessage(); as success) { <div class="tw:feedback tw:feedback-success" role="status"><ds-icon name="check" /><span>{{ success }}</span></div> }
   @if (loading()) {
-    <div class="tw:console-list-panel" role="status" aria-busy="true" aria-label="Cargando conexión de WhatsApp"><div class="tw:console-list-skeleton" aria-hidden="true">@for (row of [1,2,3]; track row) { <div></div> }</div></div>
+    <div class="tw:console-list-panel" role="status" aria-busy="true" aria-label="Cargando WhatsApp"><div class="tw:console-list-skeleton" aria-hidden="true">@for (row of [1,2,3]; track row) { <div></div> }</div></div>
   } @else if (loadFailed()) {
     <ds-empty-state title="No pudimos cargar WhatsApp" body="Revisa tu conexión e inténtalo de nuevo."><ds-button variant="secondary" (click)="load()">Reintentar</ds-button></ds-empty-state>
   } @else {
-    <ds-form-section title="Estado del número" icon="whatsapp">
+    <ds-form-section title="WhatsApp" description="Número de tu negocio para vender por chat." icon="whatsapp">
       @if (whatsapp; as channel) {
         <span class="tw:w-fit tw:rounded-sm tw:bg-canvas tw:px-2 tw:py-1 tw:text-caption" [class.tw:text-success-text]="channel.healthStatus === 'CONNECTED'">{{ statusLabel(channel.healthStatus) }}</span>
         <dl class="tw:m-0 tw:grid tw:gap-4 tw:text-sm tw:sm:grid-cols-2"><div><dt class="tw:text-caption tw:text-muted">Negocio</dt><dd class="tw:m-0 tw:mt-1 tw:wrap-anywhere tw:font-semibold">{{ channel.displayName || 'WhatsApp Business' }}</dd></div><div><dt class="tw:text-caption tw:text-muted">Conexión</dt><dd class="tw:m-0 tw:mt-1 tw:font-semibold">{{ channel.connectionMode === 'COEXISTENCE' ? 'WhatsApp Business y API' : 'API de WhatsApp' }}</dd></div></dl>
@@ -34,7 +71,7 @@
                 <label class="tw:grid tw:gap-2 tw:text-sm tw:font-semibold">Token de verificación<input class="tw:console-field" type="text" readonly autocomplete="off" [value]="webhook.verifyToken" /></label>
                 <p class="tw:m-0 tw:text-caption tw:text-muted">Este token corresponde únicamente a tu conexión. Tu token de acceso y el secreto de la app permanecen privados.</p>
               }
-              <ds-action-bar label="Activar conexión con credenciales propias"><span dsActionStatus role="status">{{ whatsapp?.healthStatus === 'CONNECTED' ? 'Conexión activa' : 'Configura el webhook antes de activar' }}</span><ds-button [disabled]="saving() || setupLoading() || !manualWebhook()" (click)="activateManual()">{{ saving() ? 'Verificando…' : 'Verificar y activar' }}</ds-button></ds-action-bar>
+              <ds-action-bar layout="dock" label="Activar conexión con credenciales propias"><span dsActionStatus role="status">{{ whatsapp?.healthStatus === 'CONNECTED' ? 'Conexión activa' : 'Configura el webhook antes de activar' }}</span><ds-button [disabled]="saving() || setupLoading() || !manualWebhook()" (click)="activateManual()">{{ saving() ? 'Verificando…' : 'Verificar y activar' }}</ds-button></ds-action-bar>
             </ds-form-section>
           } @else if (hasConnection) {
             <ds-form-section title="Credenciales propias"><p class="tw:m-0 tw:text-sm tw:text-muted">Desconecta el número actual antes de configurar tu propia app de Meta.</p></ds-form-section>
@@ -51,7 +88,7 @@
                   <label class="tw:grid tw:gap-2 tw:text-sm tw:font-semibold">ID del número de teléfono (Phone Number ID)<input class="tw:console-field" inputmode="numeric" maxlength="30" formControlName="phoneNumberId" [attr.aria-invalid]="manualForm.controls.phoneNumberId.touched && manualForm.controls.phoneNumberId.invalid" />@if (manualForm.controls.phoneNumberId.touched && manualForm.controls.phoneNumberId.invalid) { <small class="tw:text-caption tw:text-danger-text">Ingresa el ID del número, no el teléfono.</small> }</label>
                 </fieldset>
               </ds-form-section>
-              <ds-action-bar label="Guardar credenciales de WhatsApp"><span dsActionStatus role="status">Tus credenciales se guardan cifradas</span><ds-button type="submit" [disabled]="saving()">{{ saving() ? 'Verificando…' : 'Verificar credenciales' }}</ds-button></ds-action-bar>
+              <ds-action-bar layout="dock" label="Guardar credenciales de WhatsApp"><span dsActionStatus role="status">Tus credenciales se guardan cifradas</span><ds-button type="submit" [disabled]="saving()">{{ saving() ? 'Verificando…' : 'Verificar credenciales' }}</ds-button></ds-action-bar>
             </form>
           }
         } @else if (manualConnection) {
@@ -69,12 +106,12 @@
                 @if (selectedPhone?.coexistence) { <p class="tw:m-0 tw:text-sm tw:text-muted">Meta identificó un número de WhatsApp Business. La conexión utilizará coexistencia cuando esté habilitada para tu cuenta.</p> }
               </fieldset>
             </ds-form-section>
-            <ds-action-bar label="Confirmar conexión de WhatsApp"><span dsActionStatus role="status">{{ saving() ? 'Activando número…' : 'Cuenta autorizada' }}</span><ds-button variant="ghost" [disabled]="saving()" (click)="cancel()">Cancelar</ds-button><ds-button type="submit" [disabled]="saving()">{{ saving() ? 'Conectando…' : 'Confirmar conexión' }}</ds-button></ds-action-bar>
+            <ds-action-bar layout="dock" label="Confirmar conexión de WhatsApp"><span dsActionStatus role="status">{{ saving() ? 'Activando número…' : 'Cuenta autorizada' }}</span><ds-button variant="ghost" [disabled]="saving()" (click)="cancel()">Cancelar</ds-button><ds-button type="submit" [disabled]="saving()">{{ saving() ? 'Conectando…' : 'Confirmar conexión' }}</ds-button></ds-action-bar>
           </form>
         } @else {
           <ds-form-section title="Conectar con Meta" description="Inicia sesión en Meta y selecciona la cuenta y el número de tu negocio. Tus credenciales se guardan de forma privada.">
             <ol class="tw:m-0 tw:grid tw:gap-3 tw:pl-5 tw:text-sm tw:text-muted"><li>Usa una cuenta de Meta con acceso de administración al negocio.</li><li>Selecciona o crea tu cuenta de WhatsApp y completa la verificación del número.</li><li>Autoriza los permisos y confirma la conexión en VendedorIA.</li></ol>
-            <ds-action-bar label="Acciones de conexión de WhatsApp"><span dsActionStatus role="status">{{ preparing() ? 'Preparando conexión…' : operation() === 'authorize' ? 'Completa la autorización en Meta' : operation() === 'disconnect' ? 'Desconectando…' : 'Tu cuenta, tu número' }}</span>
+            <ds-action-bar layout="dock" label="Acciones de conexión de WhatsApp"><span dsActionStatus role="status">{{ preparing() ? 'Preparando conexión…' : operation() === 'authorize' ? 'Completa la autorización en Meta' : operation() === 'disconnect' ? 'Desconectando…' : 'Tu cuenta, tu número' }}</span>
               @if (operation() === 'authorize') { <ds-button variant="ghost" (click)="cancel()">Cancelar</ds-button> }
               @if (!ready() && !preparing()) { <ds-button variant="secondary" [disabled]="saving()" (click)="prepare()">Preparar conexión</ds-button> }
               <ds-button [disabled]="saving() || !ready() || preparing()" (click)="connect()">{{ whatsapp && whatsapp.healthStatus !== 'DISCONNECTED' ? 'Reconectar con Meta' : 'Conectar con Meta' }}</ds-button>
@@ -97,4 +134,6 @@
       </aside>
     </div>
   }
+  }
+  </div>
 </section>

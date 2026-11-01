@@ -1,7 +1,9 @@
 @use './styles/tokens';
 @use '../../../packages/ui/src/checkbox/checkbox-control' as checkbox;
+@use '../../../packages/ui/src/sticky-edge/ds-sticky-edge' as stickyEdge;
 
 @include checkbox.native-checkboxes;
+@include stickyEdge.styles;
 
 // Self-hosted (public/fonts): the console CSP only allows fonts from 'self'.
 @font-face {
@@ -120,28 +122,21 @@ button {
   letter-spacing: 0 !important;
 }
 
-[class~='tw:console-scope'] .ds-page-header {
-  margin-bottom: var(--ds-space-3);
-  align-items: center;
+/* Compact primary/secondary controls inside the 28px Admin toolbar row. */
+[class~='tw:console-scope'] .ds-page-header__actions {
+  --ds-touch-target: 1.75rem;
+  --ds-control-height: 1.75rem;
+}
+
+[class~='tw:console-scope'] .ds-page-header__actions .ds-button,
+[class~='tw:console-scope'] .ds-page-header__actions a,
+[class~='tw:console-scope'] .ds-page-header__actions [class~='tw:console-action-secondary'],
+[class~='tw:console-scope'] .ds-page-header__actions [class~='tw:console-action-link'] {
   min-height: 1.75rem;
-}
-
-[class~='tw:console-scope'] .ds-page-header__title {
-  font-size: var(--ds-console-type-page) !important;
-  font-weight: var(--ds-console-type-page-weight, 500) !important;
-  line-height: 1.75rem !important; /* 28px — heading row */
-  letter-spacing: -0.01em;
-  color: var(--ds-console-text, #101010);
-}
-
-[class~='tw:console-scope'] .ds-page-header__icon {
-  color: var(--ds-console-text, #101010);
-}
-
-[class~='tw:console-scope'] .ds-page-header__description {
+  height: 1.75rem;
+  padding-block: 0;
   font-size: 0.8125rem;
-  line-height: 1.25rem;
-  color: var(--ds-console-text-secondary, #4a4a4a);
+  line-height: 1;
 }
 
 [class~='tw:console-scope'] .ds-empty__title {

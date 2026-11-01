@@ -7,12 +7,17 @@ export type IntegrationInfo = {
   key: IntegrationKey;
   name: string;
   summary: string;
-  /** Console page that appears in the sidebar once the integration is on. */
+  /** Console destination once the integration is on (Configurar / deep link). */
   path: string;
   navLabel: string;
   icon: DsIconName;
-  /** Sidebar group where the page appears. */
+  /** Sidebar group when `sidebar` is true. */
   group: 'catalog' | 'connect' | 'results' | 'footer';
+  /**
+   * When false, the integration is configured inside another hub (e.g. Instagram in Canales)
+   * and must not inject a sibling rail item.
+   */
+  sidebar?: boolean;
 };
 
 export const INTEGRATIONS: IntegrationInfo[] = [
@@ -35,10 +40,11 @@ export const INTEGRATIONS: IntegrationInfo[] = [
     key: 'instagram',
     name: 'Instagram Direct',
     summary: 'Tu vendedor IA responde los mensajes directos de tu cuenta profesional de Instagram.',
-    path: '/app/instagram',
+    path: '/app/channels?canal=instagram',
     navLabel: 'Instagram',
     icon: 'instagram',
     group: 'connect',
+    sidebar: false,
   },
   {
     key: 'custom_domain',

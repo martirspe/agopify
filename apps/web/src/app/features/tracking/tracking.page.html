@@ -1,5 +1,6 @@
-<section class="store tw:mx-auto tw:min-w-0">
-  <ds-page-header title="Píxel y Analytics" icon="chartColumn" description="Mide las visitas, los carritos y las compras de tu tienda en Meta y Google Analytics para medir tus anuncios. Solo se mide a quien acepta las cookies." />
+<section class="store tw:grid tw:w-full tw:min-w-0 tw:gap-5">
+  <ds-page-header title="Píxel y Analytics" icon="chartColumn" />
+  <div class="tw:mx-auto tw:grid tw:w-full tw:min-w-0 tw:max-w-form tw:gap-5">
 
   @if (errorMessage() && !loadFailed(); as error) {
     <div class="tw:feedback tw:feedback-danger" role="alert">
@@ -105,4 +106,5 @@
       </aside>
     </div>
   }
+  </div>
 </section>

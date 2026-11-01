@@ -1,9 +1,16 @@
-<section class="tw:mx-auto tw:grid tw:w-full tw:min-w-0 tw:max-w-page tw:gap-5">
-  <ds-page-header
-    title="Catálogo externo"
-    icon="store"
-    description="Conecta Magento o WooCommerce para importar productos, variantes e inventario al catálogo de VendedorIA."
-  />
+<section class="tw:grid tw:w-full tw:min-w-0 tw:gap-5">
+  <ds-page-header title="Catálogo externo" icon="store">
+    @if (!loading() && !loadFailed()) {
+      <div dsPageActions class="tw:flex tw:flex-nowrap tw:items-center tw:gap-2">
+        <ds-button variant="ghost" [disabled]="busy()" (click)="load()"><ds-icon name="rotateCcw" />Actualizar</ds-button>
+        @if (selected()) {
+          <ds-button variant="secondary" [disabled]="busy()" (click)="openPanel('sync')">Sincronizar</ds-button>
+        }
+        <ds-button [disabled]="busy()" (click)="openPanel('connect')">Nueva conexión</ds-button>
+      </div>
+    }
+  </ds-page-header>
+  <div class="tw:mx-auto tw:grid tw:w-full tw:min-w-0 tw:max-w-page tw:gap-5">
 
   @if (errorMessage() && !loadFailed(); as error) {
     <div class="tw:feedback tw:feedback-danger" role="alert"><ds-icon name="alert" /><span>{{ error }}</span></div>
@@ -21,30 +28,23 @@
       <ds-button variant="secondary" (click)="load()">Reintentar</ds-button>
     </ds-empty-state>
   } @else {
-    <ds-action-bar label="Acciones de catálogo externo">
-      <span dsActionStatus role="status">
-        @if (busy()) {
-          @switch (operation()) {
-            @case ('connect') { Verificando tienda… }
-            @case ('sync') { Encolando sincronización… }
-            @case ('test') { Probando conexión… }
-            @case ('settings') { Guardando preferencias… }
-            @case ('disconnect') { Desconectando… }
-            @case ('retry') { Reintentando… }
-            @default { Trabajando… }
-          }
-        } @else if (selected(); as current) {
-          {{ platformLabel(current.platform) }} · {{ statusLabel(current.status) }}
-        } @else {
-          Sin conexiones activas
+    <p class="tw:m-0 tw:text-caption tw:text-muted" role="status">
+      @if (busy()) {
+        @switch (operation()) {
+          @case ('connect') { Verificando tienda… }
+          @case ('sync') { Encolando sincronización… }
+          @case ('test') { Probando conexión… }
+          @case ('settings') { Guardando preferencias… }
+          @case ('disconnect') { Desconectando… }
+          @case ('retry') { Reintentando… }
+          @default { Trabajando… }
         }
-      </span>
-      <ds-button variant="secondary" [disabled]="busy()" (click)="load()"><ds-icon name="rotateCcw" />Actualizar</ds-button>
-      <ds-button variant="secondary" [disabled]="busy()" (click)="openPanel('connect')">Nueva conexión</ds-button>
-      @if (selected()) {
-        <ds-button [disabled]="busy()" (click)="openPanel('sync')">Ir a sincronización</ds-button>
+      } @else if (selected(); as current) {
+        {{ platformLabel(current.platform) }} · {{ statusLabel(current.status) }}
+      } @else {
+        Sin conexiones activas
       }
-    </ds-action-bar>
+    </p>
 
     @if (!encryptionConfigured()) {
       <div class="tw:feedback tw:feedback-danger" role="alert">
@@ -403,4 +403,5 @@
       </div>
     </div>
   }
+  </div>
 </section>

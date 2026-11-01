@@ -1,9 +1,6 @@
-import { DsActionBarComponent } from '@vendedoria/ui';
-import { DsEmptyStateComponent } from '@vendedoria/ui';
 import { latestThemes } from '@vendedoria/themes/catalog';
 import { ConversionSettingsComponent } from './conversion-settings.component';
 import { ThemeManagerComponent } from './theme-manager.component';
-import { DsSelectComponent } from '@vendedoria/ui';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -22,7 +19,17 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { STORE_SECTIONS } from '../../layout/console-context';
 import type { StoreTemplate } from '@vendedoria/contracts';
-import { DsButtonComponent, DsDisclosureComponent, DsFormSectionComponent, DsIconComponent, DsPageHeaderComponent } from '@vendedoria/ui';
+import {
+  DsButtonComponent,
+  DsDisclosureComponent,
+  DsEmptyStateComponent,
+  DsFormSectionComponent,
+  DsIconComponent,
+  DsPageFrameComponent,
+  DsPageHeaderComponent,
+  DsSaveBarComponent,
+  DsSelectComponent,
+} from '@vendedoria/ui';
 import {
   SellerType,
   StoreApiService,
@@ -56,7 +63,7 @@ export const TEMPLATE_OPTIONS = latestThemes().map(theme => ({
 @Component({
   selector: 'app-store-page',
   standalone: true,
-  imports: [DsActionBarComponent, DsEmptyStateComponent, DsDisclosureComponent, DsFormSectionComponent, ThemeManagerComponent, ConversionSettingsComponent, DsSelectComponent, ReactiveFormsModule, RouterLink, DsButtonComponent, DsIconComponent, DsPageHeaderComponent, IntegrationGateComponent],
+  imports: [DsPageFrameComponent, DsSaveBarComponent, DsEmptyStateComponent, DsDisclosureComponent, DsFormSectionComponent, ThemeManagerComponent, ConversionSettingsComponent, DsSelectComponent, ReactiveFormsModule, RouterLink, DsButtonComponent, DsIconComponent, DsPageHeaderComponent, IntegrationGateComponent],
   templateUrl: './store.page.html',
   styleUrl: './store.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

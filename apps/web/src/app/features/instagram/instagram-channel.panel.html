@@ -1,5 +1,4 @@
-<section class="tw:mx-auto tw:grid tw:w-full tw:min-w-0 tw:max-w-form tw:gap-5">
-  <ds-page-header title="Instagram Direct" icon="instagram" description="Conecta tu cuenta profesional para gestionar sus mensajes directos desde VendedorIA." />
+<div class="tw:grid tw:w-full tw:min-w-0 tw:gap-5">
   @if (errorMessage() && !loadFailed(); as error) { <div class="tw:feedback tw:feedback-danger" role="alert"><ds-icon name="alert" /><span>{{ error }}</span></div> }
   @if (successMessage(); as success) { <div class="tw:feedback tw:feedback-success" role="status"><ds-icon name="check" /><span>{{ success }}</span></div> }
   @if (loading()) {
@@ -9,7 +8,7 @@
   } @else if (!active()) {
     <app-integration-gate key="instagram" />
   } @else if (status(); as s) {
-    <ds-form-section title="Estado de la cuenta" icon="instagram">
+    <ds-form-section title="Instagram Direct" description="Mensajes directos de tu cuenta profesional." icon="instagram">
       <div class="tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-4">
         <div class="tw:grid tw:min-w-0 tw:gap-2">
           <span class="tw:w-fit tw:rounded-sm tw:bg-canvas tw:px-2 tw:py-1 tw:text-caption tw:text-muted" [class.tw:bg-success/10]="connected()" [class.tw:text-success-text]="connected()">{{ connected() ? 'Conectada' : s.channel ? 'Requiere revisión' : 'Sin conectar' }}</span>
@@ -24,7 +23,7 @@
       <div class="tw:min-w-0 tw:lg:col-span-2">
         @if (canManage) {
           <form class="tw:grid tw:min-w-0 tw:gap-4" [formGroup]="form" (ngSubmit)="connect()">
-            <ds-action-bar label="Acciones de Instagram"><span dsActionStatus>{{ operation() === 'disconnect' ? 'Desconectando cuenta…' : connected() ? 'Verificar conexión' : 'Nueva conexión' }}</span><ds-button type="submit" [disabled]="saving()">{{ operation() === 'connect' ? 'Conectando…' : connected() ? 'Guardar y verificar' : 'Conectar Instagram' }}</ds-button></ds-action-bar>
+            <ds-action-bar layout="dock" label="Acciones de Instagram"><span dsActionStatus>{{ operation() === 'disconnect' ? 'Desconectando cuenta…' : connected() ? 'Verificar conexión' : 'Nueva conexión' }}</span><ds-button type="submit" [disabled]="saving()">{{ operation() === 'connect' ? 'Conectando…' : connected() ? 'Guardar y verificar' : 'Conectar Instagram' }}</ds-button></ds-action-bar>
             <fieldset class="tw:m-0 tw:min-w-0 tw:border-0 tw:p-0" [disabled]="saving()"><legend class="tw:sr-only">Datos de conexión de Instagram</legend>
               <ds-form-section [title]="connected() ? 'Actualizar cuenta' : 'Conectar cuenta'" description="Utiliza los datos de tu cuenta profesional de Meta.">
                 <label class="tw:grid tw:gap-2 tw:text-sm tw:font-semibold">Token de acceso de Instagram<input class="tw:console-field" formControlName="accessToken" type="password" autocomplete="off" spellcheck="false" [attr.aria-invalid]="!!fieldError('accessToken')" aria-describedby="instagram-token-help" /> <small id="instagram-token-help" class="tw:text-caption tw:font-normal" [class.tw:text-danger-text]="!!fieldError('accessToken')">{{ fieldError('accessToken') || 'No se muestra después de guardar la conexión.' }}</small></label>
@@ -42,4 +41,4 @@
       </aside>
     </div>
   }
-</section>
+</div>

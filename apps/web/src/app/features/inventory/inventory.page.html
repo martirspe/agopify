@@ -1,19 +1,22 @@
-<section class="tw:grid tw:w-full tw:min-w-0 tw:gap-5">
-  <ds-page-header
-    title="Inventario"
-    icon="list"
-    description="Consulta y ajusta las unidades disponibles de tus productos y variantes."
-  >
-    <a dsPageActions routerLink="/app/products" class="tw:console-action-secondary"><ds-icon name="chevronLeft" />Productos</a>
-  </ds-page-header>
-
-  @if (pendingCount()) {
-    <ds-action-bar label="Acciones del inventario">
-      <span dsActionStatus role="status" class="tw:px-2">{{ saving() ? 'Guardando cambios…' : pendingCount() + (pendingCount() === 1 ? ' cambio pendiente' : ' cambios pendientes') }}</span>
+<ds-page-frame>
+  @if (pendingCount() || saving()) {
+    <ds-action-bar
+      dsPageFrameSave
+      class="ds-page-frame__save"
+      label="Acciones del inventario"
+      layout="capsule"
+    >
+      <span dsActionStatus role="status">{{ saving() ? 'Guardando cambios…' : pendingCount() === 1 ? '1 cambio pendiente' : pendingCount() + ' cambios pendientes' }}</span>
       <ds-button type="button" variant="ghost" [disabled]="saving()" (click)="discard()">Descartar</ds-button>
       <ds-button type="button" [disabled]="saving() || hasInvalidQty()" (click)="save()">{{ saving() ? 'Guardando…' : 'Guardar stock' }}</ds-button>
     </ds-action-bar>
   }
+  <ds-page-header title="Inventario" icon="list">
+    <div dsPageActions>
+      <a routerLink="/app/products" class="tw:console-action-secondary"><ds-icon name="chevronLeft" />Productos</a>
+    </div>
+  </ds-page-header>
+  <div class="ds-page-frame__body tw:grid tw:w-full tw:min-w-0 tw:gap-5">
   @if (errorMessage() && !loadFailed(); as error) {
     <div class="tw:feedback tw:feedback-danger" role="alert"><ds-icon name="alert" /><span>{{ error }} Tus cambios siguen disponibles para volver a intentar.</span></div>
   }
@@ -149,4 +152,5 @@
       Los sets no tienen unidades propias en esta lista. Su disponibilidad depende de las piezas que los componen; actualiza aquí el stock de cada pieza.
     </ds-disclosure>
   }
-</section>
+  </div>
+</ds-page-frame>

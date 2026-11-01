@@ -1,12 +1,24 @@
-import { DsActionBarComponent } from '@vendedoria/ui';
-import { DsEmptyStateComponent } from '@vendedoria/ui';
-import { DsSelectComponent } from '@vendedoria/ui';
 import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DsButtonComponent, DsCheckboxComponent, DsChoiceCardComponent, DsDisclosureComponent, DsConfirmService, DsFormSectionComponent, DsIconComponent, DsModalDirective, DsPageHeaderComponent, type DsIconName } from '@vendedoria/ui';
+import {
+  DsButtonComponent,
+  DsCheckboxComponent,
+  DsChoiceCardComponent,
+  DsConfirmService,
+  DsDisclosureComponent,
+  DsEmptyStateComponent,
+  DsFormSectionComponent,
+  DsIconComponent,
+  DsModalDirective,
+  DsPageFrameComponent,
+  DsPageHeaderComponent,
+  DsSaveBarComponent,
+  DsSelectComponent,
+  type DsIconName,
+} from '@vendedoria/ui';
 import {
   Coupon,
   CouponKind,
@@ -47,7 +59,7 @@ const fromLocalInput = (value: string) => (value ? new Date(value).toISOString()
 @Component({
   selector: 'app-coupons-page',
   standalone: true,
-  imports: [DsActionBarComponent, DsCheckboxComponent, DsChoiceCardComponent, DsDisclosureComponent, DsFormSectionComponent, DsEmptyStateComponent, DsSelectComponent, ReactiveFormsModule, DsButtonComponent, DsIconComponent, DsModalDirective, DsPageHeaderComponent, IntegrationGateComponent],
+  imports: [DsPageFrameComponent, DsSaveBarComponent, DsCheckboxComponent, DsChoiceCardComponent, DsDisclosureComponent, DsFormSectionComponent, DsEmptyStateComponent, DsSelectComponent, ReactiveFormsModule, DsButtonComponent, DsIconComponent, DsModalDirective, DsPageHeaderComponent, IntegrationGateComponent],
   templateUrl: './coupons.page.html',
   styleUrl: './coupons.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

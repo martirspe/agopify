@@ -27,6 +27,78 @@ ds-action-bar .ds-action-bar {
   color: var(--ds-action-text);
   box-shadow: var(--ds-shadow-dropdown);
 }
+
+/* Capsule layout — same geometry as ds-save-bar capsule (Admin contextual pill). */
+ds-action-bar.ds-action-bar--capsule {
+  top: var(--ds-space-2);
+  z-index: calc(var(--ds-z-sticky) + 6);
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-block-start: calc(-1 * (var(--ds-console-page-header-height, 3.25rem) - var(--ds-space-2)));
+  margin-block-end: calc(-1 * var(--ds-save-capsule-height, 2.25rem));
+  pointer-events: none;
+  --ds-button-radius: var(--ds-radius-pill);
+  --ds-button-ghost-color: var(--ds-save-capsule-text, #eee);
+  --ds-touch-target: var(--ds-save-capsule-control, 1.75rem);
+}
+ds-action-bar.ds-action-bar--capsule .ds-action-bar {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1.25rem;
+  width: auto;
+  max-width: min(100%, 36rem);
+  height: var(--ds-save-capsule-height, 2.25rem);
+  padding: 0.25rem 0.25rem 0.25rem 0.75rem;
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-save-capsule-bg, #0a0a0a);
+  color: var(--ds-save-capsule-text, #eee);
+  box-shadow:
+    rgb(220 220 220 / 18%) 0 0 0 1px,
+    rgb(0 0 0 / 15%) 0 1px 2px 0,
+    rgb(0 0 0 / 15%) 0 3px 6px -3px,
+    rgb(0 0 0 / 72%) 0 24px 56px -12px;
+  pointer-events: auto;
+}
+ds-action-bar.ds-action-bar--capsule .ds-action-bar-status {
+  flex: 0 1 auto;
+  padding: 0;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+ds-action-bar.ds-action-bar--capsule .ds-action-bar-actions {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+}
+ds-action-bar.ds-action-bar--capsule .ds-button,
+ds-action-bar.ds-action-bar--capsule .ds-button-host .ds-button {
+  min-height: var(--ds-save-capsule-control, 1.75rem);
+  height: var(--ds-save-capsule-control, 1.75rem);
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: var(--ds-radius-pill);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+ds-action-bar.ds-action-bar--capsule .ds-button--ghost,
+ds-action-bar.ds-action-bar--capsule .ds-button-host.ds-button--ghost .ds-button {
+  background: rgb(255 255 255 / 12%);
+  color: var(--ds-save-capsule-text, #eee);
+}
+ds-action-bar.ds-action-bar--capsule .ds-button--primary,
+ds-action-bar.ds-action-bar--capsule .ds-button-host.ds-button--primary .ds-button {
+  background: var(--ds-save-capsule-save-bg, #fcfcfc);
+  color: var(--ds-save-capsule-save-text, #121212);
+  filter: none;
+}
 ds-action-bar .ds-action-bar-status {
   padding-inline: 0;
   min-width: 0;

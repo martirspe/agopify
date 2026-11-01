@@ -73,7 +73,7 @@
   <div class="tw:console-frame" [attr.data-assistant-dock]="assistantLayout.dockOpen() ? '' : null">
     <header
       class="tw:flex tw:min-h-12 tw:shrink-0 tw:items-center tw:justify-between tw:gap-3 tw:px-gutter tw:py-2"
-      [class.tw:console:hidden]="!isHome() && !context()"
+      [class.tw:console:hidden]="!isHome()"
     >
       <div class="tw:flex tw:min-w-0 tw:items-center tw:gap-2">
         <button type="button" class="tw:console-icon-button tw:console:hidden" aria-label="Abrir navegación" aria-haspopup="dialog" [attr.aria-expanded]="mobileNavOpen()" (click)="mobileNavOpen.set(true)"><ds-icon name="menu" /></button>

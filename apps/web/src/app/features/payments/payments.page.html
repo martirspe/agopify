@@ -1,5 +1,6 @@
-<section class="tw:mx-auto tw:grid tw:w-full tw:min-w-0 tw:max-w-form tw:gap-5">
-  <ds-page-header title="Cobros" icon="wallet" description="Conecta tu cuenta de Mercado Pago para recibir los pagos de tus clientes en la tienda y en los links del vendedor." />
+<section class="tw:grid tw:w-full tw:min-w-0 tw:gap-5">
+  <ds-page-header title="Cobros" icon="wallet" />
+  <div class="tw:mx-auto tw:grid tw:w-full tw:min-w-0 tw:max-w-form tw:gap-5">
   @if (errorMessage() && !loadFailed(); as error) { <div class="tw:feedback tw:feedback-danger" role="alert"><ds-icon name="alert" /><span>{{ error }}</span></div> }
   @if (successMessage(); as success) { <div class="tw:feedback tw:feedback-success" role="status"><ds-icon name="check" /><span>{{ success }}</span></div> }
   @if (loading()) {
@@ -73,4 +74,5 @@
       </aside>
     </div>
   }
+  </div>
 </section>

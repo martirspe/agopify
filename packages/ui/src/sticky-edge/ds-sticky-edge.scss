@@ -1,0 +1,22 @@
+/* Invisible probe placed before sticky chrome; out of view ⇒ scrolled. */
+@mixin styles {
+  .ds-sticky-edge-sentinel {
+    display: block;
+    width: 100%;
+    height: 1px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  .ds-sticky-edge {
+    border-block-end: var(--ds-border-width) solid transparent;
+    transition: border-color var(--ds-motion-fast, 120ms) var(--ds-ease-out, ease);
+  }
+
+  .ds-sticky-edge--scrolled {
+    border-block-end-color: var(--ds-color-divider);
+  }
+}

@@ -190,10 +190,10 @@ export class ConsoleShellLayout {
           (item) => !item.integration || this.integrations.isActive(item.integration),
         ),
         ...this.activeIntegrations()
-          .filter((integration) => integration.group === group.id)
+          .filter((integration) => integration.group === group.id && integration.sidebar !== false)
           .map((integration) => ({
             label: integration.navLabel,
-            path: integration.path,
+            path: integration.path.split('?')[0],
             icon: integration.icon,
           })),
       ],
@@ -203,11 +203,13 @@ export class ConsoleShellLayout {
   readonly footerItems = computed<ConsoleNavItem[]>(() => {
     const team = this.activeIntegrations().filter((integration) => integration.group === 'footer');
     return [
-      ...team.map((integration) => ({
-        label: integration.navLabel,
-        path: integration.path,
-        icon: integration.icon,
-      })),
+      ...team
+        .filter((integration) => integration.sidebar !== false)
+        .map((integration) => ({
+          label: integration.navLabel,
+          path: integration.path.split('?')[0],
+          icon: integration.icon,
+        })),
       ...this.baseFooterItems,
     ];
   });
@@ -400,7 +402,7 @@ export class ConsoleShellLayout {
   readonly searchResults = computed(() => {
     const filter = this.paletteFilter();
     const q = normalizeSearch(this.paletteQuery());
-    const sections = this.filteredPalette().filter(action => filter === 'todos' || filter === 'productos' && ['/app/products', '/app/inventory', '/app/coupons'].includes(action.path) || filter === 'vendedor' && action.path.startsWith('/app/seller') || filter === 'conexiones' && ['/app/channels', '/app/payments', '/app/integrations', '/app/instagram', '/app/tiktok-live'].includes(action.path) || filter === 'ajustes' && (action.id.startsWith('context-') || ['/app/profile', '/app/help', '/app/plans'].includes(action.path)));
+    const sections = this.filteredPalette().filter(action => filter === 'todos' || filter === 'productos' && ['/app/products', '/app/inventory', '/app/coupons'].includes(action.path) || filter === 'vendedor' && action.path.startsWith('/app/seller') || filter === 'conexiones' && ['/app/channels', '/app/payments', '/app/integrations', '/app/tiktok-live'].includes(action.path) || filter === 'ajustes' && (action.id.startsWith('context-') || ['/app/profile', '/app/help', '/app/plans'].includes(action.path)));
     const unique = [...new Map(sections.map(action => [action.path, action])).values()];
  /* búsqueda: empty query shows centered prompt (or Recientes only). */
     if (!q && filter === 'todos') return this.paletteRecent().slice(0, 7);

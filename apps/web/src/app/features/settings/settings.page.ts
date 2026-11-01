@@ -1,6 +1,14 @@
-import { DsSaveBarComponent, DsFormSectionComponent, DsDisclosureComponent, DsPageHeaderComponent } from '@vendedoria/ui';
-import { DsEmptyStateComponent } from '@vendedoria/ui';
-import { DsSelectComponent } from '@vendedoria/ui';
+import {
+  DsButtonComponent,
+  DsDisclosureComponent,
+  DsEmptyStateComponent,
+  DsFormSectionComponent,
+  DsIconComponent,
+  DsPageFrameComponent,
+  DsPageHeaderComponent,
+  DsSaveBarComponent,
+  DsSelectComponent,
+} from '@vendedoria/ui';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,8 +16,6 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DsButtonComponent } from '@vendedoria/ui';
-import { DsIconComponent } from '@vendedoria/ui';
 import { TenantsApiService, type TenantDto } from '../../core/api/tenants-api.service';
 
 type BusinessSettings = Pick<TenantDto, 'name' | 'country' | 'currency'>;
@@ -17,7 +23,18 @@ type BusinessSettings = Pick<TenantDto, 'name' | 'country' | 'currency'>;
 @Component({
   selector: 'app-settings-page',
   standalone: true,
-  imports: [DsSaveBarComponent, DsFormSectionComponent, DsDisclosureComponent, DsPageHeaderComponent, DsEmptyStateComponent, DsSelectComponent, ReactiveFormsModule, DsButtonComponent, DsIconComponent],
+  imports: [
+    DsPageFrameComponent,
+    DsSaveBarComponent,
+    DsFormSectionComponent,
+    DsDisclosureComponent,
+    DsPageHeaderComponent,
+    DsEmptyStateComponent,
+    DsSelectComponent,
+    ReactiveFormsModule,
+    DsButtonComponent,
+    DsIconComponent,
+  ],
   templateUrl: './settings.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

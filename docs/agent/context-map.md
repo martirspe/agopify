@@ -11,7 +11,7 @@ Jump table from domain to paths. API paths are under `apps/api/src/`, console pa
 | AI Core (hybrid evolution of sales-engine-v2: multi-model port, migration docs, mode alias `ai-core`) | `agent-runtime/models/`, `docs/ai-core/`; skill `.agents/skills/vendedoria-ai-core` | Seller / playground unchanged | implement; `vendedoria-ai-core` |
 | AI Core conversation training (Understanding, multinicho gap matrix, golden evals) | `agent-runtime/conversation-understanding.ts`, `sales-state.ts`, `sales-response-validator.ts`, `docs/ai-core/UNDERSTANDING.md`, `docs/agent/evals/`; skill `.agents/skills/vendedoria-ai-core-training` | Playground / WhatsApp quality | `vendedoria-ai-core-training` + implement |
 | Knowledge (FAQs, journeys) | `knowledge/` | `features/seller/` | implement |
-| WhatsApp channel + Meta webhook + dual onboarding | `channels/` (`whatsapp-signup.service.ts`, `whatsapp-manual.service.ts`, `meta-signup.client.ts`); activation guide `docs/WHATSAPP-ONBOARDING.md` | `features/channels/`, `features/integrations/` | security, data, ui |
+| WhatsApp + Instagram chat channels (hub Canales) + Meta webhook + dual onboarding | `channels/` (`whatsapp-signup.service.ts`, `whatsapp-manual.service.ts`, `meta-signup.client.ts`); Instagram connect in `integrations/`; guide `docs/WHATSAPP-ONBOARDING.md` | `features/channels/` (hub + WhatsApp), `features/instagram/` (panel), `features/integrations/` | security, data, ui |
 | Inbox / conversations | `conversations/` | `features/messages/` | implement |
 | TikTok LIVE sales, liquidation and reservations | `live/`, `checkout/`, `orders/settlement.ts` (stock transfer/payment); official OAuth adapter in `live/tiktok-*` | `features/live/`, integration registry; store universal `/live-checkout`; guide `docs/TIKTOK-LIVE.md` | implement, data, security, ui; personal `vendedoria-tiktok-live` |
 | Catalog, sets, inventory, photo upload, catalog package import/export (`catalog-import.ts`, `catalog-export.ts`, `catalog-import.service.ts`) | `catalog/` | `features/catalog/` (`catalog-import.page`, `catalog-package.ts`, products export ZIP/CSV), `features/inventory/` | implement |
@@ -35,7 +35,7 @@ Jump table from domain to paths. API paths are under `apps/api/src/`, console pa
 
 ## Discrepancies
 
-- Consola save CTA: DSM historically forbade floating capsules; Product editor now uses `ds-save-bar layout="capsule"` (Admin-measured sticky pill) while other views keep docked full-width bars. (code wins; constitution items marked PLANNED)
+- Consola chrome: page actions live in `ds-page-header` `[dsPageActions]` (right); dark capsule is only `ds-save-bar` when dirty. `ds-action-bar` defaults to dock.
 
 - Console `/app` uses a dark rail (`#0a0a0a`), light nav text, white rounded frame 16px, 13px page titles, Inter and flat bordered cards, with VendedorIA brand primary `#C8F542`. Marketing and tenant store keep full VendedorIA identity. Identifiers, classes and product names must not copy competitor admin chrome.
 - AI Core architecture docs describe a greenfield multi-provider brain; the repository already ships that substrate as `sales-engine-v2` / mode alias `ai-core`. Evolve `agent-runtime` in place — do not add a parallel Nest app or duplicate commerce services. Multi-model beyond OpenAI remains incremental (`agent-runtime/models/`).

@@ -16,4 +16,6 @@ export * from './src/disclosure/ds-disclosure.component';
 export * from './src/save-bar/ds-save-bar.component';
 export * from './src/action-bar/ds-action-bar.component';
 export * from './src/page-header/ds-page-header.component';
+export * from './src/page-frame/ds-page-frame.component';
+export * from './src/sticky-edge/ds-sticky-edge.directive';
 export * from './src/banner/ds-banner.component';

@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
-  DsActionBarComponent,
   DsButtonComponent,
   DsConfirmService,
   DsDisclosureComponent,
@@ -37,7 +36,6 @@ type ConnectablePlatform = 'magento' | 'woocommerce';
   imports: [
     DatePipe,
     ReactiveFormsModule,
-    DsActionBarComponent,
     DsButtonComponent,
     DsDisclosureComponent,
     DsEmptyStateComponent,

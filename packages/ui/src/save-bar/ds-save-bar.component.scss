@@ -38,9 +38,12 @@ ds-save-bar.ds-save-bar--top.ds-save-bar--dock .ds-action-bar-status {
  */
 ds-save-bar.ds-save-bar--capsule {
   top: var(--ds-space-2);
+  z-index: calc(var(--ds-z-sticky) + 6);
   display: flex;
   justify-content: center;
   width: 100%;
+  /* Sit in the sticky page-header band when placed right after it. */
+  margin-block-start: calc(-1 * (var(--ds-console-page-header-height, 3.25rem) - var(--ds-space-2)));
   margin-block-end: calc(-1 * var(--ds-save-capsule-height, 2.25rem));
   pointer-events: none;
 }

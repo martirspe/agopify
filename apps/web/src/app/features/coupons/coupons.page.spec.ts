@@ -68,9 +68,11 @@ describe('discount editing and recovery', () => {
     page.startCreate('FREE_SHIPPING', 'AUTOMATIC'); page.form.controls.label.setValue('Entrega sin costo');
     await page.save(); expect(api.create).toHaveBeenCalledWith(expect.objectContaining({ code: undefined, value: 0 }));
     page.startEdit(coupon); fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Sin cambios');
-    page.form.controls.scope.setValue('CATEGORY'); page.toggleTarget('Ropa', true);
+    expect(page.hasChanges()).toBe(false);
+    expect(fixture.nativeElement.querySelector('ds-save-bar')).toBeNull();
+    page.form.controls.scope.setValue('CATEGORY'); page.toggleTarget('Ropa', true); fixture.detectChanges();
     expect(page.hasChanges()).toBe(true); expect(page.selectedTargets()).toEqual(['Ropa']);
+    expect(fixture.nativeElement.querySelector('ds-save-bar')).toBeTruthy();
   });
 
   it('recovers failed loading without confusing it with an empty discounts list', async () => {

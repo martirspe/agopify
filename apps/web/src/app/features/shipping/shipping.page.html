@@ -1,9 +1,17 @@
-<section class="shipping tw:mx-auto tw:min-w-0">
-  <ds-page-header
-    title="Envíos"
-    icon="truck"
-    description="Configura las formas de entrega y las tarifas que usan tu vendedor IA y tu tienda web."
-  />
+<ds-page-frame>
+  @if (form.dirty || saving()) {
+    <ds-save-bar
+      dsPageFrameSave
+      class="ds-page-frame__save"
+      formId="shipping-form"
+      [pending]="form.dirty"
+      [busy]="saving()"
+      label="Guardar envíos"
+      pendingText="Envíos sin guardar"
+    />
+  }
+  <ds-page-header title="Envíos" icon="truck" />
+  <div class="ds-page-frame__body shipping tw:mx-auto tw:min-w-0">
 
   @if (errorMessage(); as error) {
     <div class="tw:feedback tw:feedback-danger" role="alert">
@@ -32,7 +40,7 @@
       </div>
     }
 
-    <form class="shipping__form" [formGroup]="form" (ngSubmit)="save()">
+    <form id="shipping-form" class="shipping__form" [formGroup]="form" (ngSubmit)="save()">
       <div class="shipping__layout">
       <fieldset class="shipping__fields tw:console-card tw:shadow-none!" [disabled]="saving()">
       <legend class="tw:sr-only">Configuración de entrega</legend>
@@ -152,7 +160,7 @@
           Sobre el total después de descuentos. Deja el importe vacío si no ofreces envío gratis.
         </ds-disclosure>
       </ds-form-section>
-      <ds-save-bar [pending]="form.dirty" [busy]="saving()" label="Guardar envíos" />
     </form>
   }
-</section>
+  </div>
+</ds-page-frame>

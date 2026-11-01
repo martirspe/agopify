@@ -1,5 +1,3 @@
-import { DsSaveBarComponent } from '@vendedoria/ui';
-import { DsSelectComponent } from '@vendedoria/ui';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -12,8 +10,15 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { map, startWith } from 'rxjs';
-import { DsButtonComponent, DsConfirmService, DsPageHeaderComponent } from '@vendedoria/ui';
-import { DsIconComponent } from '@vendedoria/ui';
+import {
+  DsButtonComponent,
+  DsConfirmService,
+  DsIconComponent,
+  DsPageFrameComponent,
+  DsPageHeaderComponent,
+  DsSaveBarComponent,
+  DsSelectComponent,
+} from '@vendedoria/ui';
 import { SellerPlaygroundComponent } from './seller-playground.component';
 import {
   AgentsApiService,
@@ -52,7 +57,7 @@ const CUSTOM_PROMPT_MAX = 12000;
 @Component({
   selector: 'app-seller-page',
   standalone: true,
-  imports: [DsSaveBarComponent, DsSelectComponent,
+  imports: [DsPageFrameComponent, DsSaveBarComponent, DsSelectComponent,
     ReactiveFormsModule,
     RouterLink,
     DsButtonComponent,

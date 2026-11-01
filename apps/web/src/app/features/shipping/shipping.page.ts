@@ -5,6 +5,7 @@ import {
   DsEmptyStateComponent,
   DsFormSectionComponent,
   DsIconComponent,
+  DsPageFrameComponent,
   DsPageHeaderComponent,
   DsSaveBarComponent,
   DsSelectComponent,
@@ -29,7 +30,7 @@ const CARRIER_TIER_LABELS = ['Hasta 20 km', 'Hasta 100 km', 'Hasta 400 km', 'Has
 @Component({
   selector: 'app-shipping-page',
   standalone: true,
-  imports: [DsCheckboxComponent, DsFormSectionComponent, DsDisclosureComponent, DsSaveBarComponent, DsSelectComponent, ReactiveFormsModule, DsButtonComponent, DsEmptyStateComponent, DsIconComponent, DsPageHeaderComponent],
+  imports: [DsCheckboxComponent, DsFormSectionComponent, DsDisclosureComponent, DsPageFrameComponent, DsSaveBarComponent, DsSelectComponent, ReactiveFormsModule, DsButtonComponent, DsEmptyStateComponent, DsIconComponent, DsPageHeaderComponent],
   templateUrl: './shipping.page.html',
   styleUrl: './shipping.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

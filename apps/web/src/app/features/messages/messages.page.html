@@ -1,13 +1,17 @@
-<section class="inbox">
+<section class="messages tw:grid tw:h-full tw:min-h-0 tw:w-full tw:min-w-0 tw:gap-0">
+  <ds-page-header title="Mensajes" icon="message">
+    @if (!loadingList() && !listError()) {
+      <div dsPageActions class="tw:flex tw:flex-nowrap tw:items-center tw:gap-2">
+        <span class="tw:text-caption tw:text-muted">
+          {{ conversations().length }}
+          {{ conversations().length === 1 ? 'conversación' : 'conversaciones' }}{{ query() || filterSales() || filterUnattended() ? ' en esta vista' : '' }}
+        </span>
+      </div>
+    }
+  </ds-page-header>
+  <div class="inbox">
   <aside class="inbox__list tw:flex tw:flex-col tw:min-w-0 tw:min-h-0" [class.tw:hidden]="openedConversationId()" [class.tw:inbox:flex]="openedConversationId()" aria-label="Conversaciones">
-    <ds-page-header
-      class="tw:p-4 tw:pb-0"
-      title="Mensajes"
-      icon="message"
-      [description]="!loadingList() && !listError() ? conversations().length + ' ' + (conversations().length === 1 ? 'conversación' : 'conversaciones') + (query() || filterSales() || filterUnattended() ? ' en esta vista' : '') : null"
-    />
-
-    <div class="tw:mx-4 tw:mb-3 tw:grid tw:gap-2">
+    <div class="tw:mx-4 tw:mb-3 tw:mt-3 tw:grid tw:gap-2">
       <label class="tw:flex tw:min-w-0 tw:items-center tw:gap-2 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:bg-surface tw:px-3 tw:focus-within:border-focus">
         <span class="tw:sr-only">Buscar conversaciones</span>
         <ds-icon name="search" [size]="1" />
@@ -372,4 +376,5 @@
       </form>
     </dialog>
   }
+  </div>
 </section>

@@ -1,19 +1,29 @@
-<section class="seller tw:mx-auto tw:min-w-0">
-  <ds-page-header
-    icon="bot"
-    [title]="activeSection().label"
-    [description]="activeSection().hint + '.'"
-  >
-    <div dsPageActions class="tw:flex tw:flex-wrap tw:items-center tw:gap-3">
+<ds-page-frame>
+  @if ((dirty() || saving()) && agentId()) {
+    <ds-save-bar
+      dsPageFrameSave
+      class="ds-page-frame__save"
+      formId="seller-form"
+      [pending]="dirty()"
+      [busy]="saving()"
+      label="Guardar vendedor"
+      pendingText="Hay cambios sin guardar"
+    />
+  }
+  <ds-page-header icon="bot" [title]="activeSection().label">
+    <div dsPageActions>
       <ds-button type="button" variant="secondary" [disabled]="loading() || loadFailed() || agentLoading() || agentLoadFailed() || !agentId()" (click)="openPlayground()">
         Probar vendedor
       </ds-button>
-      @if (!loading() && !loadFailed() && !agentLoading() && !agentLoadFailed() && agentId()) { <div class="seller__status" [class.seller__status--on]="currentAgent()?.isActive">
-        <span class="seller__status-dot" aria-hidden="true"></span>
-        {{ currentAgent()?.isActive ? 'Activo' : 'Pausado' }}
-      </div> }
+      @if (!loading() && !loadFailed() && !agentLoading() && !agentLoadFailed() && agentId()) {
+        <div class="seller__status" [class.seller__status--on]="currentAgent()?.isActive">
+          <span class="seller__status-dot" aria-hidden="true"></span>
+          {{ currentAgent()?.isActive ? 'Activo' : 'Pausado' }}
+        </div>
+      }
     </div>
   </ds-page-header>
+  <div class="ds-page-frame__body seller tw:mx-auto tw:min-w-0">
 
   @if (!loading() && agents().length) {
     <div class="tw:console-card tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
@@ -294,6 +304,7 @@
         </div>
       } @else {
         <form
+          id="seller-form"
           class="seller__form"
           [formGroup]="form"
           (ngSubmit)="save()"
@@ -821,7 +832,6 @@
             }
           }
 
-          <ds-save-bar [pending]="dirty()" [busy]="saving()" label="Guardar vendedor" pendingText="Hay cambios sin guardar. Se aplicarán al guardar." />
         </form>
       }
       <aside class="seller__rail" aria-label="Configuración y vista previa">
@@ -860,4 +870,5 @@
       (closed)="closePlayground()"
     />
   }
-</section>
+  </div>
+</ds-page-frame>

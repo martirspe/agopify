@@ -1,27 +1,41 @@
-<section class="store tw:mx-auto tw:w-full tw:min-w-0" [class.tw:max-w-form]="section() !== 'temas'" [class.tw:max-w-page]="section() === 'temas'">
-  <ds-page-header [title]="sectionTitle()" [description]="sectionDescription()" [icon]="sectionIcon()" />
+<ds-page-frame>
+  @if (!loading() && !loadFailed() && active() && (hasChanges() || saving())) {
+    <ds-save-bar
+      dsPageFrameSave
+      class="ds-page-frame__save"
+      formId="store-settings-form"
+      [pending]="hasChanges()"
+      [busy]="saving()"
+      [disabled]="mutationBusy()"
+      label="Guardar cambios"
+      pendingText="Configuración sin guardar"
+    >
+      <ds-button type="button" variant="ghost" [disabled]="mutationBusy()" (click)="discardChanges()">Descartar</ds-button>
+    </ds-save-bar>
+  }
+  <ds-page-header [title]="sectionTitle()" [icon]="sectionIcon()">
     @if (!loading() && !loadFailed() && active() && view(); as v) {
-      <ds-action-bar label="Acciones de tienda">
-        <span dsActionStatus role="status">{{ saving() ? 'Guardando configuración…' : hasChanges() ? 'Configuración sin guardar' : v.availability.public ? 'Tienda visible' : isPublished() ? 'Tienda pausada' : 'Tienda en borrador' }}</span>
+      <div dsPageActions>
         <ds-button variant="secondary" [disabled]="mutationBusy() || !v.availability.previewAllowed" (click)="openPreview()">
           <ds-icon name="eye" />
-          {{ busyAction() === 'preview' ? 'Abriendo…' : 'Vista previa de mi tienda' }}
+          {{ busyAction() === 'preview' ? 'Abriendo…' : 'Vista previa' }}
         </ds-button>
-        @if (hasChanges() || saving()) {
-          <ds-button variant="ghost" [disabled]="mutationBusy()" (click)="discardChanges()">Descartar</ds-button>
-          <ds-button type="submit" form="store-settings-form" [disabled]="mutationBusy()">{{ saving() ? 'Guardando…' : 'Guardar cambios' }}</ds-button>
-        } @else if (isPublished()) {
-          <ds-button variant="ghost" [disabled]="mutationBusy()" (click)="unpublish()">
-            {{ busyAction() === 'unpublish' ? 'Despublicando…' : 'Despublicar' }}
-          </ds-button>
-        } @else {
-          <ds-button [disabled]="mutationBusy() || hasChanges() || !v.canPublish || !active()" (click)="publish()">
-            <ds-icon name="rocket" />
-            {{ busyAction() === 'publish' ? 'Publicando…' : 'Publicar tienda' }}
-          </ds-button>
+        @if (!hasChanges() && !saving()) {
+          @if (isPublished()) {
+            <ds-button variant="ghost" [disabled]="mutationBusy()" (click)="unpublish()">
+              {{ busyAction() === 'unpublish' ? 'Despublicando…' : 'Despublicar' }}
+            </ds-button>
+          } @else {
+            <ds-button [disabled]="mutationBusy() || !v.canPublish || !active()" (click)="publish()">
+              <ds-icon name="rocket" />
+              {{ busyAction() === 'publish' ? 'Publicando…' : 'Publicar tienda' }}
+            </ds-button>
+          }
         }
-      </ds-action-bar>
+      </div>
     }
+  </ds-page-header>
+  <div class="ds-page-frame__body store tw:mx-auto tw:w-full tw:min-w-0" [class.tw:max-w-form]="section() !== 'temas'" [class.tw:max-w-page]="section() === 'temas'">
 
   @if (errorMessage() && !loadFailed(); as error) {
     <div class="tw:feedback tw:feedback-danger" role="alert">
@@ -384,4 +398,5 @@
       }
     </div>
   }
-</section>
+  </div>
+</ds-page-frame>

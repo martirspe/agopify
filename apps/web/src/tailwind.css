@@ -866,22 +866,37 @@
 }
 
 /*
- * Product publish frame (Admin main parity): editor owns scroll + header overlay
- * so the contextual save capsule stays centered in the panel header while content scrolls.
+ * Framed console pages (Productos editor + ds-page-frame): the frame owns scroll
+ * and the save capsule overlays the sticky header (Admin main parity).
  */
-.console-workspace-scroll:has(.catalog--editing) {
+.console-workspace-scroll:has(.catalog--editing),
+.console-workspace-scroll:has(ds-page-frame),
+.console-workspace-scroll:has(app-messages-page) {
   display: flex;
   flex-direction: column;
   padding: 0;
   overflow: hidden;
 }
 
-.console-workspace-scroll:has(.catalog--editing) > app-products-page {
+.console-workspace-scroll:has(.catalog--editing) > app-products-page,
+.console-workspace-scroll:has(ds-page-frame) > *,
+.console-workspace-scroll:has(app-messages-page) > app-messages-page {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* Mensajes: header flush like Productos; inbox fills the rest. */
+.console-workspace-scroll:has(app-messages-page) {
+  padding-inline: var(--ds-space-4);
+  padding-block-end: var(--ds-space-4);
+}
+
+.console-workspace-scroll:has(app-messages-page) > app-messages-page > .messages > ds-page-header {
+  margin-inline: calc(-1 * var(--ds-space-4));
+  margin-block-start: 0;
 }
 
 /*

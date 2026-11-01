@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { InstagramPage } from './instagram.page';
+import { InstagramChannelPanel } from './instagram-channel.panel';
 import { IntegrationsApiService, type InstagramStatus } from '../../core/api/integrations-api.service';
 import { AuthApiService } from '../../core/auth/auth-api.service';
 import { IntegrationsStateService } from '../../core/integrations/integrations-state.service';
@@ -9,8 +9,8 @@ import { DsConfirmService } from '@vendedoria/ui';
 const status: InstagramStatus = { channel: { id: 'channel', displayName: 'Cuenta de prueba', externalId: 'account', healthStatus: 'CONNECTED', lastActiveAt: null, metadata: null }, webhook: { callbackUrl: 'https://example.test/callback', verifyTokenConfigured: false, signatureConfigured: false } };
 async function setup() {
   const api = { getInstagram: vi.fn(async () => status), connectInstagram: vi.fn<() => Promise<InstagramStatus>>().mockResolvedValue(status), disconnectChannel: vi.fn(async () => {}) };
-  TestBed.configureTestingModule({ imports: [InstagramPage], providers: [{ provide: IntegrationsApiService, useValue: api }, { provide: AuthApiService, useValue: { isManager: () => true } }, { provide: IntegrationsStateService, useValue: { isActive: () => true, refresh: async () => {} } }, { provide: DsConfirmService, useValue: { confirm: async () => true } }] });
-  const fixture = TestBed.createComponent(InstagramPage); fixture.detectChanges(); await fixture.whenStable();
+  TestBed.configureTestingModule({ imports: [InstagramChannelPanel], providers: [{ provide: IntegrationsApiService, useValue: api }, { provide: AuthApiService, useValue: { isManager: () => true } }, { provide: IntegrationsStateService, useValue: { isActive: () => true, refresh: async () => {} } }, { provide: DsConfirmService, useValue: { confirm: async () => true } }] });
+  const fixture = TestBed.createComponent(InstagramChannelPanel); fixture.detectChanges(); await fixture.whenStable();
   await vi.waitFor(() => expect(fixture.componentInstance.loading()).toBe(false)); fixture.detectChanges();
   return { page: fixture.componentInstance, fixture, api };
 }

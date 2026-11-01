@@ -29,7 +29,7 @@ describe('shipping configuration feedback', () => {
   it('keeps saved options distinct from pending changes and preserves them after a failed save', async () => {
     const { fixture, page, api } = await setup();
     page.form.controls.olvaEnabled.setValue(false); page.form.markAsDirty(); fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Cambios sin guardar');
+    expect(fixture.nativeElement.textContent).toContain('Envíos sin guardar');
     const summary = fixture.nativeElement.querySelector('[aria-label="Opciones de entrega guardadas"]');
     expect(summary.textContent).toContain('Olva Courier');
     expect(summary.textContent).toContain('Guarda los cambios');
@@ -87,7 +87,7 @@ describe('shipping configuration feedback', () => {
     resolve({ ...saved, pickupEnabled: true, pickupAddress: 'Local de prueba', options: [...saved.options, { mode: 'PICKUP', label: 'Recojo en tienda', cents: 0, eta: 'Local de prueba', byDistance: false }] });
     await saving; fixture.detectChanges();
     expect(page.form.pristine).toBe(true);
-    expect(fixture.nativeElement.textContent).toContain('Configuración guardada');
+    expect(fixture.nativeElement.textContent).toContain('Envíos actualizados');
     expect(fixture.nativeElement.querySelector('[aria-label="Opciones de entrega guardadas"]').textContent).toContain('Recojo en tienda');
   });
 });

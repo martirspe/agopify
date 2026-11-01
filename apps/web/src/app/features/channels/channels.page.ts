@@ -1,21 +1,29 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { map } from 'rxjs';
 import { DsActionBarComponent, DsButtonComponent, DsDisclosureComponent, DsEmptyStateComponent, DsFormSectionComponent, DsIconComponent, DsPageHeaderComponent, DsSelectComponent } from '@vendedoria/ui';
 import { AuthorizedWhatsAppPhone, ChannelDto, ChannelDiagnostics, MessagingApiService, WhatsAppSignupConfiguration, WhatsAppSignupSession, WhatsAppManualWebhook } from '../../core/api/messaging-api.service';
+import { IntegrationsStateService } from '../../core/integrations/integrations-state.service';
+import { InstagramChannelPanel } from '../instagram/instagram-channel.panel';
 import { MetaWhatsAppSignupService } from './meta-whatsapp-signup.service';
+
+export type SalesChannelTab = 'whatsapp' | 'instagram';
 
 @Component({
   selector: 'app-channels-page', standalone: true,
-  imports: [ReactiveFormsModule, DsActionBarComponent, DsSelectComponent, DsButtonComponent, DsEmptyStateComponent, DsIconComponent, DsDisclosureComponent, DsFormSectionComponent, DsPageHeaderComponent],
+  imports: [ReactiveFormsModule, InstagramChannelPanel, DsActionBarComponent, DsSelectComponent, DsButtonComponent, DsEmptyStateComponent, DsIconComponent, DsDisclosureComponent, DsFormSectionComponent, DsPageHeaderComponent],
   templateUrl: './channels.page.html', changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChannelsPage implements OnDestroy {
   private readonly api = inject(MessagingApiService);
   private readonly meta = inject(MetaWhatsAppSignupService);
   private readonly fb = inject(FormBuilder);
-  private readonly route = inject(ActivatedRoute, { optional: true });
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly integrations = inject(IntegrationsStateService);
   private session: WhatsAppSignupSession | null = null;
   private destroyed = false;
   private attemptVersion = 0;
@@ -46,7 +54,30 @@ export class ChannelsPage implements OnDestroy {
     phoneNumberId: ['', [Validators.required, Validators.pattern(/^\d{5,30}$/)]],
   });
 
+  private readonly canalQuery = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('canal'))),
+    { initialValue: this.route.snapshot.queryParamMap.get('canal') },
+  );
+  readonly tab = computed<SalesChannelTab>(() =>
+    this.canalQuery() === 'instagram' ? 'instagram' : 'whatsapp',
+  );
+  readonly instagramActive = computed(() => this.integrations.isActive('instagram'));
+  readonly whatsappConnected = computed(() => {
+    const channel = this.channels().find((item) => item.type === 'WHATSAPP');
+    return !!channel && channel.healthStatus === 'CONNECTED';
+  });
+
   constructor() { void this.load(); }
+
+  selectTab(tab: SalesChannelTab): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { canal: tab === 'whatsapp' ? null : tab },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
   get whatsapp(): ChannelDto | undefined { return this.channels().find(channel => channel.type === 'WHATSAPP'); }
   get manualConnection(): boolean { return this.whatsapp?.metadata?.onboarding === 'MANUAL' && this.whatsapp.healthStatus !== 'DISCONNECTED'; }
   get hasConnection(): boolean { return !!this.whatsapp && this.whatsapp.healthStatus !== 'DISCONNECTED'; }

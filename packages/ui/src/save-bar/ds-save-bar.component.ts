@@ -24,10 +24,10 @@ export class DsSaveBarComponent {
   readonly pendingText = input('Cambios sin guardar');
   readonly formId = input<string | null>(null);
   /** Top: contextual sticky (editors). Bottom: sticky footer for long forms. */
-  readonly placement = input<'top' | 'bottom'>('bottom');
+  readonly placement = input<'top' | 'bottom'>('top');
   /**
-   * dock = full-width ink strip (settings/forms).
-   * capsule = centered floating pill for dirty editors (Admin contextual save).
+   * dock = full-width ink strip (legacy/settings footers).
+   * capsule = centered floating pill for dirty editors (Admin contextual save; console default).
    */
-  readonly layout = input<'dock' | 'capsule'>('dock');
+  readonly layout = input<'dock' | 'capsule'>('capsule');
 }
