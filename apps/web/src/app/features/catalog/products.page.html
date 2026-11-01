@@ -1,27 +1,30 @@
 <section class="catalog tw:grid tw:w-full tw:min-w-0 tw:gap-5" [class.catalog--editing]="editorOpen()">
   @if (!editorOpen()) {
     <ds-page-header title="Productos" icon="package">
-      <div dsPageActions class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
-        <a routerLink="/app/inventory" class="tw:console-action-secondary"><ds-icon name="list" [size]="0.95" />Inventario</a>
-        <a routerLink="/app/products/import" class="tw:console-action-secondary">
-          <ds-icon name="upload" [size]="0.95" /> Importar
-        </a>
-        <ds-button
-          type="button"
-          variant="ghost"
-          [disabled]="loading() || loadFailed() || !filteredProducts().length"
-          (click)="exportCatalogCsv()"
-        >
-          Exportar CSV
-        </ds-button>
-        <ds-button
-          type="button"
-          variant="ghost"
-          [disabled]="loading() || loadFailed() || !products().length || exportingPackage()"
-          (click)="exportCatalogPackage()"
-        >
-          {{ exportingPackage() ? 'Exportando…' : 'Exportar paquete' }}
-        </ds-button>
+      <div dsPageActions>
+        <a routerLink="/app/inventory" class="tw:console-action-secondary"><ds-icon name="list" [size]="0.9" />Inventario</a>
+        <a routerLink="/app/products/import" class="tw:console-action-secondary"><ds-icon name="upload" [size]="0.9" />Importar</a>
+        <ds-menu label="Más acciones" menuId="products-header-more">
+          <span dsMenuTrigger>Más acciones <ds-icon name="chevronDown" [size]="0.85" /></span>
+          <button
+            type="button"
+            role="menuitem"
+            [disabled]="loading() || loadFailed() || !filteredProducts().length"
+            (click)="exportCatalogCsv()"
+          >
+            <ds-icon name="fileText" [size]="1" />
+            Exportar CSV
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            [disabled]="loading() || loadFailed() || !products().length || exportingPackage()"
+            (click)="exportCatalogPackage()"
+          >
+            <ds-icon name="package" [size]="1" />
+            {{ exportingPackage() ? 'Exportando…' : 'Exportar paquete' }}
+          </button>
+        </ds-menu>
         <ds-button type="button" (click)="openCreate()">Agregar producto</ds-button>
       </div>
     </ds-page-header>

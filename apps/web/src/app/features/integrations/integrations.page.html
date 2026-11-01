@@ -1,7 +1,7 @@
 <section class="tw:grid tw:w-full tw:min-w-0 tw:gap-5">
   <ds-page-header title="Integraciones" icon="plug">
     <div dsPageActions>
-      <ds-button variant="secondary" [disabled]="loading() || busyKey() !== null" (click)="load()"><ds-icon name="rotateCcw" />Actualizar</ds-button>
+      <ds-button variant="secondary" [disabled]="loading() || busyKey() !== null" (click)="load()"><ds-icon name="rotateCcw" [size]="0.9" />Actualizar</ds-button>
     </div>
   </ds-page-header>
   @if (actionError(); as error) { <div class="tw:feedback tw:feedback-danger" role="alert"><ds-icon name="alert" /><span>{{ error }}</span></div> }

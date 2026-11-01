@@ -1,5 +1,127 @@
-// One native control surface for both projected and standalone checkboxes.
-@mixin control {
+// Shared boolean control surfaces.
+// Console switch measured from Shopify Admin Preferencias crop (1× CSS px):
+//   track 32×16 (#101010 on), thumb 12×12, inset 2px, travel 16px, flat white thumb.
+// Storefront / auth keep the classic box via `native-checkboxes`.
+
+@mixin switch-tokens {
+  --ds-switch-track-width: 2rem; /* 32px */
+  --ds-switch-track-height: 1rem; /* 16px */
+  --ds-switch-thumb-size: 0.75rem; /* 12px */
+  --ds-switch-thumb-offset: 0.125rem; /* 2px */
+  --ds-switch-travel: calc(
+    var(--ds-switch-track-width) - var(--ds-switch-thumb-size) - (var(--ds-switch-thumb-offset) * 2)
+  ); /* 16px */
+  --ds-switch-off: #dddddd;
+  --ds-switch-off-hover: #d0d0d0;
+  --ds-switch-on: #101010;
+  --ds-switch-on-hover: #0a0a0a;
+  --ds-switch-thumb: #ffffff;
+  --ds-switch-thumb-shadow: none;
+  --ds-switch-thumb-disabled: #f7f7f7;
+  --ds-switch-disabled-track: #f1f1f1;
+  --ds-switch-motion: 50ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/** Native input painted as switch (console natives outside ds-checkbox). */
+@mixin switch-control {
+  @include switch-tokens;
+
+  appearance: none;
+  position: relative;
+  display: inline-block;
+  box-sizing: border-box;
+  width: var(--ds-switch-track-width);
+  height: var(--ds-switch-track-height);
+  min-width: var(--ds-switch-track-width);
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 999px;
+  background-color: var(--ds-switch-off);
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--ds-switch-motion);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: var(--ds-switch-thumb-offset);
+    left: var(--ds-switch-thumb-offset);
+    width: var(--ds-switch-thumb-size);
+    height: var(--ds-switch-thumb-size);
+    border-radius: 999px;
+    background-color: var(--ds-switch-thumb);
+    box-shadow: var(--ds-switch-thumb-shadow);
+    pointer-events: none;
+    transition: transform var(--ds-switch-motion);
+    transform: translate(0);
+  }
+
+  &:hover:not(:disabled) {
+    background-color: var(--ds-switch-off-hover);
+  }
+
+  &:checked {
+    background-color: var(--ds-switch-on);
+
+    &::before {
+      transform: translateX(var(--ds-switch-travel));
+      background-color: var(--ds-switch-thumb);
+    }
+
+    &:hover:not(:disabled) {
+      background-color: var(--ds-switch-on-hover);
+    }
+  }
+
+  &:indeterminate {
+    background-color: color-mix(in srgb, var(--ds-switch-on) 55%, var(--ds-switch-off));
+
+    &::before {
+      transform: translateX(calc(var(--ds-switch-travel) / 2));
+    }
+  }
+
+  &[aria-invalid='true'] {
+    box-shadow: 0 0 0 0.125rem var(--ds-color-danger);
+  }
+
+  &:focus { outline: none; }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 0.125rem var(--ds-color-focus-ring, rgba(80, 131, 240, 1));
+  }
+
+  &:disabled {
+    background-color: var(--ds-switch-disabled-track);
+    cursor: default;
+    opacity: 1;
+    pointer-events: none;
+
+    &::before {
+      background-color: var(--ds-switch-thumb-disabled);
+    }
+  }
+
+  @media (forced-colors: active) {
+    appearance: auto;
+    background-color: Canvas;
+    border: 1px solid ButtonText;
+    &::before { display: none; }
+    &:checked, &:indeterminate { background-color: Canvas; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    &::before { transition: none; }
+  }
+}
+
+@mixin box-control {
   appearance: none;
   display: inline-grid;
   place-content: center;
@@ -32,10 +154,14 @@
   }
 }
 
+/** Kept for API compat; ds-checkbox now paints via track/thumb spans. */
+@mixin control {
+  @include switch-control;
+}
+
 @mixin native-checkboxes {
-  // ds-checkbox uses this surface with its existing Lucide indicators.
   input[type='checkbox']:not(ds-checkbox input) {
-    @include control;
+    @include box-control;
 
     &::before {
       content: '';
@@ -61,6 +187,53 @@
 
     @media (forced-colors: active) {
       &::before { display: none; }
+    }
+  }
+}
+
+@mixin native-console-switches {
+  [class~='tw:console-scope'] input[type='checkbox']:not(ds-checkbox input) {
+    @include switch-control;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: var(--ds-switch-thumb-offset);
+      left: var(--ds-switch-thumb-offset);
+      width: var(--ds-switch-thumb-size);
+      height: var(--ds-switch-thumb-size);
+      border-radius: 999px;
+      background-color: var(--ds-switch-thumb);
+      clip-path: none;
+      box-shadow: var(--ds-switch-thumb-shadow);
+      transform: translate(0);
+      pointer-events: none;
+      transition: transform var(--ds-switch-motion);
+    }
+
+    &:checked::before {
+      transform: translateX(var(--ds-switch-travel));
+      background-color: var(--ds-switch-thumb);
+      clip-path: none;
+    }
+
+    &:indeterminate::before {
+      transform: translateX(calc(var(--ds-switch-travel) / 2));
+      background-color: var(--ds-switch-thumb);
+      height: var(--ds-switch-thumb-size);
+      clip-path: none;
+    }
+
+    &:disabled::before {
+      background-color: var(--ds-switch-thumb-disabled);
+    }
+
+    @media (forced-colors: active) {
+      &::before { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      &::before { transition: none; }
     }
   }
 }

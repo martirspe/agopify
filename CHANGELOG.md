@@ -2,8 +2,16 @@
 
 ## [Unreleased]
 
+- Consola: interruptor Admin Next (Preferencias): pista 32×16, thumb 12/inset 2, off `#dddddd` / on `#101010`, thumb blanco plano; track+thumb en `ds-checkbox` y nativos `.tw:console-scope`.
 - Consola: chrome de Productos extendido al resto — `ds-page-frame` (overlay de cápsula dirty) en formularios (ajustes, envíos, perfil, tienda, vendedor, inventario, descuentos); índices con header 52 px full-bleed y acciones a la derecha (sin cápsula ni descripción en la franja).
 - Consola: Mensajes con cabecera flush arriba del inbox; Tienda/Ajustes sin franja vacía sobre el header en desktop; Canales con título/ícono alineados al rail (`radio`) y WhatsApp como sección del cuerpo.
+- Consola: el `router-outlet` ya no recibe flex en páginas con `ds-page-frame`, así Descuentos/Inventario/Tienda mantienen el título flush arriba (sin hueco ~260 px).
+- Consola · Mensajes: inbox integrado al sheet blanco (sin tarjeta flotante ni canvas gris de página); historial del hilo con clase propia; vacíos sin caja anidada; búsqueda/filtros y densidad alineadas al chrome de Productos.
+- Consola · Ajustes: hover del buscador del submenú más contenido (idle/hover discretos; foco con borde suave, sin doble anillo).
+- Consola: ícono de prueba/suscripción del rail colapsado alineado con Ajustes y el menú de cuenta (mismo chip 32×30 e icono 20).
+- Consola: CTAs del `ds-page-header` en una sola fila (pastilla 28 px, gap 6 px), alineados al título; Productos con Inventario/Importar/Más acciones + Agregar producto.
+- Consola: CTAs de cabecera unificados en todas las vistas (Métricas, LIVE, Tienda, Descuentos, Integraciones, Catálogo externo, Inventario, Importar…): secundario/ghost como pastilla blanca con borde; primario marca; iconos 14 px.
+- Consola: ítems de `ds-menu` con estilo de fila Admin (hover, foco, disabled) — corrige «Más acciones» en Productos.
 - Consola / Canales: hub de chat (WhatsApp + Instagram) en una sola entrada del rail; Instagram ya no inyecta ítem hermano; TikTok LIVE sigue como destino propio al activarse; `/app/instagram` redirige a Canales.
 - Consola / Productos: «Eliminar producto» sale del header (ya no compite con Guardar) y queda como acción destructiva secundaria al pie del riel de organización.
 - Consola / Productos: ficha de publicación con header completo sticky del main (ancho del panel, migas + volver) y overlay; cápsula de guardado centrada en ese header y fija al hacer scroll (geometría Admin), visible solo con cambios; Descartar restaura el último estado cargado.

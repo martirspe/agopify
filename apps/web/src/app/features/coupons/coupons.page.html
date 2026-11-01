@@ -18,9 +18,9 @@
   >
     <div dsPageActions>
       @if (editing() !== null) {
-        <ds-button variant="ghost" [disabled]="saving()" (click)="cancel()"><ds-icon name="chevronLeft" [size]="1" /> Volver</ds-button>
+        <ds-button variant="secondary" [disabled]="saving()" (click)="cancel()"><ds-icon name="chevronLeft" [size]="0.9" />Volver</ds-button>
       } @else if (!loading() && !loadFailed() && active() && coupons().length) {
-        <ds-button [disabled]="!!busyId()" (click)="openCreatePicker()"><ds-icon name="plus" [size]="1" /> Crear descuento</ds-button>
+        <ds-button [disabled]="!!busyId()" (click)="openCreatePicker()"><ds-icon name="plus" [size]="0.9" />Crear descuento</ds-button>
       }
     </div>
   </ds-page-header>

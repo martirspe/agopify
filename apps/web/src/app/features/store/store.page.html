@@ -17,17 +17,17 @@
     @if (!loading() && !loadFailed() && active() && view(); as v) {
       <div dsPageActions>
         <ds-button variant="secondary" [disabled]="mutationBusy() || !v.availability.previewAllowed" (click)="openPreview()">
-          <ds-icon name="eye" />
+          <ds-icon name="eye" [size]="0.9" />
           {{ busyAction() === 'preview' ? 'Abriendo…' : 'Vista previa' }}
         </ds-button>
         @if (!hasChanges() && !saving()) {
           @if (isPublished()) {
-            <ds-button variant="ghost" [disabled]="mutationBusy()" (click)="unpublish()">
+            <ds-button variant="secondary" [disabled]="mutationBusy()" (click)="unpublish()">
               {{ busyAction() === 'unpublish' ? 'Despublicando…' : 'Despublicar' }}
             </ds-button>
           } @else {
             <ds-button [disabled]="mutationBusy() || !v.canPublish || !active()" (click)="publish()">
-              <ds-icon name="rocket" />
+              <ds-icon name="rocket" [size]="0.9" />
               {{ busyAction() === 'publish' ? 'Publicando…' : 'Publicar tienda' }}
             </ds-button>
           }

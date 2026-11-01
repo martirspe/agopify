@@ -14,10 +14,26 @@ p { margin: 0; }
 .metrics div { padding: var(--ds-space-2); background: var(--ds-color-bg); border-radius: var(--ds-radius-sm); }
 dd { margin: var(--ds-space-1) 0 0; font-weight: 700; }
 form { display: grid; gap: var(--ds-space-3); }
-.choice { display: flex; align-items: center; gap: var(--ds-space-2); min-height: var(--ds-touch-target); cursor: pointer; }
+.choice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-3);
+  min-height: var(--ds-touch-target);
+  cursor: pointer;
+}
+.choice > input[type='checkbox'] { order: 2; flex-shrink: 0; margin: 0; }
+.choice > span { order: 1; flex: 1 1 auto; min-width: 0; }
 .choice--main { font-weight: 600; }
 .channels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ds-space-2); }
-.channels .choice { padding-inline: var(--ds-space-2); border: thin solid var(--ds-color-border); border-radius: var(--ds-radius-sm); }
+.channels .choice {
+  justify-content: flex-start;
+  padding: var(--ds-space-2);
+  border: thin solid var(--ds-color-border);
+  border-radius: var(--ds-radius-sm);
+}
+.channels .choice > input[type='checkbox'] { order: 0; }
+.channels .choice > span { order: 0; flex: 0 1 auto; }
 fieldset { padding: 0; margin: 0; min-width: 0; border: 0; }
 legend { color: var(--ds-color-text-secondary); margin-bottom: var(--ds-space-2); }
 .field { display: grid; gap: var(--ds-space-2); margin-block: var(--ds-space-3); }

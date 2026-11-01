@@ -425,11 +425,6 @@ tbody tr:hover {
   font: inherit;
 }
 
-.modal__panel .toggle {
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: var(--ds-space-3);
-}
 
 .modal__panel footer {
   display: flex;

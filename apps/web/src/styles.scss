@@ -3,7 +3,30 @@
 @use '../../../packages/ui/src/sticky-edge/ds-sticky-edge' as stickyEdge;
 
 @include checkbox.native-checkboxes;
+@include checkbox.native-console-switches;
 @include stickyEdge.styles;
+
+/* Console setting rows: label + trailing switch. */
+[class~='tw:console-scope'] label.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-3);
+  min-height: var(--ds-touch-target);
+  cursor: pointer;
+}
+
+[class~='tw:console-scope'] label.toggle > input[type='checkbox'] {
+  order: 2;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+[class~='tw:console-scope'] label.toggle > span {
+  order: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+}
 
 // Self-hosted (public/fonts): the console CSP only allows fonts from 'self'.
 @font-face {
@@ -103,7 +126,8 @@ button {
 /* Nested empties stay flush inside index/filter panels ( IndexTable empty). */
 [class~='tw:console-scope'] .orders__index .ds-empty,
 [class~='tw:console-scope'] [class~='tw:console-list-panel'] .ds-empty,
-[class~='tw:console-scope'] [class~='tw:console-index-table'] .ds-empty {
+[class~='tw:console-scope'] [class~='tw:console-index-table'] .ds-empty,
+[class~='tw:console-scope'] .inbox .ds-empty {
   min-height: 16rem;
   border: 0;
   border-radius: 0;
@@ -122,21 +146,94 @@ button {
   letter-spacing: 0 !important;
 }
 
-/* Compact primary/secondary controls inside the 28px Admin toolbar row. */
+/*
+ * Page-header CTAs — shared compact Admin chrome (all console views):
+ * 28px pills, gap 6px, secondary = white+border, primary = brand lime.
+ */
 [class~='tw:console-scope'] .ds-page-header__actions {
   --ds-touch-target: 1.75rem;
   --ds-control-height: 1.75rem;
+  --ds-button-radius: 999px;
+  --ds-button-padding-inline: 0.75rem;
+}
+
+[class~='tw:console-scope'] .ds-page-header__actions ds-button,
+[class~='tw:console-scope'] .ds-page-header__actions ds-menu {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  height: 1.75rem;
+  max-height: 1.75rem;
+  align-items: center;
 }
 
 [class~='tw:console-scope'] .ds-page-header__actions .ds-button,
+[class~='tw:console-scope'] .ds-page-header__actions .ds-menu-trigger,
 [class~='tw:console-scope'] .ds-page-header__actions a,
 [class~='tw:console-scope'] .ds-page-header__actions [class~='tw:console-action-secondary'],
 [class~='tw:console-scope'] .ds-page-header__actions [class~='tw:console-action-link'] {
+  box-sizing: border-box;
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+  justify-content: center;
   min-height: 1.75rem;
   height: 1.75rem;
+  max-height: 1.75rem;
   padding-block: 0;
-  font-size: 0.8125rem;
-  line-height: 1;
+  padding-inline: 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem; /* 12px */
+  font-weight: 550;
+  line-height: 1.25rem;
+  white-space: nowrap;
+}
+
+/* Secondary / ghost / text links share the same quiet pill in the header. */
+[class~='tw:console-scope'] .ds-page-header__actions .ds-button--secondary,
+[class~='tw:console-scope'] .ds-page-header__actions .ds-button--ghost,
+[class~='tw:console-scope'] .ds-page-header__actions .ds-menu-trigger,
+[class~='tw:console-scope'] .ds-page-header__actions [class~='tw:console-action-secondary'],
+[class~='tw:console-scope'] .ds-page-header__actions [class~='tw:console-action-link'] {
+  background: var(--ds-color-surface) !important;
+  border: 1px solid var(--ds-console-border, var(--ds-color-border)) !important;
+  color: var(--ds-console-text, var(--ds-color-text-primary)) !important;
+  box-shadow: none;
+  filter: none;
+}
+
+[class~='tw:console-scope'] .ds-page-header__actions .ds-button--secondary:hover:not(:disabled),
+[class~='tw:console-scope'] .ds-page-header__actions .ds-button--ghost:hover:not(:disabled),
+[class~='tw:console-scope'] .ds-page-header__actions .ds-menu-trigger:hover,
+[class~='tw:console-scope'] .ds-page-header__actions .ds-menu-trigger[aria-expanded='true'],
+[class~='tw:console-scope'] .ds-page-header__actions [class~='tw:console-action-secondary']:hover,
+[class~='tw:console-scope'] .ds-page-header__actions [class~='tw:console-action-link']:hover {
+  background: #f7f7f7 !important;
+}
+
+[class~='tw:console-scope'] .ds-page-header__actions .ds-button--primary {
+  border-color: transparent !important;
+}
+
+[class~='tw:console-scope'] .ds-page-header__actions .ds-menu-trigger {
+  width: auto;
+  min-width: 0;
+}
+
+[class~='tw:console-scope'] .ds-page-header__actions .ds-menu-trigger [dsMenuTrigger],
+[class~='tw:console-scope'] .ds-page-header__actions .ds-menu-trigger > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+[class~='tw:console-scope'] .ds-page-header__actions ds-icon,
+[class~='tw:console-scope'] .ds-page-header__actions .ds-icon,
+[class~='tw:console-scope'] .ds-page-header__actions .ds-icon svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
 }
 
 [class~='tw:console-scope'] .ds-empty__title {

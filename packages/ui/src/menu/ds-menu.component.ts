@@ -1,4 +1,14 @@
-import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, inject, input, signal } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  inject,
+  input,
+  signal,
+  ViewEncapsulation,
+} from '@angular/core';
 
 /** Projected menu actions retain their real links and native button behavior. */
 @Component({
@@ -6,7 +16,11 @@ import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, Elemen
   standalone: true,
   templateUrl: './ds-menu.component.html',
   styleUrl: './ds-menu.component.scss',
-  host: { '[attr.data-tone]': 'tone()' },
+  encapsulation: ViewEncapsulation.None,
+  host: {
+    class: 'ds-menu-host',
+    '[attr.data-tone]': 'tone()',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DsMenuComponent {
@@ -45,12 +59,27 @@ export class DsMenuComponent {
     panel.showPopover();
     this.open.set(true);
     // Positioning is measured; visual decisions remain in semantic CSS tokens.
-    const gap = parseFloat(win.getComputedStyle(panel).paddingLeft);
+    const gap = parseFloat(win.getComputedStyle(panel).paddingLeft) || 8;
     const rect = trigger.getBoundingClientRect();
     const bounds = panel.getBoundingClientRect();
     panel.style.left = `${Math.max(gap, Math.min(rect.left, win.innerWidth - bounds.width - gap))}px`;
-    const top = this.mode() === 'panel' && rect.bottom + bounds.height + gap <= win.innerHeight
-      ? rect.bottom + gap : rect.top - bounds.height - gap;
+    // Header/surface menus open below; bottom-rail navigation prefers above.
+    const below = rect.bottom + gap;
+    const above = rect.top - bounds.height - gap;
+    const fitsBelow = below + bounds.height <= win.innerHeight - gap;
+    const fitsAbove = above >= gap;
+    const preferBelow = this.tone() !== 'navigation' || this.mode() === 'panel';
+    const top = preferBelow
+      ? fitsBelow
+        ? below
+        : fitsAbove
+          ? above
+          : below
+      : fitsAbove
+        ? above
+        : fitsBelow
+          ? below
+          : above;
     panel.style.top = `${Math.max(gap, Math.min(top, win.innerHeight - bounds.height - gap))}px`;
     const targets = this.mode() === 'panel' ? this.controls() : this.actions();
     (last ? targets.at(-1) : targets[0])?.focus();

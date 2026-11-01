@@ -1,7 +1,7 @@
 <section class="live-page tw:mx-auto tw:min-w-0">
   <ds-page-header title="TikTok LIVE" icon="radio">
     <div dsPageActions>
-      <ds-button variant="ghost" (click)="load()" [disabled]="loading() || busy()">Actualizar</ds-button>
+      <ds-button variant="secondary" (click)="load()" [disabled]="loading() || busy()"><ds-icon name="rotateCcw" [size]="0.9" />Actualizar</ds-button>
     </div>
   </ds-page-header>
   @if (error(); as message) {

@@ -224,14 +224,18 @@
           <a routerLink="/app/plans" class="tw:console-trial-notice__cta" (click)="closeNavigation()">Suscribirse</a>
         </div>
       } @else {
-        <a
-          routerLink="/app/plans"
-          class="tw:console-rail-link tw:justify-center"
-          [attr.aria-label]="label + '. Suscribirse'"
-          [consoleRailTooltip]="label"
-          [consoleRailTooltipWhen]="true"
-          (click)="closeNavigation()"
-        ><ds-icon name="creditCard" [size]="1" [strokeWidth]="1.75" /></a>
+        <ul class="tw:m-0 tw:grid tw:list-none tw:justify-items-center tw:gap-0 tw:p-0" aria-label="Suscripción">
+          <li class="tw:w-8">
+            <a
+              routerLink="/app/plans"
+              class="tw:console-rail-link"
+              [attr.aria-label]="label + '. Suscribirse'"
+              [consoleRailTooltip]="label"
+              [consoleRailTooltipWhen]="true"
+              (click)="closeNavigation()"
+            ><ds-icon name="creditCard" [size]="1" [strokeWidth]="1.75" /><span class="tw:console-nav-label" aria-hidden="true">Suscribirse</span></a>
+          </li>
+        </ul>
       }
     }
     <div

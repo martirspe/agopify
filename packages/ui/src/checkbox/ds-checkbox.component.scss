@@ -1,35 +1,182 @@
 @use './checkbox-control' as checkbox;
 
-ds-checkbox { display: block; min-width: 0; }
+ds-checkbox {
+  display: block;
+  min-width: 0;
+}
+
+/* Shopify Admin setting row: label left, switch right, no per-row chrome. */
 ds-checkbox .ds-checkbox-label {
-  display: flex; align-items: center; gap: var(--ds-space-3);
-  min-height: var(--ds-touch-target); padding: var(--ds-space-3);
-  border: var(--ds-border-width) solid var(--ds-color-border);
-  border-radius: var(--ds-radius-sm); background: var(--ds-color-surface);
-  color: var(--ds-color-text-primary); font: inherit; cursor: pointer;
+  @include checkbox.switch-tokens;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-3);
+  min-height: var(--ds-touch-target);
+  padding: var(--ds-space-2) 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ds-color-text-primary);
+  font: inherit;
+  cursor: pointer;
 }
-ds-checkbox .ds-checkbox-label:has(input:checked), ds-checkbox .ds-checkbox-label:has(input:indeterminate) {
-  border-color: color-mix(in srgb, var(--ds-color-ink) 30%, var(--ds-color-border));
+
+ds-checkbox .ds-checkbox-label:not(.ds-checkbox-label--inline) .ds-checkbox-copy {
+  order: 1;
+  flex: 1 1 auto;
+  min-width: 0;
 }
-ds-checkbox .ds-checkbox-control { position: relative; display: grid; place-items: center; flex-shrink: 0; }
-ds-checkbox .ds-checkbox-control > input[type=checkbox] {
-  @include checkbox.control;
+
+ds-checkbox .ds-checkbox-label:not(.ds-checkbox-label--inline) .ds-checkbox-control {
+  order: 2;
+}
+
+ds-checkbox .ds-checkbox-control {
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+  width: var(--ds-switch-track-width);
+  height: var(--ds-switch-track-height);
+  line-height: 0;
+}
+
+/* Hit target overlays the painted track (Shopify button + track/thumb). */
+ds-checkbox .ds-checkbox-control > input[type='checkbox'] {
+  appearance: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
   cursor: inherit;
+  outline: none;
 }
-ds-checkbox .ds-checkbox-control > ds-icon { position: absolute; pointer-events: none; color: var(--ds-color-primary); visibility: hidden; }
-ds-checkbox input:checked:not(:indeterminate) ~ .ds-checkbox-check,
-ds-checkbox input:indeterminate ~ .ds-checkbox-mixed { visibility: visible; }
-ds-checkbox .ds-checkbox-copy { display: grid; gap: var(--ds-space-1); min-width: 0; overflow-wrap: anywhere; font-size: var(--ds-type-sm); font-weight: 600; }
-ds-checkbox .ds-checkbox-copy small { color: var(--ds-color-text-secondary); font-size: var(--ds-type-caption); font-weight: 400; }
-ds-checkbox .ds-checkbox-label:has(input:focus-visible) { outline: calc(2 * var(--ds-border-width)) solid var(--ds-color-focus-ring); outline-offset: calc(2 * var(--ds-border-width)); }
-ds-checkbox .ds-checkbox-label:has(input:disabled) { opacity: .55; cursor: not-allowed; }
-ds-checkbox .ds-checkbox-label:has(input[aria-invalid=true]) { border-color: var(--ds-color-danger); }
+
+ds-checkbox .ds-switch-track {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-radius: 999px;
+  background-color: var(--ds-switch-off);
+  pointer-events: none;
+  transition: background-color var(--ds-switch-motion);
+}
+
+ds-checkbox .ds-switch-thumb {
+  position: absolute;
+  top: var(--ds-switch-thumb-offset);
+  left: var(--ds-switch-thumb-offset);
+  width: var(--ds-switch-thumb-size);
+  height: var(--ds-switch-thumb-size);
+  border-radius: 999px;
+  background-color: var(--ds-switch-thumb);
+  box-shadow: var(--ds-switch-thumb-shadow);
+  transform: translate(0);
+  transition: transform var(--ds-switch-motion);
+}
+
+ds-checkbox .ds-checkbox-label:hover:not(:has(input:disabled)) .ds-switch-track {
+  background-color: var(--ds-switch-off-hover);
+}
+
+ds-checkbox .ds-checkbox-control > input:checked + .ds-switch-track {
+  background-color: var(--ds-switch-on);
+}
+
+ds-checkbox .ds-checkbox-label:hover:not(:has(input:disabled)) .ds-checkbox-control > input:checked + .ds-switch-track {
+  background-color: var(--ds-switch-on-hover);
+}
+
+ds-checkbox .ds-checkbox-control > input:checked + .ds-switch-track .ds-switch-thumb {
+  transform: translateX(var(--ds-switch-travel));
+}
+
+ds-checkbox .ds-checkbox-control > input:indeterminate + .ds-switch-track {
+  background-color: color-mix(in srgb, var(--ds-switch-on) 55%, var(--ds-switch-off));
+}
+
+ds-checkbox .ds-checkbox-control > input:indeterminate + .ds-switch-track .ds-switch-thumb {
+  transform: translateX(calc(var(--ds-switch-travel) / 2));
+}
+
+ds-checkbox .ds-checkbox-control > input:disabled + .ds-switch-track {
+  background-color: var(--ds-switch-disabled-track);
+}
+
+ds-checkbox .ds-checkbox-control > input:disabled + .ds-switch-track .ds-switch-thumb {
+  background-color: var(--ds-switch-thumb-disabled);
+}
+
+ds-checkbox .ds-checkbox-copy {
+  display: grid;
+  gap: var(--ds-space-1);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--ds-type-sm);
+  font-weight: 600;
+}
+
+ds-checkbox .ds-checkbox-copy small {
+  color: var(--ds-color-text-secondary);
+  font-size: var(--ds-type-caption);
+  font-weight: 400;
+}
+
+ds-checkbox .ds-checkbox-label:has(input:focus-visible) .ds-switch-track {
+  box-shadow: 0 0 0 0.125rem var(--ds-color-focus-ring, rgba(80, 131, 240, 1));
+}
+
+ds-checkbox .ds-checkbox-label:has(input:disabled) {
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+ds-checkbox .ds-checkbox-label:has(input:disabled) .ds-checkbox-copy {
+  opacity: 0.55;
+}
+
+ds-checkbox .ds-checkbox-label:has(input[aria-invalid='true']) .ds-switch-track {
+  box-shadow: 0 0 0 0.125rem var(--ds-color-danger);
+}
+
 ds-checkbox .ds-checkbox-label.ds-checkbox-label--inline {
-  gap: var(--ds-space-2); padding: var(--ds-space-1) 0;
-  border: 0; background: transparent; border-radius: var(--ds-radius-sm);
+  justify-content: flex-start;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-1) 0;
 }
-ds-checkbox .ds-checkbox-label--inline .ds-checkbox-copy { font-weight: 400; }
+
+ds-checkbox .ds-checkbox-label--inline .ds-checkbox-control {
+  order: 0;
+}
+
+ds-checkbox .ds-checkbox-label--inline .ds-checkbox-copy {
+  order: 0;
+  flex: 0 1 auto;
+  font-weight: 400;
+}
+
 @media (forced-colors: active) {
-  ds-checkbox .ds-checkbox-control > input[type=checkbox] { appearance: auto; }
-  ds-checkbox .ds-checkbox-control > ds-icon { display: none; }
+  ds-checkbox .ds-switch-track {
+    outline: 1px solid ButtonText;
+  }
+  ds-checkbox .ds-switch-thumb {
+    background-color: ButtonText;
+  }
+  ds-checkbox .ds-checkbox-control > input:checked + .ds-switch-track {
+    background-color: Highlight;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ds-checkbox .ds-switch-track,
+  ds-checkbox .ds-switch-thumb {
+    transition: none;
+  }
 }

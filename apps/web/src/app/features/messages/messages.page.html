@@ -1,7 +1,7 @@
 <section class="messages tw:grid tw:h-full tw:min-h-0 tw:w-full tw:min-w-0 tw:gap-0">
   <ds-page-header title="Mensajes" icon="message">
     @if (!loadingList() && !listError()) {
-      <div dsPageActions class="tw:flex tw:flex-nowrap tw:items-center tw:gap-2">
+      <div dsPageActions>
         <span class="tw:text-caption tw:text-muted">
           {{ conversations().length }}
           {{ conversations().length === 1 ? 'conversación' : 'conversaciones' }}{{ query() || filterSales() || filterUnattended() ? ' en esta vista' : '' }}
@@ -11,8 +11,8 @@
   </ds-page-header>
   <div class="inbox">
   <aside class="inbox__list tw:flex tw:flex-col tw:min-w-0 tw:min-h-0" [class.tw:hidden]="openedConversationId()" [class.tw:inbox:flex]="openedConversationId()" aria-label="Conversaciones">
-    <div class="tw:mx-4 tw:mb-3 tw:mt-3 tw:grid tw:gap-2">
-      <label class="tw:flex tw:min-w-0 tw:items-center tw:gap-2 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:bg-surface tw:px-3 tw:focus-within:border-focus">
+    <div class="inbox__toolbar">
+      <label class="inbox__search">
         <span class="tw:sr-only">Buscar conversaciones</span>
         <ds-icon name="search" [size]="1" />
         <input
@@ -24,7 +24,7 @@
           (input)="onSearch($any($event.target).value)"
         />
       </label>
-      <div class="tw:flex tw:flex-wrap tw:gap-2" aria-label="Filtros de conversaciones">
+      <div class="inbox__filters" aria-label="Filtros de conversaciones">
         <button
           type="button"
           class="tw:console-filter-chip"
@@ -235,7 +235,7 @@
           </details>
         }
 
-        <div class="messages" #messageList role="log" aria-label="Historial de mensajes">
+        <div class="thread-log" #messageList role="log" aria-label="Historial de mensajes">
           @if (!thread.messages.length) { <div class="thread-empty"><p>Aún no hay mensajes en esta conversación.</p></div> }
           @for (message of thread.messages; track message.id) {
             <article

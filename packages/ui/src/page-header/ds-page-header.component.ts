@@ -123,10 +123,24 @@ import { DsStickyEdgeDirective } from '../sticky-edge/ds-sticky-edge.directive';
       align-items: center;
       justify-content: flex-end;
       gap: 0.375rem; /* 6px */
-      flex: 0 0 auto;
+      flex: 0 1 auto;
       min-width: 0;
-      max-width: 70%;
+      max-width: min(70%, 100%);
+      height: 1.75rem;
+      max-height: 1.75rem;
       margin-inline-end: 0.25rem; /* toolbar pad end 4px */
+    }
+
+    /* Projected [dsPageActions] must stay one row with the title (no wrap). */
+    .ds-page-header__actions > * {
+      display: inline-flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.375rem;
+      min-width: 0;
+      max-width: 100%;
+      height: 1.75rem;
     }
 
     .ds-page-header__actions:empty {

@@ -1,6 +1,6 @@
 <section class="orders tw:grid tw:w-full tw:min-w-0 tw:gap-4">
   <ds-page-header title="Pedidos" icon="shoppingBag" class="tw:mb-0!">
-    <div dsPageActions class="orders__header-actions tw:flex tw:flex-wrap tw:items-center tw:gap-2">
+    <div dsPageActions>
       <ds-button type="button" [disabled]="loading() || loadFailed()" (click)="openCreate()">Nuevo pedido</ds-button>
     </div>
   </ds-page-header>
