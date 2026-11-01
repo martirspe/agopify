@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, ViewEncapsulation } from '@angular/core';
 import { DsButtonComponent } from '../button/ds-button.component';
 import { DsActionBarComponent } from '../action-bar/ds-action-bar.component';
 
@@ -7,6 +7,13 @@ import { DsActionBarComponent } from '../action-bar/ds-action-bar.component';
   imports: [DsButtonComponent, DsActionBarComponent],
   templateUrl: './ds-save-bar.component.html',
   styleUrl: './ds-save-bar.component.scss',
+  encapsulation: ViewEncapsulation.None,
+  host: {
+    '[class.ds-save-bar--top]': 'placement() === "top"',
+    '[class.ds-save-bar--bottom]': 'placement() === "bottom"',
+    '[class.ds-save-bar--capsule]': 'layout() === "capsule"',
+    '[class.ds-save-bar--dock]': 'layout() === "dock"',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DsSaveBarComponent {
@@ -16,4 +23,11 @@ export class DsSaveBarComponent {
   readonly label = input('Guardar cambios');
   readonly pendingText = input('Cambios sin guardar');
   readonly formId = input<string | null>(null);
+  /** Top: contextual sticky (editors). Bottom: sticky footer for long forms. */
+  readonly placement = input<'top' | 'bottom'>('bottom');
+  /**
+   * dock = full-width ink strip (settings/forms).
+   * capsule = centered floating pill for dirty editors (Admin contextual save).
+   */
+  readonly layout = input<'dock' | 'capsule'>('dock');
 }

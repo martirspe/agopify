@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Consola / Productos: «Eliminar producto» sale del header (ya no compite con Guardar) y queda como acción destructiva secundaria al pie del riel de organización.
+- Consola / Productos: ficha de publicación con header completo sticky del main (ancho del panel, migas + volver) y overlay; cápsula de guardado centrada en ese header y fija al hacer scroll (geometría Admin), visible solo con cambios; Descartar restaura el último estado cargado.
+- Consola / Productos: barra de guardado contextual en cápsula flotante centrada (solo con cambios; geometría Admin: 36 px, pill, Descartar/Guardar compactos), con Descartar que restaura el último estado cargado; sustituye la barra inferior del editor.
+- Consola / Productos: índice al estilo Admin (vistas Todos/Activos/Borradores/Archivados, tabla densa con badges e iconos de canal, sin tarjetas métricas) y ficha con título+descripciones, Multimedia, Estado/Publicación/Organización en el riel.
 - Consola: aviso de prueba gratis en el pie del riel (texto factual + CTA «Suscribirse»), sin banner invasivo en el contenido; los avisos de plan vencido o cuota siguen en el workspace.
 - Consola / Productos: lista y editor alineados al patrón de ficha de producto (columna principal + riel de Estado / Publicación / Organización), con `ds-form-section`, barra de guardado y columnas Producto · Estado · Inventario · Canales · Precio; marca, SKU y línea en Organización.
 - Catálogo: estado de producto (`DRAFT` / `ACTIVE` / `ARCHIVED`) separado de la publicación por canal (tienda web, WhatsApp, Instagram); opciones de variante como ejes (`ProductOption`) y colecciones de negocio de primer nivel (`Collection`). Migración `0003_product_status_channels` convierte los flags `isAvailable` / `isPublishedOnStore`. El agente solo ofrece productos activos publicados en el canal de la conversación; la tienda solo lista activos con canal tienda publicado.

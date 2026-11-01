@@ -11,7 +11,7 @@ import { catalogCsv, catalogStock, filterCatalog, type CatalogListState } from '
 const product = (id: string): ProductDto => ({
   id, handle: id, name: `Producto ${id}`, descriptionShort: 'Descripción para comprar este producto', descriptionFull: null, categories: [],
   basePriceCents: 10000, currency: 'PEN', kind: 'PRODUCT', durationMinutes: null, serviceMode: null, digitalAccessUrl: null, digitalInstructions: null,
-  isAvailable: true, stockUnlimited: true, stockQty: null, isPublishedOnStore: false, compareAtPriceCents: null, brand: null, sku: null,
+  status: 'ACTIVE', isAvailable: true, stockUnlimited: true, stockQty: null, isPublishedOnStore: false, compareAtPriceCents: null, brand: null, sku: null,
   line: null, details: null, variants: [], media: [], components: [], createdAt: '2026-10-05', updatedAt: '2026-10-05',
 });
 
@@ -51,12 +51,9 @@ describe('set editor round trip', () => {
     expect(fixture.nativeElement.querySelector('[formControlName="name"]')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('input[type="file"]')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('[formControlName="price"]')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('[formControlName="isPublishedOnStore"]')).not.toBeNull();
-    const select = fixture.nativeElement.querySelector('.variant-row--set select') as HTMLSelectElement;
-    expect(select.value).toBe(first.id);
-    expect(select.selectedOptions[0].textContent).toContain(first.name);
-    select.value = second.id; select.dispatchEvent(new Event('change')); fixture.detectChanges();
-    page.updateComponent(0, { quantity: 3 });
+    expect(fixture.nativeElement.querySelector('[formControlName="channelStore"]')).not.toBeNull();
+    expect(page.components()[0]).toEqual({ productId: first.id, quantity: 2 });
+    page.updateComponent(0, { productId: second.id, quantity: 3 });
     await page.saveProduct();
     expect(api.update).toHaveBeenCalledWith('set', expect.objectContaining({ components: [{ productId: second.id, quantity: 3 }] }));
     page.openEdit(set); fixture.detectChanges(); await fixture.whenStable();
@@ -107,7 +104,7 @@ describe('catalog management', () => {
     params.next(convertToParamMap({ inventario: 'agotados', pagina: '99' }));
     fixture.detectChanges();
     expect(page.visibleProducts().map(item => item.id)).toEqual(['empty']);
-    expect(fixture.nativeElement.textContent).toContain('Sin stock');
+    expect(page.stockLabel(page.visibleProducts()[0])).toBe('Agotado');
     expect(page.availabilityLabel(page.visibleProducts()[0])).toBe('Sin stock');
     page.clearListFilters();
     expect(navigate).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({ inventario: null, pagina: null }) }));
@@ -154,7 +151,7 @@ describe('catalog management', () => {
     const saving = page.saveProduct(); fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('fieldset').disabled).toBe(true);
     expect(fixture.nativeElement.querySelector('[formControlName="name"]').matches(':disabled')).toBe(true);
-    expect(fixture.nativeElement.querySelector('[formControlName="isAvailable"]').matches(':disabled')).toBe(true);
+    expect(fixture.nativeElement.querySelector('[formControlName="status"]').matches(':disabled')).toBe(true);
     await page.saveProduct(); page.closeEditor();
     expect(api.create).toHaveBeenCalledTimes(1); expect(page.editorOpen()).toBe(true);
     reject(new Error('offline')); await saving; fixture.detectChanges();
@@ -164,21 +161,55 @@ describe('catalog management', () => {
     expect(page.errorMessage()).toBeTruthy();
   });
 
-  it('keeps shared checkbox bindings and prevents saving or closing during image upload', async () => {
+  it('keeps status bindings and prevents saving or closing during image upload', async () => {
     const { page, fixture, api } = await setup();
     page.openCreate(); fixture.detectChanges();
-    const checkbox = fixture.nativeElement.querySelector('ds-checkbox [formControlName="isAvailable"]') as HTMLInputElement;
-    expect(checkbox.checked).toBe(true); checkbox.click(); fixture.detectChanges();
-    expect(page.productForm.controls.isAvailable.value).toBe(false);
+    const status = fixture.nativeElement.querySelector('[formControlName="status"]') as HTMLSelectElement;
+    expect(status.value).toBe('DRAFT');
+    status.value = 'ACTIVE';
+    status.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(page.productForm.controls.status.value).toBe('ACTIVE');
     expect(page.productForm.dirty).toBe(true);
     page.uploading.set(true); await page.saveProduct(); page.closeEditor();
     expect(api.create).not.toHaveBeenCalled(); expect(page.editorOpen()).toBe(true);
   });
 
+  it('shows a top contextual save bar only when dirty and discard restores the loaded product', async () => {
+    const { page, fixture } = await setup();
+    const saved = product('p-1');
+    saved.name = 'Nombre guardado';
+    page.products.set([saved]);
+    page.openEdit(saved);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('ds-save-bar')).toBeNull();
+    const header = fixture.nativeElement.querySelector('.publish-frame__header') as HTMLElement;
+    expect(header?.textContent ?? '').not.toContain('Eliminar');
+    expect(fixture.nativeElement.querySelector('.publish-danger')?.textContent).toContain('Eliminar producto');
+    page.productForm.controls.name.setValue('Nombre editado');
+    page.productForm.controls.name.markAsDirty();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.publish-frame__overlay')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.publish-frame__header')).toBeTruthy();
+    const bar = fixture.nativeElement.querySelector('.publish-frame__save.ds-save-bar--capsule') as HTMLElement | null;
+    expect(bar).toBeTruthy();
+    expect(bar?.classList.contains('ds-save-bar--top')).toBe(true);
+    expect(bar?.textContent).toContain('Cambios no guardados');
+    expect(bar?.textContent).toContain('Descartar');
+    expect(bar?.textContent).toContain('Guardar');
+    page.discardEditorChanges();
+    fixture.detectChanges();
+    expect(page.productForm.controls.name.value).toBe('Nombre guardado');
+    expect(page.editorPending()).toBe(false);
+    expect(page.editorOpen()).toBe(true);
+    expect(fixture.nativeElement.querySelector('ds-save-bar')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.publish-frame__overlay')).toBeTruthy();
+  });
+
   it('explains invalid required fields and focuses the next missing value, including the generated address', async () => {
     const { page, fixture } = await setup();
     page.openCreate(); fixture.detectChanges();
-    (fixture.nativeElement.querySelector('ds-button[type="submit"] button') as HTMLButtonElement).click();
+    await page.saveProduct();
     await fixture.whenStable(); fixture.detectChanges();
     await flushFocus();
     fixture.detectChanges();
@@ -200,10 +231,10 @@ describe('catalog management', () => {
     expect(page.pendingFields()).toBe(0);
     expect(page.errorMessage()).toBeNull();
     expect(page.editorFieldError('handle')).toBeNull();
-    expect(fixture.nativeElement.querySelector('[aria-label="Resumen del producto"]').textContent).toContain('Producto válido');
+    expect(page.editorTitle()).toBe('Producto válido');
   });
 
-  it('requires a secure digital access link and makes its readiness action focus the access field', async () => {
+  it('requires a secure digital access link and focuses the access field', async () => {
     const { page, fixture } = await setup();
     page.openCreate();
     page.productForm.patchValue({ kind: 'DIGITAL', name: 'Guía digital', handle: 'guia', descriptionShort: 'Guía para descargar', price: 20, digitalAccessUrl: 'http://example.test/guia' });
@@ -216,7 +247,7 @@ describe('catalog management', () => {
     page.productForm.controls.digitalAccessUrl.setValue('https://example.test/guia'); fixture.detectChanges();
     expect(page.readinessReady()).toBe(true);
     expect(page.editorFieldError('access')).toBeNull();
-    (fixture.nativeElement.querySelector('button[aria-label="Revisar Enlace de acceso seguro"]') as HTMLButtonElement).click();
+    page.focusEditorField('access');
     await flushFocus();
     expect(document.activeElement?.getAttribute('formControlName')).toBe('digitalAccessUrl');
   });

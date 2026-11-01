@@ -134,10 +134,16 @@ export class ProductsPage {
   );
   readonly kindFilter = computed(() => this.listState().kind);
   readonly kindOptions: Array<{ id: KindFilter; label: string }> = [
-    { id: 'todos', label: 'Todos' },
-    { id: 'productos', label: 'Productos' },
+    { id: 'todos', label: 'Todos los tipos' },
+    { id: 'productos', label: 'Físicos' },
     { id: 'servicios', label: 'Servicios' },
     { id: 'digitales', label: 'Digitales' },
+  ];
+  readonly statusViews: Array<{ id: 'todos' | 'activo' | 'borrador' | 'archivado'; label: string }> = [
+    { id: 'todos', label: 'Todos' },
+    { id: 'activo', label: 'Activos' },
+    { id: 'borrador', label: 'Borradores' },
+    { id: 'archivado', label: 'Archivados' },
   ];
   readonly kindCounts = computed((): Record<KindFilter, number> => {
     const list = this.products();
@@ -145,23 +151,34 @@ export class ProductsPage {
     const digital = list.filter((product) => product.kind === 'DIGITAL').length;
     return { todos: list.length, productos: list.length - services - digital, servicios: services, digitales: digital };
   });
+  readonly statusCounts = computed(() => {
+    const list = this.products();
+    let active = 0;
+    let draft = 0;
+    let archived = 0;
+    for (const product of list) {
+      const status = product.status ?? (product.isAvailable ? 'ACTIVE' : 'DRAFT');
+      if (status === 'ACTIVE') active += 1;
+      else if (status === 'ARCHIVED') archived += 1;
+      else draft += 1;
+    }
+    return { todos: list.length, activo: active, borrador: draft, archivado: archived };
+  });
   readonly filteredProducts = computed(() => filterCatalog(this.products(), this.listState()));
+  /** Kept for quick filters / specs; the index UI uses status views instead of metric cards. */
   readonly catalogSummary = computed(() => ({
     total: this.products().length,
-    paused: this.products().filter(product => (product.status ?? (product.isAvailable ? 'ACTIVE' : 'DRAFT')) !== 'ACTIVE').length,
-    soldOut: this.products().filter(product => catalogStock(product) === 0).length,
-    hidden: this.products().filter(product => !(product.channelListings?.some((row) => row.channel === 'STORE' && row.isPublished) ?? product.isPublishedOnStore)).length,
+    soldOut: this.products().filter((product) => catalogStock(product) === 0).length,
   }));
   readonly activeListFilters = computed(() => {
     const state = this.listState();
     const filters: Array<{ key: string; label: string }> = [];
     if (state.query) filters.push({ key: 'q', label: `Búsqueda: ${state.query}` });
-    if (state.status !== 'todos') {
-      const statusLabel =
-        state.status === 'activo' || state.status === 'disponibles' ? 'Activos'
-        : state.status === 'archivado' ? 'Archivados'
-        : 'Borradores';
-      filters.push({ key: 'estado', label: statusLabel });
+    if (state.kind !== 'todos') {
+      filters.push({
+        key: 'tipo',
+        label: this.kindOptions.find((option) => option.id === state.kind)?.label ?? 'Tipo',
+      });
     }
     if (state.publication !== 'todos') {
       const pubLabel =
@@ -171,7 +188,7 @@ export class ProductsPage {
         : 'Ocultos en tienda';
       filters.push({ key: 'tienda', label: pubLabel });
     }
-    if (state.inventory === 'agotados') filters.push({ key: 'inventario', label: 'Sin stock' });
+    if (state.inventory === 'agotados') filters.push({ key: 'inventario', label: 'Agotados' });
     return filters;
   });
   readonly collections = signal<CollectionDto[]>([]);
@@ -678,6 +695,20 @@ export class ProductsPage {
     this.variantDrafts.set([]);
     this.media.set([]);
     this.draftDirty.set(false);
+  }
+
+  /** Restores the last loaded product (or a blank create draft) without leaving the editor. */
+  discardEditorChanges(): void {
+    if (this.saving() || this.uploading() || this.deleting()) return;
+    const id = this.editingId();
+    if (id) {
+      const product = this.products().find((row) => row.id === id);
+      if (product) {
+        this.openEdit(product);
+        return;
+      }
+    }
+    this.openCreate();
   }
 
   toggleDetails(enabled: boolean): void {
@@ -1260,17 +1291,17 @@ export class ProductsPage {
   }
 
   stockLabel(product: ProductDto): string {
-    if (product.kind === 'DIGITAL') return 'Digital · acceso tras el pago';
+    if (product.kind === 'DIGITAL') return 'Digital';
     if (product.kind === 'SERVICE') {
       return product.durationMinutes ? `Servicio · ${product.durationMinutes} min` : 'Servicio';
     }
     const pieces = product.components?.length ?? 0;
     if (pieces) return `Set · ${pieces} ${pieces === 1 ? 'pieza' : 'piezas'}`;
     const stock = catalogStock(product);
-    if (stock === null) return 'Stock ilimitado';
-    const qty = stock;
-    const base = qty === 1 ? '1 unidad' : `${qty} unidades`;
+    if (stock === null) return 'Sin seguimiento';
+    if (stock === 0) return 'Agotado';
     const variants = product.variants?.length ?? 0;
+    const base = stock === 1 ? '1 en inventario' : `${stock} en inventario`;
     return variants ? `${base} · ${variants} var.` : base;
   }
 
@@ -1291,16 +1322,31 @@ export class ProductsPage {
     return 'Producto físico';
   }
 
-  channelSummary(product: ProductDto): string {
-    if (this.productStatus(product) !== 'ACTIVE') return 'Sin publicar';
+  channelFlags(product: ProductDto): { whatsapp: boolean; instagram: boolean; store: boolean } {
+    if (this.productStatus(product) !== 'ACTIVE') {
+      return { whatsapp: false, instagram: false, store: false };
+    }
     const listings = product.channelListings;
     const published = (channel: ProductChannelKind, legacy?: boolean) =>
       listings?.some((row) => row.channel === channel && row.isPublished) ?? Boolean(legacy);
+    return {
+      whatsapp: published('WHATSAPP'),
+      instagram: published('INSTAGRAM'),
+      store: this.storeActive() && published('STORE', product.isPublishedOnStore),
+    };
+  }
+
+  channelSummary(product: ProductDto): string {
+    const flags = this.channelFlags(product);
     const labels: string[] = [];
-    if (published('WHATSAPP')) labels.push('WhatsApp');
-    if (published('INSTAGRAM')) labels.push('Instagram');
-    if (this.storeActive() && published('STORE', product.isPublishedOnStore)) labels.push('Tienda');
-    return labels.length ? labels.join(' · ') : 'Sin canales';
+    if (flags.whatsapp) labels.push('WhatsApp');
+    if (flags.instagram) labels.push('Instagram');
+    if (flags.store) labels.push('Tienda');
+    return labels.length ? labels.join(' · ') : 'Sin publicar';
+  }
+
+  setStatusView(status: 'todos' | 'activo' | 'borrador' | 'archivado'): void {
+    this.setListFilter('estado', status === 'todos' ? '' : status);
   }
 
   availabilityLabel(product: ProductDto): string {

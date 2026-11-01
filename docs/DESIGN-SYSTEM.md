@@ -37,7 +37,7 @@ Selecta también compone el inicio mediante `_selecta-editorial.scss`: fotograf�
 | Espaciado | `space-1/2/3/4/5/6/8/10/12`: escala de 4 a 48 px. Formularios: separación habitual 16 px, grupos 12 px, etiqueta/campo 8 px. |
 | Tamaños | `touch-target` 44 px en móvil/táctil; densidad de consola de escritorio definida por `console-control-height` (36 px). `console-form-width`, `console-page-width` y anchos de navegación son tokens existentes. |
 | Forma | Consola: radios (`radius-sm` 8 px, card 12 px). Controles con radio pequeño; sin `rounded-full` global en botones de consola. |
-| Elevación | Cards planas con borde; `shadow-sm` mínimo; `shadow-dropdown` para overlays. Barra de guardado a ancho completo, no cápsula flotante. |
+| Elevación | Cards planas con borde; `shadow-sm` mínimo; `shadow-dropdown` para overlays. CTA dock a ancho completo; guardado contextual de editores usa cápsula flotante (`layout="capsule"`). |
 | Movimiento | `motion-fast/base` y `ease-out`; respetar reduced motion. Movimiento solo para interacción, no para decoración persistente. |
 | Responsive | Tailwind usa los breakpoints instalados y el breakpoint `console` existente. 40 rem para composición estrecha y 64 rem para el layout principal/lateral de Envíos. CSS de layout local permitido; nuevas escalas visuales locales no. |
 | Capas | Sticky: `--ds-z-sticky`. Dropdowns/dialogs existentes usan popover/dialog del navegador y su top layer. No inventar índices por feature; la normalización de capas de estilos heredados sigue pendiente. |
@@ -62,8 +62,8 @@ Todos se exportan desde `@vendedoria/ui`, son standalone y OnPush. Ninguno decid
 | Filtros de índice | `console-filter-bar` (+ `console-filter-chip`) | Franja con búsqueda y chips; clear real del consumidor. No inventar filtros sin backend/URL. |
 | Tabla índice | `console-index-table`, `console-data-row` | Panel con cabecera densa, filas y acciones; en móvil lista/cards del consumidor. `console-list-panel`, `console-metric`, `console-list-skeleton` siguen vigentes. |
 | FAQ/detalle opcional | `ds-disclosure` | `title` requerido, `group` opcional para acordeón nativo; contenido proyectado. Details/summary mantiene teclado y estado expandido sin ARIA duplicado; reduced motion. No poner acciones interactivas dentro del título. |
-| CTA sticky | `ds-action-bar` | `placement`: top/bottom, `label` para la región. Slot `[dsActionStatus]` para conteo/contexto; resto para acciones. En consola: barra oscura a ancho completo (no cápsula). Conserva handlers y submit de los botones proyectados. |
-| Guardado | `ds-save-bar` | Compone action bar; `pending`, `busy`, `disabled`, `label`, `pendingText` opcional, `formId` opcional. Submit nativo bloqueado sin cambios o durante operación; status anuncia cambios pendientes/guardando/guardado. Proyección opcional de Cancelar/Descartar. |
+| CTA sticky | `ds-action-bar` | `placement`: top/bottom, `label` para la región. Slot `[dsActionStatus]` para conteo/contexto; resto para acciones. En consola: barra oscura a ancho completo (dock). Conserva handlers y submit de los botones proyectados. |
+| Guardado | `ds-save-bar` | Compone action bar; `pending`, `busy`, `disabled`, `label`, `pendingText`, `formId`, `placement` top/bottom (bottom), `layout` dock/capsule (dock). Submit bloqueado sin cambios o en operación. Capsule: píldora centrada sticky (`top: 8px`, 36×auto, `#0a0a0a`, radio pill, sombra multicapa, Descartar fill 12% blanco, Guardar `#fcfcfc`/`#121212`, tipografía 13/400–500); solo montar con dirty. |
 | Feedback | `ds-empty-state`, `ds-banner`, `feedback-*` | Error recuperable, vacío con acción real, éxito y advertencia. No confundir fallo de carga con ausencia de datos. |
 | Formularios | `console-field`, labels con utilities | Input nativo con altura, padding y radio DS; `aria-invalid` activa borde de error. Asociar label, ayuda y error con IDs. Se preservan validadores y conversiones del dominio. |
 | Datos/navegación | Utilities existentes | `console-list-panel`, `console-data-row`, `console-metric`, `console-filter-chip`, `console-filter-bar`, `console-index-table`, `console-list-skeleton`, navegación y sidebar. No crear versiones locales equivalentes. |
@@ -74,16 +74,22 @@ Todos se exportan desde `@vendedoria/ui`, son standalone y OnPush. Ninguno decid
 
 Excepción: el editor visual de Tienda conserva su toolbar de cabecera sin `ds-action-bar` adicional. La configuración de Tienda concentra Guardar/Descartar/Publicar en una sola barra compartida.
 
-Consola: barra de guardado oscura a ancho del frame (`ds-action-bar` / `ds-save-bar`), status + secundarias + primary de marca `#C8F542`. Una barra general por vista. Perfil: barra al pie solo con cambios pendientes; contraseña queda como acción de sección. Canales: una instancia visible por paso excluyente.
+Consola: CTA dock oscuro a ancho del frame (`ds-action-bar` / `ds-save-bar` layout dock), status + secundarias + primary de marca `#C8F542`. Una barra general por vista. Perfil: barra al pie solo con cambios pendientes; contraseña queda como acción de sección. Canales: una instancia visible por paso excluyente. Productos: frame de publicación (`publish-frame`) con **header completo del main** sticky a ancho del panel (migas + volver, ~52 px) y overlay; cápsula (`placement="top"` + `layout="capsule"`) centrada en el overlay del header (`top: 8px`, `width: max-content`, `margin-inline: auto`); header y cápsula permanecen al hacer scroll del cuerpo; visible solo con cambios; copy «Producto no guardado» / «Cambios no guardados»; Descartar restaura el último borrador sin salir del editor.
 
-Tokens: `--ds-action-bg/text/control-height/gap/padding/offset`, `--ds-z-sticky`. Altura de controles: `console-control-height` en escritorio fino; 44 px táctil. Bottom suma safe-area. Top para editores/inventario/integraciones; bottom para formularios al final. Sin wrappers overflow que rompan sticky; sin Cancelar sin handler.
+Tokens: `--ds-action-*`, `--ds-save-capsule-*`, `--ds-z-sticky`. Controles dock: `console-control-height` / 44 px táctil. Capsule: altura 36 px, controles 28 px. Bottom suma safe-area. Sin wrappers overflow que rompan sticky; sin Cancelar/Descartar sin handler.
 
 ```html
-<ds-action-bar label="Acciones del producto">
-  <span dsActionStatus role="status">{{ pendingFields() }} datos pendientes</span>
-  <ds-button type="button" variant="ghost" (click)="closeEditor()">Cancelar</ds-button>
-  <ds-button type="submit" [disabled]="saving()">Guardar</ds-button>
-</ds-action-bar>
+<ds-save-bar
+  placement="top"
+  layout="capsule"
+  formId="product-form"
+  [pending]="editorPending()"
+  [busy]="saving()"
+  label="Guardar"
+  pendingText="Cambios no guardados"
+>
+  <ds-button type="button" variant="ghost" (click)="discardEditorChanges()">Descartar</ds-button>
+</ds-save-bar>
 
 <ds-save-bar [pending]="form.dirty" [busy]="saving()" label="Guardar envíos" />
 ```

@@ -1,15 +1,14 @@
 <section class="catalog tw:grid tw:w-full tw:min-w-0 tw:gap-5" [class.catalog--editing]="editorOpen()">
   @if (!editorOpen()) {
-    <ds-page-header
-      title="Productos"
-      icon="package"
-      description="Precios, disponibilidad e inventario para vender por chat y en tu tienda."
-    >
+    <ds-page-header title="Productos" icon="package">
       <div dsPageActions class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
         <a routerLink="/app/inventory" class="tw:console-action-secondary"><ds-icon name="list" [size]="0.95" />Inventario</a>
+        <a routerLink="/app/products/import" class="tw:console-action-secondary">
+          <ds-icon name="upload" [size]="0.95" /> Importar
+        </a>
         <ds-button
           type="button"
-          variant="secondary"
+          variant="ghost"
           [disabled]="loading() || loadFailed() || !filteredProducts().length"
           (click)="exportCatalogCsv()"
         >
@@ -17,15 +16,12 @@
         </ds-button>
         <ds-button
           type="button"
-          variant="secondary"
+          variant="ghost"
           [disabled]="loading() || loadFailed() || !products().length || exportingPackage()"
           (click)="exportCatalogPackage()"
         >
           {{ exportingPackage() ? 'Exportando…' : 'Exportar paquete' }}
         </ds-button>
-        <a routerLink="/app/products/import" class="tw:console-action-secondary">
-          <ds-icon name="upload" [size]="0.95" /> Importar catálogo
-        </a>
         <ds-button type="button" (click)="openCreate()">Agregar producto</ds-button>
       </div>
     </ds-page-header>
@@ -56,47 +52,32 @@
         </a>
       </ds-empty-state>
     } @else {
-      <section class="tw:grid tw:grid-cols-2 tw:gap-3 tw:lg:grid-cols-4" aria-label="Resumen del catálogo">
-        <button type="button" class="tw:console-metric" [attr.aria-pressed]="!hasListFilters()" (click)="clearListFilters()">
-          <span>Todo el catálogo<small>Todos los tipos</small></span><strong>{{ catalogSummary().total }}</strong>
-        </button>
-        <button type="button" class="tw:console-metric" [attr.aria-pressed]="listState().inventory === 'agotados'" (click)="showCatalogAttention('inventario', 'agotados')">
-          <span>Sin stock<small>Revisa el inventario</small></span><strong class="tw:text-warning-text">{{ catalogSummary().soldOut }}</strong>
-        </button>
-        <button type="button" class="tw:console-metric" [attr.aria-pressed]="listState().status === 'borrador' || listState().status === 'archivado'" (click)="showCatalogAttention('estado', 'borrador')">
-          <span>Sin activar<small>Borrador o archivado</small></span><strong>{{ catalogSummary().paused }}</strong>
-        </button>
-        @if (storeActive()) {
-          <button type="button" class="tw:console-metric" [attr.aria-pressed]="listState().publication === 'ocultos'" (click)="showCatalogAttention('tienda', 'ocultos')">
-            <span>Ocultos en tienda<small>Revisa la publicación</small></span><strong>{{ catalogSummary().hidden }}</strong>
-          </button>
-        } @else {
-          <a routerLink="/app/inventory" class="tw:console-metric tw:no-underline"><span>Inventario<small>Gestionar unidades</small></span><ds-icon name="chevronRight" /></a>
-        }
-      </section>
       <div class="tw:console-index-table">
-        <div class="tw:flex tw:flex-wrap tw:gap-2 tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:bg-canvas tw:p-3" role="group" aria-label="Filtrar por tipo">
-          @for (option of kindOptions; track option.id) {
+        <div class="catalog-views" role="group" aria-label="Vistas por estado">
+          @for (view of statusViews; track view.id) {
+            @let currentStatus = listState().status;
             <button
               type="button"
-              class="tw:console-filter-chip tw:font-semibold"
-              [attr.aria-pressed]="kindFilter() === option.id"
-              (click)="setKindFilter(option.id)"
+              class="catalog-views__tab"
+              [attr.aria-pressed]="view.id === 'todos' ? (currentStatus !== 'activo' && currentStatus !== 'borrador' && currentStatus !== 'archivado') : currentStatus === view.id"
+              (click)="setStatusView(view.id)"
             >
-              {{ option.label }} <span>{{ kindCounts()[option.id] }}</span>
+              {{ view.label }}<span class="catalog-views__count">{{ statusCounts()[view.id] }}</span>
             </button>
           }
         </div>
-        <div class="tw:flex tw:min-w-0 tw:flex-wrap tw:items-center tw:gap-2 tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:p-3">
-          <label class="tw:flex tw:min-w-0 tw:flex-1 tw:items-center tw:gap-2 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:bg-surface tw:px-3 tw:focus-within:border-focus">
+        <div class="catalog-toolbar tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:p-3">
+          <label class="catalog-toolbar__search tw:flex tw:min-w-0 tw:items-center tw:gap-2 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:bg-surface tw:px-3 tw:focus-within:border-focus">
             <span class="tw:sr-only">Buscar productos</span>
             <ds-icon name="search" class="tw:text-muted" />
             <input type="search" class="tw:console-field tw:min-h-touch tw:border-0! tw:bg-transparent! tw:px-0!" placeholder="Nombre, SKU, marca o colección" maxlength="200" [value]="listState().query" (input)="setListFilter('q', $any($event.target).value)" />
           </label>
-          <ds-select><select aria-label="Estado" [value]="listState().status" (change)="setListFilter('estado', $any($event.target).value)"><option value="todos">Estado</option><option value="activo">Activos</option><option value="borrador">Borradores</option><option value="archivado">Archivados</option></select></ds-select>
-          <ds-select><select aria-label="Inventario" [value]="listState().inventory || 'todos'" (change)="setListFilter('inventario', $any($event.target).value)"><option value="todos">Inventario</option><option value="agotados">Sin stock</option></select></ds-select>
-          <ds-select><select aria-label="Canal" [value]="listState().publication" (change)="setListFilter('tienda', $any($event.target).value)"><option value="todos">Canal</option>@if (storeActive()) { <option value="visibles">En tienda</option><option value="ocultos">Ocultos en tienda</option> }<option value="whatsapp">En WhatsApp</option><option value="instagram">En Instagram</option></select></ds-select>
-          <ds-select><select aria-label="Ordenar por" [value]="listState().sort" (change)="setListFilter('orden', $any($event.target).value)"><option value="recientes">Más recientes</option><option value="antiguos">Más antiguos</option><option value="nombre">Nombre, A–Z</option><option value="nombre-desc">Nombre, Z–A</option></select></ds-select>
+          <div class="catalog-toolbar__filters" role="group" aria-label="Filtros del catálogo">
+            <ds-select class="catalog-toolbar__select"><select aria-label="Tipo" [value]="kindFilter()" (change)="setKindFilter($any($event.target).value)">@for (option of kindOptions; track option.id) { <option [value]="option.id">{{ option.id === 'todos' ? 'Tipo' : option.label + ' (' + kindCounts()[option.id] + ')' }}</option> }</select></ds-select>
+            <ds-select class="catalog-toolbar__select"><select aria-label="Inventario" [value]="listState().inventory || 'todos'" (change)="setListFilter('inventario', $any($event.target).value)"><option value="todos">Inventario</option><option value="agotados">Agotados</option></select></ds-select>
+            <ds-select class="catalog-toolbar__select"><select aria-label="Canal" [value]="listState().publication" (change)="setListFilter('tienda', $any($event.target).value)"><option value="todos">Canal</option>@if (storeActive()) { <option value="visibles">En tienda</option><option value="ocultos">Ocultos en tienda</option> }<option value="whatsapp">En WhatsApp</option><option value="instagram">En Instagram</option></select></ds-select>
+            <ds-select class="catalog-toolbar__select"><select aria-label="Ordenar por" [value]="listState().sort" (change)="setListFilter('orden', $any($event.target).value)"><option value="recientes">Más recientes</option><option value="antiguos">Más antiguos</option><option value="nombre">Nombre, A–Z</option><option value="nombre-desc">Nombre, Z–A</option></select></ds-select>
+          </div>
         </div>
         <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3 tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:px-4 tw:py-3">
           <span class="tw:text-caption tw:text-muted" role="status">{{ filteredProducts().length }} {{ filteredProducts().length === 1 ? 'resultado' : 'resultados' }} de {{ products().length }}</span>
@@ -122,7 +103,7 @@
           <li class="tw:border-0 tw:border-t tw:border-solid tw:border-divider">
             <button type="button" class="tw:grid tw:w-full tw:cursor-pointer tw:grid-cols-2 tw:items-center tw:gap-x-4 tw:gap-y-2 tw:border-0 tw:bg-transparent tw:px-4 tw:py-3 tw:text-left tw:text-body tw:text-foreground tw:hover:bg-canvas/50 tw:md:grid-cols-12" (click)="openEdit(product)" [attr.aria-label]="'Editar ' + product.name">
               <span class="tw:col-span-2 tw:flex tw:min-w-0 tw:items-center tw:gap-3 tw:md:col-span-4">
-                <span class="tw:grid tw:size-12 tw:shrink-0 tw:place-items-center tw:overflow-hidden tw:rounded-sm tw:border tw:border-solid tw:border-border tw:bg-canvas">
+                <span class="tw:grid tw:size-10 tw:shrink-0 tw:place-items-center tw:overflow-hidden tw:rounded-sm tw:border tw:border-solid tw:border-border tw:bg-canvas">
                 @if (thumb(product); as url) {
                   <img [src]="url" alt="" class="tw:h-full tw:w-full tw:object-cover" loading="lazy" />
                 } @else {
@@ -137,13 +118,21 @@
               </span>
               <span class="tw:hidden tw:md:col-span-2 tw:md:block">
                 <span
-                  class="pill"
-                  [class.pill--ok]="productStatus(product) === 'ACTIVE'"
-                  [class.pill--off]="productStatus(product) !== 'ACTIVE'"
+                  class="catalog-status"
+                  [class.catalog-status--active]="productStatus(product) === 'ACTIVE'"
+                  [class.catalog-status--draft]="productStatus(product) === 'DRAFT'"
+                  [class.catalog-status--archived]="productStatus(product) === 'ARCHIVED'"
                 >{{ statusLabel(product) }}</span>
               </span>
               <span class="tw:hidden tw:text-caption tw:text-muted tw:md:col-span-2 tw:md:block">{{ stockLabel(product) }}</span>
-              <span class="tw:hidden tw:text-caption tw:text-muted tw:md:col-span-2 tw:md:block">{{ channelSummary(product) }}</span>
+              <span class="tw:hidden tw:md:col-span-2 tw:md:block">
+                @let flags = channelFlags(product);
+                <span class="catalog-channels" role="img" [attr.aria-label]="channelSummary(product)">
+                  <span class="catalog-channels__item" [class.is-on]="flags.whatsapp" [attr.title]="flags.whatsapp ? 'WhatsApp: publicado' : 'WhatsApp: no publicado'"><ds-icon name="whatsapp" [size]="0.95" /></span>
+                  <span class="catalog-channels__item" [class.is-on]="flags.instagram" [attr.title]="flags.instagram ? 'Instagram: publicado' : 'Instagram: no publicado'"><ds-icon name="instagram" [size]="0.95" /></span>
+                  <span class="catalog-channels__item" [class.is-on]="flags.store" [attr.title]="flags.store ? 'Tienda web: publicado' : 'Tienda web: no publicado'"><ds-icon name="store" [size]="0.95" /></span>
+                </span>
+              </span>
               <span class="tw:text-right tw:font-medium tw:tabular-nums tw:md:col-span-2">{{ formatPrice(product.basePriceCents, product.currency) }}</span>
             </button>
           </li>
@@ -162,26 +151,58 @@
       </div>
     }
   } @else {
-    <form id="product-form" class="publish tw:mx-auto tw:grid tw:w-full tw:max-w-page tw:gap-5 tw:pb-24" [formGroup]="productForm" (ngSubmit)="saveProduct()">
-      <button type="button" class="publish__back" [disabled]="saving() || deleting() || uploading()" (click)="closeEditor()">
-        ← Volver al catálogo
-      </button>
-      <ds-page-header icon="package" [title]="editorTitle()">
-        <div dsPageActions class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
-          @if (isEditing()) {
+    <div class="publish-frame">
+      <div class="publish-frame__overlay" aria-live="polite">
+        @if (editorPending() || saving()) {
+          <ds-save-bar
+            class="publish-frame__save"
+            placement="top"
+            layout="capsule"
+            formId="product-form"
+            [pending]="editorPending()"
+            [busy]="saving()"
+            [disabled]="deleting() || uploading()"
+            label="Guardar"
+            [pendingText]="isEditing() ? 'Cambios no guardados' : 'Producto no guardado'"
+          >
             <ds-button
               type="button"
               variant="ghost"
               [disabled]="saving() || deleting() || uploading()"
-              (click)="deleteProduct()"
+              (click)="discardEditorChanges()"
             >
-              <ds-icon name="trash" [size]="1" />
-              {{ deleting() ? 'Eliminando…' : 'Eliminar' }}
+              Descartar
             </ds-button>
-          }
+          </ds-save-bar>
+        }
+      </div>
+      <div class="publish-frame__scroll">
+      <header class="publish-frame__header">
+        <div class="publish-frame__toolbar">
+          <button
+            type="button"
+            class="publish-frame__back"
+            [disabled]="saving() || deleting() || uploading()"
+            (click)="closeEditor()"
+            aria-label="Volver a productos"
+          >
+            <ds-icon name="chevronLeft" [size]="1.1" />
+          </button>
+          <nav class="publish-frame__crumbs" aria-label="Ubicación en catálogo">
+            <button
+              type="button"
+              class="publish-frame__crumb"
+              [disabled]="saving() || deleting() || uploading()"
+              (click)="closeEditor()"
+            >
+              Productos
+            </button>
+            <span class="publish-frame__crumb-sep" aria-hidden="true">/</span>
+            <span class="publish-frame__crumb-current">{{ isEditing() ? editorTitle() : 'Agregar producto' }}</span>
+          </nav>
         </div>
-      </ds-page-header>
-
+      </header>
+    <form id="product-form" class="publish tw:mx-auto tw:grid tw:w-full tw:max-w-page tw:gap-5 tw:pb-8" [formGroup]="productForm" (ngSubmit)="saveProduct()">
       @if (errorMessage()) {
         <p class="tw:feedback tw:feedback-danger tw:m-0" role="alert">
           {{ errorMessage() }}
@@ -251,9 +272,24 @@
                 <span class="field__count">{{ descriptionCount() }}/1000</span>
               </span>
             </label>
+
+            <label class="field">
+              <span>Descripción detallada</span>
+              <textarea class="tw:console-field"
+                formControlName="descriptionFull"
+                aria-label="Descripción detallada"
+                rows="8"
+                maxlength="5000"
+                placeholder="Materiales, medidas, cuidados, qué incluye, para quién es y qué no cubre…"
+              ></textarea>
+              <span class="field__meta">
+                <span class="field__hint">Describe materiales, medidas, cuidados o qué incluye.</span>
+                <span class="field__count">{{ (productForm.controls.descriptionFull.value ?? '').length }}/5000</span>
+              </span>
+            </label>
           </ds-form-section>
 
-          <ds-form-section title="Archivos multimedia" description="La primera es la portada del catálogo, la tienda y el chat.">
+          <ds-form-section title="Multimedia" description="La primera es la portada del catálogo, la tienda y el chat.">
             @if (storePhotoWarning()) {
               <p class="field__hint" role="status">
                 Está visible en la tienda sin foto. Sube al menos una para que se vea bien.
@@ -572,22 +608,6 @@
               }
             </ds-form-section>
           }
-
-          <ds-form-section title="Descripción" description="Detalle para la ficha y tu vendedor. Envíos y cambios: Conocimiento del negocio.">
-            <label class="field">
-              <span class="tw:sr-only">Descripción detallada</span>
-              <textarea class="tw:console-field"
-                formControlName="descriptionFull"
-                rows="8"
-                maxlength="5000"
-                placeholder="Materiales, medidas, cuidados, qué incluye, para quién es y qué no cubre…"
-              ></textarea>
-              <span class="field__meta">
-                <span class="field__hint">Describe materiales, medidas, cuidados o qué incluye.</span>
-                <span class="field__count">{{ (productForm.controls.descriptionFull.value ?? '').length }}/5000</span>
-              </span>
-            </label>
-          </ds-form-section>
         </div>
 
         <aside class="publish__rail tw:grid tw:min-w-0 tw:content-start tw:gap-4 tw:lg:sticky tw:lg:top-4" aria-label="Estado, canales y organización">
@@ -602,33 +622,20 @@
                 </select>
               </ds-select>
             </label>
-            <span
-              class="pill"
-              [class.pill--ok]="productForm.controls.status.value === 'ACTIVE'"
-              [class.pill--off]="productForm.controls.status.value !== 'ACTIVE'"
-            >
-              {{ productForm.controls.status.value === 'ACTIVE' ? 'Listo para vender' : productForm.controls.status.value === 'ARCHIVED' ? 'Archivado' : 'Borrador' }}
-            </span>
           </ds-form-section>
 
-          <ds-form-section title="Publicación en canales" density="compact">
+          <ds-form-section title="Publicación" density="compact">
             <div class="avail-row">
               <ds-checkbox variant="inline">
                 <input type="checkbox" formControlName="channelWhatsapp" [disabled]="productForm.controls.status.value !== 'ACTIVE'" />
                 <span>WhatsApp</span>
               </ds-checkbox>
-              <span class="pill" [class.pill--ok]="productForm.controls.channelWhatsapp.value" [class.pill--off]="!productForm.controls.channelWhatsapp.value">
-                {{ productForm.controls.channelWhatsapp.value ? 'Publicado' : 'Oculto' }}
-              </span>
             </div>
             <div class="avail-row">
               <ds-checkbox variant="inline">
                 <input type="checkbox" formControlName="channelInstagram" [disabled]="productForm.controls.status.value !== 'ACTIVE'" />
                 <span>Instagram</span>
               </ds-checkbox>
-              <span class="pill" [class.pill--ok]="productForm.controls.channelInstagram.value" [class.pill--off]="!productForm.controls.channelInstagram.value">
-                {{ productForm.controls.channelInstagram.value ? 'Publicado' : 'Oculto' }}
-              </span>
             </div>
             @if (storeActive()) {
               <div class="avail-row">
@@ -636,13 +643,6 @@
                   <input type="checkbox" formControlName="channelStore" [disabled]="productForm.controls.status.value !== 'ACTIVE'" />
                   <span>Tienda web</span>
                 </ds-checkbox>
-                <span
-                  class="pill"
-                  [class.pill--ok]="productForm.controls.channelStore.value"
-                  [class.pill--off]="!productForm.controls.channelStore.value"
-                >
-                  {{ productForm.controls.channelStore.value ? 'En tienda' : 'Oculto' }}
-                </span>
               </div>
               @if (storePhotoWarning()) {
                 <p class="field__hint" role="status">Añade una foto antes de mostrarlo en la tienda.</p>
@@ -717,16 +717,26 @@
               <input type="hidden" formControlName="categoriesText" />
             </div>
           </ds-form-section>
+          @if (isEditing()) {
+            <div class="publish-danger">
+              <p class="publish-danger__hint">Quitar este producto del catálogo. No se puede deshacer.</p>
+              <ds-button
+                type="button"
+                variant="ghost"
+                [disabled]="saving() || deleting() || uploading()"
+                (click)="deleteProduct()"
+              >
+                <ds-icon name="trash" [size]="1" />
+                {{ deleting() ? 'Eliminando…' : 'Eliminar producto' }}
+              </ds-button>
+            </div>
+          }
         </aside>
       </div>
     </fieldset>
-
-    @if (editorPending() || saving()) {
-      <ds-save-bar formId="product-form" [pending]="editorPending()" [busy]="saving()" [disabled]="deleting() || uploading()" label="Guardar" pendingText="Cambios sin guardar">
-        <ds-button type="button" variant="ghost" [disabled]="saving() || deleting() || uploading()" (click)="closeEditor()">Descartar</ds-button>
-      </ds-save-bar>
-    }
     </form>
+      </div>
+    </div>
   }
 </section>
 <ng-template #productType>

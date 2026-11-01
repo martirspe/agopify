@@ -1,1 +1,146 @@
-:host { display: block; position: sticky; bottom: calc(var(--ds-action-offset) + env(safe-area-inset-bottom, 0px)); z-index: var(--ds-z-sticky); min-width: 0; }
+ds-save-bar {
+  display: block;
+  position: sticky;
+  z-index: var(--ds-z-sticky);
+  min-width: 0;
+}
+
+ds-save-bar.ds-save-bar--top {
+  top: 0;
+}
+
+ds-save-bar.ds-save-bar--bottom {
+  top: auto;
+  bottom: calc(var(--ds-action-offset) + env(safe-area-inset-bottom, 0px));
+}
+
+/* Host owns sticky edges; nested action-bar only paints the surface. */
+ds-save-bar ds-action-bar {
+  position: static;
+  top: auto;
+  bottom: auto;
+}
+
+ds-save-bar.ds-save-bar--top.ds-save-bar--dock .ds-action-bar {
+  padding-block: var(--ds-space-2);
+  padding-inline: var(--ds-space-4);
+  box-shadow: 0 0.125rem 0.25rem rgb(0 0 0 / 15%);
+}
+
+ds-save-bar.ds-save-bar--top.ds-save-bar--dock .ds-action-bar-status {
+  font-weight: 600;
+}
+
+/*
+ * Contextual capsule — measured against Admin product editor save pill:
+ * 36px tall, #0a0a0a, radius pill, padding 4/4/4/12, gap message→actions 20px,
+ * controls 28px, discard fill 12% white, save near-white on ink.
+ */
+ds-save-bar.ds-save-bar--capsule {
+  top: var(--ds-space-2);
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-block-end: calc(-1 * var(--ds-save-capsule-height, 2.25rem));
+  pointer-events: none;
+}
+
+ds-save-bar.ds-save-bar--capsule ds-action-bar {
+  width: auto;
+  max-width: min(100%, 36rem);
+  pointer-events: auto;
+  --ds-button-radius: var(--ds-radius-pill);
+  --ds-button-ghost-color: var(--ds-save-capsule-text, #eee);
+  --ds-touch-target: var(--ds-save-capsule-control, 1.75rem);
+}
+
+ds-save-bar.ds-save-bar--capsule .ds-action-bar {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1.25rem; /* 20px message → actions */
+  width: auto;
+  max-width: 100%;
+  height: var(--ds-save-capsule-height, 2.25rem);
+  padding: 0.25rem 0.25rem 0.25rem 0.75rem; /* 4 4 4 12 */
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-save-capsule-bg, #0a0a0a);
+  color: var(--ds-save-capsule-text, #eee);
+  box-shadow:
+    rgb(220 220 220 / 18%) 0 0 0 1px,
+    rgb(0 0 0 / 15%) 0 1px 2px 0,
+    rgb(0 0 0 / 15%) 0 3px 6px -3px,
+    rgb(0 0 0 / 72%) 0 24px 56px -12px;
+}
+
+ds-save-bar.ds-save-bar--capsule .ds-action-bar-status {
+  flex: 0 1 auto;
+  padding: 0;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 400;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+ds-save-bar.ds-save-bar--capsule .ds-action-bar-actions {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 0.25rem; /* 4px */
+}
+
+ds-save-bar.ds-save-bar--capsule .ds-button,
+ds-save-bar.ds-save-bar--capsule .ds-button-host .ds-button {
+  min-height: var(--ds-save-capsule-control, 1.75rem);
+  height: var(--ds-save-capsule-control, 1.75rem);
+  padding: 0 0.75rem; /* 12px */
+  border: 0;
+  border-radius: var(--ds-radius-pill);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+ds-save-bar.ds-save-bar--capsule .ds-button--ghost,
+ds-save-bar.ds-save-bar--capsule .ds-button-host.ds-button--ghost .ds-button,
+ds-save-bar.ds-save-bar--capsule :host(.ds-button--ghost) {
+  background: rgb(255 255 255 / 12%);
+  color: var(--ds-save-capsule-text, #eee);
+}
+
+ds-save-bar.ds-save-bar--capsule .ds-button--ghost:not(:disabled):hover,
+ds-save-bar.ds-save-bar--capsule .ds-button-host.ds-button--ghost .ds-button:not(:disabled):hover {
+  background: rgb(255 255 255 / 18%);
+}
+
+ds-save-bar.ds-save-bar--capsule .ds-button--primary,
+ds-save-bar.ds-save-bar--capsule .ds-button-host.ds-button--primary .ds-button,
+ds-save-bar.ds-save-bar--capsule ds-action-bar .ds-button--primary {
+  background: var(--ds-save-capsule-save-bg, #fcfcfc);
+  color: var(--ds-save-capsule-save-text, #121212);
+  filter: none;
+}
+
+ds-save-bar.ds-save-bar--capsule .ds-button--primary:not(:disabled):hover,
+ds-save-bar.ds-save-bar--capsule ds-action-bar .ds-button--primary:not(:disabled):hover {
+  background: #f5f5f5;
+  filter: none;
+}
+
+@media (max-width: 40rem) {
+  ds-save-bar.ds-save-bar--capsule .ds-action-bar {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--ds-save-capsule-height, 2.25rem);
+    justify-content: center;
+    gap: var(--ds-space-2);
+  }
+
+  ds-save-bar.ds-save-bar--capsule .ds-action-bar-status {
+    flex-basis: auto;
+    text-align: start;
+    white-space: normal;
+  }
+}

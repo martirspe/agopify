@@ -33,7 +33,9 @@ Jump table from domain to paths. API paths are under `apps/api/src/`, console pa
 | AWS media (S3 + CloudFront) and email (SES) | `catalog/media.service.ts`, `checkout/order-email.service.ts`, `config/env.validation.ts`, `infra/terraform/` (Terraform: bucket + CloudFront + SES + IAM + Cloudflare DNS) | — | aws |
 | Docker / deploy | `Dockerfile`, `docker-compose.yml` (prod), `docker-compose.dev.yml`, `docker/nginx/`, `scripts/docker.mjs`, `scripts/{deploy,bootstrap-host,backup,restore-backup}.sh`, `.env.production.example`, guide `docs/DEPLOY.md` | — | — |
 
-## Discrepancies (code wins; constitution items marked PLANNED)
+## Discrepancies
+
+- Consola save CTA: DSM historically forbade floating capsules; Product editor now uses `ds-save-bar layout="capsule"` (Admin-measured sticky pill) while other views keep docked full-width bars. (code wins; constitution items marked PLANNED)
 
 - Console `/app` uses a dark rail (`#0a0a0a`), light nav text, white rounded frame 16px, 13px page titles, Inter and flat bordered cards, with VendedorIA brand primary `#C8F542`. Marketing and tenant store keep full VendedorIA identity. Identifiers, classes and product names must not copy competitor admin chrome.
 - AI Core architecture docs describe a greenfield multi-provider brain; the repository already ships that substrate as `sales-engine-v2` / mode alias `ai-core`. Evolve `agent-runtime` in place — do not add a parallel Nest app or duplicate commerce services. Multi-model beyond OpenAI remains incremental (`agent-runtime/models/`).

@@ -850,7 +850,7 @@
 
 @utility console-workspace {
  /* : flex child that clips; the inner scroll owns overflow. */
-  @apply tw:flex tw:min-w-0 tw:w-full tw:flex-col;
+  @apply tw:relative tw:flex tw:min-w-0 tw:w-full tw:flex-col;
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
@@ -863,6 +863,25 @@
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+/*
+ * Product publish frame (Admin main parity): editor owns scroll + header overlay
+ * so the contextual save capsule stays centered in the panel header while content scrolls.
+ */
+.console-workspace-scroll:has(.catalog--editing) {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.console-workspace-scroll:has(.catalog--editing) > app-products-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /*

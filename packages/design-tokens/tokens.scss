@@ -76,6 +76,13 @@
   --ds-action-gap: var(--ds-space-2);
   --ds-action-padding: var(--ds-space-1);
   --ds-action-offset: var(--ds-space-2);
+  /* Contextual save capsule (dirty editors): measured Admin pill geometry. */
+  --ds-save-capsule-bg: #0a0a0a;
+  --ds-save-capsule-text: #eeeeee;
+  --ds-save-capsule-save-bg: #fcfcfc;
+  --ds-save-capsule-save-text: #121212;
+  --ds-save-capsule-height: 2.25rem; /* 36px */
+  --ds-save-capsule-control: 1.75rem; /* 28px */
   --ds-z-sticky: 20;
   --ds-touch-target: 2.75rem;
   --ds-gutter: clamp(1rem, 3vw, 2rem);
