@@ -144,6 +144,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'commerce-integrations',
+        loadComponent: () =>
+          import('./features/commerce-integrations/commerce-integrations.page').then(
+            (m) => m.CommerceIntegrationsPage,
+          ),
+      },
+      {
         path: 'plans',
         loadComponent: () =>
           import('./features/billing/plans.page').then((m) => m.PlansPage),

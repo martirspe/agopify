@@ -1,15 +1,29 @@
 <section class="inbox">
   <aside class="inbox__list tw:flex tw:flex-col tw:min-w-0 tw:min-h-0" [class.tw:hidden]="openedConversationId()" [class.tw:inbox:flex]="openedConversationId()" aria-label="Conversaciones">
-    <header class="inbox__list-head">
-      <div>
-        <h1 class="tw:console-title">Mensajes</h1>
-        @if (!loadingList() && !listError()) { <p>{{ conversations().length }} {{ conversations().length === 1 ? 'conversación' : 'conversaciones' }}{{ query() || filterSales() || filterUnattended() ? ' en esta vista' : '' }}</p> }
-      </div>
-      <div class="inbox__filters tw:flex tw:flex-wrap tw:gap-2 tw:w-full">
+    <ds-page-header
+      class="tw:p-4 tw:pb-0"
+      title="Mensajes"
+      icon="message"
+      [description]="!loadingList() && !listError() ? conversations().length + ' ' + (conversations().length === 1 ? 'conversación' : 'conversaciones') + (query() || filterSales() || filterUnattended() ? ' en esta vista' : '') : null"
+    />
+
+    <div class="tw:mx-4 tw:mb-3 tw:grid tw:gap-2">
+      <label class="tw:flex tw:min-w-0 tw:items-center tw:gap-2 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:bg-surface tw:px-3 tw:focus-within:border-focus">
+        <span class="tw:sr-only">Buscar conversaciones</span>
+        <ds-icon name="search" [size]="1" />
+        <input
+          type="search"
+          aria-label="Buscar conversaciones"
+          placeholder="Buscar conversaciones…"
+          class="tw:console-field tw:min-h-touch tw:border-0! tw:bg-transparent! tw:px-0!"
+          [value]="query()"
+          (input)="onSearch($any($event.target).value)"
+        />
+      </label>
+      <div class="tw:flex tw:flex-wrap tw:gap-2" aria-label="Filtros de conversaciones">
         <button
           type="button"
-          class="chip tw:console-action-secondary tw:px-3!"
-          [class.chip--active]="filterUnattended()"
+          class="tw:console-filter-chip"
           [attr.aria-pressed]="filterUnattended()"
           (click)="toggleUnattendedFilter()"
         >
@@ -17,26 +31,14 @@
         </button>
         <button
           type="button"
-          class="chip tw:console-action-secondary tw:px-3!"
-          [class.chip--active]="filterSales()"
+          class="tw:console-filter-chip"
           [attr.aria-pressed]="filterSales()"
           (click)="toggleSalesFilter()"
         >
           Ventas
         </button>
       </div>
-    </header>
-
-    <label class="search">
-      <ds-icon name="search" />
-      <input
-        type="search"
-        aria-label="Buscar conversaciones"
-        placeholder="Buscar conversaciones…"
-        [value]="query()"
-        (input)="onSearch($any($event.target).value)"
-      />
-    </label>
+    </div>
 
     @if (loadingList()) {
       <div class="tw:console-list-skeleton" role="status" aria-busy="true"><span class="tw:sr-only">Cargando conversaciones…</span><div aria-hidden="true"></div><div aria-hidden="true"></div><div aria-hidden="true"></div></div>

@@ -7,6 +7,7 @@ import {
   DsConfirmService,
   DsEmptyStateComponent,
   DsIconComponent,
+  DsPageHeaderComponent,
 } from '@vendedoria/ui';
 import { messageFrom } from '../../core/api/api-error';
 import {
@@ -35,6 +36,7 @@ const ROLE_LABELS: Record<MembershipRole, string> = {
     DsButtonComponent,
     DsEmptyStateComponent,
     DsIconComponent,
+    DsPageHeaderComponent,
     IntegrationGateComponent,
   ],
   templateUrl: './team.page.html',

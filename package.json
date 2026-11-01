@@ -52,8 +52,21 @@
     },
     "@nestjs/swagger": {
       "js-yaml": "5.4.1"
-    }
+    },
+    "glob": "^13.0.6"
   },
+  "allowScripts": {
+    "@parcel/watcher": true,
+    "@prisma/client": true,
+    "@prisma/engines": true,
+    "@scarf/scarf": false,
+    "esbuild": true,
+    "lmdb": true,
+    "msgpackr-extract": true,
+    "prisma": true,
+    "unrs-resolver": true
+  },
+
   "engines": {
     "node": ">=22"
   }

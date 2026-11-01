@@ -233,6 +233,7 @@ model Tenant {
   customerMemories  SalesCustomerMemory[]
   salesTurns        SalesEngineTurn[]
   salesSearchJobs   SalesSearchJob[]
+  commerceIntegrations CommerceIntegration[]
 }
 
 model ConversionSettings {
@@ -1231,4 +1232,180 @@ model LiveEvent {
   session LiveSession @relation(fields: [tenantId, sessionId], references: [tenantId, id], onDelete: Cascade)
   @@unique([tenantId, externalEventId])
   @@index([tenantId, sessionId, createdAt])
+}
+
+/// External commerce platform id for the Integration Core (not plan TenantIntegration keys).
+enum CommercePlatform {
+  MAGENTO
+  WOOCOMMERCE
+  SHOPIFY
+  PRESTASHOP
+}
+
+enum CommerceIntegrationStatus {
+  AVAILABLE
+  CONNECTING
+  CONNECTED
+  SYNCING
+  ERROR
+  REAUTH_REQUIRED
+  DISCONNECTED
+}
+
+enum CommerceAuthType {
+  OAUTH2
+  OAUTH1A
+  API_TOKEN
+  API_KEY
+  BASIC
+}
+
+enum CommerceSyncType {
+  INITIAL
+  INCREMENTAL
+  EVENT
+  RECONCILIATION
+  INVENTORY
+}
+
+enum CommerceSyncStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  PARTIAL
+  FAILED
+  CANCELLED
+}
+
+enum CommerceResourceType {
+  PRODUCT
+  VARIANT
+  CATEGORY
+  MEDIA
+  INVENTORY
+}
+
+enum CommerceWebhookStatus {
+  RECEIVED
+  QUEUED
+  PROCESSED
+  FAILED
+  DUPLICATE
+}
+
+/// Connection to an external commerce platform (Integration Core).
+model CommerceIntegration {
+  id                   String                     @id @default(cuid())
+  tenantId             String
+  platform             CommercePlatform
+  name                 String
+  baseUrl              String?
+  status               CommerceIntegrationStatus  @default(CONNECTING)
+  authenticationType   CommerceAuthType
+  /// AES-GCM sealed JSON credentials (`enc:v1.…`); never returned to the client.
+  encryptedCredentials String
+  capabilities         Json                       @default("[]")
+  configuration        Json                       @default("{}")
+  syncSettings         Json                       @default("{}")
+  externalStoreId      String?
+  externalStoreName    String?
+  connectedAt          DateTime?
+  lastSyncAt           DateTime?
+  lastError            String?
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+
+  tenant    Tenant                         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  resources CommerceIntegrationResource[]
+  syncs     CommerceSyncExecution[]
+  webhooks  CommerceWebhookEvent[]
+
+  @@unique([tenantId, platform, name])
+  @@index([tenantId, platform])
+  @@index([tenantId, status])
+}
+
+/// Maps an external commerce resource to the unified catalog (or other internal ids).
+model CommerceIntegrationResource {
+  id                String               @id @default(cuid())
+  tenantId          String
+  integrationId     String
+  resourceType      CommerceResourceType
+  externalId        String
+  internalId        String?
+  externalUpdatedAt DateTime?
+  lastSyncedAt      DateTime?
+  syncStatus        String               @default("active")
+  metadata          Json?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  integration CommerceIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@unique([integrationId, resourceType, externalId])
+  @@index([tenantId, integrationId])
+  @@index([tenantId, internalId])
+}
+
+model CommerceSyncExecution {
+  id              String             @id @default(cuid())
+  tenantId        String
+  integrationId   String
+  syncType        CommerceSyncType
+  status          CommerceSyncStatus @default(PENDING)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  durationMs      Int?
+  totalItems      Int                @default(0)
+  createdItems    Int                @default(0)
+  updatedItems    Int                @default(0)
+  unchangedItems  Int                @default(0)
+  skippedItems    Int                @default(0)
+  failedItems     Int                @default(0)
+  checkpoint      Json?
+  errorSummary    String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  integration CommerceIntegration      @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  items       CommerceSyncExecutionItem[]
+
+  @@index([tenantId, integrationId, createdAt])
+  @@index([tenantId, status])
+}
+
+model CommerceSyncExecutionItem {
+  id           String   @id @default(cuid())
+  executionId  String
+  externalId   String
+  resourceType CommerceResourceType
+  operation    String
+  status       String
+  attempts     Int      @default(1)
+  errorCode    String?
+  errorMessage String?
+  processedAt  DateTime @default(now())
+
+  execution CommerceSyncExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  @@index([executionId, status])
+}
+
+model CommerceWebhookEvent {
+  id                String                @id @default(cuid())
+  tenantId          String
+  integrationId     String
+  externalEventId   String
+  eventType         String
+  payload           Json
+  signatureValid    Boolean
+  processingStatus  CommerceWebhookStatus @default(RECEIVED)
+  receivedAt        DateTime              @default(now())
+  processedAt       DateTime?
+  errorMessage      String?
+
+  integration CommerceIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@unique([integrationId, externalEventId])
+  @@index([tenantId, processingStatus, receivedAt])
 }

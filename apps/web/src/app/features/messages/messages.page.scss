@@ -20,21 +20,6 @@
   background: color-mix(in srgb, var(--ds-color-bg) 65%, var(--ds-color-surface));
 }
 
-.inbox__list-head {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--ds-space-3);
-  align-items: start;
-  flex-wrap: wrap;
-  padding: var(--ds-space-4);
-}
-
-.inbox__list-head p {
-  margin: var(--ds-space-1) 0 0;
-  color: var(--ds-color-text-secondary);
-  font-size: var(--ds-type-sm);
-}
-
 .chip--active {
   background: var(--ds-color-ink);
   color: var(--ds-color-surface);

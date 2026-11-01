@@ -20,6 +20,16 @@
   src: url('/fonts/satoshi-700.woff2') format('woff2');
 }
 
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  /* Variable Inter — same family consola brands as Inter. */
+  src: url('/fonts/inter-latin.woff2') format('woff2');
+  font-named-instance: 'Regular';
+}
+
 *,
 *::before,
 *::after {
@@ -34,6 +44,16 @@ body {
   color: var(--ds-color-text-primary);
   background: var(--ds-color-bg);
   -webkit-font-smoothing: antialiased;
+}
+
+/* consola: html/body do not scroll while the console shell is mounted
+ (shell is position:fixed; equivalent owns vertical overflow). */
+html:has(app-console-shell),
+body:has(app-console-shell) {
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 a {
@@ -53,12 +73,92 @@ button {
 .ds-empty {
   display: grid;
   gap: var(--ds-space-3);
-  justify-items: start;
-  padding: var(--ds-space-8);
-  margin: var(--ds-space-5);
-  border: 1px dashed var(--ds-color-border);
-  border-radius: var(--ds-radius-lg);
+  justify-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--ds-space-10) var(--ds-space-6);
+  margin: var(--ds-space-4);
+  border: 0;
+  border-radius: var(--ds-radius-md);
+  background: transparent;
+}
+
+/* Tailwind prefix: utility class is `tw:console-scope`, not `.console-scope`. */
+[class~='tw:console-scope'] .ds-empty {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 0.375rem;
+  min-height: min(28rem, calc(100dvh - 12rem));
+  place-content: center;
+  margin: 0;
+  padding: 2.5rem 1.5rem 4rem;
+  border-radius: var(--ds-console-card-radius, 0.75rem);
+  border: 1px solid var(--ds-console-border, var(--ds-color-border));
   background: var(--ds-color-surface);
+}
+
+/* Nested empties stay flush inside index/filter panels ( IndexTable empty). */
+[class~='tw:console-scope'] .orders__index .ds-empty,
+[class~='tw:console-scope'] [class~='tw:console-list-panel'] .ds-empty,
+[class~='tw:console-scope'] [class~='tw:console-index-table'] .ds-empty {
+  min-height: 16rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 3rem 1.5rem;
+}
+
+[class~='tw:console-scope'] .ds-empty__actions {
+  justify-content: center;
+  margin-top: var(--ds-space-4);
+}
+
+/* Button weight: pierce emulated encapsulation to match console medium CTA density. */
+[class~='tw:console-scope'] .ds-button {
+  font-weight: 550 !important;
+  letter-spacing: 0 !important;
+}
+
+[class~='tw:console-scope'] .ds-page-header {
+  margin-bottom: var(--ds-space-3);
+  align-items: center;
+  min-height: 1.75rem;
+}
+
+[class~='tw:console-scope'] .ds-page-header__title {
+  font-size: var(--ds-console-type-page) !important;
+  font-weight: var(--ds-console-type-page-weight, 500) !important;
+  line-height: 1.75rem !important; /* 28px — heading row */
+  letter-spacing: -0.01em;
+  color: var(--ds-console-text, #101010);
+}
+
+[class~='tw:console-scope'] .ds-page-header__icon {
+  color: var(--ds-console-text, #101010);
+}
+
+[class~='tw:console-scope'] .ds-page-header__description {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: var(--ds-console-text-secondary, #4a4a4a);
+}
+
+[class~='tw:console-scope'] .ds-empty__title {
+  margin: 0;
+  max-width: 25rem;
+  font-size: 0.9375rem; /* heading-large */
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: var(--ds-console-text, #101010);
+}
+
+[class~='tw:console-scope'] .ds-empty__body {
+  margin: 0;
+  max-width: 25rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: var(--ds-console-text-secondary, #4a4a4a);
 }
 
 .ds-empty__title {
@@ -70,4 +170,68 @@ button {
 .ds-empty__body {
   margin: 0;
   color: var(--ds-color-text-secondary);
+}
+
+/* condensed-rail tooltip ( + KeyboardKey --extraSmall). */
+.console-rail-tooltip {
+  position: fixed;
+  z-index: 80;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* space-200 */
+  min-height: 1.875rem; /* ~30px measured */
+  max-width: min(20rem, calc(100vw - 1rem));
+  padding: 0.3125rem 0.3125rem 0.3125rem 0.5rem; /* 5 5 5 8 — shortcut inset */
+  border-radius: 0.5rem;
+  background: #1a1a1a;
+  color: #eeeeee;
+  font-family: var(--ds-font-ui, Inter, system-ui, sans-serif);
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 450;
+  line-height: 1.25rem;
+  letter-spacing: -0.01em;
+  pointer-events: none;
+  box-shadow:
+    0 0.125rem 0.125rem -0.0625rem rgb(0 0 0 / 6%),
+    0 0.1875rem 0.25rem -0.125rem rgb(0 0 0 / 6%),
+    0 0.375rem 0.5rem -0.1875rem rgb(0 0 0 / 8%),
+    0 0 0 0.0625rem rgb(0 0 0 / 8%);
+}
+
+.console-rail-tooltip:has(.console-rail-tooltip__keys) {
+  padding-inline-end: 0.3125rem; /* tooltip-shortcut-inset */
+}
+
+.console-rail-tooltip__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.console-rail-tooltip__keys {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.25rem; /* space-100 */
+}
+
+.console-rail-tooltip__key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 1.25rem; /* space-500 */
+  height: 1.25rem;
+  margin: 0;
+  padding: 0.125rem 0.25rem; /* 2px 4px */
+  border: 0;
+  border-radius: 0.3125rem; /* 5px */
+  background: #2f2f2f;
+  color: #eeeeee;
+  font-family: inherit;
+  font-size: 0.625rem; /* 10px */
+  font-weight: 500;
+  line-height: 1;
 }

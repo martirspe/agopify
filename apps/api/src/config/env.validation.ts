@@ -127,6 +127,10 @@ class EnvironmentVariables {
   @ValidateIf((_env, value) => Boolean(value)) @Matches(/^([0-9a-fA-F]{64}|[A-Za-z0-9+/_-]{43}=?)$/)
   CHANNEL_CREDENTIALS_KEY?: string;
 
+  /** 32 bytes encrypting external commerce integration credentials (Integration Core). */
+  @ValidateIf((_env, value) => Boolean(value)) @Matches(/^([0-9a-fA-F]{64}|[A-Za-z0-9+/_-]{43}=?)$/)
+  INTEGRATION_CREDENTIALS_KEY?: string;
+
   @IsOptional()
   @IsString()
   INSTAGRAM_APP_SECRET?: string;
@@ -277,6 +281,9 @@ export function validateEnv(config: Record<string, unknown>) {
   }
   if (validated.CHANNEL_CREDENTIALS_KEY && !parseCredentialsKey(validated.CHANNEL_CREDENTIALS_KEY)) {
     throw new Error('CHANNEL_CREDENTIALS_KEY must be 32 bytes as 64 hex characters or base64');
+  }
+  if (validated.INTEGRATION_CREDENTIALS_KEY && !parseCredentialsKey(validated.INTEGRATION_CREDENTIALS_KEY)) {
+    throw new Error('INTEGRATION_CREDENTIALS_KEY must be 32 bytes as 64 hex characters or base64');
   }
   if (validated.META_WHATSAPP_CONFIG_ID) {
     if (!validated.META_APP_ID || !validated.META_APP_SECRET || !validated.META_VERIFY_TOKEN || !validated.CHANNEL_CREDENTIALS_KEY) throw new Error('WhatsApp Embedded Signup requires META_APP_ID, META_APP_SECRET, META_VERIFY_TOKEN and CHANNEL_CREDENTIALS_KEY');

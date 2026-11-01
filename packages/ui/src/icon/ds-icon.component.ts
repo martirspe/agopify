@@ -106,6 +106,14 @@ function isBrandIcon(name: DsIconName): name is DsBrandIconName {
     }
   `,
   styles: `
+    :host {
+      display: inline-flex;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+      vertical-align: middle;
+    }
     .ds-icon {
       display: block;
       flex-shrink: 0;
@@ -116,9 +124,9 @@ function isBrandIcon(name: DsIconName): name is DsBrandIconName {
 })
 export class DsIconComponent {
   readonly name = input.required<DsIconName>();
-  /** Icon box size in rem (default ~1.25). */
+  /** Icon box size in rem (default ~1.25 = 20px). Nav rail passes 1 (16px). */
   readonly size = input(1.25);
-  readonly strokeWidth = input(1.8);
+  readonly strokeWidth = input(1.75);
 
   protected readonly pixels = computed(() => this.size() * 16);
   protected readonly brandPath = computed(() => {

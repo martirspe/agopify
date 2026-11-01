@@ -1,11 +1,11 @@
-<section class="catalog tw:mx-auto tw:grid tw:w-full tw:max-w-page tw:gap-5" [class.catalog--editing]="editorOpen()">
+<section class="catalog tw:grid tw:w-full tw:min-w-0 tw:gap-5" [class.catalog--editing]="editorOpen()">
   @if (!editorOpen()) {
-    <header class="catalog__header">
-      <div>
-        <h1 class="tw:console-title">Productos</h1>
-        <p>Precios, disponibilidad e inventario para vender por chat y en tu tienda.</p>
-      </div>
-      <div class="catalog__actions">
+    <ds-page-header
+      title="Productos"
+      icon="package"
+      description="Precios, disponibilidad e inventario para vender por chat y en tu tienda."
+    >
+      <div dsPageActions class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
         <a routerLink="/app/inventory" class="tw:console-action-secondary"><ds-icon name="list" [size]="0.95" />Inventario</a>
         <ds-button
           type="button"
@@ -28,17 +28,13 @@
         </a>
         <ds-button type="button" (click)="openCreate()">Agregar producto</ds-button>
       </div>
-    </header>
+    </ds-page-header>
 
     @if (errorMessage() && !editorOpen() && !loadFailed()) {
-      <p class="tw:feedback tw:feedback-danger tw:m-0" role="alert">
-        {{ errorMessage() }}
-      </p>
+      <ds-banner tone="critical">{{ errorMessage() }}</ds-banner>
     }
     @if (successMessage()) {
-      <p class="tw:feedback tw:feedback-success tw:m-0" role="status">
-        {{ successMessage() }}
-      </p>
+      <ds-banner tone="success">{{ successMessage() }}</ds-banner>
     }
 
     @if (loading()) {
@@ -78,8 +74,8 @@
           <a routerLink="/app/inventory" class="tw:console-metric tw:no-underline"><span>Inventario<small>Gestionar unidades</small></span><ds-icon name="chevronRight" /></a>
         }
       </section>
-      <div class="tw:console-list-panel">
-        <div class="tw:flex tw:flex-wrap tw:gap-2 tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:p-3" role="group" aria-label="Filtrar por tipo">
+      <div class="tw:console-index-table">
+        <div class="tw:flex tw:flex-wrap tw:gap-2 tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:bg-canvas tw:p-3" role="group" aria-label="Filtrar por tipo">
           @for (option of kindOptions; track option.id) {
             <button
               type="button"
@@ -91,16 +87,16 @@
             </button>
           }
         </div>
-        <div class="tw:grid tw:gap-3 tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:p-4 tw:lg:grid-cols-3">
-          <label class="tw:grid tw:min-w-0 tw:gap-1 tw:text-caption tw:font-medium">Buscar productos
-            <span class="tw:flex tw:min-w-0 tw:items-center tw:gap-2 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:px-3 tw:focus-within:border-focus"><ds-icon name="search" class="tw:text-muted" /><input type="search" class="tw:console-field tw:console-field tw:border-0! tw:px-0!" placeholder="Nombre, SKU, marca o colección" maxlength="200" [value]="listState().query" (input)="setListFilter('q', $any($event.target).value)" /></span>
+        <div class="tw:flex tw:min-w-0 tw:flex-wrap tw:items-center tw:gap-2 tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:p-3">
+          <label class="tw:flex tw:min-w-0 tw:flex-1 tw:items-center tw:gap-2 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:bg-surface tw:px-3 tw:focus-within:border-focus">
+            <span class="tw:sr-only">Buscar productos</span>
+            <ds-icon name="search" class="tw:text-muted" />
+            <input type="search" class="tw:console-field tw:min-h-touch tw:border-0! tw:bg-transparent! tw:px-0!" placeholder="Nombre, SKU, marca o colección" maxlength="200" [value]="listState().query" (input)="setListFilter('q', $any($event.target).value)" />
           </label>
-          <div class="tw:grid tw:min-w-0 tw:grid-cols-2 tw:gap-3 tw:lg:col-span-2 tw:xl:grid-cols-4">
-            <label class="tw:grid tw:min-w-0 tw:gap-1 tw:text-caption tw:font-medium">Disponibilidad<ds-select><select [value]="listState().status" (change)="setListFilter('estado', $any($event.target).value)"><option value="todos">Todas</option><option value="disponibles">Habilitados</option><option value="pausados">No disponibles</option></select></ds-select></label>
-            <label class="tw:grid tw:min-w-0 tw:gap-1 tw:text-caption tw:font-medium">Inventario<ds-select><select [value]="listState().inventory || 'todos'" (change)="setListFilter('inventario', $any($event.target).value)"><option value="todos">Todo el inventario</option><option value="agotados">Sin stock</option></select></ds-select></label>
-            @if (storeActive()) { <label class="tw:grid tw:min-w-0 tw:gap-1 tw:text-caption tw:font-medium">Tienda web<ds-select><select [value]="listState().publication" (change)="setListFilter('tienda', $any($event.target).value)"><option value="todos">Todos</option><option value="visibles">Visibles</option><option value="ocultos">Ocultos</option></select></ds-select></label> }
-            <label class="tw:grid tw:min-w-0 tw:gap-1 tw:text-caption tw:font-medium">Ordenar por<ds-select><select [value]="listState().sort" (change)="setListFilter('orden', $any($event.target).value)"><option value="recientes">Más recientes</option><option value="antiguos">Más antiguos</option><option value="nombre">Nombre, A–Z</option><option value="nombre-desc">Nombre, Z–A</option></select></ds-select></label>
-          </div>
+          <ds-select><select aria-label="Disponibilidad" [value]="listState().status" (change)="setListFilter('estado', $any($event.target).value)"><option value="todos">Disponibilidad</option><option value="disponibles">Habilitados</option><option value="pausados">No disponibles</option></select></ds-select>
+          <ds-select><select aria-label="Inventario" [value]="listState().inventory || 'todos'" (change)="setListFilter('inventario', $any($event.target).value)"><option value="todos">Inventario</option><option value="agotados">Sin stock</option></select></ds-select>
+          @if (storeActive()) { <ds-select><select aria-label="Tienda web" [value]="listState().publication" (change)="setListFilter('tienda', $any($event.target).value)"><option value="todos">Tienda web</option><option value="visibles">Visibles</option><option value="ocultos">Ocultos</option></select></ds-select> }
+          <ds-select><select aria-label="Ordenar por" [value]="listState().sort" (change)="setListFilter('orden', $any($event.target).value)"><option value="recientes">Más recientes</option><option value="antiguos">Más antiguos</option><option value="nombre">Nombre, A–Z</option><option value="nombre-desc">Nombre, Z–A</option></select></ds-select>
         </div>
         <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3 tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:px-4 tw:py-3">
           <span class="tw:text-caption tw:text-muted" role="status">{{ filteredProducts().length }} {{ filteredProducts().length === 1 ? 'resultado' : 'resultados' }} de {{ products().length }}</span>
@@ -162,14 +158,11 @@
         <ds-button type="button" variant="ghost" [disabled]="saving() || deleting() || uploading()" (click)="closeEditor()">Cancelar</ds-button>
         <ds-button type="submit" [disabled]="saving() || deleting() || uploading()">{{ saving() ? 'Guardando…' : 'Guardar' }}</ds-button>
       </ds-action-bar>
-      <header class="publish__top">
-        <div>
-          <button type="button" class="publish__back" [disabled]="saving() || deleting() || uploading()" (click)="closeEditor()">
-            ← Volver al catálogo
-          </button>
-          <h1 class="tw:console-title">{{ isEditing() ? 'Editar producto' : 'Agregar producto' }}</h1>
-        </div>
-        <div class="publish__actions">
+      <button type="button" class="publish__back" [disabled]="saving() || deleting() || uploading()" (click)="closeEditor()">
+        ← Volver al catálogo
+      </button>
+      <ds-page-header icon="package" [title]="isEditing() ? 'Editar producto' : 'Agregar producto'">
+        <div dsPageActions class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
           @if (isEditing()) {
             <ds-button
               type="button"
@@ -182,7 +175,7 @@
             </ds-button>
           }
         </div>
-      </header>
+      </ds-page-header>
 
       @if (errorMessage()) {
         <p class="tw:feedback tw:feedback-danger tw:m-0" role="alert">

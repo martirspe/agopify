@@ -1,14 +1,26 @@
-<section class="tw:mx-auto tw:grid tw:max-w-home tw:gap-6">
-  <header class="tw:grid tw:gap-2">
-    <h1 class="tw:console-title">Inicio</h1>
-    <p class="tw:m-0 tw:text-body tw:text-muted">Prepara tu negocio y sigue el avance de tus primeras ventas.</p>
-  </header>
+@if (assistantOpen()) {
+  <app-home-assistant-panel
+    [mode]="assistantMode()"
+    [title]="assistantTitle()"
+    [messages]="assistantMessages()"
+    [drafting]="assistantDrafting()"
+    (closed)="closeAssistant()"
+    (modeChange)="setAssistantMode($event)"
+    (newChat)="resetAssistantChat()"
+    (sent)="onAssistantSent($event)"
+    (plusAction)="onAssistantPlus($event)"
+  />
+}
+
+<section class="home" aria-labelledby="home-welcome-title" [attr.aria-hidden]="assistantOpen() && assistantMode() === 'full' ? 'true' : null">
   @if (loading()) {
     <div class="tw:grid tw:gap-4" aria-busy="true" role="status">
       <span class="tw:sr-only">Revisando tu avance…</span>
-      <div class="tw:console-card tw:console-list-skeleton" aria-hidden="true"><div></div><div></div><div></div></div>
-      <div class="tw:console-list-panel tw:console-list-skeleton" aria-hidden="true">
-        @for (item of items(); track item.id) { <div></div> }
+      <div class="tw:mx-auto tw:h-16 tw:w-full tw:max-w-[38.75rem] tw:rounded-[1.625rem] tw:bg-canvas" aria-hidden="true"></div>
+      <div class="home-cards" aria-hidden="true">
+        <div class="home-card tw:console-list-skeleton"><div></div><div></div><div></div></div>
+        <div class="home-card tw:console-list-skeleton"><div></div><div></div><div></div></div>
+        <div class="home-card tw:console-list-skeleton"><div></div><div></div><div></div></div>
       </div>
     </div>
   } @else if (errorMessage(); as error) {
@@ -17,54 +29,244 @@
       <ds-button variant="secondary" (click)="load()">Reintentar</ds-button>
     </div>
   } @else {
-    <section class="tw:console-card tw:grid tw:gap-5" aria-labelledby="setup-next-title">
-      <div class="tw:flex tw:items-start tw:gap-3">
-        <span class="tw:grid tw:size-touch tw:shrink-0 tw:place-items-center tw:rounded-md tw:bg-ink tw:text-primary"><ds-icon [name]="nextItem() ? 'sparkles' : 'circleCheck'" /></span>
-        <div class="tw:min-w-0 tw:flex-1">
-          <p class="tw:m-0 tw:text-caption tw:text-muted">{{ nextItem() ? 'Tu siguiente paso' : 'Primeros pasos completados' }}</p>
-          <h2 id="setup-next-title" class="tw:mt-1 tw:mb-0 tw:text-section tw:font-semibold tw:leading-snug">{{ nextItem()?.title ?? 'Continúa con tus ventas' }}</h2>
-          <p class="tw:mt-2 tw:mb-0 tw:text-body tw:leading-relaxed tw:text-muted">{{ nextItem()?.body ?? 'Revisa tus conversaciones y pedidos para dar seguimiento a tus clientes.' }}</p>
-        </div>
-      </div>
-      <div class="tw:flex tw:flex-col tw:gap-4 tw:sm:flex-row tw:sm:items-center">
-        <div class="tw:grid tw:min-w-0 tw:flex-1 tw:gap-2">
-          <div class="tw:flex tw:items-center tw:justify-between tw:gap-3 tw:text-caption"><span class="tw:text-muted">{{ completedCount() }} de {{ items().length }} pasos completados</span><span class="tw:font-semibold tw:tabular-nums">{{ progressPercent() }}%</span></div>
-          <progress class="tw:setup-progress" role="progressbar" aria-label="Avance de primeros pasos" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="progressPercent()" [value]="progressPercent()" max="100"></progress>
-        </div>
-        @if (nextItem(); as next) { <a [routerLink]="next.link" class="tw:console-action-link">{{ next.cta }}<ds-icon name="arrowRight" [size]="0.9" /></a> }
-        @else { <a routerLink="/app/messages" class="tw:console-action-link">Ir a Mensajes<ds-icon name="arrowRight" [size]="0.9" /></a> }
-      </div>
-    </section>
-    @if (readyToSell()) { <div class="tw:feedback tw:feedback-success" role="status"><ds-icon name="check" /><span>Tu vendedor, catálogo y WhatsApp están configurados para atender a tus clientes.</span></div> }
-    <section class="tw:grid tw:gap-3" aria-labelledby="setup-checklist-title">
-      <h2 id="setup-checklist-title" class="tw:m-0 tw:text-section tw:font-semibold">Primeros pasos</h2>
-      <ol class="tw:console-list-panel tw:m-0 tw:list-none tw:p-0 tw:divide-y tw:divide-border">
-        @for (item of items(); track item.id; let index = $index) {
-          <li class="tw:flex tw:items-start tw:gap-3 tw:p-4 tw:sm:gap-4">
-            <span class="tw:grid tw:size-touch tw:shrink-0 tw:place-items-center tw:rounded-md tw:bg-canvas tw:text-muted" aria-hidden="true">
-              @if (item.done) { <ds-icon name="circleCheck" class="tw:text-success-text" /> } @else { <span class="tw:text-body tw:font-semibold tw:tabular-nums">{{ index + 1 }}</span> }
-            </span>
-            <div class="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:gap-3 tw:sm:flex-row tw:sm:items-center tw:sm:justify-between">
-              <div class="tw:min-w-0 tw:flex-1">
-                <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-x-3 tw:gap-y-1"><h3 class="tw:m-0 tw:text-body tw:font-semibold">{{ item.title }}</h3><span class="tw:text-caption tw:text-muted">{{ item.done ? 'Completado' : nextStepId() === item.id ? 'Siguiente paso' : 'Pendiente' }}</span></div>
-                <p class="tw:mt-1 tw:mb-0 tw:text-body tw:leading-relaxed tw:text-muted">{{ item.body }}</p>
-              </div>
-              <a [routerLink]="item.link" class="tw:console-action-secondary tw:shrink-0 tw:self-start"><span class="tw:sr-only">{{ item.title }}. </span>{{ item.done ? 'Revisar' : item.cta }}<ds-icon name="arrowRight" [size]="0.9" /></a>
+    <header class="home__hero">
+      <h1 id="home-welcome-title" class="home__welcome">
+        <span class="home__welcome-line">¡Te damos la bienvenida a VendedorIA!</span>
+        <span class="home__welcome-line">Configuremos <span class="home__store">{{ businessName() }}</span></span>
+      </h1>
+
+      <div
+        class="home-assistant"
+        [class.home-assistant--active]="composerActive()"
+        [class.home-assistant--suggesting]="promptFocused() && !homePlusOpen()"
+        (mousedown)="onComposerActivate()"
+        (focusin)="onComposerFocusIn()"
+        (focusout)="onComposerFocusOut($event)"
+      >
+        <div class="home-assistant__composer-wrap">
+          <form class="home-assistant__field" (submit)="submitPrompt($event)" aria-label="Asistente de configuración">
+            <label class="tw:sr-only" for="home-assistant-input">¿En qué te puedo ayudar?</label>
+            <textarea
+              id="home-assistant-input"
+              class="home-assistant__input"
+              name="assistantPrompt"
+              rows="2"
+              enterkeyhint="send"
+              data-focus-chrome="parent"
+              [placeholder]="placeholder()"
+              [ngModel]="prompt()"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="prompt.set($event)"
+              (keydown.enter)="onPromptEnter($event)"
+              (focus)="onPromptFocus()"
+              (blur)="onPromptBlur()"
+            ></textarea>
+            @if (homeDictationError(); as err) {
+              <p class="home-assistant__dictation-error" role="alert">{{ err }}</p>
+            }
+            <div class="home-assistant__toolbar" [attr.data-dictating]="homeDictating() ? '' : null">
+              @if (homeDictating()) {
+                <div class="home-assistant__dictation" role="status" aria-live="polite" aria-label="Dictando">
+                  <button type="button" class="home-assistant__dictation-cancel" aria-label="Cancelar dictado" (click)="cancelHomeDictation()">
+                    <ds-icon name="x" [size]="0.85" />
+                  </button>
+                  <div class="home-assistant__waveform" aria-hidden="true">
+                    @for (_ of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]; track $index) {
+                      <span class="home-assistant__waveform-bar" [style.animation-delay]="($index % 8) * 90 + 'ms'"></span>
+                    }
+                  </div>
+                  <button type="button" class="home-assistant__dictation-confirm" aria-label="Listo" (click)="confirmHomeDictation()">
+                    <ds-icon name="check" [size]="0.85" />
+                  </button>
+                </div>
+              } @else {
+                <span class="home-assistant__character" aria-hidden="true">
+                  <ds-icon name="sparkles" [size]="0.75" />
+                </span>
+                <div class="home-assistant__tools">
+                  <button type="button" class="home-assistant__pill" (click)="openSearch()">
+                    <ds-icon name="history" [size]="0.85" />
+                    Recientes
+                  </button>
+                  <div class="home-assistant__plus-anchor">
+                    @if (homePlusOpen()) {
+                      <div
+                        class="home-assistant__plus-menu"
+                        role="menu"
+                        aria-label="Acciones del asistente"
+                        (mousedown)="$event.preventDefault()"
+                      >
+                        @for (item of homePlusItems; track item.id) {
+                          @if (item.dividerBefore) {
+                            <div class="home-assistant__plus-divider" role="separator"></div>
+                          }
+                          @if (item.kind === 'toggle') {
+                            <div class="home-assistant__plus-item home-assistant__plus-item--toggle" role="none">
+                              <span class="home-assistant__plus-icon" aria-hidden="true"><ds-icon [name]="item.icon" [size]="1.25" /></span>
+                              <span class="home-assistant__plus-label">{{ item.label }}</span>
+                              <button
+                                type="button"
+                                class="home-assistant__switch"
+                                role="switch"
+                                [attr.aria-checked]="generateApps()"
+                                [attr.aria-label]="item.label"
+                                (click)="toggleGenerateApps()"
+                              >
+                                <span class="home-assistant__switch-thumb" aria-hidden="true"></span>
+                              </button>
+                              <button type="button" class="home-assistant__plus-info" aria-label="Más información" disabled>
+                                <ds-icon name="info" [size]="1.25" />
+                              </button>
+                            </div>
+                          } @else {
+                            <button
+                              type="button"
+                              class="home-assistant__plus-item"
+                              role="menuitem"
+                              [disabled]="item.disabled"
+                              (click)="onHomePlus(item.id)"
+                            >
+                              <span class="home-assistant__plus-icon" aria-hidden="true"><ds-icon [name]="item.icon" [size]="1.25" /></span>
+                              <span class="home-assistant__plus-label">{{ item.label }}</span>
+                              @if (item.hint || item.trailingIcon || item.submenu) {
+                                <span class="home-assistant__plus-meta" aria-hidden="true">
+                                  @if (item.hint) {
+                                    <span class="home-assistant__plus-hint">{{ item.hint }}</span>
+                                  }
+                                  @if (item.trailingIcon) {
+                                    <span class="home-assistant__plus-trailing">
+                                      <ds-icon [name]="item.trailingIcon" [size]="1.125" />
+                                    </span>
+                                  }
+                                  @if (item.submenu) {
+                                    <ds-icon name="chevronRight" [size]="1.25" />
+                                  }
+                                </span>
+                              }
+                            </button>
+                          }
+                        }
+                      </div>
+                    }
+                    <button
+                      type="button"
+                      class="home-assistant__icon-btn"
+                      aria-label="Agregar archivos y más"
+                      [attr.aria-expanded]="homePlusOpen()"
+                      (mousedown)="$event.preventDefault()"
+                      (click)="toggleHomePlus($event)"
+                    >
+                      <ds-icon name="plus" [size]="0.9" />
+                    </button>
+                  </div>
+                  @if (prompt().trim()) {
+                    <button type="submit" class="home-assistant__icon-btn home-assistant__send" aria-label="Enviar">
+                      <ds-icon name="arrowUp" [size]="0.85" />
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="home-assistant__icon-btn"
+                      aria-label="Dictar"
+                      [disabled]="!homeDictationSupported()"
+                      (click)="startHomeDictation()"
+                    >
+                      <ds-icon name="mic" [size]="0.9" />
+                    </button>
+                  }
+                </div>
+              }
             </div>
-          </li>
-        }
-      </ol>
-    </section>
-    @if (agentReady()) {
-      <aside class="tw:flex tw:flex-col tw:gap-3 tw:sm:flex-row tw:sm:items-center tw:sm:justify-between">
-        <div><h2 class="tw:m-0 tw:text-body tw:font-semibold">Prueba cómo atiende tu vendedor</h2><p class="tw:mt-1 tw:mb-0 tw:text-body tw:text-muted">Configuración: {{ agentScore() }}/{{ agentMaxScore() }} puntos. Las pruebas no envían mensajes a clientes reales.</p></div>
-        <a class="tw:console-action-secondary tw:shrink-0 tw:self-start" routerLink="/app/seller/profile" [queryParams]="{ playground: '1' }">Probar vendedor<ds-icon name="arrowRight" [size]="0.9" /></a>
-      </aside>
+          </form>
+        </div>
+
+        <ul
+          class="home-assistant__suggestions"
+          aria-label="Sugerencias"
+          [attr.aria-hidden]="promptFocused() && !homePlusOpen() ? null : 'true'"
+          [attr.inert]="promptFocused() && !homePlusOpen() ? null : ''"
+        >
+          @for (suggestion of suggestions(); track suggestion.id) {
+            <li>
+              <button
+                type="button"
+                class="home-assistant__suggestion"
+                [tabIndex]="promptFocused() && !homePlusOpen() ? 0 : -1"
+                (mousedown)="$event.preventDefault()"
+                (click)="applySuggestion(suggestion)"
+              >
+                <span class="home-assistant__suggestion-arrow" aria-hidden="true">→</span>
+                <span class="home-assistant__suggestion-label">{{ suggestion.label }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+    </header>
+
+    @if (readyToSell()) {
+      <div class="home-ready tw:feedback tw:feedback-success" role="status">
+        <ds-icon name="check" />
+        <span>Tu vendedor, catálogo y WhatsApp están configurados para atender a tus clientes.</span>
+      </div>
     }
-    @if (!readyToSell()) {
-      <aside class="tw:flex tw:flex-col tw:gap-3 tw:border-0 tw:border-t tw:border-solid tw:border-divider tw:pt-5 tw:sm:flex-row tw:sm:items-center tw:sm:justify-between">
-        <div class="tw:min-w-0"><h2 class="tw:m-0 tw:text-body tw:font-semibold">¿Necesitas ayuda?</h2><p class="tw:mt-1 tw:mb-0 tw:text-body tw:text-muted">Agenda una sesión para configurar WhatsApp, catálogo y tienda.</p></div>
-        <a class="tw:console-action-secondary tw:shrink-0 tw:self-start" [href]="onboardingUrl" target="_blank" rel="noopener">Agendar sesión<ds-icon name="externalLink" [size]="0.9" /><span class="tw:sr-only"> (se abre en una pestaña nueva)</span></a>
+
+    <section class="home-cards" aria-labelledby="home-cards-title">
+      <h2 id="home-cards-title" class="tw:sr-only">Primeros pasos</h2>
+      @for (card of featuredCards(); track card.id) {
+        <a class="home-card" [routerLink]="card.link">
+          <div class="home-card__media" [class.home-card__media--done]="card.done" aria-hidden="true">
+            <span class="home-card__media-icon"><ds-icon [name]="card.icon" [size]="2" /></span>
+          </div>
+          <div class="home-card__body">
+            <h3 class="home-card__title">{{ card.title }}</h3>
+            <p class="home-card__body-text">{{ card.body }}</p>
+          </div>
+          <div class="home-card__action">
+            <span class="home-card__cta">{{ card.done ? 'Revisar' : card.cta }}</span>
+          </div>
+        </a>
+      }
+
+      @if (!readyToSell()) {
+        <a class="home-card home-card--optimize" [href]="onboardingUrl" target="_blank" rel="noopener">
+          <div class="home-card__media home-card__media--tasks" aria-hidden="true">
+            <span class="home-card__tasks-count">
+              {{ completedCount() }} {{ completedCount() === 1 ? 'tarea completada' : 'tareas completadas' }}
+            </span>
+          </div>
+          <div class="home-card__body">
+            <h3 class="home-card__title">Optimiza {{ businessName() }}</h3>
+            <p class="home-card__body-text">Prepárate para vender con una guía paso a paso, personalizada para tu negocio.</p>
+          </div>
+          <div class="home-card__action">
+            <span class="home-card__cta">Comenzar<span class="tw:sr-only"> (se abre en una pestaña nueva)</span></span>
+          </div>
+        </a>
+      }
+    </section>
+
+    <p class="tw:sr-only" id="setup-next-title">{{ nextItem()?.title ?? 'Primeros pasos completados' }}</p>
+    <progress
+      class="tw:sr-only"
+      role="progressbar"
+      aria-label="Avance de primeros pasos"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      [attr.aria-valuenow]="progressPercent()"
+      [value]="progressPercent()"
+      max="100"
+    ></progress>
+
+    @if (agentReady()) {
+      <aside class="home-footer">
+        <div>
+          <h2 class="tw:m-0 tw:text-body tw:font-semibold">Prueba cómo atiende tu vendedor</h2>
+          <p class="tw:mt-1 tw:mb-0 tw:text-body tw:text-muted">Configuración: {{ agentScore() }}/{{ agentMaxScore() }} puntos. Las pruebas no envían mensajes a clientes reales.</p>
+        </div>
+        <a class="tw:console-action-secondary tw:shrink-0 tw:self-start" routerLink="/app/seller/profile" [queryParams]="{ playground: '1' }">
+          Probar vendedor<ds-icon name="arrowRight" [size]="0.9" />
+        </a>
       </aside>
     }
   }

@@ -62,7 +62,7 @@ Cada combinación tiene SKU, precio, imagen, stock y disponibilidad. `priceInher
 
 Los lectores de pedidos, agentes, búsqueda, filtros y tienda comprenden los cinco ejes. Las tres parejas antiguas se conservan y siguen leyéndose cuando `options` es nulo. Los tres primeros ejes se escriben también en esas columnas para compatibilidad. Una combinación retirada que todavía está reservada por un pedido pendiente produce conflicto; se puede desactivar mientras se espera su liberación.
 
-La investigación usó documentación primaria: Mercado Libre describe atributos permitidos por categoría, combinación única, SKU/stock/precio/fotos y preservación de IDs al actualizar; esos conceptos se adaptaron al modelo existente. [Documentación oficial de variaciones](https://global-selling.mercadolibre.com/devsite/manage-questions-answers-global-selling/variations-global-selling). Shopify también representa una variante mediante opciones seleccionadas y su identidad, inventario, precio e imagen; las compras recurrentes tienen un contrato separado. [ProductVariant en Shopify](https://shopify.dev/docs/api/storefront/latest/objects/productvariant).
+La investigación usó documentación primaria: Mercado Libre describe atributos permitidos por categoría, combinación única, SKU/stock/precio/fotos y preservación de IDs al actualizar; esos conceptos se adaptaron al modelo existente. [Documentación oficial de variaciones](https://global-selling.mercadolibre.com/devsite/manage-questions-answers-global-selling/variations-global-selling). El mismo patrón (opciones → identidad de variante con inventario, precio e imagen) es estándar en ecommerce; las compras recurrentes quedan fuera de este contrato.
 
 ### Clasificación y atributos
 

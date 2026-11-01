@@ -1,12 +1,5 @@
 <section class="store tw:mx-auto tw:w-full tw:min-w-0" [class.tw:max-w-form]="section() !== 'temas'" [class.tw:max-w-page]="section() === 'temas'">
-  <header class="store__header">
-    <div>
-      <p class="tw:console-eyebrow">Tienda web</p>
-      <h1 class="tw:console-title">{{ sectionTitle() }}</h1>
-      <p>{{ sectionDescription() }}</p>
-    </div>
-
-  </header>
+  <ds-page-header [title]="sectionTitle()" [description]="sectionDescription()" [icon]="sectionIcon()" />
     @if (!loading() && !loadFailed() && active() && view(); as v) {
       <ds-action-bar label="Acciones de tienda">
         <span dsActionStatus role="status">{{ saving() ? 'Guardando configuración…' : hasChanges() ? 'Configuración sin guardar' : v.availability.public ? 'Tienda visible' : isPublished() ? 'Tienda pausada' : 'Tienda en borrador' }}</span>

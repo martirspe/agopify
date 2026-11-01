@@ -1,42 +1,45 @@
-<section class="orders tw:mx-auto tw:w-full tw:max-w-page tw:min-w-0">
-  <header class="orders__header">
-    <div>
-      <h1 class="tw:console-title">Pedidos</h1>
-      <p>
-        Cobra, prepara y sigue cada venta desde un solo lugar.
-      </p>
-    </div>
-    <div class="orders__header-actions">
-      @if (!loading() && !loadFailed() && mockMode()) {
-        <span class="tw:console-filter-chip tw:bg-warning/10 tw:text-warning-text">Pagos en modo de prueba</span>
-      }
+<section class="orders tw:grid tw:w-full tw:min-w-0 tw:gap-4">
+  <ds-page-header title="Pedidos" icon="shoppingBag" class="tw:mb-0!">
+    <div dsPageActions class="orders__header-actions tw:flex tw:flex-wrap tw:items-center tw:gap-2">
       <ds-button type="button" [disabled]="loading() || loadFailed()" (click)="openCreate()">Nuevo pedido</ds-button>
     </div>
-  </header>
+  </ds-page-header>
 
+  @if (!loading() && !loadFailed() && mockMode()) {
+    <ds-banner tone="warning" title="Pagos en modo de prueba">
+      Los cobros de esta vista usan credenciales de prueba. No se mueve dinero real.
+    </ds-banner>
+  }
   @if (errorMessage() && !loadFailed() && !createOpen() && !selected(); as error) {
-    <div class="tw:feedback tw:feedback-danger" role="alert">
-      <ds-icon name="alert" />
-      <span>{{ error }}</span>
-    </div>
+    <ds-banner tone="critical"><span>{{ error }}</span></ds-banner>
   }
   @if (successMessage(); as success) {
-    <div class="tw:feedback tw:feedback-success" role="status">
-      <ds-icon name="check" />
-      <span>{{ success }}</span>
-    </div>
+    <ds-banner tone="success"><span>{{ success }}</span></ds-banner>
   }
 
-  @if (!loading() && !loadFailed()) {
-    <section class="tw:grid tw:gap-3 tw:sm:grid-cols-3" aria-label="Resumen de pedidos en esta vista">
+  @if (!loading() && !loadFailed() && (summary().total > 0 || hasFilters())) {
+    <section class="tw:mb-4 tw:grid tw:gap-3 tw:sm:grid-cols-3" aria-label="Resumen de pedidos en esta vista">
       <div class="tw:console-metric"><span>Pedidos mostrados<small>{{ hasFilters() ? 'Con los filtros actuales' : tab() === 'new' ? 'Borradores, por pagar y pagados' : 'Todos los estados' }}</small></span><strong>{{ summary().total }}</strong></div>
       <div class="tw:console-metric"><span>Por cobrar<small>En esta vista</small></span><strong class="tw:text-warning-text">{{ summary().awaitingPayment }}</strong></div>
       <div class="tw:console-metric"><span>Por preparar<small>Pagados en esta vista</small></span><strong class="tw:text-success-text">{{ summary().awaitingFulfillment }}</strong></div>
     </section>
   }
 
-  <div class="tw:console-list-panel">
-  <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3 tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:p-3">
+  @if (loading()) {
+    <div role="status" aria-busy="true" aria-label="Cargando pedidos" class="tw:console-list-skeleton">@for (row of [1, 2, 3, 4]; track row) { <div aria-hidden="true"></div> }</div>
+  } @else if (loadFailed()) {
+    <ds-empty-state title="No pudimos cargar los pedidos" body="Revisa tu conexión y vuelve a intentarlo."><ds-button variant="secondary" (click)="bootstrap()">Reintentar</ds-button></ds-empty-state>
+  } @else if (filteredOrders().length === 0 && !hasFilters()) {
+    <ds-empty-state
+      [title]="tab() === 'new' ? 'No hay pedidos pendientes' : 'Aún no hay pedidos'"
+      [body]="tab() === 'new' ? 'Aquí aparecen los borradores y pedidos por cobrar o preparar. Puedes revisar el historial o crear una nueva venta.' : 'Los pedidos de tu tienda y tus conversaciones aparecerán aquí. También puedes crear uno manualmente.'"
+    >
+      @if (tab() === 'new') { <ds-button type="button" variant="secondary" (click)="setTab('all')">Ver todos los pedidos</ds-button> }
+      <ds-button type="button" (click)="openCreate()">Crear pedido</ds-button>
+    </ds-empty-state>
+  } @else {
+  <div class="orders__index tw:min-w-0 tw:overflow-hidden tw:rounded-card tw:border tw:border-solid tw:border-border tw:bg-surface">
+  <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3 tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:bg-canvas tw:px-3 tw:py-2">
     <div class="tabs" role="group" aria-label="Vista de pedidos">
       <button
         type="button"
@@ -62,36 +65,34 @@
     </div>
   </div>
 
-  <div class="tw:grid tw:gap-3 tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:p-4 tw:sm:grid-cols-3">
-    <label class="tw:grid tw:min-w-0 tw:gap-1 tw:text-caption tw:font-medium tw:sm:col-span-2">Buscar pedidos
-      <span class="tw:flex tw:min-w-0 tw:items-center tw:gap-2 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:px-3 tw:focus-within:border-focus">
-      <ds-icon name="search" />
+  <div class="tw:flex tw:min-w-0 tw:flex-wrap tw:items-center tw:gap-2 tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:p-3">
+    <label class="tw:flex tw:min-w-0 tw:flex-1 tw:items-center tw:gap-2 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:bg-surface tw:px-3 tw:focus-within:border-focus">
+      <span class="tw:sr-only">Buscar pedidos</span>
+      <ds-icon name="search" [size]="1" />
       <input
         type="search"
         aria-label="Buscar pedidos"
         placeholder="Buscar por cliente, teléfono o ID…"
-        class="tw:console-field tw:border-0! tw:px-0!"
+        class="tw:console-field tw:min-h-touch tw:border-0! tw:bg-transparent! tw:px-0!"
         maxlength="200"
         [value]="query()"
         (input)="onSearch($any($event.target).value)"
       />
-      </span>
     </label>
-
-    <label class="tw:grid tw:min-w-0 tw:gap-1 tw:text-caption tw:font-medium">
-      Estado
+    <label class="tw:grid tw:min-w-40 tw:gap-1 tw:text-caption tw:font-medium">
+      <span class="tw:sr-only">Estado</span>
       <ds-select><select
         [value]="statusFilter()"
         (change)="onStatusFilter($any($event.target).value)"
+        aria-label="Filtrar por estado"
       >
-        <option value="ALL">Todos</option>
+        <option value="ALL">Todos los estados</option>
         @for (column of columns; track column.id) {
           <option [value]="column.id">{{ column.label }}</option>
         }
         <option value="CANCELLED">Cancelado</option>
       </select></ds-select>
     </label>
-
   </div>
 
   @if (hasFilters()) {
@@ -104,22 +105,8 @@
     </div>
   }
 
-  @if (loading()) {
-    <div role="status" aria-busy="true" aria-label="Cargando pedidos" class="tw:console-list-skeleton">@for (row of [1, 2, 3, 4]; track row) { <div aria-hidden="true"></div> }</div>
-  } @else if (loadFailed()) {
-    <ds-empty-state title="No pudimos cargar los pedidos" body="Revisa tu conexión y vuelve a intentarlo."><ds-button variant="secondary" (click)="bootstrap()">Reintentar</ds-button></ds-empty-state>
-  } @else if (filteredOrders().length === 0) {
-    @if (hasFilters()) {
+  @if (filteredOrders().length === 0) {
       <ds-empty-state title="No hay coincidencias" body="No encontramos pedidos con esta búsqueda y estado. Limpia los filtros para volver a la lista."><ds-button variant="secondary" (click)="clearFilters()">Limpiar filtros</ds-button></ds-empty-state>
-    } @else {
-    <ds-empty-state
-      [title]="tab() === 'new' ? 'No hay pedidos pendientes' : 'Aún no hay pedidos'"
-      [body]="tab() === 'new' ? 'Aquí aparecen los borradores y pedidos por cobrar o preparar. Puedes revisar el historial o crear una nueva venta.' : 'Los pedidos de tu tienda y tus conversaciones aparecerán aquí. También puedes crear uno manualmente.'"
-    >
-      @if (tab() === 'new') { <ds-button type="button" variant="secondary" (click)="setTab('all')">Ver todos los pedidos</ds-button> }
-      <ds-button type="button" (click)="openCreate()">Crear pedido</ds-button>
-    </ds-empty-state>
-    }
   } @else if (view() === 'kanban') {
     <div class="kanban tw:m-4" tabindex="0" role="region" aria-label="Pedidos por estado">
       @for (column of kanbanBoard(); track column.id) {
@@ -156,7 +143,7 @@
       }
     </div>
   } @else {
-    <div class="table-wrap tw:border-0! tw:rounded-none! tw:hidden tw:md:block" role="region" aria-label="Pedidos, tabla desplazable" tabindex="0">
+    <div class="table-wrap tw:console-index-table tw:border-0! tw:rounded-none! tw:hidden tw:md:block" role="region" aria-label="Pedidos, tabla desplazable" tabindex="0">
       <table>
         <thead>
           <tr>
@@ -202,6 +189,7 @@
     </ul>
   }
   </div>
+  }
 
   @if (selected() || detailLoading() || detailFailed()) {
     <dialog dsModal (dsModalClose)="closeDetail()" class="drawer tw:m-0 tw:ml-auto tw:max-h-none tw:max-w-full tw:border-0 tw:p-0 tw:backdrop:bg-overlay" aria-label="Detalle del pedido">

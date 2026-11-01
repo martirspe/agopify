@@ -9,7 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { LiveApiService, TikTokStatus } from '../../core/api/live-api.service';
-import { DsButtonComponent, DsConfirmService, DsActionBarComponent, DsFormSectionComponent, DsSelectComponent, DsDisclosureComponent, DsEmptyStateComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsConfirmService, DsActionBarComponent, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent, DsEmptyStateComponent } from '@vendedoria/ui';
 import { DsIconComponent } from '@vendedoria/ui';
 import type { IntegrationKey } from '../../core/api/billing-api.service';
 import { IntegrationState, IntegrationsApiService } from '../../core/api/integrations-api.service';
@@ -62,7 +62,7 @@ type IntegrationCard = {
 @Component({
   selector: 'app-integrations-page',
   standalone: true,
-  imports: [DatePipe, DsButtonComponent, DsIconComponent, DsActionBarComponent, DsFormSectionComponent, DsSelectComponent, DsDisclosureComponent, DsEmptyStateComponent],
+  imports: [DatePipe, DsButtonComponent, DsIconComponent, DsActionBarComponent, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent, DsEmptyStateComponent],
   templateUrl: './integrations.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -164,12 +164,44 @@ export class IntegrationsPage {
         link: '/app/payments',
       },
       {
+        id: 'magento',
+        name: 'Magento / Adobe Commerce',
+        category: 'E-commerce',
+        status: 'ready',
+        summary: 'Importa productos configurables, precios e inventario al catálogo unificado.',
+        nextStep: 'Conecta con access token y lanza la importación inicial.',
+        link: '/app/commerce-integrations',
+        actions: [
+          { label: 'Conectar Magento', link: '/app/commerce-integrations', disabled: false },
+        ],
+      },
+      {
+        id: 'woocommerce',
+        name: 'WooCommerce',
+        category: 'E-commerce',
+        status: 'ready',
+        summary: 'Sincroniza productos variables, stock y webhooks de cambios.',
+        nextStep: 'Conecta con consumer key/secret y configura el webhook.',
+        link: '/app/commerce-integrations',
+        actions: [
+          { label: 'Conectar WooCommerce', link: '/app/commerce-integrations', disabled: false },
+        ],
+      },
+      {
         id: 'shopify',
         name: 'Shopify',
         category: 'E-commerce',
         status: 'waitlist',
-        summary: 'El conector con Shopify no está disponible para activar.',
-        nextStep: 'Aún no disponible. Mientras tanto, carga tus productos en Productos.',
+        summary: 'Conector mapeado en el Integration Core; activación en un hito posterior.',
+        nextStep: 'Mientras tanto, usa Magento, WooCommerce o carga productos en Productos.',
+      },
+      {
+        id: 'prestashop',
+        name: 'PrestaShop',
+        category: 'E-commerce',
+        status: 'waitlist',
+        summary: 'Conector mapeado sobre la Webservice API; aún no disponible para activar.',
+        nextStep: 'Usa Magento o WooCommerce, o carga el catálogo en Productos.',
       },
       {
         id: 'shipping',

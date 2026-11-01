@@ -1,5 +1,5 @@
-<section class="tw:mx-auto tw:grid tw:w-full tw:min-w-0 tw:max-w-page tw:gap-5">
-  <header><p class="tw:console-eyebrow">Conexiones</p><h1 class="tw:console-title">Integraciones</h1><p class="tw:mt-2 tw:max-w-prose tw:text-sm tw:text-muted">Activa las funciones de tu plan y conecta los servicios de tu negocio. Después de activar una función, configúrala desde el menú.</p></header>
+<section class="tw:grid tw:w-full tw:min-w-0 tw:gap-5">
+  <ds-page-header title="Integraciones" icon="plug" description="Activa las funciones de tu plan y conecta los servicios de tu negocio. Después de activar una función, configúrala desde el menú." />
   @if (actionError(); as error) { <div class="tw:feedback tw:feedback-danger" role="alert"><ds-icon name="alert" /><span>{{ error }}</span></div> }
   @if (actionSuccess(); as success) { <div class="tw:feedback tw:feedback-success" role="status"><ds-icon name="check" /><span>{{ success }}</span></div> }
   <ds-action-bar label="Acciones de integraciones">

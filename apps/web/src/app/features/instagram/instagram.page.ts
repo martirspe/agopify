@@ -2,7 +2,7 @@ import { DsActionBarComponent } from '@vendedoria/ui';
 import { DsEmptyStateComponent } from '@vendedoria/ui';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DsButtonComponent, DsDisclosureComponent, DsFormSectionComponent, DsConfirmService, DsIconComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsDisclosureComponent, DsFormSectionComponent, DsConfirmService, DsIconComponent, DsPageHeaderComponent } from '@vendedoria/ui';
 import { messageFrom } from '../../core/api/api-error';
 import { InstagramStatus, IntegrationsApiService } from '../../core/api/integrations-api.service';
 import { AuthApiService } from '../../core/auth/auth-api.service';
@@ -12,7 +12,7 @@ import { IntegrationGateComponent } from '../integrations/integration-gate.compo
 @Component({
   selector: 'app-instagram-page',
   standalone: true,
-  imports: [DsActionBarComponent, DsEmptyStateComponent, DsDisclosureComponent, DsFormSectionComponent, ReactiveFormsModule, DsButtonComponent, DsIconComponent, IntegrationGateComponent],
+  imports: [DsActionBarComponent, DsEmptyStateComponent, DsDisclosureComponent, DsFormSectionComponent, ReactiveFormsModule, DsButtonComponent, DsIconComponent, DsPageHeaderComponent, IntegrationGateComponent],
   templateUrl: './instagram.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

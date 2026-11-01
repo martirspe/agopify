@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+- Consola / Inicio: asistente en hoja blanca fija paralela al frame principal (inset 4px, radio 16, ancho 356, gap 4px); al abrir arranca en dock; expandir cubre el panel main (íconos maximize/minimize).
+- Consola / Inicio: Dictar en el composer (`mic` + barra Cancelar/waveform/Listo con Web Speech API en es-PE).
+- Consola / Inicio: sugerencias solo con foco en el campo de escritura; menú + anclado al botón (home y panel del asistente).
+- Consola / Inicio: feedback del chat con íconos copiar / me gusta / no me gusta (`copy`, `thumbsUp`, `thumbsDown`).
+- Consola: panel de chat del inicio renombrado a `assistant-panel` / `HomeAssistantPanel`; docs y tokens sin nombres/clases de referencia de competidores (salvo conectores ecommerce por nombre de plataforma).
+- Integration Core: infraestructura universal de conectores ecommerce (`commerce-integrations`) con registry, credenciales cifradas, sync asíncrono al catálogo unificado, webhooks WooCommerce y adaptadores Magento + WooCommerce (otros conectores mapeados en registry). Arquitectura: `INTEGRATION_CORE_ARCHITECTURE.md`.
+- Catálogo externo: Magento hidrata hijos configurables y WooCommerce variaciones; consola con resumen, sync, webhooks, preferencias, historial/reintento y UX alineada al design system.
+- Consola: tooltips del rail compacto (chip `#1a1a1a` + teclas CTRL/B·K); submenú contextual settings (240px); al abrir el submenú el rail queda en 60px y restaura la preferencia al salir; scrollbars sin flechas; atajo Ctrl+B.
+- Consola / Inicio: menú + del asistente (234×, pad 4, r12, ítems 31, switch, tipografía 13/`#101010`).
+- Consola: rail compacto (60; logo 40; search 32×36; ítems 32×30; divisores 16).
+- Consola: el panel blanco (`console-frame`) fijo al viewport; scroll solo dentro del workspace.
+- Consola: foco inset en campos; composers sin ring flotante; sin `!important` global de `:focus-visible`.
+- Consola / Inicio: home con bienvenida, composer (radio 26px, Recientes/+/Dictar) y tarjetas de primeros pasos (producto→tema→pagos→dominio→envío + vendedor/WhatsApp/chat/pedido, Optimiza al final).
+- Consola: menú de cuenta (popover blanco ~300px / radio 16); `tone=navigation` ya no pinta el panel con el gris del rail.
+- Consola: tipografía Inter Variable; íconos del rail 16px; search pill 220×36; modal de búsqueda 648×480 (overlay `#000000b5`, radio 24).
+- Consola: shell (rail `#0a0a0a`, frame 16px inset 4px, primario `#C8F542` solo en CTAs/logo); sidebar 220/60; empty de Pedidos sin filtros anidados.
+- Dependencias: Jest 30.5.2 y override de `glob` ^13 eliminan los avisos deprecados de `glob`/`inflight` en `npm ci` (Docker/build); `allowScripts` aprueba Prisma, esbuild y nativos necesarios para el arranque.
 - AI Core: preguntas de descuento/oferta/cupón solo responden con cupones activos y vigentes del negocio (o precio tachado del catálogo); si no hay, lo dice sin inventar promociones.
 - AI Core: ciclo completo — “quiero el X” → ¿Te lo preparo? (no distrito); con distrito pendiente honra foto/producto y descuentos; browse de otra categoría libera el envío; “cancelar el pedido” / “ya no lo voy a comprar” cancela el pedido impago y no queda en bucle de “pedido pendiente” (B6/E5/E6/E7/G2 multinicho).
 - Consola / Planes: vista de consumo y comparación alineada al design system; el formulario de pago del plan se abre en un modal centrado con fondo oscurecido y difuminado (`modal-frame`).

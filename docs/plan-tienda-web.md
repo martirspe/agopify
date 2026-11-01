@@ -16,7 +16,7 @@ Cada merchant de VendedorIA obtiene, además de su vendedor IA en WhatsApp/Insta
 - Un solo inbox de pedidos (web + chat), con el canal de origen visible.
 - Si el merchant aún no conecta su cobro, la tienda funciona en modo **"pedir por WhatsApp"**: el carrito se convierte en un pedido borrador ligado a la conversación y el agente lo cierra.
 
-Posicionamiento: *tienda simple que vende sola por WhatsApp*. No es un competidor de Shopify; no se construye un editor de páginas.
+Posicionamiento: *tienda simple que vende sola por WhatsApp*. No se construye un editor de páginas libre.
 
 ---
 

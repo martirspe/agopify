@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DsIconComponent } from '@vendedoria/ui';
+import { DsIconComponent, DsPageHeaderComponent } from '@vendedoria/ui';
 
 type HelpTopic = {
   title: string;
@@ -12,7 +12,7 @@ type HelpTopic = {
 @Component({
   selector: 'app-help-page',
   standalone: true,
-  imports: [RouterLink, DsIconComponent],
+  imports: [RouterLink, DsIconComponent, DsPageHeaderComponent],
   templateUrl: './help.page.html',
   styleUrl: './help.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

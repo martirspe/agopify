@@ -10,6 +10,8 @@ const generators = {
   PAYMENT_CREDENTIALS_KEY: () => randomBytes(32).toString('hex'),
   // Encrypts WhatsApp customer tokens for both Meta signup and customer-owned apps.
   CHANNEL_CREDENTIALS_KEY: () => randomBytes(32).toString('hex'),
+  // Encrypts Magento / WooCommerce / future commerce connector credentials.
+  INTEGRATION_CREDENTIALS_KEY: () => randomBytes(32).toString('hex'),
 };
 
 function presentKeys(text) {

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { DsActionBarComponent, DsButtonComponent, DsCheckboxComponent, DsDisclosureComponent, DsEmptyStateComponent, DsIconComponent, DsMenuComponent, DsSelectComponent } from '@vendedoria/ui';
+import { DsActionBarComponent, DsButtonComponent, DsCheckboxComponent, DsDisclosureComponent, DsEmptyStateComponent, DsIconComponent, DsMenuComponent, DsPageHeaderComponent, DsSelectComponent } from '@vendedoria/ui';
 import { CatalogApiService, InventoryRow, InventoryUpdate } from '../../core/api/catalog-api.service';
 
 type Draft = { unlimited: boolean; qty: string };
@@ -14,7 +14,7 @@ const rowKey = (row: Pick<InventoryRow, 'productId' | 'variantId'>) => `${row.pr
 @Component({
   selector: 'app-inventory-page',
   standalone: true,
-  imports: [DsActionBarComponent, RouterLink, DsButtonComponent, DsCheckboxComponent, DsDisclosureComponent, DsEmptyStateComponent, DsIconComponent, DsMenuComponent, DsSelectComponent],
+  imports: [DsActionBarComponent, RouterLink, DsButtonComponent, DsCheckboxComponent, DsDisclosureComponent, DsEmptyStateComponent, DsIconComponent, DsMenuComponent, DsPageHeaderComponent, DsSelectComponent],
   templateUrl: './inventory.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

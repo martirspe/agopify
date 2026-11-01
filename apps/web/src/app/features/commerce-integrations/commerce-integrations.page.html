@@ -1,0 +1,406 @@
+<section class="tw:mx-auto tw:grid tw:w-full tw:min-w-0 tw:max-w-page tw:gap-5">
+  <ds-page-header
+    title="Catálogo externo"
+    icon="store"
+    description="Conecta Magento o WooCommerce para importar productos, variantes e inventario al catálogo de VendedorIA."
+  />
+
+  @if (errorMessage() && !loadFailed(); as error) {
+    <div class="tw:feedback tw:feedback-danger" role="alert"><ds-icon name="alert" /><span>{{ error }}</span></div>
+  }
+  @if (successMessage(); as success) {
+    <div class="tw:feedback tw:feedback-success" role="status"><ds-icon name="check" /><span>{{ success }}</span></div>
+  }
+
+  @if (loading()) {
+    <div class="tw:console-list-panel" role="status" aria-busy="true" aria-label="Cargando integraciones de catálogo">
+      <div class="tw:console-list-skeleton" aria-hidden="true">@for (row of [1, 2, 3, 4]; track row) { <div></div> }</div>
+    </div>
+  } @else if (loadFailed()) {
+    <ds-empty-state title="No pudimos cargar el catálogo externo" body="Revisa tu conexión e inténtalo de nuevo.">
+      <ds-button variant="secondary" (click)="load()">Reintentar</ds-button>
+    </ds-empty-state>
+  } @else {
+    <ds-action-bar label="Acciones de catálogo externo">
+      <span dsActionStatus role="status">
+        @if (busy()) {
+          @switch (operation()) {
+            @case ('connect') { Verificando tienda… }
+            @case ('sync') { Encolando sincronización… }
+            @case ('test') { Probando conexión… }
+            @case ('settings') { Guardando preferencias… }
+            @case ('disconnect') { Desconectando… }
+            @case ('retry') { Reintentando… }
+            @default { Trabajando… }
+          }
+        } @else if (selected(); as current) {
+          {{ platformLabel(current.platform) }} · {{ statusLabel(current.status) }}
+        } @else {
+          Sin conexiones activas
+        }
+      </span>
+      <ds-button variant="secondary" [disabled]="busy()" (click)="load()"><ds-icon name="rotateCcw" />Actualizar</ds-button>
+      <ds-button variant="secondary" [disabled]="busy()" (click)="openPanel('connect')">Nueva conexión</ds-button>
+      @if (selected()) {
+        <ds-button [disabled]="busy()" (click)="openPanel('sync')">Ir a sincronización</ds-button>
+      }
+    </ds-action-bar>
+
+    @if (!encryptionConfigured()) {
+      <div class="tw:feedback tw:feedback-danger" role="alert">
+        <ds-icon name="alert" />
+        <span>No podemos guardar credenciales de forma segura en este entorno. Contacta a soporte antes de conectar una tienda.</span>
+      </div>
+    }
+    @if (!canManage()) {
+      <div class="tw:feedback tw:feedback-info" role="status">
+        <ds-icon name="info" />
+        <span>Puedes consultar las conexiones. El propietario o un administrador puede conectar, sincronizar o desconectar tiendas.</span>
+      </div>
+    }
+
+    <div class="tw:grid tw:gap-3 tw:sm:grid-cols-3">
+      <div class="tw:console-metric">
+        <div><span>Conexiones activas</span><small>Magento y WooCommerce</small></div>
+        <strong>{{ connectedCount() }}</strong>
+      </div>
+      <div class="tw:console-metric">
+        <div><span>Productos sincronizados</span><small>En el catálogo unificado</small></div>
+        <strong>{{ mappedTotal() }}</strong>
+      </div>
+      <div class="tw:console-metric">
+        <div><span>Con errores</span><small>Requieren revisión</small></div>
+        <strong>{{ errorCount() }}</strong>
+      </div>
+    </div>
+
+    <div class="tw:grid tw:min-w-0 tw:items-start tw:gap-5 tw:lg:grid-cols-12">
+      <aside class="tw:grid tw:min-w-0 tw:gap-4 tw:lg:col-span-4" aria-label="Conexiones de catálogo">
+        <ds-form-section title="Tus tiendas" description="Selecciona una conexión para ver su estado y sincronización." icon="store">
+          @if (connections().length === 0) {
+            <ds-empty-state
+              title="Aún no hay tiendas conectadas"
+              body="Conecta Magento o WooCommerce para importar tu catálogo sin cargarlo a mano."
+            >
+              <ds-button (click)="openPanel('connect')">Conectar tienda</ds-button>
+            </ds-empty-state>
+          } @else {
+            <ul class="tw:m-0 tw:grid tw:list-none tw:gap-2 tw:p-0">
+              @for (connection of connections(); track connection.id) {
+                <li>
+                  <button
+                    type="button"
+                    class="tw:flex tw:w-full tw:min-w-0 tw:flex-col tw:gap-1 tw:rounded-md tw:border tw:border-border tw:bg-surface tw:px-3 tw:py-3 tw:text-left tw:transition hover:tw:bg-canvas focus-visible:tw:outline focus-visible:tw:outline-2 focus-visible:tw:outline-offset-2 focus-visible:tw:outline-primary"
+                    [class.tw:border-primary]="selectedId() === connection.id"
+                    [class.tw:bg-canvas]="selectedId() === connection.id"
+                    (click)="select(connection)"
+                  >
+                    <span class="tw:flex tw:items-center tw:justify-between tw:gap-2">
+                      <span class="tw:truncate tw:font-semibold">{{ connection.name }}</span>
+                      <span
+                        class="tw:shrink-0 tw:rounded-sm tw:bg-canvas tw:px-2 tw:py-0.5 tw:text-caption tw:font-semibold tw:text-muted"
+                        [class.tw:bg-success/10]="connection.status === 'CONNECTED'"
+                        [class.tw:text-success-text]="connection.status === 'CONNECTED'"
+                        [class.tw:bg-danger/10]="connection.status === 'ERROR'"
+                        [class.tw:text-danger-text]="connection.status === 'ERROR'"
+                      >{{ statusLabel(connection.status) }}</span>
+                    </span>
+                    <span class="tw:text-caption tw:text-muted">
+                      {{ platformLabel(connection.platform) }}
+                      · {{ connection.mappedProductCount }} productos
+                      @if (connection.externalStoreName) { · {{ connection.externalStoreName }} }
+                    </span>
+                    @if (connection.lastError) {
+                      <span class="tw:text-caption tw:text-danger-text">{{ connection.lastError }}</span>
+                    }
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+          <div class="tw:flex tw:flex-wrap tw:gap-2">
+            <ds-button variant="secondary" [disabled]="busy()" (click)="openPanel('connect')">Nueva conexión</ds-button>
+            <ds-button variant="ghost" [disabled]="busy()" (click)="openPanel('upcoming')">Próximos conectores</ds-button>
+          </div>
+        </ds-form-section>
+      </aside>
+
+      <div class="tw:grid tw:min-w-0 tw:gap-5 tw:lg:col-span-8">
+        @if (panel() === 'connect') {
+          <form class="tw:grid tw:gap-5" [formGroup]="form" (ngSubmit)="connect()">
+            <ds-form-section title="Conectar tienda" description="Validamos la conexión antes de guardar las credenciales cifradas." icon="plug">
+              <div class="tw:flex tw:flex-wrap tw:gap-2" role="group" aria-label="Plataforma">
+                @for (platform of connectable(); track platform.id) {
+                  <ds-button
+                    type="button"
+                    [variant]="platformChoice() === platform.id ? 'primary' : 'secondary'"
+                    (click)="choosePlatform($any(platform.id))"
+                  >{{ platform.name }}</ds-button>
+                }
+              </div>
+              @if (selectedPlatform(); as platform) {
+                <p class="tw:m-0 tw:text-sm tw:text-muted">{{ platform.summary }}</p>
+                <div class="tw:flex tw:flex-wrap tw:gap-1.5">
+                  @for (capability of platform.capabilities; track capability) {
+                    <span class="tw:rounded-sm tw:bg-canvas tw:px-2 tw:py-1 tw:text-caption tw:text-muted">{{ capabilityLabel(capability) }}</span>
+                  }
+                </div>
+              }
+
+              <fieldset class="tw:m-0 tw:grid tw:gap-5 tw:border-0 tw:p-0" [disabled]="!canManage() || busy() || !encryptionConfigured()">
+                <legend class="tw:sr-only">Datos de conexión</legend>
+                <div class="tw:grid tw:gap-2">
+                  <label for="commerce-name" class="tw:text-sm tw:font-semibold">Nombre interno</label>
+                  <input id="commerce-name" class="tw:console-field" formControlName="name" autocomplete="off" [attr.aria-invalid]="!!fieldError('name')" [attr.aria-describedby]="fieldError('name') ? 'commerce-name-error' : null" />
+                  @if (fieldError('name'); as error) { <p id="commerce-name-error" class="tw:m-0 tw:text-caption tw:text-danger-text">{{ error }}</p> }
+                </div>
+                <div class="tw:grid tw:gap-2">
+                  <label for="commerce-baseUrl" class="tw:text-sm tw:font-semibold">URL de la tienda</label>
+                  <input id="commerce-baseUrl" class="tw:console-field" formControlName="baseUrl" placeholder="https://tu-tienda.com" autocomplete="url" spellcheck="false" [attr.aria-invalid]="!!fieldError('baseUrl')" [attr.aria-describedby]="fieldError('baseUrl') ? 'commerce-baseUrl-help commerce-baseUrl-error' : 'commerce-baseUrl-help'" />
+                  <p id="commerce-baseUrl-help" class="tw:m-0 tw:text-caption tw:text-muted">Solo HTTPS. No uses direcciones locales ni redes privadas.</p>
+                  @if (fieldError('baseUrl'); as error) { <p id="commerce-baseUrl-error" class="tw:m-0 tw:text-caption tw:text-danger-text">{{ error }}</p> }
+                </div>
+
+                @if (platformChoice() === 'magento') {
+                  <div class="tw:grid tw:gap-2">
+                    <label for="commerce-accessToken" class="tw:text-sm tw:font-semibold">Access token</label>
+                    <input id="commerce-accessToken" class="tw:console-field" type="password" formControlName="accessToken" autocomplete="new-password" spellcheck="false" [attr.aria-describedby]="'commerce-accessToken-help'" />
+                    <p id="commerce-accessToken-help" class="tw:m-0 tw:text-caption tw:text-muted">Token Bearer de la REST API de Magento / Adobe Commerce. Se guarda cifrado y no vuelve a mostrarse.</p>
+                  </div>
+                } @else {
+                  <div class="tw:grid tw:gap-2 tw:sm:grid-cols-2">
+                    <div class="tw:grid tw:gap-2">
+                      <label for="commerce-consumerKey" class="tw:text-sm tw:font-semibold">Consumer key</label>
+                      <input id="commerce-consumerKey" class="tw:console-field" type="password" formControlName="consumerKey" autocomplete="new-password" spellcheck="false" />
+                    </div>
+                    <div class="tw:grid tw:gap-2">
+                      <label for="commerce-consumerSecret" class="tw:text-sm tw:font-semibold">Consumer secret</label>
+                      <input id="commerce-consumerSecret" class="tw:console-field" type="password" formControlName="consumerSecret" autocomplete="new-password" spellcheck="false" />
+                    </div>
+                  </div>
+                  <div class="tw:grid tw:gap-2">
+                    <label for="commerce-webhookSecret" class="tw:text-sm tw:font-semibold">Webhook secret (opcional)</label>
+                    <input id="commerce-webhookSecret" class="tw:console-field" type="password" formControlName="webhookSecret" autocomplete="new-password" spellcheck="false" [attr.aria-describedby]="'commerce-webhookSecret-help'" />
+                    <p id="commerce-webhookSecret-help" class="tw:m-0 tw:text-caption tw:text-muted">Si lo omites, se usará el consumer secret para verificar firmas de webhook.</p>
+                  </div>
+                }
+              </fieldset>
+
+              <div class="tw:flex tw:flex-wrap tw:gap-2">
+                <ds-button type="submit" [disabled]="!canManage() || busy() || !encryptionConfigured()">
+                  {{ operation() === 'connect' ? 'Verificando…' : 'Conectar y validar' }}
+                </ds-button>
+                @if (selected()) {
+                  <ds-button type="button" variant="ghost" [disabled]="busy()" (click)="openPanel('overview')">Cancelar</ds-button>
+                }
+              </div>
+            </ds-form-section>
+
+            <aside class="tw:grid tw:gap-4" aria-label="Ayuda para conectar">
+              @if (platformChoice() === 'magento') {
+                <ds-disclosure title="Cómo obtener el token de Magento">
+                  <ol class="tw:m-0 tw:grid tw:gap-2 tw:pl-5 tw:text-sm tw:text-muted">
+                    <li>En Magento, crea una Integration con acceso a Catalog y Inventory.</li>
+                    <li>Activa la integración y copia el Access Token.</li>
+                    <li>Pega aquí la URL pública HTTPS de tu tienda y el token.</li>
+                  </ol>
+                </ds-disclosure>
+              } @else {
+                <ds-disclosure title="Cómo crear claves de WooCommerce">
+                  <ol class="tw:m-0 tw:grid tw:gap-2 tw:pl-5 tw:text-sm tw:text-muted">
+                    <li>Ve a WooCommerce → Ajustes → Avanzado → REST API.</li>
+                    <li>Crea una clave con permisos de lectura.</li>
+                    <li>Copia consumer key y secret. Después podrás pegar la URL de webhook de VendedorIA.</li>
+                  </ol>
+                </ds-disclosure>
+              }
+              <ds-disclosure title="¿Qué ocurre con mis productos actuales?">
+                <p class="tw:m-0 tw:text-sm tw:text-muted">Los productos creados a mano se conservan. Los importados se identifican por la tienda de origen y no duplican entradas ya sincronizadas.</p>
+              </ds-disclosure>
+            </aside>
+          </form>
+        } @else if (panel() === 'upcoming') {
+          <ds-form-section title="Próximos conectores" description="Ya están registrados en el Integration Core; aún no se pueden activar." icon="plug">
+            <ul class="tw:m-0 tw:grid tw:list-none tw:gap-3 tw:p-0 tw:sm:grid-cols-2">
+              @for (platform of upcoming(); track platform.id) {
+                <li class="tw:rounded-md tw:border tw:border-border tw:p-4">
+                  <div class="tw:flex tw:items-start tw:justify-between tw:gap-2">
+                    <div>
+                      <p class="tw:m-0 tw:font-semibold">{{ platform.name }}</p>
+                      <p class="tw:m-0 tw:mt-1 tw:text-sm tw:text-muted">{{ platform.summary }}</p>
+                    </div>
+                    <span class="tw:shrink-0 tw:rounded-sm tw:bg-canvas tw:px-2 tw:py-1 tw:text-caption tw:font-semibold tw:text-muted">Próximamente</span>
+                  </div>
+                  <div class="tw:mt-3 tw:flex tw:flex-wrap tw:gap-1.5">
+                    @for (capability of platform.capabilities.slice(0, 4); track capability) {
+                      <span class="tw:rounded-sm tw:bg-canvas tw:px-2 tw:py-1 tw:text-caption tw:text-muted">{{ capabilityLabel(capability) }}</span>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+            <ds-button variant="secondary" (click)="openPanel(selected() ? 'overview' : 'connect')">Volver</ds-button>
+          </ds-form-section>
+        } @else if (selected(); as current) {
+          <div class="tw:flex tw:flex-wrap tw:gap-2" role="tablist" aria-label="Secciones de la conexión">
+            <ds-button type="button" [variant]="panel() === 'overview' ? 'primary' : 'secondary'" (click)="openPanel('overview')">Resumen</ds-button>
+            <ds-button type="button" [variant]="panel() === 'sync' ? 'primary' : 'secondary'" (click)="openPanel('sync')">Sincronización</ds-button>
+          </div>
+
+          @if (panel() === 'overview') {
+            <ds-form-section [title]="current.name" [description]="platformLabel(current.platform) + ' · ' + statusLabel(current.status)" icon="store">
+              <ds-button dsSectionActions variant="secondary" [disabled]="!canManage() || busy()" (click)="testSelected()">
+                {{ operation() === 'test' ? 'Probando…' : 'Probar conexión' }}
+              </ds-button>
+              <dl class="tw:m-0 tw:grid tw:gap-4 tw:text-sm tw:sm:grid-cols-3">
+                <div>
+                  <dt class="tw:text-caption tw:text-muted">Tienda externa</dt>
+                  <dd class="tw:m-0 tw:mt-1 tw:font-semibold">{{ current.externalStoreName || 'Sin nombre' }}</dd>
+                </div>
+                <div>
+                  <dt class="tw:text-caption tw:text-muted">Productos mapeados</dt>
+                  <dd class="tw:m-0 tw:mt-1 tw:font-semibold">{{ current.mappedProductCount }}</dd>
+                </div>
+                <div>
+                  <dt class="tw:text-caption tw:text-muted">Última sincronización</dt>
+                  <dd class="tw:m-0 tw:mt-1 tw:font-semibold">
+                    @if (current.lastSyncAt) { {{ current.lastSyncAt | date:'short' }} }
+                    @else { Aún no sincroniza }
+                  </dd>
+                </div>
+              </dl>
+              @if (current.baseUrl) {
+                <p class="tw:m-0 tw:wrap-anywhere tw:text-caption tw:text-muted">URL: {{ current.baseUrl }}</p>
+              }
+              <div class="tw:flex tw:flex-wrap tw:gap-2">
+                <ds-button [disabled]="!canManage() || busy()" (click)="openPanel('sync')">Sincronizar</ds-button>
+                <ds-button variant="ghost" [disabled]="!canManage() || busy()" (click)="disconnectSelected()">Desconectar</ds-button>
+              </div>
+              @if (current.lastError) {
+                <div class="tw:feedback tw:feedback-danger" role="alert"><ds-icon name="alert" /><span>{{ current.lastError }}</span></div>
+              }
+              @if (current.latestSync; as latest) {
+                <p class="tw:m-0 tw:text-sm tw:text-muted" role="status">
+                  Última ejecución: {{ syncTypeLabel(latest.syncType) }} · {{ statusLabel(latest.status) }}
+                  · {{ latest.totalItems }} ítems
+                  ({{ latest.createdItems }} nuevos, {{ latest.updatedItems }} actualizados, {{ latest.failedItems }} fallidos)
+                </p>
+              }
+              @if (current.capabilities?.length) {
+                <div class="tw:flex tw:flex-wrap tw:gap-1.5">
+                  @for (capability of current.capabilities; track capability) {
+                    <span class="tw:rounded-sm tw:bg-canvas tw:px-2 tw:py-1 tw:text-caption tw:text-muted">{{ capabilityLabel(capability) }}</span>
+                  }
+                </div>
+              }
+            </ds-form-section>
+
+            @if (current.webhookUrl) {
+              <ds-form-section title="Webhooks de WooCommerce" description="Pega esta URL en WooCommerce → Ajustes → Avanzado → Webhooks.">
+                <code class="tw:block tw:select-all tw:wrap-anywhere tw:rounded-md tw:bg-canvas tw:p-3 tw:text-caption">{{ current.webhookUrl }}</code>
+                <ds-button type="button" variant="secondary" (click)="copyWebhook(current.webhookUrl!)">
+                  <ds-icon name="copy" />{{ copied() ? 'URL copiada' : 'Copiar URL del webhook' }}
+                </ds-button>
+                @if (current.webhookEventCount != null) {
+                  <p class="tw:m-0 tw:text-caption tw:text-muted">Eventos recibidos: {{ current.webhookEventCount }}</p>
+                }
+              </ds-form-section>
+            }
+
+            <form class="tw:grid tw:gap-4" [formGroup]="settingsForm" (ngSubmit)="saveSettings()">
+              <ds-form-section title="Preferencias de sincronización" description="Controlan qué se importa en las próximas ejecuciones.">
+                <div class="tw:grid tw:gap-3 tw:sm:grid-cols-2">
+                  <label class="tw:flex tw:items-center tw:gap-2 tw:text-sm"><input type="checkbox" formControlName="automaticSyncEnabled" /> Sync automática habilitada</label>
+                  <label class="tw:flex tw:items-center tw:gap-2 tw:text-sm"><input type="checkbox" formControlName="syncProducts" /> Productos</label>
+                  <label class="tw:flex tw:items-center tw:gap-2 tw:text-sm"><input type="checkbox" formControlName="syncVariants" /> Variantes</label>
+                  <label class="tw:flex tw:items-center tw:gap-2 tw:text-sm"><input type="checkbox" formControlName="syncInventory" /> Inventario</label>
+                  <label class="tw:flex tw:items-center tw:gap-2 tw:text-sm"><input type="checkbox" formControlName="syncPrices" /> Precios</label>
+                  <label class="tw:flex tw:items-center tw:gap-2 tw:text-sm"><input type="checkbox" formControlName="syncImages" /> Imágenes</label>
+                </div>
+                <div class="tw:grid tw:gap-2">
+                  <label for="commerce-deletion" class="tw:text-sm tw:font-semibold">Si un producto desaparece en la tienda</label>
+                  <ds-select>
+                    <select id="commerce-deletion" formControlName="deletionPolicy">
+                      <option value="unpublish">Despublicarlo en VendedorIA</option>
+                      <option value="ignore">Conservarlo sin cambios</option>
+                      <option value="archive">Marcarlo como archivado</option>
+                    </select>
+                  </ds-select>
+                </div>
+                <ds-button type="submit" [disabled]="!canManage() || busy() || settingsForm.pristine">
+                  {{ operation() === 'settings' ? 'Guardando…' : 'Guardar preferencias' }}
+                </ds-button>
+              </ds-form-section>
+            </form>
+          } @else {
+            <ds-form-section title="Sincronización" description="Las importaciones corren en segundo plano. Los números son reales de cada ejecución." icon="rotateCcw">
+              <div class="tw:grid tw:gap-3 tw:sm:grid-cols-[1fr_auto] tw:sm:items-end">
+                <div class="tw:grid tw:gap-2">
+                  <label for="commerce-sync-kind" class="tw:text-sm tw:font-semibold">Tipo de sincronización</label>
+                  <ds-select>
+                    <select id="commerce-sync-kind" [value]="syncKind()" (change)="setSyncKind($any($event.target).value)">
+                      <option value="INITIAL">Importación inicial</option>
+                      <option value="INCREMENTAL">Solo cambios recientes</option>
+                      <option value="RECONCILIATION">Reconciliación completa</option>
+                    </select>
+                  </ds-select>
+                </div>
+                <ds-button [disabled]="!canManage() || busy()" (click)="syncSelected()">
+                  {{ operation() === 'sync' ? 'Encolando…' : 'Iniciar' }}
+                </ds-button>
+              </div>
+              <p class="tw:m-0 tw:text-caption tw:text-muted">
+                @switch (syncKind()) {
+                  @case ('INITIAL') { Recorre el catálogo completo y crea o actualiza productos mapeados. }
+                  @case ('INCREMENTAL') { Usa la última sincronización como punto de partida cuando la plataforma lo permite. }
+                  @default { Compara de nuevo el catálogo externo para detectar diferencias perdidas. }
+                }
+              </p>
+            </ds-form-section>
+
+            <ds-form-section title="Historial" description="Últimas ejecuciones de esta conexión.">
+              @if (history().length === 0) {
+                <ds-empty-state title="Sin ejecuciones todavía" body="Lanza la primera sincronización para ver el progreso aquí.">
+                  <ds-button [disabled]="!canManage() || busy()" (click)="syncSelected()">Sincronizar ahora</ds-button>
+                </ds-empty-state>
+              } @else {
+                <ul class="tw:m-0 tw:grid tw:list-none tw:gap-2 tw:p-0">
+                  @for (item of history(); track item.id) {
+                    <li class="tw:rounded-md tw:border tw:border-border tw:px-3 tw:py-3">
+                      <div class="tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-2">
+                        <div class="tw:min-w-0">
+                          <p class="tw:m-0 tw:font-semibold">{{ syncTypeLabel(item.syncType) }} · {{ statusLabel(item.status) }}</p>
+                          <p class="tw:m-0 tw:mt-1 tw:text-sm tw:text-muted">
+                            {{ item.createdAt | date:'short' }}
+                            · {{ item.totalItems }} ítems
+                            · {{ item.createdItems }} nuevos
+                            · {{ item.updatedItems }} actualizados
+                            · {{ item.failedItems }} fallidos
+                            @if (item.durationMs != null) { · {{ item.durationMs }} ms }
+                          </p>
+                          @if (item.errorSummary) {
+                            <p class="tw:m-0 tw:mt-1 tw:text-sm tw:text-danger-text">{{ item.errorSummary }}</p>
+                          }
+                        </div>
+                        @if (item.status === 'FAILED' || item.status === 'PARTIAL') {
+                          <ds-button variant="secondary" [disabled]="!canManage() || busy()" (click)="retry(item)">Reintentar</ds-button>
+                        }
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+            </ds-form-section>
+          }
+        } @else {
+          <ds-empty-state
+            title="Elige o crea una conexión"
+            body="Conecta Magento o WooCommerce para empezar a sincronizar tu catálogo."
+          >
+            <ds-button (click)="openPanel('connect')">Conectar tienda</ds-button>
+          </ds-empty-state>
+        }
+      </div>
+    </div>
+  }
+</section>

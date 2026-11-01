@@ -1,0 +1,225 @@
+<div class="assistant-panel" [class.assistant-panel--dock]="mode() === 'dock'" [class.assistant-panel--full]="mode() === 'full'">
+  <header class="assistant-panel__header">
+    <h2 id="assistant-panel-title" class="assistant-panel__title">{{ title() }}</h2>
+    <div class="assistant-panel__header-actions">
+      <button type="button" class="assistant-panel__icon-btn" aria-label="Nueva conversación" (click)="newChat.emit()">
+        <ds-icon name="pencil" [size]="0.95" />
+      </button>
+      <button
+        type="button"
+        class="assistant-panel__icon-btn"
+        [attr.aria-label]="mode() === 'full' ? 'Mostrar como panel' : 'Ampliar al tamaño del área principal'"
+        (click)="toggleMode()"
+      >
+ <!-- asistente: maximize / minimize (diagonal arrows), not panel icons. -->
+        <ds-icon [name]="mode() === 'full' ? 'minimize2' : 'maximize2'" [size]="0.95" />
+      </button>
+      <button type="button" class="assistant-panel__icon-btn" aria-label="Cerrar asistente" (click)="closed.emit()">
+        <ds-icon name="x" [size]="0.95" />
+      </button>
+    </div>
+  </header>
+
+  <div class="assistant-panel__thread" tabindex="-1">
+    @for (message of messages(); track message.id) {
+      @if (message.role === 'user') {
+        <div class="assistant-panel__row assistant-panel__row--user">
+          <div class="assistant-panel__bubble">{{ message.text }}</div>
+        </div>
+      } @else {
+        <div class="assistant-panel__row assistant-panel__row--assistant">
+          @if (message.status) {
+            <p class="assistant-panel__status">
+              <ds-icon name="circleCheck" [size]="0.85" />
+              <span>{{ message.status }}</span>
+            </p>
+          }
+          <div class="assistant-panel__body">
+            <p class="assistant-panel__text">{{ message.text }}</p>
+            @if (message.bullets?.length) {
+              <ul class="assistant-panel__bullets">
+                @for (bullet of message.bullets; track bullet) {
+                  <li>{{ bullet }}</li>
+                }
+              </ul>
+            }
+          </div>
+          @if (message.actions?.length) {
+            <div class="assistant-panel__actions">
+              @for (action of message.actions; track action.id) {
+                <a
+                  class="assistant-panel__action-pill"
+                  [routerLink]="action.link"
+                  [queryParams]="action.queryParams"
+                  (click)="closed.emit()"
+                >
+                  {{ action.label }}
+                </a>
+              }
+            </div>
+          }
+          <div class="assistant-panel__feedback">
+            <button
+              type="button"
+              class="assistant-panel__icon-btn assistant-panel__icon-btn--quiet"
+              [attr.aria-label]="copiedId() === message.id ? 'Copiado' : 'Copiar respuesta'"
+              (click)="copyMessage(message)"
+            >
+              <ds-icon [name]="copiedId() === message.id ? 'check' : 'copy'" [size]="0.85" />
+            </button>
+            <button type="button" class="assistant-panel__icon-btn assistant-panel__icon-btn--quiet" aria-label="Me gusta" disabled>
+              <ds-icon name="thumbsUp" [size]="0.85" />
+            </button>
+            <button type="button" class="assistant-panel__icon-btn assistant-panel__icon-btn--quiet" aria-label="No me gusta" disabled>
+              <ds-icon name="thumbsDown" [size]="0.85" />
+            </button>
+          </div>
+        </div>
+      }
+    }
+    @if (drafting()) {
+      <div class="assistant-panel__row assistant-panel__row--assistant" aria-live="polite">
+        <p class="assistant-panel__status assistant-panel__status--busy">
+          <ds-icon name="sparkles" [size]="0.85" />
+          <span>Trabajando en ello…</span>
+        </p>
+      </div>
+    }
+  </div>
+
+  <div class="assistant-panel__composer-wrap">
+    <form
+      class="assistant-panel__composer"
+      [attr.data-dictating]="dictating() ? '' : null"
+      (submit)="submit($event)"
+      aria-label="Escribe al asistente"
+    >
+      <label class="tw:sr-only" for="assistant-panel-input">Mensaje para el asistente</label>
+      <textarea
+        #assistantPanelInput
+        id="assistant-panel-input"
+        class="assistant-panel__input"
+        rows="2"
+        enterkeyhint="send"
+        data-focus-chrome="parent"
+        [placeholder]="placeholder"
+        [ngModel]="draft()"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="draft.set($event)"
+        (keydown.enter)="onEnter($event)"
+        (focus)="closePlus()"
+      ></textarea>
+      @if (dictationError(); as err) {
+        <p class="assistant-panel__dictation-error" role="alert">{{ err }}</p>
+      }
+      <div class="assistant-panel__composer-bar">
+        @if (dictating()) {
+          <div class="assistant-panel__dictation" role="status" aria-live="polite" aria-label="Dictando">
+            <button type="button" class="assistant-panel__dictation-cancel" aria-label="Cancelar dictado" (click)="cancelDictation()">
+              <ds-icon name="x" [size]="0.85" />
+            </button>
+            <div class="assistant-panel__waveform" aria-hidden="true">
+              @for (_ of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]; track $index) {
+                <span class="assistant-panel__waveform-bar" [style.animation-delay]="($index % 8) * 90 + 'ms'"></span>
+              }
+            </div>
+            <button type="button" class="assistant-panel__dictation-confirm" aria-label="Listo" (click)="confirmDictation()">
+              <ds-icon name="check" [size]="0.85" />
+            </button>
+          </div>
+        } @else {
+          <span class="assistant-panel__avatar" aria-hidden="true">
+            <ds-icon name="sparkles" [size]="0.75" />
+          </span>
+          <div class="assistant-panel__composer-tools">
+            <div class="assistant-panel__plus-anchor">
+              @if (plusOpen()) {
+                <div class="assistant-panel__plus-menu" role="menu" aria-label="Acciones del asistente" (mousedown)="$event.preventDefault()">
+                  @for (item of plusItems; track item.id) {
+                    @if (item.dividerBefore) {
+                      <div class="assistant-panel__plus-divider" role="separator"></div>
+                    }
+                    @if (item.kind === 'toggle') {
+                      <div class="assistant-panel__plus-item assistant-panel__plus-item--toggle" role="none">
+                        <span class="assistant-panel__plus-icon" aria-hidden="true"><ds-icon [name]="item.icon" [size]="1.25" /></span>
+                        <span class="assistant-panel__plus-label">{{ item.label }}</span>
+                        <button
+                          type="button"
+                          class="assistant-panel__switch"
+                          role="switch"
+                          [attr.aria-checked]="generateApps()"
+                          [attr.aria-label]="item.label"
+                          (click)="toggleGenerateApps()"
+                        >
+                          <span class="assistant-panel__switch-thumb" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" class="assistant-panel__plus-info" aria-label="Más información" disabled>
+                          <ds-icon name="info" [size]="1.25" />
+                        </button>
+                      </div>
+                    } @else {
+                      <button
+                        type="button"
+                        class="assistant-panel__plus-item"
+                        role="menuitem"
+                        [disabled]="item.disabled"
+                        (click)="onPlus(item)"
+                      >
+                        <span class="assistant-panel__plus-icon" aria-hidden="true"><ds-icon [name]="item.icon" [size]="1.25" /></span>
+                        <span class="assistant-panel__plus-label">{{ item.label }}</span>
+                        @if (item.hint || item.trailingIcon || item.submenu) {
+                          <span class="assistant-panel__plus-meta" aria-hidden="true">
+                            @if (item.hint) {
+                              <span class="assistant-panel__plus-hint">{{ item.hint }}</span>
+                            }
+                            @if (item.trailingIcon) {
+                              <span class="assistant-panel__plus-trailing">
+                                <ds-icon [name]="item.trailingIcon" [size]="1.125" />
+                              </span>
+                            }
+                            @if (item.submenu) {
+                              <ds-icon name="chevronRight" [size]="1.25" />
+                            }
+                          </span>
+                        }
+                      </button>
+                    }
+                  }
+                </div>
+              }
+              <button
+                type="button"
+                class="assistant-panel__icon-btn"
+                aria-label="Agregar archivos y más"
+                [attr.aria-expanded]="plusOpen()"
+                (mousedown)="$event.preventDefault()"
+                (click)="togglePlus()"
+              >
+                <ds-icon name="plus" [size]="0.9" />
+              </button>
+            </div>
+            @if (canSend()) {
+              <button type="submit" class="assistant-panel__icon-btn assistant-panel__send" aria-label="Enviar">
+                <ds-icon name="arrowUp" [size]="0.85" />
+              </button>
+            } @else if (drafting()) {
+              <button type="button" class="assistant-panel__icon-btn assistant-panel__send" disabled aria-label="Generando respuesta">
+                <ds-icon name="pause" [size]="0.85" />
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="assistant-panel__icon-btn"
+                aria-label="Dictar"
+                [disabled]="!dictationSupported()"
+                (click)="startDictation()"
+              >
+                <ds-icon name="mic" [size]="0.9" />
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </form>
+  </div>
+</div>

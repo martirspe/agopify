@@ -4,7 +4,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { DsButtonComponent, DsActionBarComponent, DsFormSectionComponent, DsSelectComponent, DsDisclosureComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsActionBarComponent, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent } from '@vendedoria/ui';
 import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { distinctUntilChanged, map } from 'rxjs';
@@ -24,7 +24,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
     DsEmptyStateComponent,
     DsIconComponent,
     RouterLink,
-    DatePipe, DsActionBarComponent, DsFormSectionComponent, DsSelectComponent, DsDisclosureComponent,
+    DatePipe, DsActionBarComponent, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent,
   ],
   templateUrl: './metrics.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

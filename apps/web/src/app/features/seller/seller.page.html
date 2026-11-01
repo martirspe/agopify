@@ -1,10 +1,10 @@
 <section class="seller tw:mx-auto tw:min-w-0">
-  <header class="tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-4">
-    <div>
-      <h1 class="tw:console-title">{{ activeSection().label }}</h1>
-      <p class="tw:mt-2 tw:mb-0 tw:text-muted">{{ activeSection().hint }}.</p>
-    </div>
-    <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-3">
+  <ds-page-header
+    icon="bot"
+    [title]="activeSection().label"
+    [description]="activeSection().hint + '.'"
+  >
+    <div dsPageActions class="tw:flex tw:flex-wrap tw:items-center tw:gap-3">
       <ds-button type="button" variant="secondary" [disabled]="loading() || loadFailed() || agentLoading() || agentLoadFailed() || !agentId()" (click)="openPlayground()">
         Probar vendedor
       </ds-button>
@@ -13,7 +13,7 @@
         {{ currentAgent()?.isActive ? 'Activo' : 'Pausado' }}
       </div> }
     </div>
-  </header>
+  </ds-page-header>
 
   @if (!loading() && agents().length) {
     <div class="tw:console-card tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">

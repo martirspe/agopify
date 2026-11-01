@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
-import { DsButtonComponent, DsFormSectionComponent, DsSelectComponent, DsDisclosureComponent, DsActionBarComponent, DsEmptyStateComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsFormSectionComponent, DsSelectComponent, DsDisclosureComponent, DsActionBarComponent, DsEmptyStateComponent, DsPageHeaderComponent } from '@vendedoria/ui';
 import { DsIconComponent } from '@vendedoria/ui';
 import {
   BillingApiService,
@@ -25,7 +25,7 @@ type PlanOption = BillingOverview['currentPlan'] & { prepay?: PrepayPrice[] };
 @Component({
   selector: 'app-plans-page',
   standalone: true,
-  imports: [DsButtonComponent, DsIconComponent, RouterLink, PlanCheckoutComponent, DsFormSectionComponent, DsSelectComponent, DsDisclosureComponent, DsActionBarComponent, DsEmptyStateComponent],
+  imports: [DsButtonComponent, DsIconComponent, RouterLink, PlanCheckoutComponent, DsFormSectionComponent, DsSelectComponent, DsDisclosureComponent, DsActionBarComponent, DsEmptyStateComponent, DsPageHeaderComponent],
   templateUrl: './plans.page.html',
   styleUrl: './plans.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

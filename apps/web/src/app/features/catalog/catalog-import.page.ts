@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
-import { DsButtonComponent, DsIconComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsIconComponent, DsPageHeaderComponent } from '@vendedoria/ui';
 import {
   CatalogApiService,
   CatalogImportFile,
@@ -36,7 +36,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 @Component({
   selector: 'app-catalog-import-page',
   standalone: true,
-  imports: [RouterLink, DsButtonComponent, DsIconComponent],
+  imports: [RouterLink, DsButtonComponent, DsIconComponent, DsPageHeaderComponent],
   templateUrl: './catalog-import.page.html',
   styleUrls: ['../store/store.page.scss', './catalog-import.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

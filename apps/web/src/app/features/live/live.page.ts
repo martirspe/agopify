@@ -10,7 +10,7 @@ import { CurrencyPipe, DatePipe, PercentPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { DsButtonComponent, DsConfirmService, DsEmptyStateComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsConfirmService, DsEmptyStateComponent, DsPageHeaderComponent } from '@vendedoria/ui';
 import {
   LiveApiService,
   LiveCampaign,
@@ -76,6 +76,7 @@ export function parseLiveUpdate(block: string): InboxStreamEvent | null {
     RouterLink,
     DsButtonComponent,
     DsEmptyStateComponent,
+    DsPageHeaderComponent,
     IntegrationGateComponent,
   ],
   templateUrl: './live.page.html',

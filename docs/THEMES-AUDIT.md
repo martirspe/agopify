@@ -61,11 +61,11 @@ Los addons verifican versiones mínimas antes de cargar. Theme conditions elige 
 
 Dynamic tags conectan controles con contenido obtenido por proveedores registrados. Adaptamos el principio a DTO públicos y componentes tipados que reciben datos autoritativos; v1 no evalúa expresiones libres en el manifest. Templates/documentos y estilos globales reutilizan estructura visual, mientras el renderer de plataforma resuelve la presentación del runtime. [Dynamic tags](https://developers.elementor.com/docs/dynamic-tags/).
 
-### Shopify
+### Composición tipada de temas
 
-Layouts, templates JSON, sections, blocks y snippets separan composición y markup Liquid. Settings distinguen definición de valor guardado; schema de section describe controles y presets. Adoptamos composición tipada, presets no destructivos y settings separados del catálogo de productos. Evitamos trasladar Liquid al proyecto: nuestros renderers compilados ya resuelven presentación. [Arquitectura](https://shopify.dev/docs/storefronts/themes/architecture), [settings](https://shopify.dev/docs/storefronts/themes/architecture/settings), [section schema](https://shopify.dev/docs/storefronts/themes/architecture/sections/section-schema).
+Layouts, templates, sections y blocks separan composición y presentación. Settings distinguen definición de valor guardado; el schema de section describe controles y presets. Adoptamos composición tipada, presets no destructivos y settings separados del catálogo de productos, con renderers compilados de plataforma (sin lenguajes de plantilla arbitrarios en el merchant).
 
-Las actualizaciones se incorporan como drafts y trasladan personalizaciones del editor; cambios manuales de código requieren atención. App blocks permiten extensiones en slots expresamente soportados. Adoptamos actualizar como borrador, release notes y extensibilidad declarada; evitamos JS remoto y promesas de migración automática de código de terceros. [Actualizaciones](https://help.shopify.com/en/manual/online-store/themes/managing-themes/updating-themes), [app blocks](https://shopify.dev/docs/storefronts/themes/architecture/blocks/app-blocks).
+Las actualizaciones se incorporan como drafts y trasladan personalizaciones del editor. Extensiones solo en slots declarados. Adoptamos actualizar como borrador, release notes y extensibilidad declarada; evitamos JS remoto y promesas de migración automática de código de terceros.
 
 ### WooCommerce
 

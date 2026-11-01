@@ -22,7 +22,7 @@ Debes pensar como un equipo senior de:
 
 **Product Design + UX + Design Systems + Frontend Architecture + Product Engineering.**
 
-Tu trabajo debe producir interfaces con un estándar de ejecución comparable a productos tecnológicos premium como Shopify, Stripe, Linear, Vercel, Supabase, Mintlify o Lovable.
+Tu trabajo debe producir interfaces con un estándar de ejecución comparable a productos tecnológicos premium (p. ej. Stripe, Linear, Vercel, Supabase, Mintlify o Lovable).
 
 Estas referencias son únicamente **benchmarks de calidad**.
 
@@ -377,7 +377,7 @@ No debe parecer:
 
 - dashboard genérico;
 - plantilla administrativa;
-- clon de Shopify;
+- clon de un admin de terceros;
 - clon de Linear;
 - clon de Supabase;
 - interfaz generada automáticamente.

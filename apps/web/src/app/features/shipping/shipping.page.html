@@ -1,10 +1,9 @@
 <section class="shipping tw:mx-auto tw:min-w-0">
-  <header class="shipping__header">
-    <h1 class="tw:console-title">Envíos</h1>
-    <p>
-      Configura las formas de entrega y las tarifas que usan tu vendedor IA y tu tienda web.
-    </p>
-  </header>
+  <ds-page-header
+    title="Envíos"
+    icon="truck"
+    description="Configura las formas de entrega y las tarifas que usan tu vendedor IA y tu tienda web."
+  />
 
   @if (errorMessage(); as error) {
     <div class="tw:feedback tw:feedback-danger" role="alert">

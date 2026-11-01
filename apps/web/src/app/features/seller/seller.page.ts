@@ -12,7 +12,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { map, startWith } from 'rxjs';
-import { DsButtonComponent, DsConfirmService } from '@vendedoria/ui';
+import { DsButtonComponent, DsConfirmService, DsPageHeaderComponent } from '@vendedoria/ui';
 import { DsIconComponent } from '@vendedoria/ui';
 import { SellerPlaygroundComponent } from './seller-playground.component';
 import {
@@ -57,6 +57,7 @@ const CUSTOM_PROMPT_MAX = 12000;
     RouterLink,
     DsButtonComponent,
     DsIconComponent,
+    DsPageHeaderComponent,
     SellerPlaygroundComponent,
   ],
   templateUrl: './seller.page.html',

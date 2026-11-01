@@ -1,13 +1,5 @@
 <section class="store tw:mx-auto tw:min-w-0">
-  <header class="store__header">
-    <div>
-      <h1 class="tw:console-title">Equipo</h1>
-      <p>
-        Invita a las personas que te ayudan a atender mensajes y pedidos. Cada una entra con su
-        propio correo y contraseña.
-      </p>
-    </div>
-  </header>
+  <ds-page-header title="Equipo" icon="users" description="Invita a las personas que te ayudan a atender mensajes y pedidos. Cada una entra con su propio correo y contraseña." />
 
   @if (errorMessage() && !loadFailed(); as error) {
     <div class="tw:feedback tw:feedback-danger" role="alert">

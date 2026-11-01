@@ -1,5 +1,5 @@
 <section class="tw:mx-auto tw:grid tw:w-full tw:min-w-0 tw:max-w-form tw:gap-5">
-  <header><p class="tw:console-eyebrow">Negocio</p><h1 class="tw:console-title">Ajustes</h1><p class="tw:mt-2 tw:max-w-prose tw:text-sm tw:text-muted">Administra el nombre, el país y la moneda de tu negocio.</p></header>
+  <ds-page-header title="Ajustes" icon="settings" description="Administra el nombre, el país y la moneda de tu negocio." />
   @if (errorMessage() && !loadFailed(); as error) { <div class="tw:feedback tw:feedback-danger" role="alert"><ds-icon name="alert" /><span>{{ error }}</span></div> }
   @if (successMessage(); as success) { <div class="tw:feedback tw:feedback-success" role="status"><ds-icon name="check" /><span>{{ success }}</span></div> }
   @if (loading()) {

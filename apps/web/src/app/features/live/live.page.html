@@ -1,13 +1,9 @@
 <section class="live-page tw:mx-auto tw:min-w-0">
-  <header class="page-header">
-    <div>
-      <h1 class="tw:console-title">TikTok LIVE</h1>
-      <p>Ofertas y ventas de tu transmisión, con stock y pagos de tu tienda.</p>
+  <ds-page-header title="TikTok LIVE" icon="radio" description="Ofertas y ventas de tu transmisión, con stock y pagos de tu tienda.">
+    <div dsPageActions>
+      <ds-button variant="secondary" (click)="load()" [disabled]="loading() || busy()">Actualizar</ds-button>
     </div>
-    <ds-button variant="secondary" (click)="load()" [disabled]="loading() || busy()"
-      >Actualizar</ds-button
-    >
-  </header>
+  </ds-page-header>
   @if (error(); as message) {
     <div class="notice notice--error" role="alert">
       {{ message }} <ds-button variant="ghost" (click)="load()">Reintentar</ds-button>

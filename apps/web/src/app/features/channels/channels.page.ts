@@ -2,13 +2,13 @@ import { ChangeDetectionStrategy, Component, OnDestroy, inject, signal } from '@
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { DsActionBarComponent, DsButtonComponent, DsDisclosureComponent, DsEmptyStateComponent, DsFormSectionComponent, DsIconComponent, DsSelectComponent } from '@vendedoria/ui';
+import { DsActionBarComponent, DsButtonComponent, DsDisclosureComponent, DsEmptyStateComponent, DsFormSectionComponent, DsIconComponent, DsPageHeaderComponent, DsSelectComponent } from '@vendedoria/ui';
 import { AuthorizedWhatsAppPhone, ChannelDto, ChannelDiagnostics, MessagingApiService, WhatsAppSignupConfiguration, WhatsAppSignupSession, WhatsAppManualWebhook } from '../../core/api/messaging-api.service';
 import { MetaWhatsAppSignupService } from './meta-whatsapp-signup.service';
 
 @Component({
   selector: 'app-channels-page', standalone: true,
-  imports: [ReactiveFormsModule, DsActionBarComponent, DsSelectComponent, DsButtonComponent, DsEmptyStateComponent, DsIconComponent, DsDisclosureComponent, DsFormSectionComponent],
+  imports: [ReactiveFormsModule, DsActionBarComponent, DsSelectComponent, DsButtonComponent, DsEmptyStateComponent, DsIconComponent, DsDisclosureComponent, DsFormSectionComponent, DsPageHeaderComponent],
   templateUrl: './channels.page.html', changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChannelsPage implements OnDestroy {

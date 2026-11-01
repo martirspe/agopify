@@ -1,9 +1,17 @@
-import { DsCheckboxComponent, DsFormSectionComponent, DsDisclosureComponent, DsSaveBarComponent } from '@vendedoria/ui';
-import { DsSelectComponent } from '@vendedoria/ui';
+import {
+  DsButtonComponent,
+  DsCheckboxComponent,
+  DsDisclosureComponent,
+  DsEmptyStateComponent,
+  DsFormSectionComponent,
+  DsIconComponent,
+  DsPageHeaderComponent,
+  DsSaveBarComponent,
+  DsSelectComponent,
+} from '@vendedoria/ui';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { ShippingOption, UbigeoDistrict } from '@vendedoria/contracts';
-import { DsButtonComponent, DsEmptyStateComponent, DsIconComponent } from '@vendedoria/ui';
 import { messageFrom } from '../../core/api/api-error';
 import { CarrierRates, ShippingApiService, ShippingSettingsView } from '../../core/api/shipping-api.service';
 
@@ -21,7 +29,7 @@ const CARRIER_TIER_LABELS = ['Hasta 20 km', 'Hasta 100 km', 'Hasta 400 km', 'Has
 @Component({
   selector: 'app-shipping-page',
   standalone: true,
-  imports: [DsCheckboxComponent, DsFormSectionComponent, DsDisclosureComponent, DsSaveBarComponent, DsSelectComponent, ReactiveFormsModule, DsButtonComponent, DsEmptyStateComponent, DsIconComponent],
+  imports: [DsCheckboxComponent, DsFormSectionComponent, DsDisclosureComponent, DsSaveBarComponent, DsSelectComponent, ReactiveFormsModule, DsButtonComponent, DsEmptyStateComponent, DsIconComponent, DsPageHeaderComponent],
   templateUrl: './shipping.page.html',
   styleUrl: './shipping.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

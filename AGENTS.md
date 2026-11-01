@@ -9,6 +9,7 @@ Multi-tenant SaaS: AI sales agents on WhatsApp/Instagram ("del hola al pago") pl
 4. Code vs docs conflict: follow verifiable code, add one line to `docs/agent/context-map.md` → Discrepancies; ask only if the choice irreversibly changes product behavior.
 
 ## Repository map
+- Commerce Integration Core (external Magento/Woo/… → unified catalog): `INTEGRATION_CORE_ARCHITECTURE.md`, gap `docs/architecture/INTEGRATION_CORE_GAP_ANALYSIS.md`, code `apps/api/src/commerce-integrations/` (distinct from plan `integrations/`)
 - `apps/api` NestJS 11 + Fastify + Prisma 6 + PostgreSQL (`/api/v1`, Swagger `/docs`) → `apps/api/AGENTS.md`
 - `apps/web` Angular 22 console + marketing (prerendered SSR) → `apps/web/AGENTS.md`
 - `apps/store` Angular 22 tenant store, SSR per request resolved by host → `apps/store/AGENTS.md`

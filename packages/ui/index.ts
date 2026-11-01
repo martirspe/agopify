@@ -15,3 +15,5 @@ export * from './src/form-section/ds-form-section.component';
 export * from './src/disclosure/ds-disclosure.component';
 export * from './src/save-bar/ds-save-bar.component';
 export * from './src/action-bar/ds-action-bar.component';
+export * from './src/page-header/ds-page-header.component';
+export * from './src/banner/ds-banner.component';

@@ -1,13 +1,5 @@
 <section class="store tw:mx-auto tw:min-w-0">
-  <header class="store__header">
-    <div>
-      <h1 class="tw:console-title">Píxel y Analytics</h1>
-      <p>
-        Mide las visitas, los carritos y las compras de tu tienda en Meta y Google Analytics
-        para medir tus anuncios. Solo se mide a quien acepta las cookies.
-      </p>
-    </div>
-  </header>
+  <ds-page-header title="Píxel y Analytics" icon="chartColumn" description="Mide las visitas, los carritos y las compras de tu tienda en Meta y Google Analytics para medir tus anuncios. Solo se mide a quien acepta las cookies." />
 
   @if (errorMessage() && !loadFailed(); as error) {
     <div class="tw:feedback tw:feedback-danger" role="alert">

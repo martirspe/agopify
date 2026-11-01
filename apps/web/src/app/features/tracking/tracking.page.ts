@@ -2,7 +2,7 @@ import { DsActionBarComponent } from '@vendedoria/ui';
 import { DsEmptyStateComponent } from '@vendedoria/ui';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DsButtonComponent, DsIconComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsIconComponent, DsPageHeaderComponent } from '@vendedoria/ui';
 import { messageFrom } from '../../core/api/api-error';
 import { IntegrationsApiService, TrackingSettings } from '../../core/api/integrations-api.service';
 import { AuthApiService } from '../../core/auth/auth-api.service';
@@ -15,7 +15,7 @@ const GA4_ID = /^G-[A-Z0-9]{4,12}$/;
 @Component({
   selector: 'app-tracking-page',
   standalone: true,
-  imports: [DsActionBarComponent, DsEmptyStateComponent, ReactiveFormsModule, DsButtonComponent, DsIconComponent, IntegrationGateComponent],
+  imports: [DsActionBarComponent, DsEmptyStateComponent, ReactiveFormsModule, DsButtonComponent, DsIconComponent, DsPageHeaderComponent, IntegrationGateComponent],
   templateUrl: './tracking.page.html',
   styleUrls: ['../store/store.page.scss', '../payments/payments.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

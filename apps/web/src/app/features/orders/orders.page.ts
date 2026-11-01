@@ -18,6 +18,7 @@ import { map, startWith } from 'rxjs';
 import { DsButtonComponent } from '@vendedoria/ui';
 import { DsEmptyStateComponent } from '@vendedoria/ui';
 import { DsIconComponent } from '@vendedoria/ui';
+import { DsBannerComponent, DsPageHeaderComponent } from '@vendedoria/ui';
 import {
   OrderDto,
   OrderStatus,
@@ -48,6 +49,8 @@ const KANBAN_COLUMNS: Array<{ id: OrderStatus; label: string }> = [
     DsButtonComponent,
     DsEmptyStateComponent,
     DsIconComponent,
+    DsBannerComponent,
+    DsPageHeaderComponent,
   ],
   templateUrl: './orders.page.html',
   styleUrl: './orders.page.scss',

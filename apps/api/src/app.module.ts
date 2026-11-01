@@ -22,6 +22,7 @@ import { CheckoutModule } from './checkout/checkout.module';
 import { RateLimitModule } from './rate-limit/rate-limit.module';
 import { TurnstileModule } from './turnstile/turnstile.module';
 import { IntegrationsModule } from './integrations/integrations.module';
+import { CommerceIntegrationsModule } from './commerce-integrations/commerce-integrations.module';
 import { TeamModule } from './team/team.module';
 import { PlatformModule } from './platform/platform.module';
 import { validateEnv } from './config/env.validation';
@@ -58,6 +59,7 @@ import { LiveModule } from './live/live.module';
     ConversionModule,
     LiveModule,
     IntegrationsModule,
+    CommerceIntegrationsModule,
     TeamModule,
     PlatformModule,
   ],

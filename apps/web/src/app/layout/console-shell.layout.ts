@@ -22,11 +22,19 @@ import {
   INTEGRATIONS,
   IntegrationsStateService,
 } from '../core/integrations/integrations-state.service';
-import { DsIconComponent, DsIconName, DsMenuComponent, DsModalDirective } from '@vendedoria/ui';
+import {
+  DsBannerComponent,
+  DsIconComponent,
+  DsIconName,
+  DsMenuComponent,
+  DsModalDirective,
+} from '@vendedoria/ui';
 import { SELLER_SECTIONS } from '../features/seller/seller-config';
 import { initialsOf } from '../features/profile/profile-utils';
 import { environment } from '../../environments/environment';
 import { CONSOLE_CONTEXTS, contextForUrl, isContextLinkActive, normalizeSearch, type ContextLink } from './console-context';
+import { ConsoleRailTooltipDirective } from './console-rail-tooltip.directive';
+import { ConsoleAssistantLayoutService } from './console-assistant-layout.service';
 import { CatalogApiService, type ProductDto } from '../core/api/catalog-api.service';
 
 type ConsoleNavItem = {
@@ -63,9 +71,12 @@ type PaletteAction = {
     DsIconComponent,
     DsModalDirective,
     DsMenuComponent,
+    DsBannerComponent,
+    ConsoleRailTooltipDirective,
   ],
   templateUrl: './console-shell.layout.html',
-  host: { class: 'tw:block tw:min-h-dvh' },
+ /* Fixed to the viewport like / — document scroll cannot move the white sheet. */
+  host: { class: 'tw:fixed tw:inset-0 tw:block tw:overflow-hidden' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConsoleShellLayout {
@@ -77,9 +88,11 @@ export class ConsoleShellLayout {
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
   private readonly catalog = inject(CatalogApiService);
+  readonly assistantLayout = inject(ConsoleAssistantLayoutService);
 
   readonly paletteOpen = signal(false);
   readonly mobileNavOpen = signal(false);
+  /** User preference for condensed rail (Ctrl+B / toggle). */
   readonly navCollapsed = signal(false);
   readonly paletteQuery = signal('');
   readonly contextQuery = signal('');
@@ -205,6 +218,11 @@ export class ConsoleShellLayout {
   );
   readonly isHome = computed(() => this.currentUrl().split(/[?#]/)[0] === '/app/get-started');
   readonly context = computed(() => contextForUrl(this.currentUrl()));
+  /**
+ * settings: primary nav is forced condensed while the context subnav is open
+ * (no Expandir control; preference restored on leave).
+ */
+  readonly railCollapsed = computed(() => !!this.context() || this.navCollapsed());
   readonly contextGroups = computed(() => this.context()?.groups.map(group => ({ ...group, items: group.items.filter(item => normalizeSearch(item.label).includes(normalizeSearch(this.contextQuery()))) })).filter(group => group.items.length) ?? []);
   readonly contextLocation = computed(() => this.context()?.groups.flatMap(group => group.items).find(item => this.isContextActive(item))?.label);
   isContextActive(item: ContextLink): boolean { return isContextLinkActive(item, this.currentUrl()); }
@@ -239,6 +257,8 @@ export class ConsoleShellLayout {
   }
 
   toggleNavigation(): void {
+    /* Settings/store subnav locks the primary rail condensed — same as console. */
+    if (this.context()) return;
     this.navCollapsed.update((collapsed) => !collapsed);
     afterNextRender(() => {
       this.element.nativeElement.querySelector<HTMLButtonElement>('#console-navigation [data-nav-toggle]')?.focus();
@@ -379,7 +399,8 @@ export class ConsoleShellLayout {
     const q = normalizeSearch(this.paletteQuery());
     const sections = this.filteredPalette().filter(action => filter === 'todos' || filter === 'productos' && ['/app/products', '/app/inventory', '/app/coupons'].includes(action.path) || filter === 'vendedor' && action.path.startsWith('/app/seller') || filter === 'conexiones' && ['/app/channels', '/app/payments', '/app/integrations', '/app/instagram', '/app/tiktok-live'].includes(action.path) || filter === 'ajustes' && (action.id.startsWith('context-') || ['/app/profile', '/app/help', '/app/plans'].includes(action.path)));
     const unique = [...new Map(sections.map(action => [action.path, action])).values()];
-    if (!q && filter === 'todos') return [...new Map([...this.paletteRecent(), ...unique].map(action => [action.path, action])).values()].slice(0, 7);
+ /* búsqueda: empty query shows centered prompt (or Recientes only). */
+    if (!q && filter === 'todos') return this.paletteRecent().slice(0, 7);
     const products: PaletteAction[] = (filter === 'todos' || filter === 'productos') && (q || filter === 'productos') ? this.paletteProducts().filter(product => q.split(/\s+/).every(token => normalizeSearch(product.name + ' ' + (product.sku ?? '') + ' ' + (product.brand ?? '') + ' ' + (product.variants ?? []).map(variant => variant.sku ?? '').join(' ')).includes(token))).slice(0, 12).map(product => ({ id: `product-${product.id}`, label: product.name, hint: `Producto${product.sku ? ' · ' + product.sku : ''} · Ver en el catálogo`, path: '/app/products?q=' + encodeURIComponent(product.name), icon: 'package' })) : [];
     return [...products, ...unique.slice(0, 15)];
   });
@@ -391,8 +412,12 @@ export class ConsoleShellLayout {
     effect(() => {
       const next = this.context()?.id;
       if (next === previousContext) return;
-      if (!previousContext && next) previousCollapsed = untracked(this.navCollapsed);
-      this.navCollapsed.set(next ? true : previousCollapsed);
+      if (!previousContext && next) {
+        /* Remember preference before settings forces condensed. */
+        previousCollapsed = untracked(this.navCollapsed);
+      } else if (previousContext && !next) {
+        this.navCollapsed.set(previousCollapsed);
+      }
       this.contextQuery.set('');
       previousContext = next;
     });
@@ -412,6 +437,15 @@ export class ConsoleShellLayout {
       event.preventDefault();
       if (this.paletteOpen()) this.closePalette();
       else if (!this.mobileNavOpen()) this.openPalette();
+      return;
+    }
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b') {
+      const tag = (event.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (event.target as HTMLElement | null)?.isContentEditable) {
+        return;
+      }
+      event.preventDefault();
+      if (!this.mobileNavOpen()) this.toggleNavigation();
     }
   }
 

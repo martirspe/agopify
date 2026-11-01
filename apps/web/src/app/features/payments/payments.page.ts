@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthApiService } from '../../core/auth/auth-api.service';
-import { DsButtonComponent, DsConfirmService, DsIconComponent, DsFormSectionComponent, DsSelectComponent, DsDisclosureComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsConfirmService, DsIconComponent, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent } from '@vendedoria/ui';
 import {
   ConnectPaymentAccountPayload,
   PaymentAccountView,
@@ -16,7 +16,7 @@ const CREDENTIAL = /^(APP_USR|TEST)-[A-Za-z0-9-]{20,200}$/;
 @Component({
   selector: 'app-payments-page',
   standalone: true,
-  imports: [DsActionBarComponent, DsEmptyStateComponent, ReactiveFormsModule, DsButtonComponent, DsIconComponent, DsFormSectionComponent, DsSelectComponent, DsDisclosureComponent],
+  imports: [DsActionBarComponent, DsEmptyStateComponent, ReactiveFormsModule, DsButtonComponent, DsIconComponent, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent],
   templateUrl: './payments.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

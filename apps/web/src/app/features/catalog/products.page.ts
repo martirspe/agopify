@@ -18,6 +18,7 @@ import { map, startWith } from 'rxjs';
 import { DsButtonComponent, DsConfirmService, DsModalDirective } from '@vendedoria/ui';
 import { DsEmptyStateComponent } from '@vendedoria/ui';
 import { DsIconComponent } from '@vendedoria/ui';
+import { DsBannerComponent, DsPageHeaderComponent } from '@vendedoria/ui';
 import {
   CatalogApiService,
   ComponentInput,
@@ -79,6 +80,8 @@ function toCents(amount: number): number {
     DsEmptyStateComponent,
     DsIconComponent,
     DsModalDirective,
+    DsBannerComponent,
+    DsPageHeaderComponent,
   ],
   templateUrl: './products.page.html',
   styleUrl: './products.page.scss',

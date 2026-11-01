@@ -1,16 +1,17 @@
-<section class="discounts tw:mx-auto tw:w-full tw:min-w-0 tw:max-w-page">
-  <header class="discounts__header">
-    <div>
-      <p class="tw:console-eyebrow">{{ editing() !== null ? 'Descuentos / ' + kindLabels[kind()] : 'Tienda web' }}</p>
-      <h1 class="tw:console-title">{{ editing() === null ? 'Descuentos' : editing() === 'new' ? 'Crear descuento' : 'Editar descuento' }}</h1>
-      <p>{{ editing() !== null ? 'Define el beneficio, quién puede usarlo y durante cuánto tiempo.' : 'Gestiona códigos y promociones automáticas para tu tienda.' }}</p>
+<section class="discounts tw:w-full tw:min-w-0">
+  <ds-page-header
+    icon="ticketPercent"
+    [title]="editing() === null ? 'Descuentos' : editing() === 'new' ? 'Crear descuento' : 'Editar descuento'"
+    [description]="editing() !== null ? 'Define el beneficio, quién puede usarlo y durante cuánto tiempo.' : 'Gestiona códigos y promociones automáticas para tu tienda.'"
+  >
+    <div dsPageActions>
+      @if (editing() !== null) {
+        <ds-button variant="secondary" [disabled]="saving()" (click)="cancel()"><ds-icon name="chevronLeft" [size]="1" /> Volver a descuentos</ds-button>
+      } @else if (!loading() && !loadFailed() && active() && coupons().length) {
+        <ds-button [disabled]="!!busyId()" (click)="openCreatePicker()"><ds-icon name="plus" [size]="1" /> Crear descuento</ds-button>
+      }
     </div>
-    @if (editing() !== null) {
-      <ds-button variant="secondary" [disabled]="saving()" (click)="cancel()"><ds-icon name="chevronLeft" [size]="1" /> Volver a descuentos</ds-button>
-    } @else if (!loading() && !loadFailed() && active() && coupons().length) {
-      <ds-button [disabled]="!!busyId()" (click)="openCreatePicker()"><ds-icon name="plus" [size]="1" /> Crear descuento</ds-button>
-    }
-  </header>
+  </ds-page-header>
 
   @if (errorMessage() && !loadFailed(); as error) { <div class="tw:feedback tw:feedback-danger" role="alert"><ds-icon name="alert" /><span>{{ error }}</span></div> }
   @if (successMessage(); as success) { <div class="tw:feedback tw:feedback-success" role="status"><ds-icon name="check" /><span>{{ success }}</span></div> }

@@ -1,0 +1,763 @@
+/* Home assistant + onboarding cards layout.
+ Composer: 620×104, radius 26px, pad 14px.
+ Greeting: 28px / 500 / lh 1.2 / ls −0.7px.
+ Cards grid: max 58.25rem, gap 16px; 3-col (>900px CQ), 2-col (≤900), 1-col (≤630).
+ Card: min-height 21.125rem, pad 8px, radius 20px; CTA 184×30.
+ Cluster: hero → cards margin-top 4.5rem. */
+
+:host {
+  display: block;
+}
+
+.home {
+  container: home-workspace / inline-size;
+  display: grid;
+  gap: 0;
+  width: 100%;
+  max-width: var(--ds-console-home-width, 61rem);
+  margin-inline: auto;
+  padding-block: 1.5rem 2.5rem;
+}
+
+.home__hero {
+  display: grid;
+  gap: 1.25rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.home__welcome {
+  margin: 0;
+  max-width: 37.5rem;
+  color: var(--ds-console-text, #101010);
+  font-family: var(--ds-font-ui);
+  font-size: 1.75rem; /* 28px */
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.04375rem; /* −0.7px */
+}
+
+.home__welcome-line {
+  display: block;
+}
+
+.home__store {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+}
+
+/* —— asistente composer —— */
+.home-assistant {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  max-width: 38.75rem; /* 620px */
+  margin-inline: auto;
+}
+
+.home-assistant__composer-wrap {
+  position: relative;
+  width: 100%;
+}
+
+/* Plus menu anchored to the + control (opens below; covers the suggestion strip). */
+.home-assistant__plus-anchor {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  z-index: 6;
+}
+
+.home-assistant__plus-menu {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  top: calc(100% + 0.5rem);
+  box-sizing: border-box;
+  width: 14.625rem;
+  max-width: min(14.625rem, 70vw);
+  padding: 0.25rem;
+  border-radius: 0.75rem;
+  background: #fff;
+  overflow: hidden;
+  box-shadow:
+    0 0.5rem 1.5rem -0.5rem rgb(0 0 0 / 28%),
+    0 0.5rem 1rem -0.25rem rgb(0 0 0 / 5%),
+    0 0.1875rem 0.375rem 0 rgb(0 0 0 / 5%),
+    0 0.125rem 0.25rem 0 rgb(0 0 0 / 5%),
+    0 0.0625rem 0.125rem 0 rgb(0 0 0 / 5%),
+    0 0 0 0.0625rem rgb(0 0 0 / 6%);
+}
+
+.home-assistant__plus-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* space-200 */
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 1.9375rem; /* 31px */
+  height: 1.9375rem;
+  padding: 0.375rem; /* space-150 */
+  border: 0;
+  border-radius: 0.5rem; /* radius-200 */
+  background: transparent;
+  color: #101010;
+  font-family: var(--ds-font-ui);
+  font-size: 0.8125rem; /* bodyMd 13px */
+  font-weight: 400;
+  line-height: 1.25rem;
+  letter-spacing: -0.01em;
+  text-align: start;
+  cursor: pointer;
+}
+
+.home-assistant__plus-item:hover:not(:disabled) {
+  background: #f7f7f7; /* nav color token */
+}
+
+.home-assistant__plus-item:disabled {
+  color: #a6a6a6; /* nav color token */
+  cursor: default;
+}
+
+.home-assistant__plus-item:disabled .home-assistant__plus-icon {
+  color: #a6a6a6;
+}
+
+.home-assistant__plus-item--toggle {
+  cursor: default;
+}
+
+.home-assistant__plus-item--toggle:hover {
+  background: transparent;
+}
+
+.home-assistant__plus-icon {
+  display: grid;
+  place-items: center;
+  width: 1.25rem; /* 20px */
+  height: 1.25rem;
+  color: #606060; /* icon subdued / secondary */
+  flex-shrink: 0;
+}
+
+.home-assistant__plus-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-assistant__plus-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem; /* SuffixStack — space-100 */
+  margin-inline-start: auto;
+  color: #606060;
+  flex-shrink: 0;
+}
+
+/* Hotkey pill — 20×20, r6, bg #00000014 */
+.home-assistant__plus-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.375rem;
+  background: #00000014;
+  color: #606060;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.home-assistant__plus-trailing {
+  display: grid;
+  place-items: center;
+  width: 1.125rem; /* ~18px AppThumbnail */
+  height: 1.125rem;
+  overflow: hidden;
+  border-radius: 0.25rem;
+  color: #606060;
+}
+
+.home-assistant__plus-divider {
+  height: 0.0625rem;
+  margin: 0 0.5rem; /* Divider wrap inset — space-200 */
+  border: 0;
+  background: #dddddd; /* nav color token */
+}
+
+.home-assistant__plus-info {
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: #606060;
+  flex-shrink: 0;
+  cursor: default;
+}
+
+/* Switch — asistente Generar apps (space-800 × space-400 = 32×16) */
+.home-assistant__switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 2rem; /* 32px */
+  height: 1rem; /* 16px */
+  padding: 0 0.0625rem;
+  border: 0.0625rem solid #606060;
+  border-radius: 9999px;
+  background: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.home-assistant__switch[aria-checked='true'] {
+  border-color: transparent;
+  background: #101010;
+}
+
+.home-assistant__switch-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0.125rem;
+  width: 1rem; /* 16px */
+  height: 0.75rem; /* 12px */
+  border-radius: 9999px;
+  background: #606060;
+  translate: 0 -50%;
+  transition:
+    translate 120ms ease,
+    background-color 120ms ease;
+}
+
+.home-assistant__switch[aria-checked='true'] .home-assistant__switch-thumb {
+  background: #fff;
+  translate: 0.75rem -50%; /* space-300 */
+}
+
+.home-assistant__field {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 6.5rem; /* 104px */
+  max-height: 6.5rem;
+  padding: 0.875rem; /* 14px */
+  border: 0;
+  border-radius: 1.625rem; /* 26px */
+  background: #fff;
+  box-shadow:
+    0 0 0.125rem 0 rgba(0, 0, 0, 0.24),
+    0 0.125rem 0.75rem 0 rgba(0, 0, 0, 0.02),
+    0 0.25rem 1rem 0 rgba(0, 0, 0, 0.02),
+    0 0.25rem 3rem 0 rgba(0, 0, 0, 0.02);
+  transition: box-shadow 160ms ease;
+}
+
+.home-assistant--active .home-assistant__field,
+.home-assistant__field:focus-within {
+  box-shadow:
+    0 0 0.125rem 0 rgba(0, 0, 0, 0.28),
+    0 0.125rem 0.75rem 0 rgba(0, 0, 0, 0.04),
+    0 0.25rem 1rem 0 rgba(0, 0, 0, 0.03),
+    0 0.25rem 3rem 0 rgba(0, 0, 0, 0.03);
+}
+
+.home-assistant__input {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem; /* keep field at 104px with toolbar */
+  max-height: 2.75rem;
+  margin: 0;
+  padding: 0.25rem 0 0.375rem;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: var(--ds-console-text, #101010);
+  font-family: var(--ds-font-ui);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.25rem;
+  overflow: hidden auto;
+  box-shadow: none;
+}
+
+.home-assistant__input:focus,
+.home-assistant__input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.home-assistant__input::placeholder {
+  color: color-mix(in srgb, var(--ds-console-text, #101010) 55%, transparent);
+}
+
+.home-assistant__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.375rem;
+  min-height: 1.5rem;
+}
+
+/* parity (same metrics as assistant panel). */
+.home-assistant__dictation {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.home-assistant__dictation-cancel,
+.home-assistant__dictation-confirm {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  cursor: pointer;
+  appearance: none;
+}
+
+.home-assistant__dictation-cancel {
+  background: #f2f2f2;
+  color: #4a4a4a;
+}
+
+.home-assistant__dictation-cancel:hover {
+  background: #ebebeb;
+}
+
+.home-assistant__dictation-confirm {
+  background: #303030;
+  color: #fff;
+}
+
+.home-assistant__dictation-confirm:hover {
+  background: #1a1a1a;
+}
+
+.home-assistant__waveform {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1875rem;
+  min-width: 0;
+  height: 1.0625rem;
+  overflow: hidden;
+}
+
+.home-assistant__waveform-bar {
+  display: block;
+  width: 0.1875rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: #b5b5b5;
+  animation: home-assistant-waveform-pulse 1.05s ease-in-out infinite;
+}
+
+@keyframes home-assistant-waveform-pulse {
+  0%,
+  100% {
+    height: 0.25rem;
+    opacity: 0.55;
+  }
+  50% {
+    height: 0.875rem;
+    opacity: 1;
+  }
+}
+
+.home-assistant__dictation-error {
+  margin: 0 0 0.375rem;
+  color: #8e0b21;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.home-assistant__character {
+  display: grid;
+  place-items: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 9999px;
+  background: var(--ds-color-primary, #c8f542);
+  color: var(--ds-color-ink, #101010);
+  flex-shrink: 0;
+}
+
+.home-assistant__tools {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-inline-start: auto;
+}
+
+.home-assistant__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 1.5rem;
+  padding: 0 0.5rem 0 0.25rem;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--ds-console-text, #101010);
+  font-family: var(--ds-font-ui);
+  font-size: 0.8125rem; /* measured Recientes 13px */
+  font-weight: 400;
+  line-height: 1.25rem;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+}
+
+.home-assistant__pill:hover {
+  background: color-mix(in srgb, var(--ds-console-text, #101010) 6%, transparent);
+}
+
+.home-assistant__icon-btn {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--ds-console-text, #101010);
+  cursor: pointer;
+}
+
+.home-assistant__icon-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ds-console-text, #101010) 6%, transparent);
+}
+
+.home-assistant__icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.home-assistant__send {
+  background: var(--ds-console-text, #101010);
+  color: #fff;
+}
+
+.home-assistant__send:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ds-console-text, #101010) 88%, #fff);
+}
+
+/* Suggestions under chat — Soft reveal only when composer is active (asistente). */
+.home-assistant__suggestions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.0625rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+  max-width: 38.75rem;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translateY(-0.35rem);
+  filter: blur(2px);
+  transition:
+    opacity 220ms cubic-bezier(0.25, 0.1, 0.25, 1),
+    transform 220ms cubic-bezier(0.25, 0.1, 0.25, 1),
+    filter 220ms cubic-bezier(0.25, 0.1, 0.25, 1),
+    max-height 240ms cubic-bezier(0.25, 0.1, 0.25, 1),
+    margin-block-start 220ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.home-assistant--suggesting .home-assistant__suggestions {
+  max-height: 18rem;
+  margin-block-start: 0.5rem;
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  filter: none;
+}
+
+.home-assistant__suggestion {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--ds-console-text, #101010);
+  font-family: var(--ds-font-ui);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.25rem;
+  letter-spacing: -0.01em;
+  text-align: start;
+  cursor: pointer;
+}
+
+.home-assistant__suggestion:hover {
+  background: color-mix(in srgb, var(--ds-console-text, #101010) 4%, transparent);
+}
+
+.home-assistant__suggestion-arrow {
+  flex-shrink: 0;
+  width: 1rem;
+  color: #8a8a8a;
+  font-size: 0.8125rem;
+  line-height: 1;
+}
+
+.home-assistant__suggestion-label {
+  min-width: 0;
+  flex: 1;
+}
+
+.home-ready {
+  max-width: 38.75rem;
+  margin-inline: auto;
+  margin-block-start: 1.5rem;
+}
+
+/* —— Getting-started cards —— */
+.home-cards {
+  --card-grid-gap: 1rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--card-grid-gap);
+  justify-content: center;
+  width: 100%;
+  max-width: 58.25rem;
+  margin-inline: auto;
+  margin-block-start: 4.5rem;
+  list-style: none;
+  padding: 0;
+}
+
+/*
+ With a 220px rail the workspace rarely exceeds 900px, so a 900px CQ
+ would almost never show 3 columns. Use 720px so desktop gets 3-up.
+*/
+@container home-workspace (max-width: 720px) {
+  .home-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Orphaned last card centered in two-column layout. */
+  .home-cards > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: calc((100% - var(--card-grid-gap)) / 2);
+  }
+}
+
+@container home-workspace (max-width: 480px) {
+  .home-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-cards > :last-child:nth-child(odd) {
+    width: 100%;
+    justify-self: stretch;
+  }
+}
+
+.home-card {
+  --card-shadow:
+    0 0.5625rem 0.625rem -0.5rem rgb(0 0 0 / 13%),
+    0 -0.125rem 0.25rem rgb(255 255 255 / 50%),
+    0 0.125rem 0.0625rem -0.0625rem rgb(0 0 0 / 5%),
+    0 0 0 0.0625rem rgb(0 0 0 / 7%);
+  --card-hover-shadow:
+    0 1.5rem 1.5rem -0.625rem rgb(0 0 0 / 25%),
+    0 0.1875rem 0.1875rem -0.09375rem rgb(0 0 0 / 2%),
+    0 0.125rem 0.125rem -0.0625rem rgb(0 0 0 / 2%),
+    0 0 0 0.0625rem rgb(0 0 0 / 6%);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 21.125rem; /* ~338px */
+  padding: 0.5rem; /* 8px */
+  border-radius: 1.25rem; /* 20px */
+  background: color-mix(in srgb, #fff 92%, #f1f1f1);
+  box-shadow: var(--card-shadow);
+  overflow: clip;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 160ms ease, transform 100ms ease;
+}
+
+.home-card:hover {
+  box-shadow: var(--card-hover-shadow);
+  transform: translateY(-0.25rem);
+}
+
+.home-card:active {
+  transform: translateY(-0.5rem) scale(0.98);
+}
+
+.home-card__media {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  height: 8.75rem; /* 140px — measured card media */
+  border-radius: 0.75rem; /* 12px */
+  background: #f5f6f7;
+  color: #707070;
+  overflow: hidden;
+}
+
+.home-card__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0.625rem 0 rgb(168 177 185 / 12%);
+  pointer-events: none;
+}
+
+.home-card__media--done {
+  color: var(--ds-color-success-text, #0f7a3a);
+  background: color-mix(in srgb, var(--ds-color-success-text, #0f7a3a) 8%, #f5f6f7);
+}
+
+.home-card__media--tasks {
+  color: var(--ds-console-text, #101010);
+}
+
+.home-card__tasks-count {
+  position: relative;
+  z-index: 1;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.home-card__media-icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow:
+    inset 0 0 0 1px rgb(20 24 28 / 9%),
+    inset 0 1px 0 0 rgb(255 255 255 / 88%);
+}
+
+.home-card__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 0.375rem; /* 6px */
+  padding: 0.75rem 0.75rem 0;
+  text-align: center;
+}
+
+.home-card__title {
+  margin: 0;
+  color: var(--ds-console-text, #101010);
+  font-size: 0.9375rem; /* 15px */
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.home-card__body-text {
+  margin: 0;
+ color: #707070; /* card description */
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.375;
+}
+
+.home-card__action {
+  display: flex;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding: 0 0.75rem 0.75rem;
+}
+
+.home-card__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 11.5rem; /* 184px */
+  max-width: 100%;
+  height: 1.875rem; /* 30px */
+  margin-block-start: 0.75rem; /* spacing token */
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  background: #fff;
+  color: #000;
+  font-size: 0.75rem; /* design token */
+  font-weight: 500;
+  line-height: 1rem;
+  letter-spacing: -0.01em;
+  box-shadow:
+    0 0 0 0.0625rem rgb(0 0 0 / 7%),
+    0 0.125rem 1.25rem rgb(0 0 0 / 3%),
+    0 0.3125rem 1.25rem rgb(0 0 0 / 3%),
+    0 0.5rem 3.75rem rgb(0 0 0 / 3%);
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.home-card:hover .home-card__cta {
+  background: #f2f2f2;
+}
+
+.home-card:active .home-card__cta {
+  transform: scale(0.975);
+}
+
+.home-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 58.25rem;
+  margin-inline: auto;
+  margin-block-start: 1.5rem;
+}
+
+@media (min-width: 40rem) {
+  .home-footer {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}

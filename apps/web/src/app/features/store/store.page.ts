@@ -22,7 +22,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { STORE_SECTIONS } from '../../layout/console-context';
 import type { StoreTemplate } from '@vendedoria/contracts';
-import { DsButtonComponent, DsDisclosureComponent, DsFormSectionComponent, DsIconComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsDisclosureComponent, DsFormSectionComponent, DsIconComponent, DsPageHeaderComponent } from '@vendedoria/ui';
 import {
   SellerType,
   StoreApiService,
@@ -56,7 +56,7 @@ export const TEMPLATE_OPTIONS = latestThemes().map(theme => ({
 @Component({
   selector: 'app-store-page',
   standalone: true,
-  imports: [DsActionBarComponent, DsEmptyStateComponent, DsDisclosureComponent, DsFormSectionComponent, ThemeManagerComponent, ConversionSettingsComponent, DsSelectComponent, ReactiveFormsModule, RouterLink, DsButtonComponent, DsIconComponent, IntegrationGateComponent],
+  imports: [DsActionBarComponent, DsEmptyStateComponent, DsDisclosureComponent, DsFormSectionComponent, ThemeManagerComponent, ConversionSettingsComponent, DsSelectComponent, ReactiveFormsModule, RouterLink, DsButtonComponent, DsIconComponent, DsPageHeaderComponent, IntegrationGateComponent],
   templateUrl: './store.page.html',
   styleUrl: './store.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -69,6 +69,7 @@ export class StorePage {
   private readonly router = inject(Router);
   readonly section = toSignal(this.route.queryParamMap.pipe(map(params => STORE_SECTIONS.find(item => item.section === params.get('seccion'))?.section ?? 'temas')), { initialValue: 'temas' });
   readonly sectionTitle = computed(() => STORE_SECTIONS.find(item => item.section === this.section())!.label);
+  readonly sectionIcon = computed(() => STORE_SECTIONS.find(item => item.section === this.section())!.icon);
   readonly sectionDescription = computed(() => ({ temas: 'Personaliza el diseño de tu tienda y prepara tu próxima publicación.', identidad: 'La información que tus clientes ven al visitar tu tienda.', preferencias: 'Dirección, buscadores y opciones para vender online.', legal: 'Información del vendedor y políticas de la tienda.', automatizaciones: 'Configura las acciones que acompañan la compra.' })[this.section() as 'temas']);
 
   readonly active = computed(() => this.integrations.isActive('store'));

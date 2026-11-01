@@ -1,5 +1,5 @@
-<section class="tw:mx-auto tw:grid tw:w-full tw:min-w-0 tw:max-w-page tw:gap-5">
-  <header><p class="tw:console-eyebrow">Resultados</p><h1 class="tw:console-title">Métricas</h1><p class="tw:mt-2 tw:max-w-prose tw:text-sm tw:text-muted">Consulta la actividad de tus conversaciones y pedidos, y prioriza los clientes que necesitan atención.</p></header>
+<section class="tw:grid tw:w-full tw:min-w-0 tw:gap-5">
+  <ds-page-header title="Métricas" icon="chartColumn" description="Consulta la actividad de tus conversaciones y pedidos, y prioriza los clientes que necesitan atención." />
   <div class="tw:flex tw:flex-wrap tw:items-end tw:justify-between tw:gap-3">
     <div class="tw:grid tw:gap-2"><label for="metrics-period" class="tw:text-sm tw:font-semibold">Período de actividad</label><ds-select><select id="metrics-period" [value]="days()" (change)="changePeriod($event)" aria-describedby="metrics-period-help"><option value="7">Últimos 7 días</option><option value="30">Últimos 30 días</option></select></ds-select><p id="metrics-period-help" class="tw:m-0 tw:text-caption tw:text-muted">Incluye hoy. No incluye las pruebas de Probar vendedor.</p></div>
     @if (summary(); as data) { <p class="tw:m-0 tw:text-caption tw:text-muted">Datos mostrados: {{ data.from | date:'dd/MM/yyyy' }} – {{ data.to | date:'dd/MM/yyyy' }}</p> }

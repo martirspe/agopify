@@ -189,10 +189,12 @@ describe('console navigation', () => {
     const { fixture, router } = await setup();
     await router.navigateByUrl('/app/store?seccion=legal'); fixture.detectChanges(); await fixture.whenStable(); fixture.detectChanges();
     expect(fixture.componentInstance.contextLocation()).toBe('Datos legales');
-    expect(fixture.componentInstance.navCollapsed()).toBe(true);
+    expect(fixture.componentInstance.railCollapsed()).toBe(true);
+    expect(fixture.nativeElement.querySelector('#console-navigation [data-nav-toggle]')).toBeNull();
     expect(isContextLinkActive({ label: 'Temas', path: '/app/store', icon: 'palette', section: 'temas' }, '/app/store?seccion=legal')).toBe(false);
     expect(contextForUrl('/app/store/editor')).toBeUndefined();
     await router.navigateByUrl('/app/products'); fixture.detectChanges(); await fixture.whenStable(); fixture.detectChanges();
+    expect(fixture.componentInstance.railCollapsed()).toBe(false);
     expect(fixture.componentInstance.navCollapsed()).toBe(false);
     expect(fixture.nativeElement.querySelector('aside[aria-label="Ajustes de sección"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('#console-navigation button[role="menuitem"]')?.textContent).toContain('Cerrar sesión');

@@ -40,7 +40,7 @@ Quiero tiendas con:
 - Accesibilidad real.
 - Identidad visual diferenciada por industria.
 
-El resultado debe competir en calidad percibida con storefronts premium construidos sobre Shopify, sin copiar su identidad ni su implementación.
+El resultado debe competir en calidad percibida con storefronts ecommerce premium, sin copiar la identidad ni la implementación de terceros.
 
 **La calidad premium debe ser visible desde el primer segundo y mantenerse durante todo el recorrido de compra.**
 
@@ -1462,7 +1462,7 @@ Cada tema debe parecer una solución comercial premium diseñada cuidadosamente 
 
 No una plantilla administrativa convertida en ecommerce.
 
-No un clon genérico de Shopify.
+No un clon genérico de otra plataforma.
 
 No una página decorativa sin arquitectura.
 

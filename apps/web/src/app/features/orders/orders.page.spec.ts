@@ -81,9 +81,10 @@ describe('order list UX', () => {
   it('does not claim a connected payment provider merely because test mode is off', async () => {
     const { page, fixture } = await setup();
     page.mockMode.set(false); fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.orders__header-actions').textContent).not.toContain('Mercado Pago');
+    expect(fixture.nativeElement.textContent).not.toContain('Mercado Pago');
+    expect(fixture.nativeElement.textContent).not.toContain('Pagos en modo de prueba');
     page.mockMode.set(true); fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.orders__header-actions').textContent).toContain('Pagos en modo de prueba');
+    expect(fixture.nativeElement.textContent).toContain('Pagos en modo de prueba');
   });
 
   it('restores search, status and board from the URL and keeps cancelled orders visible', async () => {

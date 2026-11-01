@@ -5,13 +5,6 @@
   padding-bottom: var(--ds-space-8);
 }
 
-.orders__header {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--ds-space-4);
-  align-items: start;
-}
-
 .orders__eyebrow {
   margin: 0 0 var(--ds-space-2);
   color: var(--ds-color-text-secondary);
@@ -21,27 +14,14 @@
   text-transform: uppercase;
 }
 
-
-.orders__header p {
-  margin: var(--ds-space-2) 0 0;
-  max-width: var(--ds-console-form-width);
-  color: var(--ds-color-text-secondary);
-}
-
-.orders__header-actions {
-  display: flex;
-  gap: var(--ds-space-3);
-  align-items: center;
-  flex-wrap: wrap;
-}
-
 .tabs,
 .view-toggle {
   display: inline-flex;
   flex-wrap: wrap;
-  padding: var(--ds-space-1);
+  gap: 2px;
+  padding: 2px;
   border-radius: var(--ds-radius-sm);
-  background: var(--ds-color-surface);
+  background: var(--ds-color-bg);
   border: var(--ds-border-width) solid var(--ds-color-border);
 }
 
@@ -50,20 +30,22 @@
   display: inline-flex;
   align-items: center;
   gap: var(--ds-space-2);
-  min-height: var(--ds-touch-target);
+  min-height: var(--ds-console-control-height, var(--ds-touch-target));
   padding: 0 var(--ds-space-3);
   border: 0;
-  border-radius: var(--ds-radius-sm);
+  border-radius: calc(var(--ds-radius-sm) - 1px);
   background: transparent;
   color: var(--ds-color-text-secondary);
-  font-weight: 700;
+  font-size: var(--ds-type-sm);
+  font-weight: 600;
   cursor: pointer;
 }
 
 .tabs button.is-active,
 .view-toggle button.is-active {
-  background: var(--ds-color-ink);
-  color: var(--ds-color-surface);
+  background: var(--ds-color-surface);
+  color: var(--ds-color-text-primary);
+  box-shadow: var(--ds-shadow-sm);
 }
 
 .kanban {
@@ -477,14 +459,6 @@ tbody tr:hover {
   }
 }
 
-@media (max-width: 59.999rem) {
-  .orders__header {
-    grid-template-columns: 1fr;
-    display: grid;
-  }
-
-}
-
 @media (prefers-reduced-motion: reduce) {
   .drawer,
   .modal__panel,
@@ -525,11 +499,6 @@ tbody tr:hover {
 
   .drawer__footer .actions,
   .modal__panel footer {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .orders__header-actions {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
   }

@@ -1,32 +1,59 @@
 :host {
-  --menu-bg: var(--ds-color-surface);
-  --menu-text: var(--ds-color-text-primary);
-  --menu-border: var(--ds-color-border);
-  --menu-hover: var(--ds-color-bg);
+  /* Light surface popover even when the trigger sits on the dark rail. */
+  --menu-bg: var(--ds-color-surface, #fff);
+  --menu-text: var(--ds-console-text, #101010);
+  --menu-text-secondary: var(--ds-console-text-secondary, #4a4a4a);
+  --menu-border: var(--ds-console-border, #ddd);
+  --menu-hover: #f7f7f7;
+  --menu-trigger-text: var(--ds-color-text-primary);
+  --menu-trigger-hover: var(--ds-color-bg);
   display: block;
   min-width: 0;
 }
 :host([data-tone='navigation']) {
-  --menu-bg: var(--ds-console-nav-bg);
-  --menu-text: var(--ds-console-nav-text);
-  --menu-border: var(--ds-console-nav-border);
-  --menu-hover: var(--ds-console-nav-hover);
+  /* Only the activator inherits rail colors; the floating panel stays surface. */
+  --menu-trigger-text: var(--ds-console-nav-text);
+  --menu-trigger-hover: var(--ds-console-nav-hover);
+  min-width: 0;
+}
+/* Condensed rail: host is the 32px chip so hover paints one surface (not nested). */
+:host([data-tone='navigation'][data-compact]) {
+  width: 2rem;
+  flex-shrink: 0;
 }
 .ds-menu-trigger {
   display: flex;
   align-items: center;
   min-height: var(--ds-touch-target);
   width: 100%;
-  padding: var(--ds-space-1) var(--ds-space-2);
+  padding: 0;
   border: 0;
-  border-radius: var(--ds-radius-sm);
+  border-radius: 0.75rem;
   background: transparent;
-  color: var(--menu-text);
+  color: var(--menu-trigger-text);
   text-align: left;
   cursor: pointer;
 }
 .ds-menu-trigger:hover,
-.ds-menu-trigger[aria-expanded='true'] { background: var(--menu-hover); }
+.ds-menu-trigger[aria-expanded='true'] {
+  background: var(--menu-trigger-hover);
+}
+:host([data-tone='navigation']:not([data-compact])) .ds-menu-trigger {
+  /* Match console-rail-link density when the label is visible. */
+  gap: 0.125rem;
+  min-height: 1.875rem;
+  padding: 1px 4px 1px 8px;
+}
+:host([data-tone='navigation'][data-compact]) .ds-menu-trigger {
+  box-sizing: border-box;
+  width: 2rem;
+  min-width: 2rem;
+  height: 1.875rem;
+  min-height: 1.875rem;
+  justify-content: center;
+  padding: 1px 0;
+  border-radius: 0.75rem;
+}
 .ds-menu-panel {
   position: fixed;
   inset: auto;
@@ -34,12 +61,20 @@
   width: min(var(--ds-menu-width), calc(100vw - 2 * var(--ds-space-2)));
   max-height: calc(100dvh - 2 * var(--ds-space-2));
   overflow-y: auto;
-  padding: var(--ds-space-2);
-  border: 1px solid var(--menu-border);
-  border-radius: var(--ds-radius-md);
+  padding: 0.25rem;
+  border: 0;
+  border-radius: 1rem; /* 16px */
   background: var(--menu-bg);
   color: var(--menu-text);
   font: inherit;
   box-shadow: var(--ds-shadow-dropdown);
 }
-.ds-menu-trigger:focus-visible { outline: 2px solid var(--ds-color-focus-ring); outline-offset: 2px; }
+.ds-menu-trigger:focus-visible {
+  outline: 2px solid var(--ds-color-focus-ring);
+  outline-offset: 2px;
+}
+@media (min-width: 56.25rem) and (hover: hover) and (pointer: fine) {
+  :host([data-tone='navigation']) .ds-menu-trigger {
+    min-height: var(--ds-console-nav-row-height, 1.875rem);
+  }
+}

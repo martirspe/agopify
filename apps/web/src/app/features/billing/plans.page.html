@@ -1,9 +1,5 @@
 <section class="tw:mx-auto tw:grid tw:w-full tw:min-w-0 tw:gap-5">
-  <header>
-    <p class="tw:console-eyebrow">Cuenta</p>
-    <h1 class="tw:console-title">Planes</h1>
-    <p class="tw:mt-2 tw:max-w-prose tw:text-sm tw:text-muted">Consulta tu consumo y compara los planes de tu negocio.</p>
-  </header>
+  <ds-page-header title="Planes" icon="creditCard" description="Consulta tu consumo y compara los planes de tu negocio." />
 
   @if (errorMessage(); as error) {
     <div class="tw:feedback tw:feedback-danger" role="alert"><ds-icon name="alert" /><span>{{ error }}</span></div>

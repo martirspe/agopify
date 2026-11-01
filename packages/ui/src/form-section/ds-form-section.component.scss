@@ -1,4 +1,4 @@
-:host { display: block; min-width: 0; border: var(--ds-border-width) solid var(--ds-color-border); border-radius: var(--ds-radius-lg); background: var(--ds-color-surface); }
+:host { display: block; min-width: 0; border: var(--ds-border-width) solid var(--ds-color-border); border-radius: var(--ds-console-card-radius, var(--ds-radius-md)); background: var(--ds-color-surface); box-shadow: none; }
 :host(.ds-form-section--plain) { border: 0; border-radius: 0; background: transparent; }
 section { padding: var(--ds-space-5); }
 header { display: flex; flex-wrap: wrap; align-items: start; gap: var(--ds-space-3); margin-bottom: var(--ds-space-4); }

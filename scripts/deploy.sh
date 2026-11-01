@@ -110,6 +110,12 @@ if [[ -z "$(read_env CHANNEL_CREDENTIALS_KEY)" ]]; then
   log "Generated CHANNEL_CREDENTIALS_KEY (never change it once WhatsApp channels are connected)."
 fi
 
+# Encrypts external commerce connector credentials (Magento, WooCommerce, …).
+if [[ -z "$(read_env INTEGRATION_CREDENTIALS_KEY)" ]]; then
+  set_env INTEGRATION_CREDENTIALS_KEY "$(random_hex 32)"
+  log "Generated INTEGRATION_CREDENTIALS_KEY (never change it once commerce integrations are connected)."
+fi
+
 for key in JWT_ACCESS_SECRET JWT_REFRESH_SECRET; do
   if [[ -z "$(read_env "$key")" ]]; then
     set_env "$key" "$(random_hex 48)"

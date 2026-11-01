@@ -1,4 +1,4 @@
-import { DsSaveBarComponent, DsFormSectionComponent, DsDisclosureComponent } from '@vendedoria/ui';
+import { DsSaveBarComponent, DsFormSectionComponent, DsDisclosureComponent, DsPageHeaderComponent } from '@vendedoria/ui';
 import { DsEmptyStateComponent } from '@vendedoria/ui';
 import { DsSelectComponent } from '@vendedoria/ui';
 import {
@@ -17,7 +17,7 @@ type BusinessSettings = Pick<TenantDto, 'name' | 'country' | 'currency'>;
 @Component({
   selector: 'app-settings-page',
   standalone: true,
-  imports: [DsSaveBarComponent, DsFormSectionComponent, DsDisclosureComponent, DsEmptyStateComponent, DsSelectComponent, ReactiveFormsModule, DsButtonComponent, DsIconComponent],
+  imports: [DsSaveBarComponent, DsFormSectionComponent, DsDisclosureComponent, DsPageHeaderComponent, DsEmptyStateComponent, DsSelectComponent, ReactiveFormsModule, DsButtonComponent, DsIconComponent],
   templateUrl: './settings.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

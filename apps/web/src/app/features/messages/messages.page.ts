@@ -19,6 +19,7 @@ import { auditTime, tap } from 'rxjs';
 import { DsButtonComponent } from '@vendedoria/ui';
 import { DsEmptyStateComponent } from '@vendedoria/ui';
 import { DsIconComponent } from '@vendedoria/ui';
+import { DsPageHeaderComponent } from '@vendedoria/ui';
 import { InboxStreamService } from '../../core/api/inbox-stream.service';
 import {
   ConversationDetail,
@@ -45,6 +46,7 @@ import {
     DsButtonComponent,
     DsEmptyStateComponent,
     DsIconComponent,
+    DsPageHeaderComponent,
   ],
   templateUrl: './messages.page.html',
   styleUrl: './messages.page.scss',

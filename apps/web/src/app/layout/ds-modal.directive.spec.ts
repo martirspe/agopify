@@ -29,7 +29,7 @@ const nativeMethods = new Map(
 );
 
 beforeEach(() => {
-  // jsdom has no native dialog API; browser checks cover top-layer behavior.
+ // jsdom has no native dialog API; browser checks cover top-layer behavior.
   Object.defineProperty(dialogPrototype, 'showModal', {
     configurable: true,
     value(this: HTMLDialogElement) {
