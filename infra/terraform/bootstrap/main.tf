@@ -17,7 +17,7 @@ variable "aws_region" {
 
 variable "app_name" {
   type    = string
-  default = "vendedoria"
+  default = "agopify"
 }
 
 provider "aws" {

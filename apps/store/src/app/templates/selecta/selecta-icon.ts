@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, input } from '@angular/core';
-import { DsIconComponent, DsIconName } from '@vendedoria/ui';
+import { DsIconComponent, DsIconName } from '@agopify/ui';
 
 export type SelectaIconName =
   | 'bag'

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import type { ShippingOption, UbigeoDistrict } from '@vendedoria/contracts';
+import type { ShippingOption, UbigeoDistrict } from '@agopify/contracts';
 import { environment } from '../../../environments/environment';
 
 /** Five rates in cents, from the nearest distance tier to the farthest. */

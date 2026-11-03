@@ -1,8 +1,8 @@
 {
-  "name": "@vendedoria/store",
+  "name": "@agopify/store",
   "version": "0.1.0",
   "private": true,
-  "description": "Public web store of each VendedorIA tenant (SSR, resolved by host)",
+  "description": "Public web store of each Agopify tenant (SSR, resolved by host)",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

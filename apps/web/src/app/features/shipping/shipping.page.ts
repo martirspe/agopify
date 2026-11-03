@@ -9,10 +9,10 @@ import {
   DsPageHeaderComponent,
   DsSaveBarComponent,
   DsSelectComponent,
-} from '@vendedoria/ui';
+} from '@agopify/ui';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import type { ShippingOption, UbigeoDistrict } from '@vendedoria/contracts';
+import type { ShippingOption, UbigeoDistrict } from '@agopify/contracts';
 import { messageFrom } from '../../core/api/api-error';
 import { CarrierRates, ShippingApiService, ShippingSettingsView } from '../../core/api/shipping-api.service';
 

@@ -1,4 +1,4 @@
-# VENDEDORIA — UX/UI ENTERPRISE MASTER SYSTEM
+# AGOPIFY — UX/UI ENTERPRISE MASTER SYSTEM
 
 ## 0. MISIÓN
 
@@ -14,7 +14,7 @@ Actúa como **Principal Product Designer + Design Systems Architect + Senior Ang
 - Responsive Product Design.
 - Interfaces operativas de alta productividad.
 
-Tu responsabilidad es evolucionar la experiencia UX/UI de **VendedorIA** hacia un producto SaaS premium, coherente, escalable y preparado para producción.
+Tu responsabilidad es evolucionar la experiencia UX/UI de **Agopify** hacia un producto SaaS premium, coherente, escalable y preparado para producción.
 
 No eres un generador de pantallas aisladas.
 
@@ -28,7 +28,7 @@ Estas referencias son únicamente **benchmarks de calidad**.
 
 NO copies literalmente sus interfaces.
 
-VendedorIA debe desarrollar una identidad propia y reconocible.
+Agopify debe desarrollar una identidad propia y reconocible.
 
 ---
 
@@ -58,7 +58,7 @@ NO de decoración innecesaria.
 
 # 2. CONTEXTO DEL PRODUCTO
 
-VendedorIA es una plataforma SaaS multiempresa de venta asistida por inteligencia artificial y comercio electrónico.
+Agopify es una plataforma SaaS multiempresa de venta asistida por inteligencia artificial y comercio electrónico.
 
 Permite que negocios configuren vendedores IA que atienden conversaciones comerciales, consultan catálogo y conocimiento autorizado, recomiendan productos y participan en el proceso comercial.
 
@@ -72,7 +72,7 @@ El usuario debe sentir que está utilizando un sistema comercial potente pero f�
 
 # 3. SUPERFICIES DEL PRODUCTO
 
-No trates VendedorIA como una única aplicación visual.
+No trates Agopify como una única aplicación visual.
 
 Existen varias superficies con necesidades UX diferentes.
 
@@ -369,7 +369,7 @@ Evita:
 
 # 10. IDENTIDAD VISUAL
 
-VendedorIA debe sentirse:
+Agopify debe sentirse:
 
 **moderno + preciso + comercial + inteligente + confiable.**
 
@@ -703,7 +703,7 @@ Representa correctamente integraciones o servicios degradados.
 
 # 22. ROLES
 
-VendedorIA dispone de:
+Agopify dispone de:
 
 - OWNER;
 - ADMIN;
@@ -944,7 +944,7 @@ Cuando un humano interviene, la UI debe evitar ambigüedad sobre quién enviará
 
 # 30. SALES STATE
 
-VendedorIA posee etapas comerciales.
+Agopify posee etapas comerciales.
 
 Cuando sean relevantes para UX, utiliza estados como:
 
@@ -1058,7 +1058,7 @@ Distingue completamente:
 
 ### Facturación SaaS
 
-Negocio → VendedorIA.
+Negocio → Agopify.
 
 ### Commerce Checkout
 
@@ -1336,7 +1336,7 @@ Nunca hagas depender información crítica únicamente de hover.
 
 # 46. ICONOGRAFÍA
 
-VendedorIA utiliza un registro SVG basado en Lucide.
+Agopify utiliza un registro SVG basado en Lucide.
 
 REUTILÍZALO.
 
@@ -1908,7 +1908,7 @@ Según el alcance pueden incluir:
 
 `npm run build:web`
 
-`npm run test -w @vendedoria/web`
+`npm run test -w @agopify/web`
 
 Para cambios que afecten tienda:
 
@@ -2036,7 +2036,7 @@ Pregunta únicamente cuando exista una decisión de producto significativa que n
 
 # 73. PRINCIPIO FINAL
 
-VendedorIA debe evolucionar como **un sistema coherente**, no como una colección de páginas diseñadas independientemente.
+Agopify debe evolucionar como **un sistema coherente**, no como una colección de páginas diseñadas independientemente.
 
 Cada cambio debe fortalecer:
 
@@ -2044,7 +2044,7 @@ Cada cambio debe fortalecer:
 
 No diseñes para impresionar en una captura.
 
-Diseña para que un negocio pueda utilizar VendedorIA todos los días.
+Diseña para que un negocio pueda utilizar Agopify todos los días.
 
 ---
 
@@ -2070,7 +2070,7 @@ Tailwind es una herramienta de implementación.
 
 **NO es la fuente de verdad del Design System.**
 
-La fuente de verdad debe continuar siendo el sistema semántico de VendedorIA.
+La fuente de verdad debe continuar siendo el sistema semántico de Agopify.
 
 ## Uso preferido
 
@@ -2256,7 +2256,7 @@ No inventes funcionalidades, endpoints, datos, componentes ni estados que no exi
 
 ## 75.1. PRINCIPIO ARQUITECTÓNICO INNEGOCIABLE
 
-**Está estrictamente prohibido crear nuevos componentes visuales, estilos reutilizables, patrones de interfaz o pantallas sin verificar previamente su correspondencia con la Design System Matrix (DSM) de VendedorIA.**
+**Está estrictamente prohibido crear nuevos componentes visuales, estilos reutilizables, patrones de interfaz o pantallas sin verificar previamente su correspondencia con la Design System Matrix (DSM) de Agopify.**
 
 La DSM constituye el contrato visual y de interacción de toda la consola.
 
@@ -2308,7 +2308,7 @@ No crees una segunda fuente de verdad.
 
 ## 75.3. BRAND FOUNDATIONS
 
-La DSM debe estar alineada con la identidad corporativa real de VendedorIA.
+La DSM debe estar alineada con la identidad corporativa real de Agopify.
 
 Antes de definir colores, tipografía o estilos, inspecciona los recursos de branding disponibles en el repositorio.
 
@@ -2881,7 +2881,7 @@ Los complementa con una obligación adicional:
 
 **Primero establecer o completar la Design System Matrix. Después construir componentes. Finalmente componer pantallas.**
 
-La regla se aplica a toda nueva implementación UX/UI de VendedorIA.
+La regla se aplica a toda nueva implementación UX/UI de Agopify.
 
 ---
 
@@ -2900,4 +2900,4 @@ A partir de ahora, cada vez que recibas una tarea UX/UI:
 
 **Nunca diseñes una pantalla aislada. Nunca dupliques el sistema visual. Nunca introduzcas un componente reutilizable sin contrato.**
 
-**VendedorIA debe tener un único Design System corporativo, profesional, gobernado y escalable.**
+**Agopify debe tener un único Design System corporativo, profesional, gobernado y escalable.**

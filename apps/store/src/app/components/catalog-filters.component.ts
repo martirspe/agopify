@@ -10,7 +10,7 @@ import {
 import type {
   PublicCatalogFacets,
   PublicCatalogSelection,
-} from "@vendedoria/contracts";
+} from "@agopify/contracts";
 import { MoneyPipe } from "../core/money.pipe";
 
 type CategoryNode = {

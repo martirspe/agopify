@@ -1,125 +1,136 @@
 <section class="editor tw:console-scope tw:[&_.ds-button]:rounded-sm!" (keydown)="onKeydown($event)">
-  <header class="editor__bar tw:min-w-0">
-    <div class="editor__title">
-      <a routerLink="/app/store" class="icon-button" aria-label="Volver a Tienda web" title="Volver a Tienda web">
-        <ds-icon name="arrowLeft" [size]="1.1" />
-      </a>
-      <div class="editor__heading">
-        <h1>Diseño de tu tienda</h1>
-        @if (view(); as v) { <p class="editor__status">Versión {{ v.themeVersion }} · {{ hasUnpublished() ? 'Borrador' : 'Diseño guardado' }}</p> }
-        @if (saveState() === 'error') { <p class="editor__status is-error" role="alert"><ds-icon name="alert" [size]="0.9" />El borrador sigue en este editor.<button type="button" class="link" [disabled]="busy() !== null" (click)="retrySave()">Reintentar guardado</button></p> }
-        @else { <p class="editor__status" role="status"><span class="status-dot" [class.is-pending]="saveState() !== 'saved' || hasUnpublished()" aria-hidden="true"></span>{{ saveLabel() }}</p> }
-      </div>
-    </div>
+  @if (assistantOpen()) {
+    <app-home-assistant-panel
+      [mode]="assistantMode()"
+      [title]="assistantTitle()"
+      [messages]="assistantMessages()"
+      [drafting]="assistantDrafting()"
+      (closed)="closeAssistant()"
+      (modeChange)="setAssistantMode($event)"
+      (newChat)="resetAssistantChat()"
+      (restoreConversation)="onRestoreConversation($event)"
+      (sent)="onAssistantSent($event)"
+      (plusAction)="onAssistantPlus($event)"
+    />
+  }
 
-    @if (!loading() && !loadError() && active() && view()) {
-      <div class="segmented editor__devices" role="group" aria-label="Vista">
-        <button type="button" [attr.aria-pressed]="device() === 'desktop'" (click)="device.set('desktop')" aria-label="Vista de computadora" title="Computadora">
-          <ds-icon name="monitor" [size]="1.05" />
-        </button>
-        <button type="button" [attr.aria-pressed]="device() === 'mobile'" (click)="device.set('mobile')" aria-label="Vista de celular" title="Celular">
-          <ds-icon name="smartphone" [size]="1.05" />
-        </button>
-      </div>
-
-      <div class="editor__tools">
-        <div class="segmented" role="group" aria-label="Deshacer y rehacer">
-          <button type="button" [disabled]="!canUndo()" (click)="undo()" aria-label="Deshacer" title="Deshacer (Ctrl+Z)">
-            <ds-icon name="undo" [size]="1.05" />
-          </button>
-          <button type="button" [disabled]="!canRedo()" (click)="redo()" aria-label="Rehacer" title="Rehacer (Ctrl+Shift+Z)">
-            <ds-icon name="redo" [size]="1.05" />
-          </button>
-        </div>
-        <button
-          type="button"
-          class="icon-button editor__panel-toggle"
-          [attr.aria-pressed]="panelOpen()"
-          aria-controls="editor-navigator editor-properties"
-          [attr.aria-label]="panelOpen() ? 'Ocultar paneles de edición' : 'Mostrar paneles de edición'"
-          [title]="panelOpen() ? 'Ocultar panel' : 'Mostrar panel'"
-          (click)="panelOpen.set(!panelOpen())"
-        >
-          <ds-icon [name]="panelOpen() ? 'panelClose' : 'panelOpen'" [size]="1.1" />
-        </button>
-        @if (hasUnpublished()) {
-          <ds-button variant="ghost" [disabled]="busy() !== null" (click)="discard()">
-            {{ busy() === 'discard' ? 'Descartando…' : 'Descartar' }}
-          </ds-button>
-        }
-        <ds-button [disabled]="busy() !== null || view()?.themeStatus?.compatibility?.status === 'incompatible' || view()?.themeStatus?.compatibility?.status === 'update_required' || (!hasUnpublished() && saveState() === 'saved')" (click)="publish()">
-          <ds-icon name="rocket" />
-          {{ busy() === 'publish' ? 'Publicando…' : 'Publicar cambios' }}
-        </ds-button>
-      </div>
-    }
-  </header>
-
+  <div
+    class="editor__sheet"
+    [attr.data-assistant-dock]="assistantOpen() && assistantMode() === 'dock' ? '' : null"
+    [attr.aria-hidden]="assistantOpen() && assistantMode() === 'full' ? 'true' : null"
+  >
   <div class="editor__body tw:min-w-0 tw:grid-cols-1">
     @if (loading()) {
       <div class="editor__workspace tw:min-w-0" aria-busy="true" aria-label="Cargando el editor">
-        <div class="editor__canvas"><div class="skeleton-block"></div></div>
-        <div class="editor__panel editor__panel--skeleton">
-          <div class="skeleton-line"></div>
-          <div class="skeleton-line skeleton-line--short"></div>
-          <div class="skeleton-line"></div>
-          <div class="skeleton-line"></div>
+        <div class="editor__toolbar">
+          <a routerLink="/app/store" class="editor__tool" aria-label="Volver a Tienda web" title="Volver a Tienda web">
+            <ds-icon name="arrowLeft" [size]="1" />
+          </a>
+          <span class="editor__toolbar-title">Diseño de tu tienda</span>
         </div>
+        <div class="editor__canvas is-shell"><div class="skeleton-block"></div></div>
       </div>
     } @else if (loadError(); as error) {
-      <div class="editor__center">
-        <ds-empty-state title="No pudimos abrir el editor" [body]="error">
-          <ds-button variant="secondary" (click)="load()">Reintentar</ds-button>
-        </ds-empty-state>
+      <div class="editor__workspace tw:min-w-0">
+        <div class="editor__toolbar">
+          <a routerLink="/app/store" class="editor__tool" aria-label="Volver a Tienda web" title="Volver a Tienda web">
+            <ds-icon name="arrowLeft" [size]="1" />
+          </a>
+          <span class="editor__toolbar-title">Diseño de tu tienda</span>
+        </div>
+        <div class="editor__center">
+          <ds-empty-state title="No pudimos abrir el editor" [body]="error">
+            <ds-button variant="secondary" (click)="load()">Reintentar</ds-button>
+          </ds-empty-state>
+        </div>
       </div>
     } @else if (!active()) {
-      <div class="editor__center">
-        <app-integration-gate key="store" />
+      <div class="editor__workspace tw:min-w-0">
+        <div class="editor__toolbar">
+          <a routerLink="/app/store" class="editor__tool" aria-label="Volver a Tienda web" title="Volver a Tienda web">
+            <ds-icon name="arrowLeft" [size]="1" />
+          </a>
+          <span class="editor__toolbar-title">Diseño de tu tienda</span>
+        </div>
+        <div class="editor__center">
+          <app-integration-gate key="store" />
+        </div>
       </div>
     } @else if (view(); as v) {
-      <div class="editor__workspace tw:min-w-0" [class.is-panel-hidden]="!panelOpen()">
-        @if (panelOpen()) {
-          <aside id="editor-navigator" class="editor__navigator" aria-label="Estructura de la tienda">
+      <div class="editor__workspace tw:min-w-0">
+        <div class="editor__stage">
+          <div class="editor__toolbar" role="toolbar" aria-label="Editor de tienda">
+            <a routerLink="/app/store" class="editor__tool" aria-label="Volver a Tienda web" title="Volver a Tienda web">
+              <ds-icon name="arrowLeft" [size]="1" />
+            </a>
+            <button type="button" class="editor__tool" [attr.aria-pressed]="assistantOpen()" [attr.aria-label]="assistantOpen() ? 'Ocultar asistente' : 'Mostrar asistente'" (click)="toggleAssistant()">
+              <ds-icon name="panelRight" [size]="1" />
+            </button>
+            <button type="button" class="editor__tool" [attr.aria-pressed]="structureOpen()" aria-controls="editor-navigator" aria-label="Estructura" title="Estructura" (click)="toggleStructure()">
+              <ds-icon name="layers" [size]="1" />
+            </button>
+            <button type="button" class="editor__tool" [attr.aria-pressed]="inspectorOpen()" aria-controls="editor-properties" aria-label="Propiedades" title="Propiedades" (click)="toggleInspector()">
+              <ds-icon name="slidersHorizontal" [size]="1" />
+            </button>
+            <span class="editor__toolbar-divider" aria-hidden="true"></span>
+            <div class="editor__toolbar-meta">
+              <span class="editor__toolbar-title">Diseño</span>
+              @if (saveState() === 'error') {
+                <span class="editor__status is-error" role="alert">
+                  <button type="button" class="link" [disabled]="busy() !== null" (click)="retrySave()">Reintentar</button>
+                </span>
+              } @else {
+                <span class="editor__status" role="status">
+                  <span class="status-dot" [class.is-pending]="saveState() !== 'saved' || hasUnpublished()" aria-hidden="true"></span>
+                  {{ saveLabel() }}
+                </span>
+              }
+            </div>
+            <span class="editor__toolbar-spacer"></span>
+            <div class="editor__toolbar-group" role="group" aria-label="Deshacer y rehacer">
+              <button type="button" class="editor__tool" [disabled]="!canUndo()" (click)="undo()" aria-label="Deshacer" title="Deshacer (Ctrl+Z)">
+                <ds-icon name="undo" [size]="1" />
+              </button>
+              <button type="button" class="editor__tool" [disabled]="!canRedo()" (click)="redo()" aria-label="Rehacer" title="Rehacer (Ctrl+Shift+Z)">
+                <ds-icon name="redo" [size]="1" />
+              </button>
+            </div>
+            <button
+              type="button"
+              class="editor__tool"
+              [attr.aria-label]="deviceAria()"
+              [attr.title]="deviceTitle()"
+              (click)="cycleDevice()"
+            >
+              <ds-icon [name]="deviceIcon()" [size]="1" />
+            </button>
+            <button type="button" class="editor__tool" [disabled]="refreshingFrame()" aria-label="Actualizar vista de la tienda" title="Actualizar vista" (click)="reloadFrame()">
+              <ds-icon name="rotateCcw" [size]="1" />
+            </button>
+            @if (hasUnpublished()) {
+              <button type="button" class="editor__text-btn" [disabled]="busy() !== null" (click)="discard()">
+                {{ busy() === 'discard' ? 'Descartando…' : 'Descartar' }}
+              </button>
+            }
+            <button
+              type="button"
+              class="editor__publish"
+              [disabled]="busy() !== null || view()?.themeStatus?.compatibility?.status === 'incompatible' || view()?.themeStatus?.compatibility?.status === 'update_required' || (!hasUnpublished() && saveState() === 'saved')"
+              (click)="publish()"
+            >
+              <ds-icon name="rocket" [size]="0.9" />
+              {{ busy() === 'publish' ? 'Publicando…' : 'Publicar' }}
+            </button>
+          </div>
+
+          @if (structureOpen() || inspectorOpen()) {
+            <button type="button" class="editor__drawer-scrim" aria-label="Cerrar paneles" (click)="structureOpen.set(false); inspectorOpen.set(false)"></button>
+          }
+
+          @if (structureOpen()) {
+          <aside id="editor-navigator" class="editor__navigator editor__drawer editor__drawer--structure" aria-label="Estructura de la tienda">
             <header class="navigator__head"><h2>Estructura</h2><p class="hint">Selecciona, ordena y organiza tu contenido.</p><label class="navigator-search" for="editor-section-search"><span class="tw:sr-only">Buscar secciones</span><input id="editor-section-search" class="tw:console-field" type="search" [value]="sectionQuery()" (input)="sectionQuery.set($any($event.target).value)" placeholder="Buscar secciones…" /></label></header>
             <p class="panel__group">Página de inicio</p>
-              @if (view()?.aiText) {
-                <div class="library">
-                  <button
-                    type="button"
-                    class="library__toggle ai-page__toggle"
-                    [attr.aria-expanded]="aiPageOpen()"
-                    aria-controls="ai-page-form"
-                    (click)="aiPageOpen.set(!aiPageOpen())"
-                  >
-                    <ds-icon name="sparkles" [size]="1" /> Crear mi página con IA
-                  </button>
-                  @if (aiPageOpen()) {
-                    <form id="ai-page-form" class="ai ai--section" (submit)="$event.preventDefault(); createPageWithAi(aiPagePrompt)">
-                      <label class="ai__title" for="ai-page-prompt">Cuéntanos de tu negocio</label>
-                      <textarea class="tw:console-field"
-                        id="ai-page-prompt"
-                        rows="3"
-                        maxlength="500"
-                        placeholder="Ej.: cosmética natural hecha en Arequipa; quiero destacar los envíos y los regalos"
-                        [disabled]="aiPageBusy()"
-                        #aiPagePrompt
-                      ></textarea>
-                      <ds-button type="submit" variant="secondary" [disabled]="aiPageBusy()">
-                        {{ aiPageBusy() ? 'Creando página…' : 'Crear página' }}
-                      </ds-button>
-                      <div aria-live="polite">
-                        @if (aiPageError(); as error) {
-                          <p class="ai__error">{{ error }}</p>
-                        } @else if (aiPageBusy()) {
-                          <p class="ai__note">Escribiendo tu portada y tus secciones. Puede tardar unos segundos.</p>
-                        } @else {
-                          <p class="ai__note">Escribe tu portada y arma de 2 a 4 secciones con los datos de tu tienda, sin inventar precios, promociones ni opiniones. Las fotos las agregas tú o las creas con IA.</p>
-                        }
-                      </div>
-                    </form>
-                  }
-                </div>
-              }
               <ul class="sections" aria-label="Secciones de la página de inicio">
                 @for (s of filteredBodySections(); track s.id) {
                   @let open = selectedSection() === s.id;
@@ -192,7 +203,7 @@
                   <div id="section-library" class="library__list">
                     <p class="hint">Se agregará {{ after ? 'debajo de «' + after.label + '»' : 'al final de la página' }}.</p>
                     @if (view()?.aiText) {
-                      <form class="ai ai--section" (submit)="$event.preventDefault(); createSectionWithAi(aiPrompt)">
+                      <form class="ai ai--section" (submit)="$event.preventDefault(); generateSectionWithAi(aiPrompt)">
                         <label class="ai__title" for="ai-section-prompt">
                           <ds-icon name="sparkles" [size]="0.9" /> Crear con IA
                         </label>
@@ -204,14 +215,42 @@
                           [disabled]="aiSectionBusy()"
                           #aiPrompt
                         ></textarea>
-                        <ds-button type="submit" variant="secondary" [disabled]="aiSectionBusy()">
-                          {{ aiSectionBusy() ? 'Creando sección…' : 'Crear sección' }}
-                        </ds-button>
+                        @if (!aiSectionDraft() || aiSectionDraft()?.target) {
+                          <ds-button type="submit" variant="secondary" [disabled]="aiSectionBusy() || !!aiSectionDraft()?.target">
+                            {{ aiSectionBusy() && !aiSectionDraft()?.target ? 'Generando…' : 'Generar sección' }}
+                          </ds-button>
+                        }
                         <div aria-live="polite">
                           @if (aiSectionError(); as error) {
                             <p class="ai__error">{{ error }}</p>
+                          } @else if (aiSectionBusy()) {
+                            <p class="ai__note">Preparando la propuesta. El borrador no cambia hasta que apliques.</p>
+                          } @else if (aiSectionDraft(); as draft) {
+                            @if (!draft.target) {
+                              <div class="ai-patch">
+                                <p class="ai__title">Revisa la sección propuesta</p>
+                                <ul class="ai-patch__list">
+                                  @for (change of aiSectionChanges(); track change.key) {
+                                    <li>
+                                      <label class="ai-patch__item">
+                                        <input type="checkbox" [checked]="aiSectionSelected().has(change.key)" (change)="toggleSectionAiChange(change.key)" />
+                                        <span>
+                                          <strong>{{ change.fieldLabel }}</strong>
+                                          <small>{{ change.to }}</small>
+                                        </span>
+                                      </label>
+                                    </li>
+                                  }
+                                </ul>
+                                <div class="ai-patch__actions">
+                                  <ds-button type="button" [disabled]="aiSectionBusy()" (click)="applySectionAi(aiPrompt)">Aplicar</ds-button>
+                                  <ds-button type="button" variant="secondary" [disabled]="aiSectionBusy()" (click)="generateSectionWithAi(aiPrompt)">Regenerar</ds-button>
+                                  <ds-button type="button" variant="ghost" [disabled]="aiSectionBusy()" (click)="discardSectionAi()">Descartar</ds-button>
+                                </div>
+                              </div>
+                            }
                           } @else {
-                            <p class="ai__note">Elige el tipo de sección y escribe sus textos con los datos de tu tienda. Las opiniones de clientes las agregas tú.</p>
+                            <p class="ai__note">Verás la propuesta antes de agregarla. Las opiniones de clientes las escribes tú.</p>
                           }
                         </div>
                       </form>
@@ -235,32 +274,119 @@
               }
 
             @if (sectionQuery() && !filteredBodySections().length && !filteredGlobalSections().length && !filteredPageSections().length) { <div class="navigator-empty" role="status"><p>No encontramos esa sección.</p><ds-button variant="secondary" (click)="sectionQuery.set('')">Limpiar búsqueda</ds-button></div> }
-            <div class="editor-help"><ds-disclosure title="Atajos y edición"><dl class="editor-shortcuts"><div><dt>Deshacer</dt><dd>Ctrl / ⌘ + Z</dd></div><div><dt>Rehacer</dt><dd>Ctrl / ⌘ + Shift + Z</dd></div><div><dt>Guardar borrador</dt><dd>Ctrl / ⌘ + S</dd></div></dl><p>Los cambios se guardan automáticamente como borrador. Publicar los aplica al diseño de tu tienda.</p></ds-disclosure></div>
+            <div class="editor-help"><ds-disclosure title="Atajos y edición"><dl class="editor-shortcuts"><div><dt>Deshacer</dt><dd>Ctrl / ⌘ + Z</dd></div><div><dt>Rehacer</dt><dd>Ctrl / ⌘ + Shift + Z</dd></div><div><dt>Guardar borrador</dt><dd>Ctrl / ⌘ + S</dd></div><div><dt>Cerrar paneles / quitar selección</dt><dd>Esc</dd></div></dl><p>Los cambios se guardan automáticamente como borrador. Publicar los aplica al diseño de tu tienda. Esc cierra primero la IA, la biblioteca o los paneles, y después quita la selección.</p></ds-disclosure></div>
           </aside>
-        }
-        <div class="editor__canvas tw:min-w-0 tw:grid-cols-1" [class.is-mobile]="device() === 'mobile'">
-          <div class="canvas__toolbar"><div><ds-icon [name]="device() === 'mobile' ? 'smartphone' : 'monitor'" [size]="1" /><span>{{ device() === 'mobile' ? 'Vista de celular' : 'Vista de computadora' }}</span></div><button type="button" class="icon-button" [disabled]="refreshingFrame()" aria-label="Actualizar vista de la tienda" title="Actualizar vista" (click)="reloadFrame()"><ds-icon name="rotateCcw" [size]="1" /></button></div>
-          <div class="editor__frame tw:min-w-0">
-            @if (frameSrc(); as src) {
-              <iframe #frame [src]="src" title="Vista editable de tu tienda" referrerpolicy="no-referrer"></iframe>
-            }
-            @if (!frameReady()) {
-              <div class="editor__frame-state" [class.is-error]="frameFailed()">
-                @if (frameFailed()) {
-                  <ds-icon name="alert" [size]="1.6" />
-                  <p>No pudimos cargar la vista editable de tu tienda.</p>
-                  <ds-button variant="secondary" [disabled]="refreshingFrame()" (click)="reloadFrame()">{{ refreshingFrame() ? 'Actualizando…' : 'Volver a cargar' }}</ds-button>
-                } @else {
-                  <span class="spinner" aria-hidden="true"></span>
-                  <p role="status">Cargando tu tienda…</p>
-                }
-              </div>
-            }
-          </div>
-        </div>
+          }
 
-        @if (panelOpen()) {
-          <aside id="editor-properties" class="editor__panel tw:min-w-0" aria-label="Propiedades de la selección">
+          <div
+            class="editor__canvas is-shell tw:min-w-0"
+            [class.is-mobile]="device() === 'mobile'"
+            [class.is-tablet]="device() === 'tablet'"
+          >
+            <div class="editor__frame tw:min-w-0">
+              @if (frameSrc(); as src) {
+                <iframe #frame [src]="src" title="Vista editable de tu tienda" referrerpolicy="no-referrer"></iframe>
+              }
+              @if (!frameReady()) {
+                <div class="editor__frame-state" [class.is-error]="frameFailed()" role="status">
+                  @if (frameFailed()) {
+                    <ds-icon name="alert" [size]="1.6" />
+                    <p>No pudimos cargar la vista editable de tu tienda.</p>
+                    <p class="hint">Tu borrador se conserva. Revisa tu conexión o vuelve a intentarlo.</p>
+                    <ds-button variant="secondary" [disabled]="refreshingFrame()" (click)="reloadFrame()">{{ refreshingFrame() ? 'Actualizando…' : 'Volver a cargar' }}</ds-button>
+                  } @else {
+                    <span class="spinner" aria-hidden="true"></span>
+                    <p>Cargando tu tienda…</p>
+                    <p class="hint">Puedes seguir eligiendo secciones; la vista se sincroniza al cargar.</p>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          @if (v.aiText && assistantMode() !== 'full') {
+            <div class="editor__assistant-float">
+              @if (aiPageDraft(); as draft) {
+                <div class="editor__ai-patch" id="ai-page-form" aria-live="polite">
+                  <div class="ai ai--section">
+                    <p class="ai__title">Revisa la propuesta</p>
+                    @if (aiPageChanges().length) {
+                      <ul class="ai-patch__list">
+                        @for (change of aiPageChanges(); track change.key) {
+                          <li>
+                            <label class="ai-patch__item">
+                              <input type="checkbox" [checked]="aiPageSelected().has(change.key)" (change)="togglePageAiChange(change.key)" />
+                              <span>
+                                <strong>{{ change.sectionLabel }} · {{ change.fieldLabel }}</strong>
+                                <small>{{ change.to }}</small>
+                              </span>
+                            </label>
+                          </li>
+                        }
+                      </ul>
+                    }
+                    @if (draft.blocks.length && aiPageMode() === 'rewrite') {
+                      <label class="ai-patch__item ai-patch__item--blocks">
+                        <input type="checkbox" [checked]="aiPageIncludeBlocks()" (change)="aiPageIncludeBlocks.set($any($event.target).checked)" />
+                        <span>
+                          <strong>Incluir {{ draft.blocks.length }} secciones nuevas</strong>
+                          <small>{{ draft.blocks.map(b => b.type).join(', ') }}</small>
+                        </span>
+                      </label>
+                    }
+                    <div class="ai-patch__actions">
+                      <ds-button type="button" [disabled]="aiPageBusy()" (click)="applyPageAi()">Aplicar</ds-button>
+                      <ds-button type="button" variant="secondary" [disabled]="aiPageBusy()" (click)="generatePageWithAi()">Regenerar</ds-button>
+                      <ds-button type="button" variant="ghost" [disabled]="aiPageBusy()" (click)="discardPageAi()">Descartar</ds-button>
+                    </div>
+                    @if (aiPageError(); as error) { <p class="ai__error">{{ error }}</p> }
+                  </div>
+                </div>
+              }
+
+              <app-assistant-composer
+                variant="compact"
+                inputId="editor-assistant-input"
+                ariaLabel="Asistente de diseño"
+                [placeholder]="assistantPlaceholder()"
+                [value]="prompt()"
+                (valueChange)="prompt.set($event)"
+                [active]="composerActive()"
+                [docked]="assistantOpen()"
+                [disabled]="aiPageBusy()"
+                [busy]="aiPageBusy()"
+                [dictating]="homeDictating()"
+                [dictationSupported]="homeDictationSupported()"
+                [dictationError]="homeDictationError()"
+                [plusOpen]="homePlusOpen()"
+                [plusItems]="homePlusItems"
+                [plusMenuUp]="true"
+                [maxlength]="500"
+                [showDockToggle]="true"
+                [dockOpen]="assistantOpen()"
+                [attr.aria-hidden]="assistantOpen() ? 'true' : null"
+                (submitted)="onFloatComposerSubmitted($event)"
+                (plusToggle)="toggleHomePlus($event)"
+                (plusAction)="onHomePlus($event)"
+                (dictationStart)="startHomeDictation()"
+                (dictationCancel)="cancelHomeDictation()"
+                (dictationConfirm)="confirmHomeDictation()"
+                (dockToggle)="toggleAssistant()"
+                (focused)="onPromptFocus(); onComposerFocusIn()"
+                (blurred)="onPromptBlur()"
+                (activated)="onComposerActivate()"
+              />
+            </div>
+          } @else if (!v.aiText && assistantMode() !== 'full') {
+            <div class="editor__assistant-float">
+              <p class="editor-float-chat editor-float-chat--notice" [class.is-docked]="assistantOpen()" [attr.aria-hidden]="assistantOpen() ? 'true' : null">
+                La IA del editor no está disponible en este plan o entorno.
+              </p>
+            </div>
+          }
+
+          @if (inspectorOpen()) {
+          <aside id="editor-properties" class="editor__panel editor__drawer editor__drawer--inspector tw:min-w-0" aria-label="Propiedades de la selección">
             <div class="panel__head tw:min-w-0 tw:grid-cols-1">
               <div class="segmented panel__tabs tw:flex-wrap" role="group" aria-label="Qué editar">
                 <button type="button" [attr.aria-pressed]="panelTab() === 'sections'" (click)="openTab('sections')">
@@ -276,7 +402,7 @@
               <p class="hint">
                 @switch (panelTab()) {
                   @case ('sections') {
-                    Haz clic en un texto de tu tienda para escribir sobre él, o en una imagen para cambiarla.
+                    Haz clic en un texto o imagen de la vista para editarlo aquí. Esc quita la selección.
                   }
                   @case ('style') {
                     Logo, colores y letra de tu tienda. Los cambios se ven al instante.
@@ -303,6 +429,40 @@
                 @if (section(); as selected) {
                   <header class="inspector__heading"><p class="tw:console-eyebrow">{{ selected.page === 'product' ? 'Página de producto' : selected.page === 'home' ? 'Inicio' : 'Todas las páginas' }}</p><h2>{{ selected.label }}</h2>@if (selected.description) { <p class="hint">{{ selected.description }}</p> }</header>
                   @if (selected.hidden) { <p class="panel__note"><ds-icon name="eyeOff" [size]="1" />Esta sección está oculta. Puedes editarla y volver a mostrarla desde la estructura.</p> }
+                  @if (view()?.aiText && selected.fields.some(f => isText(f))) {
+                    <div class="ai ai--section ai--inspector">
+                      <button type="button" class="ai__action" [disabled]="aiSectionBusy()" (click)="fillSelectedSectionWithAi()">
+                        <ds-icon name="sparkles" [size]="0.85" /> {{ aiSectionBusy() && aiSectionDraft()?.target === selected.id ? 'Generando…' : 'Completar esta sección con IA' }}
+                      </button>
+                      @if (aiSectionDraft()?.target === selected.id) {
+                        <div class="ai-patch" aria-live="polite">
+                          @if (aiSectionError(); as error) {
+                            <p class="ai__error">{{ error }}</p>
+                          }
+                          <ul class="ai-patch__list">
+                            @for (change of aiSectionChanges(); track change.key) {
+                              <li>
+                                <label class="ai-patch__item">
+                                  <input type="checkbox" [checked]="aiSectionSelected().has(change.key)" (change)="toggleSectionAiChange(change.key)" />
+                                  <span>
+                                    <strong>{{ change.fieldLabel }}</strong>
+                                    <small>{{ change.to }}</small>
+                                  </span>
+                                </label>
+                              </li>
+                            }
+                          </ul>
+                          <div class="ai-patch__actions">
+                            <ds-button type="button" [disabled]="aiSectionBusy()" (click)="applySectionAi()">Aplicar</ds-button>
+                            <ds-button type="button" variant="secondary" [disabled]="aiSectionBusy()" (click)="fillSelectedSectionWithAi()">Regenerar</ds-button>
+                            <ds-button type="button" variant="ghost" [disabled]="aiSectionBusy()" (click)="discardSectionAi()">Descartar</ds-button>
+                          </div>
+                        </div>
+                      } @else if (aiSectionError() && !aiSectionDraft()) {
+                        <p class="ai__error">{{ aiSectionError() }}</p>
+                      }
+                    </div>
+                  }
                   <ng-container [ngTemplateOutlet]="sectionFields" [ngTemplateOutletContext]="{ $implicit: selected }" />
                 } @else {
                   <ds-empty-state title="Selecciona una sección" body="Elige una sección de la estructura o un elemento en la vista de tu tienda para editar sus propiedades." />
@@ -310,9 +470,11 @@
               </div>
             }
           </aside>
-        }
+          }
+        </div>
       </div>
     }
+  </div>
   </div>
 
   <ng-template #versionsPanel>
@@ -514,8 +676,9 @@
       @let current = value(s.id, f.id);
       @let aiOpen = aiField() === fieldKey(s.id, f.id);
       @if (f.kind === 'choice') {
-        <fieldset class="field choice">
+        <fieldset class="field choice" [attr.data-inspector-field]="fieldKey(s.id, f.id)" [class.is-focused]="selectedField() === f.id">
           <legend class="field__label">{{ f.label }}</legend>
+          <p class="hint">Elige la opción; el cambio se ve al instante en la vista.</p>
           <div class="choice__row">
             @for (o of f.options ?? []; track o.value) {
               <label class="choice__item choice__item--compact" [class.is-selected]="current === o.value">
@@ -526,7 +689,7 @@
           </div>
         </fieldset>
       } @else {
-      <div class="field" [class.is-focused]="selectedField() === f.id">
+      <div class="field" [attr.data-inspector-field]="fieldKey(s.id, f.id)" [class.is-focused]="selectedField() === f.id">
         <div class="field__head">
           <label [attr.for]="'field-' + s.id + '-' + f.id">{{ f.label }}</label>
           <span class="field__tools">
@@ -678,7 +841,8 @@
     }
 
     @if (s.faq) {
-      <div class="faq">
+      <div class="faq" data-inspector-field="faq">
+        <p class="hint">Las preguntas se editan en este panel; la vista las muestra al instante.</p>
         <div class="field__head">
           <strong>Preguntas</strong>
           @if (customFaq()) {

@@ -16,9 +16,9 @@ import type {
   StoreLayoutItem,
   StoreTemplate,
   StoreTemplateContent,
-} from '@vendedoria/contracts';
+} from '@agopify/contracts';
 import { MediaService } from '../catalog/media.service';
-import { getTheme, THEME_CATALOG, THEME_ENVIRONMENT, importPreset, migrateContent } from '@vendedoria/themes';
+import { getTheme, THEME_CATALOG, THEME_ENVIRONMENT, importPreset, migrateContent } from '@agopify/themes';
 import { isIntegrationActive } from '../integrations/integration-state';
 import { PrismaService } from '../prisma/prisma.service';
 import {

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { DsIconComponent } from '@vendedoria/ui';
+import { DsIconComponent } from '@agopify/ui';
 
 const PAYMENT_RESULT_STATES = ['success', 'pending', 'failure'] as const;
 type PaymentResultState = (typeof PAYMENT_RESULT_STATES)[number];

@@ -18,7 +18,7 @@ import {
   DsSaveBarComponent,
   DsSelectComponent,
   type DsIconName,
-} from '@vendedoria/ui';
+} from '@agopify/ui';
 import {
   Coupon,
   CouponKind,

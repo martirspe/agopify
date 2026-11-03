@@ -11,8 +11,8 @@ import {
   untracked,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import type { PublicProductDetail, PublicVariant } from '@vendedoria/contracts';
-import { DsIconComponent } from '@vendedoria/ui';
+import type { PublicProductDetail, PublicVariant } from '@agopify/contracts';
+import { DsIconComponent } from '@agopify/ui';
 import { ProductFactsComponent } from '../../components/product-facts.component';
 import { AnalyticsService } from '../../core/analytics.service';
 import { CartService } from '../../core/cart.service';
@@ -27,7 +27,7 @@ import { NotFoundPage } from '../not-found/not-found.page';
 
 type OptionGroup = {
   name: string;
-  values: Array<{ value: string; available: boolean }>;
+  values: Array<{ value: string; available: boolean; color: string | null }>;
 };
 
 @Component({
@@ -56,17 +56,21 @@ export class ProductPage {
   readonly product = input.required<PublicProductDetail | null>();
 
   readonly optionGroups = computed<OptionGroup[]>(() => {
-    const groups = new Map<string, Map<string, boolean>>();
+    const groups = new Map<string, Map<string, { available: boolean; color: string | null }>>();
     for (const variant of this.product()?.variants ?? []) {
       for (const option of variant.options) {
-        const values = groups.get(option.name) ?? new Map<string, boolean>();
-        values.set(option.value, (values.get(option.value) ?? false) || variant.isAvailable);
+        const values = groups.get(option.name) ?? new Map();
+        const previous = values.get(option.value);
+        values.set(option.value, {
+          available: (previous?.available ?? false) || variant.isAvailable,
+          color: option.color ?? previous?.color ?? null,
+        });
         groups.set(option.name, values);
       }
     }
     return [...groups].map(([name, values]) => ({
       name,
-      values: [...values].map(([value, available]) => ({ value, available })),
+      values: [...values].map(([value, meta]) => ({ value, ...meta })),
     }));
   });
 

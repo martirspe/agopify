@@ -36,14 +36,28 @@ ds-select .ds-select-options {
   box-sizing: border-box; position: fixed; inset: auto; margin: 0; padding: var(--ds-space-2);
   border: 1px solid var(--select-border); border-radius: var(--select-radius);
   background: var(--select-bg); color: var(--select-text); box-shadow: var(--ds-shadow-dropdown);
-  overflow-y: auto; overscroll-behavior: contain; font: inherit; font-size: var(--ds-control-font-size, 1rem);
+  overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+  font: inherit; font-size: var(--ds-control-font-size, 1rem);
 }
 ds-select .ds-select-option {
   display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-3);
+  box-sizing: border-box;
+  width: 100%;
+  /* Intrinsic min so the panel's max-content grows to the longest label. */
+  min-width: max-content;
   min-height: var(--ds-touch-target); padding: var(--ds-space-2) var(--ds-space-3);
   border-radius: var(--ds-radius-sm); cursor: pointer; line-height: 1.5;
+  white-space: nowrap;
 }
-ds-select .ds-select-option > span { min-width: 0; overflow-wrap: anywhere; }
+ds-select .ds-select-option > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
 ds-select .ds-select-option > ds-icon { flex: 0 0 auto; color: var(--select-brand); }
 ds-select .ds-select-option.is-active { background: color-mix(in srgb, var(--select-brand) 9%, var(--select-bg)); }
 ds-select .ds-select-option[aria-selected=true] { font-weight: 600; }

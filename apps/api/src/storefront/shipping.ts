@@ -1,5 +1,5 @@
 import type { Prisma } from '@prisma/client';
-import type { ShippingMode, ShippingOption, ShippingQuote } from '@vendedoria/contracts';
+import type { ShippingMode, ShippingOption, ShippingQuote } from '@agopify/contracts';
 import { distanceKm, findUbigeo } from '../ubigeo/ubigeo';
 
 export type ShippingRules = {

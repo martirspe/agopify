@@ -22,7 +22,7 @@ import type {
   RecoveryCaptureResult,
   RecoveredCart,
   StoreRecommendations,
-} from '@vendedoria/contracts';
+} from '@agopify/contracts';
 import { STORE_PROXY_PREFIX, TURNSTILE_HEADER } from './store-context';
 
 export type ProductListParams = {

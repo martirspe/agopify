@@ -1,6 +1,6 @@
 # Integration Core — Gap Analysis
 
-**Proyecto:** VendedorIA  
+**Proyecto:** Agopify  
 **Fuente de verdad arquitectónica:** `INTEGRATION_CORE_ARCHITECTURE.md`  
 **Fecha:** 2026-10-31  
 **Estado:** Phase B complete — drives Phase C/D implementation  

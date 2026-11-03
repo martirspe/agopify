@@ -11,7 +11,7 @@ import {
   signal,
 } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import type { PublicCatalogCard } from "@vendedoria/contracts";
+import type { PublicCatalogCard } from "@agopify/contracts";
 import { STORE_EDITOR } from "../../core/store-editor";
 import { MoneyPipe } from "../../core/money.pipe";
 import { TemplateDemo } from "../../core/template-demo";

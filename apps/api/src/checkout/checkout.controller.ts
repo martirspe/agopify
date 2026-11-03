@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Headers, HttpCode, Param, Post, Query, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
-import type { ShippingQuote, UbigeoDistrict } from '@vendedoria/contracts';
+import type { ShippingQuote, UbigeoDistrict } from '@agopify/contracts';
 import { Public } from '../common/decorators/auth.decorators';
 import { RateLimit } from '../rate-limit/rate-limit.decorator';
 import { StorefrontPublicService } from '../storefront/storefront-public.service';

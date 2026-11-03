@@ -4,7 +4,7 @@ type Selection = { handle: string; variantId?: string | null; quantity: number }
 export function checkoutStorageKey(slug: string, intent: string, items: Selection[]): string {
   const selection = items.map((item) => [item.handle, item.variantId ?? '', item.quantity])
     .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
-  return `vendedoria-checkout-v2:${slug}:${intent}:${JSON.stringify(selection)}`;
+  return `agopify-checkout-v2:${slug}:${intent}:${JSON.stringify(selection)}`;
 }
 
 export function subtractPurchased<T extends { key: string; quantity: number }>(lines: T[], purchased: { key: string; quantity: number }[]): T[] {

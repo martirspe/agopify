@@ -1,4 +1,4 @@
-import type { StoreTemplateContent } from '@vendedoria/contracts';
+import type { StoreTemplateContent } from '@agopify/contracts';
 
 const DESTINATIONS = ['/', '/productos', '/carrito', '/legal'];
 /** Undefined means original navigation. Explicit labels create a bounded custom menu. */

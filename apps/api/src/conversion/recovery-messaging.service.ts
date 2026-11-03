@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { asWhatsAppMetadata } from '../channels/whatsapp-metadata';
-import type { RecoveryCartLine } from '@vendedoria/contracts';
+import type { RecoveryCartLine } from '@agopify/contracts';
 
 export class RecoveryTransportError extends Error {
   constructor(readonly outcome: 'retry' | 'failed' | 'uncertain') {

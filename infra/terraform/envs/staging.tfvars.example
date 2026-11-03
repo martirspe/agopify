@@ -4,10 +4,10 @@ environment        = "staging"
 aws_region         = "us-east-1"
 cloudflare_zone_id = "CLOUDFLARE_ZONE_ID"
 
-media_domain = "media-staging.example.pe"
+media_domain = "media-staging.agopify.com"
 
-email_domain            = "staging.example.pe"
-email_from              = "VendedorIA Staging <pedidos@staging.example.pe>"
+email_domain            = "staging.agopify.com"
+email_from              = "Agopify Staging <pedidos@staging.agopify.com>"
 manage_dmarc            = false
 manage_account_settings = false
-alerts_email            = "alertas@example.pe"
+alerts_email = "alertas@agopify.com"

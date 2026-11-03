@@ -4,6 +4,7 @@ import { provideRouter, Router } from '@angular/router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountApiService } from '../core/api/account-api.service';
 import { BillingApiService } from '../core/api/billing-api.service';
+import { ConsoleAssistantApiService } from '../core/api/console-assistant-api.service';
 import { AuthApiService } from '../core/auth/auth-api.service';
 import { IntegrationsStateService } from '../core/integrations/integrations-state.service';
 import { ConsoleShellLayout } from './console-shell.layout';
@@ -12,6 +13,19 @@ import { isContextLinkActive, contextForUrl } from './console-context';
 
 @Component({ template: '' })
 class RouteContent {}
+
+const assistantStore = {
+  memoryEnabled: signal(true),
+  conversations: signal([]),
+  ready: signal(true),
+  ensureLoaded: vi.fn(async () => undefined),
+  setMemoryEnabled: vi.fn(async () => undefined),
+  replaceConversations: vi.fn(),
+  scheduleUpsert: vi.fn(),
+  renameConversation: vi.fn(async () => undefined),
+  deleteConversation: vi.fn(async () => undefined),
+  clearLocal: vi.fn(),
+};
 
 async function setup() {
   TestBed.configureTestingModule({
@@ -23,6 +37,7 @@ async function setup() {
       { provide: CatalogApiService, useValue: { list: async () => [] } },
       { provide: BillingApiService, useValue: { getUsage: async () => ({ planStatus: 'ACTIVE' }) } },
       { provide: IntegrationsStateService, useValue: { isActive: (key: string) => key === 'store', refresh: async () => undefined } },
+      { provide: ConsoleAssistantApiService, useValue: assistantStore },
     ],
   });
   const fixture = TestBed.createComponent(ConsoleShellLayout);
@@ -44,7 +59,7 @@ describe('console navigation', () => {
     expect(document.activeElement?.getAttribute('aria-label')).toBe('Expandir navegación');
     expect(nav.querySelectorAll('[data-nav-toggle]')).toHaveLength(1);
     expect(nav.querySelector('[aria-label="Expandir navegación"] ds-icon[name="panelRight"]')).not.toBeNull();
-    expect(nav.querySelector('[data-nav-toggle]')?.parentElement?.querySelector('a[aria-label="VendedorIA"]')).toBeNull();
+    expect(nav.querySelector('[data-nav-toggle]')?.parentElement?.querySelector('a[aria-label="Agopify"]')).toBeNull();
     const product = nav.querySelector('a[href="/app/products"]') as HTMLAnchorElement;
     expect(product.getAttribute('aria-label')).toBe('Productos');
     expect(product.getAttribute('title')).toBe('Productos');

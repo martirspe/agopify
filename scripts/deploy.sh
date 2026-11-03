@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Despliega VendedorIA en un VPS (stack Docker Compose de producción), patrón gohabix.
+# Despliega Agopify en un VPS (stack Docker Compose de producción), patrón gohabix.
 #
 # Uso:
 #   bash scripts/deploy.sh                 # backup (si la DB está arriba) + build + arranque + host
@@ -81,11 +81,11 @@ random_hex() {
 
 # ---- First-boot secrets -----------------------------------------------------
 DATA_EXISTS=false
-if docker volume inspect vendedoria_pgdata >/dev/null 2>&1; then DATA_EXISTS=true; fi
+if docker volume inspect agopify_pgdata >/dev/null 2>&1; then DATA_EXISTS=true; fi
 
 if [[ -z "$(read_env POSTGRES_PASSWORD)" ]]; then
   if [[ "$DATA_EXISTS" == true ]]; then
-    err "POSTGRES_PASSWORD is empty but the volume vendedoria_pgdata already exists."
+    err "POSTGRES_PASSWORD is empty but the volume agopify_pgdata already exists."
     err "Restore the original password in .env (a new one would not open the existing database)."
     exit 1
   fi
@@ -133,8 +133,8 @@ STORE_BASE_DOMAIN="$(read_env STORE_BASE_DOMAIN)"
 WEB_PORT="$(read_env WEB_PORT)"
 WEB_PORT="${WEB_PORT:-8082}"
 
-[[ "$CONSOLE_HOST" =~ $DOMAIN_RE ]] || fail "CONSOLE_HOST must be a public domain without https:// (e.g. app.marrso.com)"
-[[ "$STORE_BASE_DOMAIN" =~ $DOMAIN_RE ]] || fail "STORE_BASE_DOMAIN must be a public domain without https:// (e.g. marrso.com)"
+[[ "$CONSOLE_HOST" =~ $DOMAIN_RE ]] || fail "CONSOLE_HOST must be a public domain without https:// (e.g. app.agopify.com)"
+[[ "$STORE_BASE_DOMAIN" =~ $DOMAIN_RE ]] || fail "STORE_BASE_DOMAIN must be a public domain without https:// (e.g. agopify.com)"
 [[ "$CONSOLE_HOST" != "$STORE_BASE_DOMAIN" ]] || fail "CONSOLE_HOST must be a subdomain such as app.${STORE_BASE_DOMAIN}"
 if [[ "$CONSOLE_HOST" == *".${STORE_BASE_DOMAIN}" ]]; then
   # A store with that slug would be shadowed by the console; these labels are reserved slugs.

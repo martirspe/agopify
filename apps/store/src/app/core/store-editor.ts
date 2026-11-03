@@ -22,7 +22,7 @@ import type {
   StoreEditorPage,
   StoreTemplateContent,
   StoreTemplateFaq,
-} from '@vendedoria/contracts';
+} from '@agopify/contracts';
 import { StoreApiService } from './store-api.service';
 import type { StoreRequestContext } from './store-context';
 import { StoreStateService } from './store-state.service';
@@ -30,7 +30,7 @@ import { StoreStateService } from './store-state.service';
 const EDITOR_ORIGIN = makeStateKey<string | null>('storeEditorOrigin');
 
 type FrameMessage = StoreEditorFrameMessage extends infer M
-  ? M extends { source: 'vendedoria-store' }
+  ? M extends { source: 'agopify-store' }
     ? Omit<M, 'source'>
     : never
   : never;
@@ -60,6 +60,8 @@ export class StoreEditorBridge {
 
   /** Section highlighted in the page, chosen here or from the console. */
   readonly selected = signal<string | null>(null);
+  /** `section.field` of the active editable target, or null when only the section is selected. */
+  readonly selectedField = signal<string | null>(null);
   readonly active = computed(() => this.origin !== null && Boolean(this.state.store()?.isPreview));
 
   constructor() {
@@ -78,9 +80,16 @@ export class StoreEditorBridge {
     }
     if (this.browser && this.origin) {
       window.addEventListener('message', this.onMessage);
+      window.addEventListener('keydown', this.onKeydown);
       // Links and forms stay put: the editor edits this page, it does not browse the store.
       this.document.addEventListener('click', this.blockNavigation, true);
       this.document.addEventListener('submit', this.blockSubmit, true);
+      inject(DestroyRef).onDestroy(() => {
+        window.removeEventListener('message', this.onMessage);
+        window.removeEventListener('keydown', this.onKeydown);
+        this.document.removeEventListener('click', this.blockNavigation, true);
+        this.document.removeEventListener('submit', this.blockSubmit, true);
+      });
     }
   }
 
@@ -98,10 +107,16 @@ export class StoreEditorBridge {
     this.scheduleSnapshot();
   }
 
-  select(section: string, field: string | null): void {
+  select(section: string | null, field: string | null): void {
     if (!this.active()) return;
     this.selected.set(section);
+    this.selectedField.set(section && field ? `${section}.${field}` : null);
     this.post({ type: 'select', section, field });
+  }
+
+  /** Clears the canvas highlight and tells the console the selection is empty. */
+  clearSelection(): void {
+    this.select(null, null);
   }
 
   input(key: string, value: string): void {
@@ -129,7 +144,7 @@ export class StoreEditorBridge {
 
   private post(message: FrameMessage): void {
     if (!this.browser || !this.origin || !this.active()) return;
-    window.parent.postMessage({ ...message, source: 'vendedoria-store' }, this.origin);
+    window.parent.postMessage({ ...message, source: 'agopify-store' }, this.origin);
   }
 
   private scheduleSnapshot(): void {
@@ -149,23 +164,39 @@ export class StoreEditorBridge {
   private readonly onMessage = (event: MessageEvent): void => {
     if (event.origin !== this.origin || event.source !== window.parent) return;
     const message = event.data as StoreEditorHostMessage | null;
-    if (message?.source !== 'vendedoria-editor') return;
+    if (message?.source !== 'agopify-editor') return;
     if (message.type === 'content' && isContent(message.content)) {
       this.state.store.update((store) => (store ? { ...store, templateContent: message.content } : store));
       this.scheduleSnapshot();
     } else if (message.type === 'select') {
-      this.selected.set(message.section);
       const section = message.section;
+      const field = message.field ?? null;
+      this.selected.set(section);
+      this.selectedField.set(section && field ? `${section}.${field}` : null);
       void this.openPage(message.page).then(() => {
         // A block added a moment ago (or a page just opened) renders a moment later; wait for it.
         if (!section) return;
-        setTimeout(() => {
-          this.document
-            .querySelector(`[data-store-section="${CSS.escape(section)}"]`)
-            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 80);
+        setTimeout(() => this.scrollToSelection(section, field), 80);
       });
     }
+  };
+
+  private scrollToSelection(section: string, field: string | null): void {
+    const fieldKey = field ? `${section}.${field}` : null;
+    const target = fieldKey
+      ? this.document.querySelector(`[data-edit="${CSS.escape(fieldKey)}"]`)
+      : this.document.querySelector(`[data-store-section="${CSS.escape(section)}"]`);
+    target?.scrollIntoView({ behavior: 'smooth', block: fieldKey ? 'center' : 'start' });
+  }
+
+  /** Escape clears the section highlight when the merchant is not typing inline. */
+  private readonly onKeydown = (event: KeyboardEvent): void => {
+    if (!this.active() || event.key !== 'Escape' || event.defaultPrevented) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest?.('[contenteditable]')) return;
+    if (this.selected() === null && this.selectedField() === null) return;
+    event.preventDefault();
+    this.clearSelection();
   };
 
   /** Shows the page the console is editing; the product page uses the first product of the catalog. */
@@ -201,6 +232,7 @@ function isContent(value: unknown): value is StoreTemplateContent {
   host: {
     '[textContent]': 'editValue()',
     '[class.store-edit-multiline]': "editKind() === 'multiline'",
+    '[class.store-edit-selected]': 'bridge.active() && bridge.selectedField() === storeEditText()',
     '[attr.data-edit]': 'bridge.active() ? storeEditText() : null',
     '[attr.data-placeholder]': 'bridge.active() ? editPlaceholder() : null',
     '[attr.contenteditable]': "bridge.active() ? 'plaintext-only' : null",
@@ -274,6 +306,7 @@ export class StoreEditText {
 @Directive({
   selector: '[storeEditImage]',
   host: {
+    '[class.store-edit-selected]': 'bridge.active() && bridge.selectedField() === storeEditImage()',
     '[attr.data-edit]': 'bridge.active() ? storeEditImage() : null',
     '(click)': 'onClick($event)',
   },
@@ -302,14 +335,17 @@ export class StoreEditImage {
   host: {
     '[attr.data-store-section]': 'bridge.active() ? storeSection() : null',
     '[class.store-section-selected]': 'bridge.active() && bridge.selected() === storeSection()',
-    '(click)': 'onClick()',
+    '(click)': 'onClick($event)',
   },
 })
 export class StoreSection {
   readonly bridge = inject(StoreEditorBridge);
   readonly storeSection = input.required<string>();
 
-  onClick(): void {
+  onClick(event: Event): void {
+    if (!this.bridge.active()) return;
+    // Nested editable targets already selected themselves; keep their field focus.
+    if ((event.target as Element | null)?.closest?.('[data-edit]')) return;
     this.bridge.select(this.storeSection(), null);
   }
 }

@@ -35,7 +35,7 @@ export class WhatsAppManualService {
     if (!isManualPublicApiReady(this.config.get<string>('PUBLIC_API_BASE_URL'), this.config.get<string>('NODE_ENV'))) {
       throw new ServiceUnavailableException('Configura una URL pública HTTPS de la API (o localhost en desarrollo) antes de usar credenciales propias.');
     }
-    if (dto.appId === this.meta.appId) throw new BadRequestException('Usa la app de tu negocio para conectar con credenciales propias. La app de VendedorIA se conecta mediante autorización con Meta.');
+    if (dto.appId === this.meta.appId) throw new BadRequestException('Usa la app de tu negocio para conectar con credenciales propias. La app de Agopify se conecta mediante autorización con Meta.');
     const client = this.meta.forApp(dto.appId, dto.appSecret);
     const phone = await client.ownPhone(dto.accessToken, dto.wabaId, dto.phoneNumberId);
     if (!phone.registered) throw new BadRequestException('Activa el número en WhatsApp Cloud API desde Meta antes de conectarlo con credenciales propias.');

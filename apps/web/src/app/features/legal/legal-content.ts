@@ -259,7 +259,7 @@ const billing: LegalDoc = {
   title: 'Planes, Pagos y Reembolsos',
   description: `Cómo funcionan la prueba gratis, los pagos por adelantado, los chats extra y los reembolsos de ${brand}.`,
   summary: [
-    ['Pruebas el plan Crece 14 días gratis, sin tarjeta.'],
+    ['Pruebas el plan Crece 7 días gratis, sin tarjeta.'],
     ['Pagas por adelantado, por 1, 3, 6 o 12 meses. No hay cobros automáticos ni contratos de permanencia.'],
     ['Los precios están en soles e incluyen IGV.'],
     ['Si te cobramos de más, dos veces o por error, te devolvemos el íntegro. Una vez activado un plan, no hay reembolso por desistimiento.'],
@@ -277,7 +277,7 @@ const billing: LegalDoc = {
       id: 'prueba',
       title: 'Prueba gratis',
       blocks: [
-        p('Cada negocio nuevo empieza con 14 días del plan Crece, sin pedir tarjeta, con los límites de prueba que indica la página de planes. Al terminar la prueba no se cobra nada: eliges si quieres pagar un plan.'),
+        p('Cada negocio nuevo empieza con 7 días del plan Crece, sin pedir tarjeta, con los límites de prueba que indica la página de planes. Al terminar la prueba no se cobra nada: eliges si quieres pagar un plan.'),
       ],
     },
     {
@@ -504,8 +504,8 @@ const cookies: LegalDoc = {
         table(
           ['Nombre', 'Tipo', 'Finalidad', 'Duración'],
           [
-            ['vendedoria.accessToken', 'Propia, necesaria (localStorage)', 'Mantener tu sesión iniciada en la consola', 'Hasta que cierres sesión; vence a los 15 minutos y se renueva sola'],
-            ['vendedoria.refreshToken', 'Propia, necesaria (localStorage)', 'Renovar tu sesión sin pedirte la contraseña otra vez', 'Hasta que cierres sesión o pasen 30 días sin usar la consola'],
+            ['agopify.accessToken', 'Propia, necesaria (localStorage)', 'Mantener tu sesión iniciada en la consola', 'Hasta que cierres sesión; vence a los 15 minutos y se renueva sola'],
+            ['agopify.refreshToken', 'Propia, necesaria (localStorage)', 'Renovar tu sesión sin pedirte la contraseña otra vez', 'Hasta que cierres sesión o pasen 30 días sin usar la consola'],
             ['Cloudflare Turnstile', 'De terceros, necesaria', 'Verificar que no eres un bot en el registro, el inicio de sesión y las invitaciones', 'Según la política de Cloudflare'],
             ['Cookies de Mercado Pago', 'De terceros, necesarias', 'Procesar el pago de tu plan y prevenir fraude; se cargan solo al pagar', 'Según la política de Mercado Pago'],
           ],

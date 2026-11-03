@@ -89,7 +89,7 @@ async function bootstrap() {
   );
 
   const swagger = new DocumentBuilder()
-    .setTitle('VendedorIA API')
+    .setTitle('Agopify API')
     .setDescription('Premium AI Sales Agents SaaS API')
     .setVersion('0.1.0')
     .addBearerAuth()

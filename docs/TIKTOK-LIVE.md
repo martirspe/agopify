@@ -123,7 +123,7 @@ Pedidos y cobros siguen en `storefront/:slug/checkout`, `orders/:id/*` y los end
 
 Migración aditiva `20261005020000_tiktok_live`: tablas `LiveIntegration`, `LiveCampaign`, `LiveOffer`, `LiveSession`, `LiveReservation` y `LiveEvent`; relaciones con Tenant/Agent/Product/Variant/Order, claves compuestas de tenant, índices/idempotencia, checks de dinero/cantidades/estados y una sesión activa por campaña. Añade `TIKTOK_LIVE` a `ChannelType` y `OrderChannel`. Conserva el snapshot de la asignación en JSON para restaurar exactamente las unidades tomadas.
 
-La migración y la anterior de conversión ya están aplicadas al stack local y a `vendedoria_test`. Para otro entorno:
+La migración y la anterior de conversión ya están aplicadas al stack local y a `agopify_test`. Para otro entorno:
 
 ```sh
 docker compose -f docker-compose.dev.yml exec -T api npx prisma generate
@@ -138,7 +138,7 @@ Rollback operativo: desactivar `tiktok_live`, conservar esquema y expirar/revisa
 
 ## Archivos
 
-- Creados: `apps/api/src/live/` (adapter, DTOs, cliente oficial, configuración, motor, reservas, controllers, módulo y tests); `apps/api/test/live-sales.e2e-spec.ts`; migración LIVE; `apps/web/src/app/core/api/live-api.service.ts`; `apps/web/src/app/features/live/` (página, plantilla, estilos y test); esta guía y skill `vendedoria-tiktok-live` instalada en el directorio personal de skills.
+- Creados: `apps/api/src/live/` (adapter, DTOs, cliente oficial, configuración, motor, reservas, controllers, módulo y tests); `apps/api/test/live-sales.e2e-spec.ts`; migración LIVE; `apps/web/src/app/core/api/live-api.service.ts`; `apps/web/src/app/features/live/` (página, plantilla, estilos y test); esta guía y skill `agopify-tiktok-live` instalada en el directorio personal de skills.
 - Modificados en API: schema, AppModule, catálogo de planes, integración/activación, validación de entorno, runtime vendedor, checkout/controller/DTO, settlement, estado de pedidos, conversaciones, messenger y serialización segura del logger.
 - Modificados en consola: rutas lazy, IntegrationKey/registry, tarjeta de Integraciones, tipos de canal y cliente SSE compartido.
 - Modificados en tienda/contratos: contrato de reserva/checkout, API store, ruta universal LIVE, checkout existente, carrito temporal, shell y allowlist/headers SSR.

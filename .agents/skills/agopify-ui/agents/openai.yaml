@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agopify · UX/UI y Design System"
+  short_description: "Diseño con componentes y tokens compartidos"
+  default_prompt: "Usa $agopify-ui para pulir esta sección con la DSM y verificar sus estados, accesibilidad y responsive."

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, afterNextRender, computed, inject } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DsIconComponent } from '@vendedoria/ui';
+import { DsIconComponent } from '@agopify/ui';
 import { AnalyticsService } from '../../core/analytics.service';
 import { ConversionSession } from '../../core/conversion-session.service';
 import { SeoService } from '../../core/seo.service';

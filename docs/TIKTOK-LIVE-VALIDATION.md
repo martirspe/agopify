@@ -1,6 +1,6 @@
 # TikTok LIVE — validación local
 
-Fecha: 5 de octubre de 2026. Entorno: stack Docker de desarrollo `vendedoria-dev` en Windows. Las pruebas del API usan la base aislada `vendedoria_test`; no realizan cargos ni llamadas reales a TikTok. Se conservaron los cambios de conversión, diseño y demos que ya estaban en el árbol de trabajo.
+Fecha: 5 de octubre de 2026. Entorno: stack Docker de desarrollo `agopify-dev` en Windows. Las pruebas del API usan la base aislada `agopify_test`; no realizan cargos ni llamadas reales a TikTok. Se conservaron los cambios de conversión, diseño y demos que ya estaban en el árbol de trabajo.
 
 ## Resultados
 
@@ -13,7 +13,7 @@ Fecha: 5 de octubre de 2026. Entorno: stack Docker de desarrollo `vendedoria-dev
 | Prisma generate dentro del API Docker | PASS; cliente actualizado para conversión y LIVE |
 | Prisma validate | PASS |
 | Prisma migrate status, desarrollo | PASS; 7 migraciones, esquema actualizado |
-| Migraciones en `vendedoria_test` | Aplicadas; suites E2E completas pasan |
+| Migraciones en `agopify_test` | Aplicadas; suites E2E completas pasan |
 | API unitarias (`jest --runInBand`) | 43 suites, 298 tests PASS |
 | API E2E (`jest --config test/jest-e2e.json --runInBand`) | 15 suites, 82 tests PASS |
 | Angular consola (`npm test -- --watch=false`) | 8 archivos, 31 tests PASS |
@@ -82,7 +82,7 @@ Al terminar se eliminaron únicamente el tenant, usuario y registros ficticios c
 
 ## Skill y pendientes externos
 
-Skill personal instalada: `C:/Users/Martín Rojas/.codex/skills/vendedoria-tiktok-live/SKILL.md`; copia versionable: `docs/skills/vendedoria-tiktok-live/SKILL.md`. Se invoca como `$vendedoria-tiktok-live` e incluye rutas, invariantes y comandos de verificación del flujo implementado.
+Skill personal instalada: `C:/Users/Martín Rojas/.codex/skills/agopify-tiktok-live/SKILL.md`; copia versionable: `docs/skills/agopify-tiktok-live/SKILL.md`. Se invoca como `$agopify-tiktok-live` e incluye rutas, invariantes y comandos de verificación del flujo implementado.
 
 Para conectar una cuenta real faltan la aplicación/credenciales oficiales (`TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`, `TIKTOK_REDIRECT_URI`), HTTPS, registro del callback/webhook y autorización real de `user.info.basic`. Las pruebas OAuth usan un proveedor simulado; no demuestran aprobación de una cuenta ni aceptación de un callback público por TikTok.
 

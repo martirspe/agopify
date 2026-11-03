@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { DsIconComponent } from '@vendedoria/ui';
+import { DsIconComponent } from '@agopify/ui';
 import { LEGAL_LINKS, PLATFORM_LEGAL } from '../legal/legal-identity';
 
 /** Centered card layout shared by the sign-in and sign-up pages. */

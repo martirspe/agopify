@@ -14,8 +14,8 @@
     "target": "ES2022",
     "module": "preserve",
     "paths": {
-      "@vendedoria/ui": ["../../packages/ui/index.ts"],
-      "@vendedoria/contracts": ["../../packages/contracts/index.d.ts"]
+      "@agopify/ui": ["../../packages/ui/index.ts"],
+      "@agopify/contracts": ["../../packages/contracts/index.d.ts"]
     }
   },
   "angularCompilerOptions": {

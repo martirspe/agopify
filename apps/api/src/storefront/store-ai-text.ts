@@ -1,7 +1,7 @@
 import type {
   StoreEditorField,
   StoreEditorSection,
-} from '@vendedoria/contracts';
+} from '@agopify/contracts';
 import { cleanText, isTextField } from './store-templates';
 
 export const TEXT_AI_ACTIONS = [
@@ -41,6 +41,20 @@ export type SectionAiRequest = {
   blocks: StoreEditorSection[];
   prompt: string;
 };
+
+/** Fill texts of one existing section (builtin, block or fixed) instead of inventing a new block. */
+export type SectionFillAiRequest = {
+  business: TextAiBusiness;
+  section: StoreEditorSection;
+  /** Content key (`hero`, `benefits-a1b2c3`). */
+  target: string;
+  prompt: string;
+  /** Current text values the merchant already has (empty fields are omitted). */
+  current: Record<string, string>;
+};
+
+export const PAGE_AI_MODES = ['rewrite', 'fillEmpty'] as const;
+export type PageAiMode = (typeof PAGE_AI_MODES)[number];
 
 const TASKS: Record<TextAiAction, string> = {
   write: 'Escribe un texto nuevo para este campo.',
@@ -181,6 +195,57 @@ export function buildSectionPrompt(request: SectionAiRequest): {
   return { system, user };
 }
 
+export function buildSectionFillPrompt(request: SectionFillAiRequest): {
+  system: string;
+  user: string;
+} {
+  const emptyIds = new Set(
+    textFields(request.section)
+      .filter((f) => !(request.current[f.id] ?? '').trim())
+      .map((f) => f.id),
+  );
+  const system = [
+    ...WRITER_RULES,
+    '- Reescribe o completa los textos de ESTA sección de la tienda; no inventes otras secciones.',
+    '- Si un campo ya tiene textoActual, puedes mejorarlo solo si el pedido lo pide; si está vacío, escríbelo.',
+    '- Respeta el máximo de caracteres de cada campo; los campos de una línea no llevan saltos de línea.',
+    'Devuelve SOLO JSON válido: {"texts":{"<id del campo>":"..."}}.',
+  ].join('\n');
+  const user = JSON.stringify({
+    negocio: businessFacts(request.business),
+    pedidoDelComerciante: request.prompt,
+    seccion: {
+      id: request.section.id,
+      claveContenido: request.target,
+      nombre: request.section.label,
+      descripcion: request.section.description ?? null,
+      campos: textFields(request.section).map((f) => ({
+        id: f.id,
+        nombre: f.label,
+        maxCaracteres: f.maxLength,
+        unaLinea: f.kind === 'text',
+        textoActual: request.current[f.id] || null,
+        vacio: emptyIds.has(f.id),
+      })),
+    },
+  });
+  return { system, user };
+}
+
+/** Model output → texts for an existing section; unknown fields are dropped. */
+export function pickSectionFillTexts(
+  raw: unknown,
+  section: StoreEditorSection,
+  prompt: string,
+): Record<string, string> | null {
+  const value =
+    raw && typeof raw === 'object'
+      ? (raw as { texts?: unknown })
+      : {};
+  const texts = pickTexts(value.texts, section, FIGURES.test(prompt));
+  return Object.keys(texts).length ? texts : null;
+}
+
 /** Fields that come empty, too long or with invented figures are left out (the section keeps its default). */
 function pickTexts(
   input: unknown,
@@ -233,11 +298,18 @@ export type PageAiRequest = {
   sections: StoreEditorSection[];
   blocks: StoreEditorSection[];
   prompt: string;
+  mode?: PageAiMode;
+  /**
+   * When `mode` is `fillEmpty`, only these `sectionId.fieldId` targets may be written.
+   * Built from the draft on the server; empty when every text is already filled.
+   */
+  emptyTargets?: { sectionId: string; fieldIds: string[] }[];
 };
 
 export type PageAiResult = {
   sections: Record<string, Record<string, string>>;
   blocks: { type: string; texts: Record<string, string> }[];
+  mode?: PageAiMode;
 };
 
 function fieldSpecs(section: StoreEditorSection) {
@@ -253,28 +325,62 @@ export function buildPagePrompt(request: PageAiRequest): {
   system: string;
   user: string;
 } {
+  const fillEmpty = request.mode === 'fillEmpty';
   const system = [
     ...WRITER_RULES,
-    '- Escribe la página de inicio completa: los textos de cada sección fija y de 2 a 4 secciones adicionales del catálogo, sin repetir tipos, en el orden en que deben aparecer.',
+    fillEmpty
+      ? '- Completa SOLO los campos vacíos listados en camposVacios. No reescribas textos que ya existen. No agregues bloques nuevos: "blocks" debe ser [].'
+      : '- Escribe la página de inicio completa: los textos de cada sección fija y de 2 a 4 secciones adicionales del catálogo, sin repetir tipos, en el orden en que deben aparecer.',
     '- Respeta el máximo de caracteres de cada campo; los campos de una línea no llevan saltos de línea.',
-    'Devuelve SOLO JSON válido: {"sections":{"<id de la sección fija>":{"<id del campo>":"..."}},"blocks":[{"type":"<id del tipo>","texts":{"<id del campo>":"..."}}]}.',
+    'Devuelve SOLO JSON válido: {"sections":{"<id de la sección>":{"<id del campo>":"..."}},"blocks":[{"type":"<id del tipo>","texts":{"<id del campo>":"..."}}]}.',
   ].join('\n');
   const user = JSON.stringify({
     negocio: businessFacts(request.business),
     pedidoDelComerciante: request.prompt,
+    modo: fillEmpty ? 'rellenarVacios' : 'reescribirPagina',
     seccionesFijas: request.sections.map((section) => ({
       id: section.id,
       nombre: section.label,
       campos: fieldSpecs(section),
     })),
-    tiposDeSeccion: request.blocks.map((block) => ({
-      id: block.id,
-      nombre: block.label,
-      descripcion: block.description ?? null,
-      campos: fieldSpecs(block),
-    })),
+    ...(fillEmpty
+      ? { camposVacios: request.emptyTargets ?? [] }
+      : {
+          tiposDeSeccion: request.blocks.map((block) => ({
+            id: block.id,
+            nombre: block.label,
+            descripcion: block.description ?? null,
+            campos: fieldSpecs(block),
+          })),
+        }),
   });
   return { system, user };
+}
+
+/**
+ * Keeps only texts for empty draft fields and drops proposed library blocks.
+ * Used after `pickPageTexts` when the merchant asked to fill empties only.
+ */
+export function filterPageToEmptyFields(
+  page: PageAiResult,
+  emptyTargets: { sectionId: string; fieldIds: string[] }[],
+): PageAiResult | null {
+  const allowed = new Map(
+    emptyTargets.map((t) => [t.sectionId, new Set(t.fieldIds)]),
+  );
+  const sections: PageAiResult['sections'] = {};
+  for (const [sectionId, texts] of Object.entries(page.sections)) {
+    const fields = allowed.get(sectionId);
+    if (!fields) continue;
+    const kept: Record<string, string> = {};
+    for (const [fieldId, value] of Object.entries(texts)) {
+      if (fields.has(fieldId) && value.trim()) kept[fieldId] = value;
+    }
+    if (Object.keys(kept).length) sections[sectionId] = kept;
+  }
+  return Object.keys(sections).length
+    ? { sections, blocks: [], mode: 'fillEmpty' }
+    : null;
 }
 
 /**
@@ -307,6 +413,6 @@ export function pickPageTexts(
     if (blocks.length === PAGE_MAX_BLOCKS) break;
   }
   return blocks.length || Object.keys(sections).length
-    ? { sections, blocks }
+    ? { sections, blocks, mode: request.mode ?? 'rewrite' }
     : null;
 }

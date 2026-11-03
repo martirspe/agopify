@@ -10,7 +10,6 @@ import {
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map, startWith } from 'rxjs';
 import {
@@ -26,8 +25,7 @@ import {
   DsPageHeaderComponent,
   DsSaveBarComponent,
   DsSelectComponent,
-  DsStickyEdgeDirective,
-} from '@vendedoria/ui';
+} from '@agopify/ui';
 import {
   CatalogApiService,
   CollectionDto,
@@ -44,7 +42,14 @@ import { IntegrationsStateService } from '../../core/integrations/integrations-s
 import { resizeImage } from '../../core/media/resize-image';
 import { productCompleteness } from './product-completeness';
 
-import { CombinationDraft, VariantAxis, generateCombinations, readOptions, keyOf } from './variant-combinations';
+import {
+  CombinationDraft,
+  VariantAxis,
+  generateCombinations,
+  isColorAxisName,
+  readOptions,
+  keyOf,
+} from './variant-combinations';
 import { CatalogCategory } from '../../core/api/catalog-api.service';
 import { CatalogListState, catalogCsv, catalogStock, filterCatalog } from './catalog-list';
 type VariantDraft = CombinationDraft;
@@ -53,6 +58,7 @@ type VariantRow = { variant: VariantDraft; index: number; key: string };
 type FaqDraft = { question: string; answer: string };
 
 export type KindFilter = 'todos' | 'productos' | 'servicios' | 'digitales';
+type FilterPanelId = 'closed' | 'dimensions' | 'tipo' | 'inventario' | 'tienda';
 const KIND_FILTERS: KindFilter[] = ['todos', 'productos', 'servicios', 'digitales'];
 const MAX_FAQS = 10;
 
@@ -88,7 +94,6 @@ function toCents(amount: number): number {
     DsSelectComponent,
     DsFormSectionComponent,
     DsSaveBarComponent,
-    NgTemplateOutlet,
     ReactiveFormsModule,
     FormsModule,
     RouterLink,
@@ -99,7 +104,6 @@ function toCents(amount: number): number {
     DsModalDirective,
     DsBannerComponent,
     DsPageHeaderComponent,
-    DsStickyEdgeDirective,
   ],
   templateUrl: './products.page.html',
   styleUrl: './products.page.scss',
@@ -149,6 +153,18 @@ export class ProductsPage {
     { id: 'borrador', label: 'Borradores' },
     { id: 'archivado', label: 'Archivados' },
   ];
+  readonly sortOptions: Array<{ id: CatalogListState['sort']; label: string }> = [
+    { id: 'recientes', label: 'Más recientes' },
+    { id: 'antiguos', label: 'Más antiguos' },
+    { id: 'nombre', label: 'Nombre, A–Z' },
+    { id: 'nombre-desc', label: 'Nombre, Z–A' },
+  ];
+  readonly filterPanel = signal<FilterPanelId>('closed');
+  private readonly filterDimensions: Array<{ id: Exclude<FilterPanelId, 'closed' | 'dimensions'>; label: string }> = [
+    { id: 'tipo', label: 'Tipo' },
+    { id: 'inventario', label: 'Inventario' },
+    { id: 'tienda', label: 'Canal' },
+  ];
   readonly kindCounts = computed((): Record<KindFilter, number> => {
     const list = this.products();
     const services = list.filter((product) => product.kind === 'SERVICE').length;
@@ -177,23 +193,69 @@ export class ProductsPage {
   readonly activeListFilters = computed(() => {
     const state = this.listState();
     const filters: Array<{ key: string; label: string }> = [];
-    if (state.query) filters.push({ key: 'q', label: `Búsqueda: ${state.query}` });
     if (state.kind !== 'todos') {
       filters.push({
         key: 'tipo',
-        label: this.kindOptions.find((option) => option.id === state.kind)?.label ?? 'Tipo',
+        label: `Tipo es ${this.kindOptions.find((option) => option.id === state.kind)?.label ?? 'Tipo'}`,
       });
     }
+    if (state.inventory === 'agotados') filters.push({ key: 'inventario', label: 'Inventario es Agotados' });
     if (state.publication !== 'todos') {
       const pubLabel =
         state.publication === 'visibles' ? 'En tienda web'
         : state.publication === 'whatsapp' ? 'En WhatsApp'
         : state.publication === 'instagram' ? 'En Instagram'
         : 'Ocultos en tienda';
-      filters.push({ key: 'tienda', label: pubLabel });
+      filters.push({ key: 'tienda', label: `Canal es ${pubLabel}` });
     }
-    if (state.inventory === 'agotados') filters.push({ key: 'inventario', label: 'Agotados' });
     return filters;
+  });
+  readonly visibleFilterDimensions = computed(() => {
+    const state = this.listState();
+    return this.filterDimensions.filter((dimension) => {
+      if (dimension.id === 'tipo' && state.kind !== 'todos') return false;
+      if (dimension.id === 'inventario' && state.inventory === 'agotados') return false;
+      if (dimension.id === 'tienda' && state.publication !== 'todos') return false;
+      return true;
+    });
+  });
+  readonly filterPanelTitle = computed(() => {
+    const panel = this.filterPanel();
+    if (panel === 'tipo') return 'Tipo';
+    if (panel === 'inventario') return 'Inventario';
+    if (panel === 'tienda') return 'Canal';
+    return 'Filtros';
+  });
+  readonly filterPanelOptions = computed(() => {
+    const panel = this.filterPanel();
+    const state = this.listState();
+    if (panel === 'tipo') {
+      return this.kindOptions
+        .filter((option) => option.id !== 'todos')
+        .map((option) => ({
+          value: option.id,
+          label: `${option.label} (${this.kindCounts()[option.id]})`,
+          selected: state.kind === option.id,
+        }));
+    }
+    if (panel === 'inventario') {
+      return [{ value: 'agotados', label: 'Agotados', selected: state.inventory === 'agotados' }];
+    }
+    if (panel === 'tienda') {
+      const options: Array<{ value: string; label: string; selected: boolean }> = [];
+      if (this.storeActive()) {
+        options.push(
+          { value: 'visibles', label: 'En tienda web', selected: state.publication === 'visibles' },
+          { value: 'ocultos', label: 'Ocultos en tienda', selected: state.publication === 'ocultos' },
+        );
+      }
+      options.push(
+        { value: 'whatsapp', label: 'En WhatsApp', selected: state.publication === 'whatsapp' },
+        { value: 'instagram', label: 'En Instagram', selected: state.publication === 'instagram' },
+      );
+      return options;
+    }
+    return [];
   });
   readonly collections = signal<CollectionDto[]>([]);
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredProducts().length / this.listState().pageSize)));
@@ -201,7 +263,7 @@ export class ProductsPage {
   readonly listStart = computed(() => this.filteredProducts().length ? (this.currentPage() - 1) * this.listState().pageSize + 1 : 0);
   readonly listEnd = computed(() => Math.min(this.currentPage() * this.listState().pageSize, this.filteredProducts().length));
   readonly visibleProducts = computed(() => this.filteredProducts().slice(this.listStart() ? this.listStart() - 1 : 0, this.listEnd()));
-  readonly hasListFilters = computed(() => Boolean(this.activeListFilters().length || this.kindFilter() !== 'todos'));
+  readonly hasListFilters = computed(() => this.activeListFilters().length > 0 || Boolean(this.listState().query.trim()));
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
   readonly saving = signal(false);
@@ -212,7 +274,9 @@ export class ProductsPage {
   readonly handleLocked = signal(false);
   readonly variantsEnabled = signal(false);
   readonly media = signal<MediaDraft[]>([]);
-  readonly mediaDraft = signal('');
+  /** Selected tile in the Shopify-style media grid (alt / caption / ambient). */
+  readonly selectedMediaIndex = signal<number | null>(null);
+  readonly mediaDraggingIndex = signal<number | null>(null);
   readonly uploading = signal(false);
   readonly detailsEnabled = signal(false);
   readonly setEnabled = signal(false);
@@ -263,10 +327,15 @@ export class ProductsPage {
   readonly attributeValues = signal<Record<string, string>>({});
   readonly kindCategories = computed(() => this.categories().filter((category) => category.kind === this.formValues().kind));
   readonly selectedCategory = computed(() => this.categories().find((category) => category.id === this.categoryId()));
-  /** Category attributes required to save when a category is chosen. */
-  readonly requiredCategoryAttributes = computed(
-    () => this.selectedCategory()?.attributes.filter((attribute) => attribute.required) ?? [],
-  );
+  /**
+   * Product-level required attributes. Variant-defining ones (Color, Talla…) follow Shopify:
+   * they live only as option axes when variants are on — never duplicated here.
+   */
+  readonly requiredCategoryAttributes = computed(() => {
+    const attributes = this.selectedCategory()?.attributes.filter((attribute) => attribute.required) ?? [];
+    if (!this.variantsEnabled()) return attributes;
+    return attributes.filter((attribute) => !attribute.variant);
+  });
   readonly showHandle = signal(false);
   readonly faqs = signal<FaqDraft[]>([]);
   readonly maxFaqs = MAX_FAQS;
@@ -515,7 +584,8 @@ export class ProductsPage {
     this.showHandle.set(false);
     this.variantsEnabled.set(false);
     this.media.set([]);
-    this.mediaDraft.set('');
+    this.selectedMediaIndex.set(null);
+    this.mediaDraggingIndex.set(null);
     this.categoryDraft.set('');
     this.variantDrafts.set([]);
     this.axes.set([]);
@@ -592,7 +662,8 @@ export class ProductsPage {
         caption: item.caption ?? '',
       })),
     );
-    this.mediaDraft.set('');
+    this.selectedMediaIndex.set(null);
+    this.mediaDraggingIndex.set(null);
     this.categoryDraft.set('');
     const details = product.details ?? {};
     this.detailsEnabled.set(
@@ -680,7 +751,20 @@ export class ProductsPage {
       const values = optionValues.get(option.name) ?? new Set<string>();
       values.add(option.value); optionValues.set(option.name, values);
     }
-    this.axes.set([...optionValues].map(([name, values]) => ({ name, values: [...values].join(', ') })));
+    const definitionColors = new Map<string, Record<string, string>>();
+    for (const definition of product.optionDefinitions ?? []) {
+      const colors: Record<string, string> = {};
+      for (const entry of definition.values) {
+        const row = typeof entry === 'string' ? { value: entry } : entry;
+        if (row.color) colors[row.value.trim()] = row.color;
+      }
+      definitionColors.set(definition.name.trim().toLocaleLowerCase('es'), colors);
+    }
+    this.axes.set([...optionValues].map(([name, values]) => ({
+      name,
+      values: [...values].join('\n'),
+      colors: definitionColors.get(name.trim().toLocaleLowerCase('es')) ?? {},
+    })));
     this.axesPending.set(false);
     this.resetVariantView();
     this.categoryId.set(product.categoryId ?? '');
@@ -698,6 +782,8 @@ export class ProductsPage {
     this.editingId.set(null);
     this.variantDrafts.set([]);
     this.media.set([]);
+    this.selectedMediaIndex.set(null);
+    this.mediaDraggingIndex.set(null);
     this.draftDirty.set(false);
   }
 
@@ -757,6 +843,23 @@ export class ProductsPage {
     this.touchEditor();
   }
 
+  selectMedia(index: number): void {
+    this.selectedMediaIndex.set(this.selectedMediaIndex() === index ? null : index);
+  }
+
+  setFeaturedMedia(index: number): void {
+    if (index <= 0) return;
+    this.media.update((list) => {
+      if (index >= list.length) return list;
+      const next = [...list];
+      const [item] = next.splice(index, 1);
+      next.unshift(item);
+      return next;
+    });
+    this.selectedMediaIndex.set(0);
+    this.touchEditor();
+  }
+
   moveMedia(index: number, delta: -1 | 1): void {
     this.media.update((list) => {
       const target = index + delta;
@@ -765,7 +868,40 @@ export class ProductsPage {
       [next[index], next[target]] = [next[target], next[index]];
       return next;
     });
+    const selected = this.selectedMediaIndex();
+    if (selected === index) this.selectedMediaIndex.set(index + delta);
+    else if (selected === index + delta) this.selectedMediaIndex.set(index);
     this.touchEditor();
+  }
+
+  onMediaDragStart(index: number, event: DragEvent): void {
+    this.mediaDraggingIndex.set(index);
+    event.dataTransfer?.setData('text/plain', String(index));
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+  }
+
+  onMediaDragOver(event: DragEvent): void {
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+  }
+
+  onMediaDrop(targetIndex: number, event: DragEvent): void {
+    event.preventDefault();
+    const from = this.mediaDraggingIndex() ?? Number(event.dataTransfer?.getData('text/plain'));
+    this.mediaDraggingIndex.set(null);
+    if (!Number.isInteger(from) || from === targetIndex || from < 0 || from >= this.media().length) return;
+    this.media.update((list) => {
+      const next = [...list];
+      const [item] = next.splice(from, 1);
+      next.splice(targetIndex, 0, item);
+      return next;
+    });
+    this.selectedMediaIndex.set(targetIndex);
+    this.touchEditor();
+  }
+
+  onMediaDragEnd(): void {
+    this.mediaDraggingIndex.set(null);
   }
 
   async onFiles(input: HTMLInputElement): Promise<void> {
@@ -833,10 +969,51 @@ export class ProductsPage {
     this.categoryId.set(id); this.attributeValues.set({});
     this.detailsEnabled.set(id === 'fragrances');
     this.touchEditor();
+    const suggested = this.selectedCategory()?.attributes.filter((attribute) => attribute.variant && attribute.required) ?? [];
+    if (!suggested.length) return;
+    // Shopify pattern: Color/Size become variant options, not product-level fields.
     if (!this.variantDrafts().length) {
-      const suggested = this.selectedCategory()?.attributes.filter((attribute) => attribute.variant && attribute.required) ?? [];
-      this.axes.set(suggested.slice(0, 5).map((attribute) => ({ name: attribute.name, values: '' })));
+      this.variantsEnabled.set(true);
+      this.axes.set(suggested.slice(0, 5).map((attribute) => ({ name: attribute.name, values: '', colors: {} })));
+      this.axesPending.set(true);
+      this.setEnabled.set(false);
+    } else {
+      this.variantsEnabled.set(true);
+      this.ensureVariantAxesForCategory(suggested.map((attribute) => attribute.name));
     }
+  }
+
+  /** Adds missing category option axes (e.g. Color, Talla) without wiping merchant values. */
+  private ensureVariantAxesForCategory(names: string[]): void {
+    const existing = new Set(this.axes().map((axis) => axis.name.trim().toLocaleLowerCase('es')));
+    const missing = names.filter((name) => !existing.has(name.trim().toLocaleLowerCase('es')));
+    if (!missing.length) return;
+    this.axes.update((axes) => [
+      ...axes,
+      ...missing.slice(0, Math.max(0, 5 - axes.length)).map((name) => ({ name, values: '', colors: {} })),
+    ]);
+    this.axesPending.set(true);
+  }
+
+  isColorAxis(axis: VariantAxis): boolean {
+    return isColorAxisName(axis.name);
+  }
+
+  axisColor(axis: VariantAxis, value: string): string {
+    return axis.colors?.[value.trim()] ?? '#cccccc';
+  }
+
+  setAxisColor(axisIndex: number, value: string, color: string): void {
+    const key = value.trim();
+    if (!key || !/^#[0-9A-Fa-f]{6}$/.test(color)) return;
+    this.axes.update((axes) =>
+      axes.map((axis, index) =>
+        index === axisIndex
+          ? { ...axis, colors: { ...(axis.colors ?? {}), [key]: color.toLowerCase() } }
+          : axis,
+      ),
+    );
+    this.touchEditor();
   }
 
   setAttribute(key: string, value: string): void {
@@ -890,7 +1067,12 @@ export class ProductsPage {
     const previous = values[valueIndex].trim();
     if (previous) this.variantDrafts.update(list => list.map(variant => ({ ...variant, options: variant.options.map(option => option.name === axis.name.trim() && option.value === previous ? { ...option, value: value.trim() } : option) })));
     values[valueIndex] = value;
-    this.updateAxis(axisIndex, { values: values.join('\n') });
+    const colors = { ...(axis.colors ?? {}) };
+    if (previous && previous !== value.trim()) {
+      if (colors[previous] && !colors[value.trim()]) colors[value.trim()] = colors[previous];
+      delete colors[previous];
+    }
+    this.updateAxis(axisIndex, { values: values.join('\n'), colors });
   }
 
   addAxisValue(index: number): void {
@@ -899,8 +1081,13 @@ export class ProductsPage {
   }
 
   removeAxisValue(axisIndex: number, valueIndex: number): void {
-    const values = this.axisValues(this.axes()[axisIndex]).filter((_, index) => index !== valueIndex);
-    this.updateAxis(axisIndex, { values: values.join('\n') }); this.generateVariants();
+    const axis = this.axes()[axisIndex];
+    const removed = this.axisValues(axis)[valueIndex]?.trim();
+    const values = this.axisValues(axis).filter((_, index) => index !== valueIndex);
+    const colors = { ...(axis.colors ?? {}) };
+    if (removed) delete colors[removed];
+    this.updateAxis(axisIndex, { values: values.join('\n'), colors });
+    this.generateVariants();
   }
 
   variantLabel(variant: VariantDraft): string { return variant.options.map(o => o.value).join(' / '); }
@@ -943,6 +1130,53 @@ export class ProductsPage {
     this.setListFilter('tipo', filter === 'todos' ? '' : filter);
   }
 
+  openFilterPanel(panel: Exclude<FilterPanelId, 'closed'> = 'dimensions'): void {
+    this.filterPanel.set(panel);
+  }
+
+  closeFilterPanel(): void {
+    this.filterPanel.set('closed');
+  }
+
+  onFilterQueryInput(value: string): void {
+    this.setListFilter('q', value);
+    if (this.filterPanel() === 'closed') this.filterPanel.set('dimensions');
+    else if (this.filterPanel() !== 'dimensions') this.filterPanel.set('dimensions');
+  }
+
+  onFilterQueryKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeFilterPanel();
+      return;
+    }
+    if (event.key === 'ArrowDown' && this.filterPanel() === 'closed') {
+      event.preventDefault();
+      this.openFilterPanel('dimensions');
+    }
+  }
+
+  applyFilterPanelValue(value: string): void {
+    const panel = this.filterPanel();
+    if (panel === 'tipo') this.setListFilter('tipo', value);
+    else if (panel === 'inventario') this.setListFilter('inventario', value);
+    else if (panel === 'tienda') this.setListFilter('tienda', value);
+    this.closeFilterPanel();
+  }
+
+  onFilterFocusOut(event: FocusEvent): void {
+    if (this.filterPanel() === 'closed') return;
+    const root = event.currentTarget as HTMLElement | null;
+    const next = event.relatedTarget as Node | null;
+    if (root && next && root.contains(next)) return;
+    // Defer so option mousedown (preventDefault) can keep focus and apply the value.
+    setTimeout(() => {
+      const active = root?.ownerDocument.activeElement;
+      if (root && active && root.contains(active)) return;
+      this.closeFilterPanel();
+    }, 0);
+  }
+
   setListFilter(key: string, value: string): void {
     void this.router.navigate([], {
       relativeTo: this.route,
@@ -957,6 +1191,7 @@ export class ProductsPage {
   }
 
   clearListFilters(): void {
+    this.closeFilterPanel();
     void this.router.navigate([], { relativeTo: this.route, queryParams: { q: null, tipo: null, estado: null, tienda: null, inventario: null, pagina: null }, queryParamsHandling: 'merge' });
   }
 
@@ -978,7 +1213,7 @@ export class ProductsPage {
     );
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'catalogo-vendedoria.csv';
+    link.download = 'catalogo-agopify.csv';
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -1037,29 +1272,10 @@ export class ProductsPage {
     this.updateVariant(index, { price: Number(value || 0), priceInherited: false });
   }
 
-  onMediaDraftInput(value: string): void {
-    this.mediaDraft.set(value);
-  }
-
-  addMediaUrl(): void {
-    const url = this.mediaDraft().trim();
-    if (!url) return;
-    if (!/^https?:\/\//.test(url)) {
-      this.errorMessage.set('La URL debe empezar con https://');
-      return;
-    }
-    if (this.media().length >= MAX_MEDIA) {
-      this.errorMessage.set(`Máximo ${MAX_MEDIA} fotos por producto.`);
-      return;
-    }
-    if (!this.media().some((item) => item.url === url)) {
-      this.media.update((list) => [...list, { url, kind: 'image', alt: '', caption: '' }]);
-      this.touchEditor();
-    }
-    this.mediaDraft.set('');
-  }
-
   removeMediaUrl(index: number): void {
+    const selected = this.selectedMediaIndex();
+    if (selected === index) this.selectedMediaIndex.set(null);
+    else if (selected !== null && selected > index) this.selectedMediaIndex.set(selected - 1);
     this.media.update((list) => list.filter((_, i) => i !== index));
     this.touchEditor();
   }
@@ -1118,14 +1334,18 @@ export class ProductsPage {
     };
   }
 
-  private optionDefinitionsFromDrafts(): Array<{ name: string; values: string[] }> {
+  private optionDefinitionsFromDrafts(): Array<{ name: string; values: Array<{ value: string; color?: string }> }> {
     if (!this.variantsEnabled() || this.setEnabled()) return [];
     return this.axes().map((axis) => ({
       name: axis.name.trim(),
       values: axis.values
         .split(/[\n,]/)
         .map((value) => value.trim())
-        .filter(Boolean),
+        .filter(Boolean)
+        .map((value) => {
+          const color = axis.colors?.[value];
+          return color ? { value, color } : { value };
+        }),
     }));
   }
 
@@ -1200,8 +1420,27 @@ export class ProductsPage {
     if (this.categoryId() && !this.selectedCategory()) {
       this.errorMessage.set('Carga la clasificación antes de guardar este producto.'); return;
     }
-    const missing = this.selectedCategory()?.attributes.find((attribute) => attribute.required && !this.attributeValues()[attribute.key]?.trim() && !(attribute.variant && variants.length && variants.every((variant) => variant.options.some((option) => option.name.trim().toLocaleLowerCase('es') === attribute.name.trim().toLocaleLowerCase('es') && option.value.trim()))));
-    if (missing) { this.errorMessage.set('Completa ' + missing.name + '.'); return; }
+    const missing = this.selectedCategory()?.attributes.find((attribute) => {
+      if (!attribute.required || this.attributeValues()[attribute.key]?.trim()) return false;
+      if (!attribute.variant) return true;
+      // Variant-defining attrs (Color, Talla…) must be covered by option axes, not product fields.
+      if (!variants.length) return true;
+      return !variants.every((variant) =>
+        variant.options.some(
+          (option) =>
+            option.name.trim().toLocaleLowerCase('es') === attribute.name.trim().toLocaleLowerCase('es') &&
+            option.value.trim(),
+        ),
+      );
+    });
+    if (missing) {
+      this.errorMessage.set(
+        missing.variant
+          ? `Define la opción «${missing.name}» en Variantes (como en Shopify: no se pide otra vez arriba).`
+          : `Completa ${missing.name}.`,
+      );
+      return;
+    }
 
     this.saving.set(true);
     this.errorMessage.set(null);

@@ -18,7 +18,7 @@ import {
   DsPageHeaderComponent,
   DsSaveBarComponent,
   DsSelectComponent,
-} from '@vendedoria/ui';
+} from '@agopify/ui';
 import { SellerPlaygroundComponent } from './seller-playground.component';
 import {
   AgentsApiService,

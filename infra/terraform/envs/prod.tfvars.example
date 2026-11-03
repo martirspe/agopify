@@ -4,11 +4,11 @@ environment        = "prod"
 aws_region         = "us-east-1"
 cloudflare_zone_id = "CLOUDFLARE_ZONE_ID"
 
-media_domain = "media.example.pe"
+media_domain = "media.agopify.com"
 
-email_domain = "example.pe"
-email_from   = "VendedorIA <pedidos@example.pe>"
+email_domain = "agopify.com"
+email_from   = "Agopify <noreply@agopify.com>"
 # Leave false when the domain already publishes a DMARC record.
 manage_dmarc            = false
 manage_account_settings = true
-alerts_email            = "alertas@example.pe"
+alerts_email = "alertas@agopify.com"

@@ -30,7 +30,7 @@ export function catalogSearchWhere(tenantId: string, tokens: string[], options: 
   const words = tokens.slice(0, 12).map((word) => word.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^\p{L}\p{N}]/gu, '').slice(0, 50)).filter(Boolean);
   // Values are always bound parameters; tsquery syntax never comes from user input.
-  const query = Prisma.sql`to_tsquery('spanish', ${words.map((word) => `${word}:*`).join(' | ') || 'vendedoriaemptyquery'})`;
+  const query = Prisma.sql`to_tsquery('spanish', ${words.map((word) => `${word}:*`).join(' | ') || 'agopifyemptyquery'})`;
   const status = options.status
     ?? (options.available || options.published ? ProductStatus.ACTIVE : undefined);
   const channel = options.channel

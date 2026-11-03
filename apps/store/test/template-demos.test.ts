@@ -6,7 +6,7 @@ import {
   demoResponse,
   demoStore,
 } from "../src/app/demos/template-demo-data.ts";
-import type { PublicProductList } from "@vendedoria/contracts";
+import type { PublicProductList } from "@agopify/contracts";
 
 test("only exact shipped demo namespaces are accepted", () => {
   assert.equal(

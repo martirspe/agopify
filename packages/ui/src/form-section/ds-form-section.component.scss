@@ -1,16 +1,92 @@
-:host { display: block; min-width: 0; border: var(--ds-border-width) solid var(--ds-color-border); border-radius: var(--ds-console-card-radius, var(--ds-radius-md)); background: var(--ds-color-surface); box-shadow: none; }
-:host(.ds-form-section--plain) { border: 0; border-radius: 0; background: transparent; }
-section { padding: var(--ds-space-5); }
-header { display: flex; flex-wrap: wrap; align-items: start; gap: var(--ds-space-3); margin-bottom: var(--ds-space-4); }
-header > div { min-width: 0; flex: 1; }
-header > ds-icon { display: grid; place-items: center; flex-shrink: 0; width: var(--ds-space-10); height: var(--ds-space-10); border-radius: var(--ds-radius-sm); background: var(--ds-color-bg); color: var(--ds-color-ink); }
-h2 { margin: 0; font-family: var(--ds-font-ui); font-size: var(--ds-type-lg); font-weight: 600; overflow-wrap: anywhere; }
-p { margin: var(--ds-space-1) 0 0; color: var(--ds-color-text-secondary); font-size: var(--ds-type-sm); overflow-wrap: anywhere; }
-.ds-form-section-body { display: grid; gap: var(--ds-space-4); min-width: 0; }
-header > .ds-form-section-actions { flex: 0 1 auto; }
-.ds-form-section-actions:empty { display: none; }
-:host(.ds-form-section--compact) section { padding: var(--ds-space-3); }
-:host(.ds-form-section--compact) header { gap: var(--ds-space-2); margin-bottom: var(--ds-space-3); }
-:host(.ds-form-section--compact) header > ds-icon { width: var(--ds-space-8); height: var(--ds-space-8); }
-:host(.ds-form-section--compact) .ds-form-section-body { gap: var(--ds-space-3); }
-@media (max-width: 40rem) { section { padding: var(--ds-space-4); } }
+/*
+ * Console content card — Admin Next surface without hard borders or ink stamps.
+ * Quiet elevation, dense 13px type, muted icon.
+ */
+:host {
+  display: block;
+  min-width: 0;
+  border: 0;
+  border-radius: var(--ds-console-card-radius, 1.25rem);
+  background: var(--ds-color-surface);
+  box-shadow: var(--ds-console-card-shadow);
+}
+:host(.ds-form-section--plain) {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+section {
+  padding: var(--ds-space-4);
+}
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--ds-space-2);
+  margin-bottom: var(--ds-space-3);
+}
+header > div {
+  min-width: 0;
+  flex: 1;
+}
+header > ds-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-block-start: 0.125rem;
+  color: var(--ds-console-text-secondary, var(--ds-color-text-secondary));
+}
+header > ds-icon .ds-icon,
+header > ds-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+h2 {
+  margin: 0;
+  font-family: var(--ds-font-console, var(--ds-font-ui));
+  font-size: var(--ds-console-type-sm, 0.8125rem);
+  font-weight: 500;
+  line-height: 1.25rem;
+  letter-spacing: -0.01em;
+  color: var(--ds-console-text, var(--ds-color-text-primary));
+  overflow-wrap: anywhere;
+}
+p {
+  margin: 0.125rem 0 0;
+  color: var(--ds-console-text-secondary, var(--ds-color-text-secondary));
+  font-size: var(--ds-console-type-sm, 0.8125rem);
+  font-weight: 400;
+  line-height: 1.25rem;
+  overflow-wrap: anywhere;
+}
+.ds-form-section-body {
+  display: grid;
+  gap: var(--ds-space-3);
+  min-width: 0;
+}
+header > .ds-form-section-actions {
+  flex: 0 1 auto;
+  margin-block-start: -0.125rem;
+}
+.ds-form-section-actions:empty {
+  display: none;
+}
+:host(.ds-form-section--compact) section {
+  padding: var(--ds-space-3);
+}
+:host(.ds-form-section--compact) header {
+  gap: var(--ds-space-2);
+  margin-bottom: var(--ds-space-2);
+}
+:host(.ds-form-section--compact) .ds-form-section-body {
+  gap: var(--ds-space-2);
+}
+@media (max-width: 40rem) {
+  section {
+    padding: var(--ds-space-3);
+  }
+}

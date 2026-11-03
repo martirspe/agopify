@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AccountApiService } from '../../core/api/account-api.service';
 import { AgentsApiService } from '../../core/api/agents-api.service';
 import { CatalogApiService } from '../../core/api/catalog-api.service';
+import { ConsoleAssistantApiService } from '../../core/api/console-assistant-api.service';
 import { IntegrationsApiService } from '../../core/api/integrations-api.service';
 import { MessagingApiService } from '../../core/api/messaging-api.service';
 import { OrdersApiService } from '../../core/api/orders-api.service';
@@ -13,6 +15,19 @@ import { ShippingApiService } from '../../core/api/shipping-api.service';
 import { StoreApiService } from '../../core/api/store-api.service';
 import { GetStartedPage } from './get-started.page';
 
+const assistantStore = {
+  memoryEnabled: signal(true),
+  conversations: signal([]),
+  ready: signal(true),
+  ensureLoaded: vi.fn(async () => undefined),
+  setMemoryEnabled: vi.fn(async () => undefined),
+  replaceConversations: vi.fn(),
+  scheduleUpsert: vi.fn(),
+  renameConversation: vi.fn(async () => undefined),
+  deleteConversation: vi.fn(async () => undefined),
+  clearLocal: vi.fn(),
+};
+
 async function setup(healthStatus = 'CONNECTED', isActive = true, fail = false, missingSeller = false) {
   const catalog = { list: vi.fn(async () => {
     if (fail) throw new Error('unavailable');
@@ -20,6 +35,7 @@ async function setup(healthStatus = 'CONNECTED', isActive = true, fail = false, 
   }) };
   TestBed.configureTestingModule({ imports: [GetStartedPage], providers: [
     provideRouter([]),
+    { provide: ConsoleAssistantApiService, useValue: assistantStore },
     { provide: AccountApiService, useValue: { profile: () => ({ business: { name: 'Mi tienda' } }), load: async () => ({ business: { name: 'Mi tienda' } }) } },
     { provide: AgentsApiService, useValue: { getPrimary: async () => {
       if (missingSeller) throw new HttpErrorResponse({ status: 404 });
@@ -67,6 +83,7 @@ describe('onboarding readiness and recovery', () => {
     const catalog = { list: vi.fn(async () => []) };
     TestBed.configureTestingModule({ imports: [GetStartedPage], providers: [
       provideRouter([]),
+      { provide: ConsoleAssistantApiService, useValue: assistantStore },
       { provide: AccountApiService, useValue: { profile: () => ({ business: { name: 'Mi tienda' } }), load: async () => ({ business: { name: 'Mi tienda' } }) } },
       { provide: AgentsApiService, useValue: { getPrimary: async () => { throw new HttpErrorResponse({ status: 404 }); } } },
       { provide: CatalogApiService, useValue: catalog },

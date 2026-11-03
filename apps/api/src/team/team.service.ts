@@ -103,7 +103,7 @@ export class TeamService {
     const tenantId = await this.assertTeamManager(user);
     const email = dto.email.trim().toLowerCase();
     if (await this.prisma.user.findUnique({ where: { email }, select: { id: true } })) {
-      throw new ConflictException('Ese correo ya tiene una cuenta en VendedorIA. Invita otro correo.');
+      throw new ConflictException('Ese correo ya tiene una cuenta en Agopify. Invita otro correo.');
     }
     const now = new Date();
     // A new invite for the same email replaces the previous one instead of taking another seat.

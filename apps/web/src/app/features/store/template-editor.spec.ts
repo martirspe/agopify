@@ -1,8 +1,10 @@
-import type { StoreEditorField, StoreEditorSection, StoreTemplateContent } from '@vendedoria/contracts';
+import type { StoreEditorField, StoreEditorSection, StoreTemplateContent } from '@agopify/contracts';
 import {
   ContentHistory,
   addBlock,
   applyPage,
+  applyTextChanges,
+  listPageTextChanges,
   canGenerateImage,
   clampValue,
   displayValue,
@@ -198,5 +200,28 @@ describe('home layout', () => {
       () => 'cta-cccccc',
     );
     expect(withProducts.layouts?.['classic']?.map((i) => i.id)).toEqual(['hero', 'faq', 'featured', 'cta-cccccc']);
+  });
+
+  it('lists and applies selected AI text changes without touching layout', () => {
+    const heroSchema: StoreEditorSection[] = [
+      { ...schema[0], fields: [{ ...text, id: 'title', maxLength: 40 }] },
+    ];
+    const start = withField(
+      withLayout({ version: 1, sections: {} }, 'classic', [{ id: 'hero', type: 'hero' }]),
+      'hero',
+      'title',
+      'Antes',
+    );
+    const changes = listPageTextChanges(start, heroSchema, {
+      sections: { hero: { title: 'Después' } },
+      blocks: [],
+    });
+    expect(changes).toEqual([
+      expect.objectContaining({ key: 'hero.title', from: 'Antes', to: 'Después' }),
+    ]);
+    const applied = applyTextChanges(start, changes, new Set(['hero.title']));
+    expect(applied.sections['hero']?.['title']).toBe('Después');
+    expect(applied.layouts).toEqual(start.layouts);
+    expect(applyTextChanges(start, changes, new Set()).sections['hero']?.['title']).toBe('Antes');
   });
 });

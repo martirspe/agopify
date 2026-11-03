@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DsConfirmService } from '@vendedoria/ui';
+import { DsConfirmService } from '@agopify/ui';
 import { AccountApiService, type AccountProfile } from '../../core/api/account-api.service';
 import { AuthApiService } from '../../core/auth/auth-api.service';
 import { ProfilePage } from './profile.page';

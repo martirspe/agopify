@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DsConfirmService } from '@vendedoria/ui';
+import { DsConfirmService } from '@agopify/ui';
 import { PaymentsPage } from './payments.page';
 import { PaymentsApiService, type PaymentAccountView, type ConnectPaymentAccountPayload } from '../../core/api/payments-api.service';
 import { AuthApiService } from '../../core/auth/auth-api.service';

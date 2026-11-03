@@ -177,17 +177,21 @@ export type StoreEditorSnapshot = {
 
 /** Messages from the store page shown inside the console editor. */
 export type StoreEditorFrameMessage =
-  | { source: 'vendedoria-store'; type: 'snapshot'; snapshot: StoreEditorSnapshot }
-  | { source: 'vendedoria-store'; type: 'select'; section: string; field: string | null }
-  | { source: 'vendedoria-store'; type: 'input'; section: string; field: string; value: string }
-  | { source: 'vendedoria-store'; type: 'commit'; section: string; field: string; value: string }
-  | { source: 'vendedoria-store'; type: 'image'; section: string; field: string };
+  | { source: 'agopify-store'; type: 'snapshot'; snapshot: StoreEditorSnapshot }
+  /** `section` null clears the host selection (e.g. Escape on the canvas). */
+  | { source: 'agopify-store'; type: 'select'; section: string | null; field: string | null }
+  | { source: 'agopify-store'; type: 'input'; section: string; field: string; value: string }
+  | { source: 'agopify-store'; type: 'commit'; section: string; field: string; value: string }
+  | { source: 'agopify-store'; type: 'image'; section: string; field: string };
 
 /** Messages from the console editor to the store page. */
 export type StoreEditorHostMessage =
-  | { source: 'vendedoria-editor'; type: 'content'; content: StoreTemplateContent }
-  /** `page` opens that page in the preview first when it is not the one showing. */
-  | { source: 'vendedoria-editor'; type: 'select'; section: string | null; page?: StoreEditorPage };
+  | { source: 'agopify-editor'; type: 'content'; content: StoreTemplateContent }
+  /**
+   * `page` opens that page in the preview first when it is not the one showing.
+   * `field` highlights the matching `[data-edit]` target when the host knows it.
+   */
+  | { source: 'agopify-editor'; type: 'select'; section: string | null; page?: StoreEditorPage; field?: string | null };
 
 /** Home delivery is priced by ubigeo: OLVA/SHALOM courier rates by distance from the store origin. */
 export type ShippingMode = 'OLVA' | 'SHALOM' | 'PICKUP';
@@ -284,6 +288,8 @@ export type PublicServiceInfo = {
 export type PublicVariantOption = {
   name: string;
   value: string;
+  /** Hex `#rrggbb` when the merchant set a swatch on this color option value. */
+  color?: string | null;
 };
 
 export type PublicVariant = {

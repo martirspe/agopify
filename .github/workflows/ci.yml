@@ -17,22 +17,22 @@ jobs:
       - run: npm ci
       - run: npm run prisma:generate
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vendedoria?schema=public
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/agopify?schema=public
       - run: npm run build:api
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vendedoria?schema=public
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/agopify?schema=public
           JWT_ACCESS_SECRET: ci-access-secret-must-be-at-least-32-chars
           JWT_REFRESH_SECRET: ci-refresh-secret-must-be-at-least-32-chars
       - name: Offline sales-engine eval (AI Core golden set)
-        run: npm run eval:sales -w @vendedoria/api
+        run: npm run eval:sales -w @agopify/api
       - name: AI Core training curriculum (gap matrix, multinicho)
         run: npm run eval:ai-core-training
       - run: npm run theme:build
-      - run: npm run test -w @vendedoria/api -- --runInBand
+      - run: npm run test -w @agopify/api -- --runInBand
       - run: npm run theme:check
       - run: npm run theme:test
       - run: npm run theme:test:store
-      - run: npm run test -w @vendedoria/store -- --watch=false
-      - run: npm run test -w @vendedoria/web -- --watch=false
+      - run: npm run test -w @agopify/store -- --watch=false
+      - run: npm run test -w @agopify/web -- --watch=false
       - run: npm run build:web
       - run: npm run build:store

@@ -249,7 +249,7 @@ export function buildCatalogExport(
   const catalog: CatalogExportPackage['catalog'] = {
     source:
       options?.source ??
-      `VendedorIA (export ${when}, ${packageProducts.length} productos)`,
+      `Agopify (export ${when}, ${packageProducts.length} productos)`,
     inventory,
     products: packageProducts,
   };

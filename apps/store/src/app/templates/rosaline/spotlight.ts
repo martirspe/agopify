@@ -7,7 +7,7 @@ import {
   PendingTasks,
   signal,
 } from "@angular/core";
-import type { StoreCatalogProduct } from "@vendedoria/contracts";
+import type { StoreCatalogProduct } from "@agopify/contracts";
 import { ProductCardComponent } from "../../components/product-card.component";
 import { MoneyPipe } from "../../core/money.pipe";
 import { StoreApiService } from "../../core/store-api.service";

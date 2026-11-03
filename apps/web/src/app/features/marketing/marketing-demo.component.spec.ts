@@ -36,4 +36,17 @@ describe('Marketing sales example', () => {
     expect(host.querySelector('.demo__handoff')).toBeNull();
     expect(controls.every((button) => button.type === 'button')).toBe(true);
   });
+
+  it('lets visitors switch stages from simulated prompt chips', async () => {
+    await TestBed.configureTestingModule({ imports: [MarketingDemoComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(MarketingDemoComponent);
+    fixture.detectChanges();
+    const host: HTMLElement = fixture.nativeElement;
+    const prompts = Array.from(host.querySelectorAll<HTMLButtonElement>('.demo__prompt'));
+    expect(prompts).toHaveLength(3);
+    prompts[1].click();
+    fixture.detectChanges();
+    expect(host.querySelector('.demo__payment')?.textContent).toContain('Pago confirmado');
+    expect(prompts[1].getAttribute('aria-pressed')).toBe('true');
+  });
 });

@@ -1,11 +1,11 @@
 <section class="catalog tw:grid tw:w-full tw:min-w-0 tw:gap-5" [class.catalog--editing]="editorOpen()">
   @if (!editorOpen()) {
     <ds-page-header title="Productos" icon="package">
-      <div dsPageActions>
-        <a routerLink="/app/inventory" class="tw:console-action-secondary"><ds-icon name="list" [size]="0.9" />Inventario</a>
-        <a routerLink="/app/products/import" class="tw:console-action-secondary"><ds-icon name="upload" [size]="0.9" />Importar</a>
-        <ds-menu label="Más acciones" menuId="products-header-more">
-          <span dsMenuTrigger>Más acciones <ds-icon name="chevronDown" [size]="0.85" /></span>
+      <div dsPageActions class="products-header-actions">
+        <a routerLink="/app/inventory" class="tw:console-action-secondary products-chrome-link" aria-label="Inventario"><ds-icon name="list" [size]="0.9" /><span class="products-chrome-link__label">Inventario</span></a>
+        <a routerLink="/app/products/import" class="tw:console-action-secondary products-chrome-link" aria-label="Importar"><ds-icon name="upload" [size]="0.9" /><span class="products-chrome-link__label">Importar</span></a>
+        <ds-menu label="Más acciones" menuId="products-header-more" class="products-chrome-more">
+          <span dsMenuTrigger><span class="products-chrome-link__label">Más acciones</span> <ds-icon name="chevronDown" [size]="0.85" /></span>
           <button
             type="button"
             role="menuitem"
@@ -69,28 +69,123 @@
             </button>
           }
         </div>
-        <div class="catalog-toolbar tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:p-3">
-          <label class="catalog-toolbar__search tw:flex tw:min-w-0 tw:items-center tw:gap-2 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:bg-surface tw:px-3 tw:focus-within:border-focus">
-            <span class="tw:sr-only">Buscar productos</span>
-            <ds-icon name="search" class="tw:text-muted" />
-            <input type="search" class="tw:console-field tw:min-h-touch tw:border-0! tw:bg-transparent! tw:px-0!" placeholder="Nombre, SKU, marca o colección" maxlength="200" [value]="listState().query" (input)="setListFilter('q', $any($event.target).value)" />
-          </label>
-          <div class="catalog-toolbar__filters" role="group" aria-label="Filtros del catálogo">
-            <ds-select class="catalog-toolbar__select"><select aria-label="Tipo" [value]="kindFilter()" (change)="setKindFilter($any($event.target).value)">@for (option of kindOptions; track option.id) { <option [value]="option.id">{{ option.id === 'todos' ? 'Tipo' : option.label + ' (' + kindCounts()[option.id] + ')' }}</option> }</select></ds-select>
-            <ds-select class="catalog-toolbar__select"><select aria-label="Inventario" [value]="listState().inventory || 'todos'" (change)="setListFilter('inventario', $any($event.target).value)"><option value="todos">Inventario</option><option value="agotados">Agotados</option></select></ds-select>
-            <ds-select class="catalog-toolbar__select"><select aria-label="Canal" [value]="listState().publication" (change)="setListFilter('tienda', $any($event.target).value)"><option value="todos">Canal</option>@if (storeActive()) { <option value="visibles">En tienda</option><option value="ocultos">Ocultos en tienda</option> }<option value="whatsapp">En WhatsApp</option><option value="instagram">En Instagram</option></select></ds-select>
-            <ds-select class="catalog-toolbar__select"><select aria-label="Ordenar por" [value]="listState().sort" (change)="setListFilter('orden', $any($event.target).value)"><option value="recientes">Más recientes</option><option value="antiguos">Más antiguos</option><option value="nombre">Nombre, A–Z</option><option value="nombre-desc">Nombre, Z–A</option></select></ds-select>
+        <div
+          class="catalog-index-filters tw:border-0 tw:border-b tw:border-solid tw:border-divider"
+          (focusout)="onFilterFocusOut($event)"
+        >
+          <div class="catalog-index-filters__row">
+            <div
+              class="catalog-index-filters__search"
+              [class.catalog-index-filters__search--open]="filterPanel() !== 'closed'"
+            >
+              <ds-icon name="search" [size]="1" class="tw:shrink-0 tw:text-muted" aria-hidden="true" />
+              @if (activeListFilters().length) {
+                <div class="catalog-index-filters__chips" aria-label="Filtros aplicados">
+                  @for (filter of activeListFilters(); track filter.key) {
+                    <button
+                      type="button"
+                      class="catalog-index-filters__chip"
+                      [attr.aria-label]="'Quitar filtro: ' + filter.label"
+                      (click)="setListFilter(filter.key, ''); $event.stopPropagation()"
+                    >
+                      <span>{{ filter.label }}</span>
+                      <ds-icon name="x" [size]="0.75" />
+                    </button>
+                  }
+                  <button
+                    type="button"
+                    class="catalog-index-filters__add"
+                    aria-label="Agregar filtro"
+                    [attr.aria-expanded]="filterPanel() === 'dimensions'"
+                    (click)="openFilterPanel('dimensions'); $event.stopPropagation()"
+                  >
+                    <ds-icon name="plus" [size]="0.875" />
+                  </button>
+                </div>
+              }
+              <label class="catalog-index-filters__field">
+                <span class="tw:sr-only">Buscar y filtrar</span>
+                <input
+                  type="search"
+                  aria-label="Buscar y filtrar"
+                  placeholder="Buscar y filtrar"
+                  maxlength="200"
+                  autocomplete="off"
+                  [attr.aria-expanded]="filterPanel() !== 'closed'"
+                  aria-controls="catalog-filter-panel"
+                  aria-haspopup="listbox"
+                  [value]="listState().query"
+                  (focus)="openFilterPanel('dimensions')"
+                  (input)="onFilterQueryInput($any($event.target).value)"
+                  (keydown)="onFilterQueryKeydown($event)"
+                />
+              </label>
+            </div>
+            <ds-menu label="Ordenar" menuId="products-index-sort">
+              <span dsMenuTrigger class="catalog-index-filters__sort">
+                <ds-icon name="list" [size]="0.95" />
+                <span class="tw:sr-only">Ordenar</span>
+              </span>
+              @for (option of sortOptions; track option.id) {
+                <button
+                  type="button"
+                  role="menuitem"
+                  [attr.aria-current]="listState().sort === option.id ? 'true' : null"
+                  (click)="setListFilter('orden', option.id)"
+                >
+                  {{ option.label }}
+                </button>
+              }
+            </ds-menu>
           </div>
-        </div>
-        <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3 tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:px-4 tw:py-3">
-          <span class="tw:text-caption tw:text-muted" role="status">{{ filteredProducts().length }} {{ filteredProducts().length === 1 ? 'resultado' : 'resultados' }} de {{ products().length }}</span>
-          @if (hasListFilters()) { <button type="button" class="tw:console-action-secondary" (click)="clearListFilters()">Limpiar filtros</button> }
-          @if (activeListFilters().length) {
-            <div class="tw:flex tw:w-full tw:flex-wrap tw:gap-2" aria-label="Filtros aplicados">
-              @for (filter of activeListFilters(); track filter.key) { <button type="button" class="tw:console-filter-chip" [attr.aria-label]="'Quitar filtro: ' + filter.label" (click)="setListFilter(filter.key, '')"><span class="tw:wrap-anywhere">{{ filter.label }}</span><ds-icon name="x" [size]="0.85" /></button> }
+          @if (filterPanel() !== 'closed') {
+            <div
+              id="catalog-filter-panel"
+              class="catalog-index-filters__panel"
+              role="listbox"
+              [attr.aria-label]="filterPanelTitle()"
+              (mousedown)="$event.preventDefault()"
+            >
+              @if (filterPanel() === 'dimensions') {
+                @for (dimension of visibleFilterDimensions(); track dimension.id) {
+                  <button
+                    type="button"
+                    role="option"
+                    class="catalog-index-filters__option"
+                    (click)="openFilterPanel(dimension.id)"
+                  >
+                    {{ dimension.label }}
+                  </button>
+                } @empty {
+                  <p class="catalog-index-filters__empty">No hay más filtros disponibles</p>
+                }
+              } @else {
+                @for (option of filterPanelOptions(); track option.value) {
+                  <button
+                    type="button"
+                    role="option"
+                    class="catalog-index-filters__option"
+                    [attr.aria-selected]="option.selected"
+                    (click)="applyFilterPanelValue(option.value)"
+                  >
+                    {{ option.label }}
+                  </button>
+                }
+              }
+              @if (hasListFilters()) {
+                <button type="button" class="catalog-index-filters__clear" (click)="clearListFilters(); closeFilterPanel()">
+                  Limpiar filtros
+                </button>
+              }
             </div>
           }
         </div>
+        @if (hasListFilters()) {
+          <div class="catalog-index-filters__status tw:border-0 tw:border-b tw:border-solid tw:border-divider">
+            <span class="tw:text-caption tw:text-muted" role="status">{{ filteredProducts().length }} {{ filteredProducts().length === 1 ? 'resultado' : 'resultados' }} de {{ products().length }}</span>
+            <button type="button" class="tw:console-action-secondary" (click)="clearListFilters()">Limpiar filtros</button>
+          </div>
+        }
       @if (!visibleProducts().length) {
         <ds-empty-state title="No hay coincidencias" body="Prueba otro nombre, SKU o combinación de filtros."><ds-button variant="secondary" (click)="clearListFilters()">Ver todo el catálogo</ds-button></ds-empty-state>
       } @else {
@@ -180,31 +275,15 @@
         }
       </div>
       <div class="publish-frame__scroll">
-      <header class="publish-frame__header" dsStickyEdge>
-        <div class="publish-frame__toolbar">
-          <button
-            type="button"
-            class="publish-frame__back"
-            [disabled]="saving() || deleting() || uploading()"
-            (click)="closeEditor()"
-            aria-label="Volver a productos"
-          >
-            <ds-icon name="chevronLeft" [size]="1.1" />
-          </button>
-          <nav class="publish-frame__crumbs" aria-label="Ubicación en catálogo">
-            <button
-              type="button"
-              class="publish-frame__crumb"
-              [disabled]="saving() || deleting() || uploading()"
-              (click)="closeEditor()"
-            >
-              Productos
-            </button>
-            <span class="publish-frame__crumb-sep" aria-hidden="true">/</span>
-            <span class="publish-frame__crumb-current">{{ isEditing() ? editorTitle() : 'Agregar producto' }}</span>
-          </nav>
-        </div>
-      </header>
+      <ds-page-header
+        [title]="isEditing() ? editorTitle() : 'Agregar producto'"
+        icon="package"
+        parentTitle="Productos"
+        crumbsLabel="Ubicación en catálogo"
+        backLabel="Volver a productos"
+        [backDisabled]="saving() || deleting() || uploading()"
+        (back)="closeEditor()"
+      />
     <form id="product-form" class="publish tw:mx-auto tw:grid tw:w-full tw:max-w-page tw:gap-5 tw:pb-8" [formGroup]="productForm" (ngSubmit)="saveProduct()">
       @if (errorMessage()) {
         <p class="tw:feedback tw:feedback-danger tw:m-0" role="alert">
@@ -213,26 +292,114 @@
       }
 
       <fieldset class="tw:m-0 tw:min-w-0 tw:border-0 tw:p-0" [disabled]="saving() || deleting()"><legend class="tw:sr-only">Datos del producto</legend>
-      <div class="publish__layout tw:grid tw:items-start tw:gap-5 tw:lg:grid-cols-[minmax(0,1fr)_17.5rem]">
+      <div class="publish__layout tw:grid tw:items-start tw:gap-4 tw:lg:grid-cols-[minmax(0,1fr)_18.5rem]">
         <div class="publish__main tw:grid tw:min-w-0 tw:gap-4">
 
-          <ds-form-section title="Título" description="Cómo aparece en WhatsApp, Instagram y la tienda.">
-            <label class="field">
-              <span>{{ isService() ? 'Nombre del servicio' : 'Nombre del producto' }} <em>*</em></span>
-              <input class="tw:console-field"
+          <ds-form-section title="Multimedia">
+            @if (storePhotoWarning()) {
+              <p class="field__hint" role="status">
+                Está visible en la tienda sin foto. Sube al menos una para que se vea bien.
+              </p>
+            }
+
+            @if (!media().length) {
+              <div class="media-drop" (dragover)="onMediaDragOver($event)" (drop)="$event.preventDefault()">
+                <ds-icon name="image" [size]="1.75" />
+                <p>Subir imágenes</p>
+                <label class="upload-btn" [class.is-busy]="uploading()">
+                  <input type="file" class="tw:sr-only" accept="image/jpeg,image/png,image/webp" multiple [disabled]="uploading() || media().length >= maxMedia" (change)="onFiles($any($event.target))" />
+                  {{ uploading() ? 'Subiendo…' : 'Agregar multimedia' }}
+                </label>
+              </div>
+            } @else {
+              <ul class="media-grid" role="list" aria-label="Fotos del producto" (dragover)="onMediaDragOver($event)">
+                @for (item of media(); track item.url; let i = $index) {
+                  <li
+                    class="media-tile"
+                    [class.is-featured]="i === 0 && item.kind === 'image'"
+                    [class.is-selected]="selectedMediaIndex() === i"
+                    [class.is-related]="item.kind === 'related'"
+                    [class.is-dragging]="mediaDraggingIndex() === i"
+                    draggable="true"
+                    (dragstart)="onMediaDragStart(i, $event)"
+                    (drop)="onMediaDrop(i, $event)"
+                    (dragend)="onMediaDragEnd()"
+                  >
+                    <button type="button" class="media-tile__hit" [attr.aria-pressed]="selectedMediaIndex() === i" [attr.aria-label]="'Foto ' + (i + 1) + (i === 0 ? ', portada' : '')" (click)="selectMedia(i)">
+                      <img [src]="item.url" [alt]="item.alt || ''" loading="lazy" />
+                    </button>
+                    @if (i === 0 && item.kind === 'image') {
+                      <span class="media-tile__badge">Portada</span>
+                    } @else if (item.kind === 'related') {
+                      <span class="media-tile__badge media-tile__badge--soft">Ambiente</span>
+                    }
+                    <div class="media-tile__toolbar">
+                      @if (i !== 0) {
+                        <button type="button" class="media-tile__action" (click)="setFeaturedMedia(i); $event.stopPropagation()" aria-label="Usar como portada" title="Usar como portada">
+                          <ds-icon name="image" [size]="0.9" />
+                        </button>
+                      }
+                      <button type="button" class="media-tile__action media-tile__action--danger" (click)="removeMediaUrl(i); $event.stopPropagation()" aria-label="Quitar foto" title="Quitar">
+                        <ds-icon name="trash" [size]="0.9" />
+                      </button>
+                    </div>
+                  </li>
+                }
+                @if (media().length < maxMedia) {
+                  <li class="media-tile media-tile--add">
+                    <label class="media-tile__add" [class.is-busy]="uploading()">
+                      <input type="file" class="tw:sr-only" accept="image/jpeg,image/png,image/webp" multiple [disabled]="uploading()" (change)="onFiles($any($event.target))" />
+                      <ds-icon name="plus" [size]="1.1" />
+                      <span>{{ uploading() ? 'Subiendo…' : 'Agregar' }}</span>
+                    </label>
+                  </li>
+                }
+              </ul>
+
+              @if (selectedMediaIndex(); as idx) {
+                @if (media()[idx]; as selected) {
+                  <div class="media-inspector" role="region" [attr.aria-label]="'Detalles de la foto ' + (idx + 1)">
+                    <div class="media-inspector__preview">
+                      <img [src]="selected.url" [alt]="selected.alt || ''" />
+                    </div>
+                    <div class="media-inspector__fields">
+                      <label class="field">
+                        <span>Texto alternativo</span>
+                        <input class="tw:console-field" [value]="selected.alt" maxlength="160" placeholder="Describe qué se ve en la foto" aria-label="Texto alternativo" (input)="updateMedia(idx, { alt: $any($event.target).value })" />
+                      </label>
+                      <label class="field">
+                        <span>Leyenda <span class="optional">Opcional</span></span>
+                        <input class="tw:console-field" [value]="selected.caption" maxlength="200" placeholder="Texto bajo la foto" aria-label="Leyenda" (input)="updateMedia(idx, { caption: $any($event.target).value })" />
+                      </label>
+                      <ds-checkbox variant="inline">
+                        <input type="checkbox" [checked]="selected.kind === 'related'" (change)="updateMedia(idx, { kind: $any($event.target).checked ? 'related' : 'image' })" />
+                        <span>Foto de ambiente (fuera de la galería principal)</span>
+                      </ds-checkbox>
+                      @if (idx !== 0) {
+                        <ds-button type="button" variant="secondary" (click)="setFeaturedMedia(idx)">Usar como portada</ds-button>
+                      }
+                    </div>
+                  </div>
+                }
+              }
+            }
+
+            <p class="field__hint">{{ media().length }}/{{ maxMedia }} fotos · JPG, PNG o WebP · la primera es la portada</p>
+          </ds-form-section>
+
+          <ds-form-section>
+            <label class="field field--title">
+              <span class="tw:sr-only">{{ isService() ? 'Nombre del servicio' : 'Nombre del producto' }}</span>
+              <input class="tw:console-field publish-title"
                 formControlName="name"
                 [attr.aria-label]="isService() ? 'Nombre del servicio' : 'Nombre del producto'"
                 [attr.aria-invalid]="!!editorFieldError('name')"
                 aria-describedby="product-name-error"
                 maxlength="250"
                 autocomplete="off"
-                placeholder="Ej. Botín Puro Cuero 1153"
+                [placeholder]="isService() ? 'Agrega el nombre del servicio' : 'Agrega el nombre del producto'"
               />
               @if (editorFieldError('name'); as error) { <span id="product-name-error" class="tw:text-caption tw:text-danger-text">{{ error }}</span> }
-              <span class="field__meta">
-                <span class="field__hint">Nombre corto y fácil de buscar.</span>
-                <span class="field__count">{{ nameCount() }}/250</span>
-              </span>
             </label>
 
             @if (showHandle()) {
@@ -250,7 +417,7 @@
                 <span class="field__hint">Se genera del nombre. Solo cámbialo si lo necesitas en la URL.</span>
               </label>
             } @else {
-              <p class="field__hint">
+              <p class="field__hint publish-handle">
                 Enlace automático:
                 <code class="tw:text-caption">{{ productForm.controls.handle.value || '…' }}</code>
                 ·
@@ -259,15 +426,15 @@
             }
 
             <label class="field">
-              <span>Descripción corta <em>*</em></span>
+              <span>Descripción</span>
               <textarea class="tw:console-field"
                 formControlName="descriptionShort"
                 aria-label="Descripción corta"
                 [attr.aria-invalid]="!!editorFieldError('description')"
                 aria-describedby="product-description-error"
-                rows="3"
+                rows="4"
                 maxlength="1000"
-                placeholder="Qué es, para quién es y un beneficio clave."
+                placeholder="Agrega una descripción del producto"
               ></textarea>
               @if (editorFieldError('description'); as error) { <span id="product-description-error" class="tw:text-caption tw:text-danger-text">{{ error }}</span> }
               <span class="field__meta">
@@ -277,108 +444,22 @@
             </label>
 
             <label class="field">
-              <span>Descripción detallada</span>
+              <span>Descripción detallada <span class="optional">Opcional</span></span>
               <textarea class="tw:console-field"
                 formControlName="descriptionFull"
                 aria-label="Descripción detallada"
-                rows="8"
+                rows="6"
                 maxlength="5000"
-                placeholder="Materiales, medidas, cuidados, qué incluye, para quién es y qué no cubre…"
+                placeholder="Materiales, medidas, cuidados, qué incluye…"
               ></textarea>
               <span class="field__meta">
-                <span class="field__hint">Describe materiales, medidas, cuidados o qué incluye.</span>
+                <span class="field__hint">Más detalle para la ficha de la tienda.</span>
                 <span class="field__count">{{ (productForm.controls.descriptionFull.value ?? '').length }}/5000</span>
               </span>
             </label>
           </ds-form-section>
 
-          <ds-form-section title="Multimedia" description="La primera es la portada del catálogo, la tienda y el chat.">
-            @if (storePhotoWarning()) {
-              <p class="field__hint" role="status">
-                Está visible en la tienda sin foto. Sube al menos una para que se vea bien.
-              </p>
-            }
-
-            <div class="media-drop">
-              <ds-icon name="upload" />
-              <p>Sube fotos desde tu equipo; las optimizamos antes de enviarlas.</p>
-              <label class="upload-btn" [class.is-busy]="uploading()">
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  [disabled]="uploading()"
-                  (change)="onFiles($any($event.target))"
-                />
-                {{ uploading() ? 'Subiendo…' : 'Elegir fotos' }}
-              </label>
-              <p class="field__hint">O pega la URL pública de una imagen:</p>
-              <div class="media-drop__row">
-                <input class="tw:console-field"
-                  type="url"
-                  [value]="mediaDraft()"
-                  (input)="onMediaDraftInput($any($event.target).value)"
-                  placeholder="https://…" aria-label="Dirección de una imagen"
-                  (keydown.enter)="$event.preventDefault(); addMediaUrl()"
-                />
-                <ds-button type="button" variant="secondary" (click)="addMediaUrl()">
-                  Importar
-                </ds-button>
-              </div>
-            </div>
-
-            @if (media().length) {
-              <ul class="media-list">
-                @for (item of media(); track item.url; let i = $index; let last = $last) {
-                  <li>
-                    <img [src]="item.url" [alt]="item.alt" loading="lazy" />
-                    <div class="media-list__fields">
-                      <input class="tw:console-field"
-                        [value]="item.alt"
-                        maxlength="160"
-                        placeholder="Texto alternativo (qué se ve)"
-                        aria-label="Texto alternativo"
-                        (input)="updateMedia(i, { alt: $any($event.target).value })"
-                      />
-                      <input class="tw:console-field"
-                        [value]="item.caption"
-                        maxlength="200"
-                        placeholder="Leyenda (opcional)"
-                        aria-label="Leyenda"
-                        (input)="updateMedia(i, { caption: $any($event.target).value })"
-                      />
-                      <ds-checkbox variant="inline">
-                        <input
-                          type="checkbox"
-                          [checked]="item.kind === 'related'"
-                          (change)="updateMedia(i, { kind: $any($event.target).checked ? 'related' : 'image' })"
-                        />
-                        <span>Foto de ambiente (no va en la galería principal)</span>
-                      </ds-checkbox>
-                    </div>
-                    <div class="media-list__actions">
-                      @if (i === 0) {
-                        <span class="pill tw:bg-primary/20">Principal</span>
-                      }
-                      <button type="button" class="icon-btn" [disabled]="i === 0" (click)="moveMedia(i, -1)" aria-label="Subir foto">
-                        <ds-icon name="chevronUp" />
-                      </button>
-                      <button type="button" class="icon-btn" [disabled]="last" (click)="moveMedia(i, 1)" aria-label="Bajar foto">
-                        <ds-icon name="chevronDown" />
-                      </button>
-                      <button type="button" class="icon-btn" (click)="removeMediaUrl(i)" aria-label="Quitar foto">
-                        <ds-icon name="x" />
-                      </button>
-                    </div>
-                  </li>
-                }
-              </ul>
-            }
-
-            <p class="field__hint">Máximo 12 fotos (JPG, PNG o WebP).</p>
-          </ds-form-section>
-
-          <ds-form-section title="Precio" description="Precio que verán tus clientes en el chat y la tienda.">
+          <ds-form-section title="Precio">
             <div class="field-grid field-grid--two">
               <label class="field">
                 <span>Precio de venta <em>*</em></span>
@@ -409,7 +490,7 @@
             <input type="hidden" formControlName="currency" />
           </ds-form-section>
 
-          <ds-form-section [title]="isPhysical() ? 'Inventario' : isDigital() ? 'Entrega digital' : 'Modalidad del servicio'" [description]="isPhysical() ? 'Unidades reales para vender sin sobrecomprometer.' : isDigital() ? 'Acceso que se entrega al confirmarse el pago.' : 'Cómo se presta el servicio después del pago.'">
+          <ds-form-section [title]="isPhysical() ? 'Inventario' : isDigital() ? 'Entrega digital' : 'Modalidad del servicio'">
             @if (isDigital()) {
               <label class="field">
                 <span>Enlace privado de acceso <em>*</em></span>
@@ -511,39 +592,51 @@
           </ds-form-section>
 
           @if (requiredCategoryAttributes().length) {
-            <ds-form-section [title]="'Datos de ' + selectedCategory()!.name" description="Obligatorios para esta categoría.">
+            <ds-form-section [title]="'Datos de ' + selectedCategory()!.name" description="Características del modelo. Color y talla se definen en Variantes.">
               <div class="field-grid field-grid--two">
                 @for (attribute of requiredCategoryAttributes(); track attribute.key) {
                   <label class="field"><span>{{ attribute.name }} <em>*</em></span>
                     @if (attribute.values?.length) {
                       <ds-select><select [ngModel]="attributeValues()[attribute.key] ?? ''" [ngModelOptions]="{ standalone: true }" (ngModelChange)="setAttribute(attribute.key, $event)"><option value="">Sin indicar</option>@for (value of attribute.values; track value) { <option [value]="value">{{ value }}</option> }</select></ds-select>
                     } @else { <input class="tw:console-field" [value]="attributeValues()[attribute.key] ?? ''" [maxLength]="attribute.maxLength ?? 200" (input)="setAttribute(attribute.key, $any($event.target).value)" /> }
-                    @if (attribute.variant) { <span class="field__hint">También puedes definirlo por combinación en variantes.</span> }
                   </label>
                 }
               </div>
             </ds-form-section>
+          } @else if (selectedCategory() && variantsEnabled()) {
+            <p class="field__hint">Color, talla y otras variaciones de {{ selectedCategory()!.name }} se configuran solo en Variantes (una vez, como opciones de compra).</p>
           }
 
           @if (!setEnabled() || isService()) {
-            <ds-form-section title="Variantes" [description]="isPhysical() ? 'Tallas, colores u otras combinaciones. Solo si el comprador debe elegir.' : 'Modalidades o versiones. Solo si el comprador debe elegir.'">
-              <ds-checkbox variant="inline">
-                <input
-                  type="checkbox"
-                  [checked]="variantsEnabled()"
-                  (change)="toggleVariants($any($event.target).checked)"
-                />
-                <span>Activar opciones</span>
-              </ds-checkbox>
-              @if (variantsEnabled()) {
-                <p class="field__hint">Define las opciones. Las combinaciones se actualizan al terminar de editar un campo.</p>
+            <ds-form-section title="Variantes">
+              @if (!variantsEnabled()) {
+                <button type="button" class="publish-add-pill" (click)="toggleVariants(true)">
+                  <ds-icon name="plus" [size]="0.9" />
+                  Agrega opciones como talla y color
+                </button>
+              } @else {
+                <ds-checkbox variant="inline">
+                  <input
+                    type="checkbox"
+                    [checked]="true"
+                    (change)="toggleVariants($any($event.target).checked)"
+                  />
+                  <span>Opciones activadas</span>
+                </ds-checkbox>
+                <p class="field__hint">Define las opciones. En Color puedes asignar un swatch a cada valor. Las combinaciones se actualizan al terminar de editar.</p>
                 @for (axis of axes(); track $index; let axisIndex = $index) {
                   <div class="tw:grid tw:gap-2 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:p-3">
                     <label class="field"><span>Nombre de la opción {{ axisIndex + 1 }}</span><input class="tw:console-field" [value]="axis.name" maxlength="60" (input)="updateAxis(axisIndex, { name: $any($event.target).value })" (blur)="generateVariants()" placeholder="Color o talla" /></label>
                     <span class="tw:text-caption tw:font-medium">Valores de {{ axis.name || 'la opción' }}</span>
                     @for (value of axisValues(axis); track $index; let valueIndex = $index) {
                       <div class="tw:flex tw:min-w-0 tw:items-center tw:gap-2">
-                        <input class="tw:console-field tw:console-field" [attr.aria-label]="'Valor ' + (valueIndex + 1) + ' de ' + (axis.name || 'la opción ' + (axisIndex + 1))" [value]="value" maxlength="200" (input)="updateAxisValue(axisIndex, valueIndex, $any($event.target).value)" (blur)="generateVariants()" placeholder="Ej. Negro" />
+                        @if (isColorAxis(axis) && value.trim()) {
+                          <label class="tw:relative tw:inline-grid tw:size-touch tw:shrink-0 tw:cursor-pointer tw:place-items-center tw:overflow-hidden tw:rounded-full tw:border tw:border-solid tw:border-border" [attr.aria-label]="'Color de ' + value">
+                            <span class="tw:absolute tw:inset-0" [style.background]="axisColor(axis, value)" aria-hidden="true"></span>
+                            <input class="tw:absolute tw:inset-0 tw:cursor-pointer tw:opacity-0" type="color" [value]="axisColor(axis, value)" (input)="setAxisColor(axisIndex, value, $any($event.target).value)" />
+                          </label>
+                        }
+                        <input class="tw:console-field tw:min-w-0 tw:flex-1" [attr.aria-label]="'Valor ' + (valueIndex + 1) + ' de ' + (axis.name || 'la opción ' + (axisIndex + 1))" [value]="value" maxlength="200" (input)="updateAxisValue(axisIndex, valueIndex, $any($event.target).value)" (blur)="generateVariants()" placeholder="Ej. Negro" />
                         <button type="button" class="tw:console-icon-button" [attr.aria-label]="'Quitar valor ' + (value || valueIndex + 1) + ' de ' + (axis.name || 'la opción')" (click)="removeAxisValue(axisIndex, valueIndex)"><ds-icon name="trash" [size]="0.9" /></button>
                       </div>
                     }
@@ -613,112 +706,149 @@
           }
         </div>
 
-        <aside class="publish__rail tw:grid tw:min-w-0 tw:content-start tw:gap-4 tw:lg:sticky tw:lg:top-4" aria-label="Estado, canales y organización">
-          <ds-form-section title="Estado" density="compact">
-            <label class="field">
-              <span class="field__label">Estado</span>
-              <ds-select>
-                <select formControlName="status" aria-label="Estado del producto">
-                  <option value="DRAFT">Borrador</option>
-                  <option value="ACTIVE">Activo</option>
-                  <option value="ARCHIVED">Archivado</option>
-                </select>
-              </ds-select>
-            </label>
-          </ds-form-section>
+        <aside class="publish__rail tw:grid tw:min-w-0 tw:content-start tw:gap-4 tw:lg:sticky tw:lg:top-4" aria-label="Publicación y organización">
+          <ds-form-section density="compact">
+            <div class="publish-status" role="group" aria-label="Publicación">
+              <label class="publish-status__control">
+                <span
+                  class="publish-status__dot"
+                  [class.is-active]="productForm.controls.status.value === 'ACTIVE'"
+                  [class.is-draft]="productForm.controls.status.value === 'DRAFT'"
+                  [class.is-archived]="productForm.controls.status.value === 'ARCHIVED'"
+                  aria-hidden="true"
+                ></span>
+                <ds-select class="publish-status__select">
+                  <select formControlName="status" aria-label="Estado del producto">
+                    <option value="DRAFT">Borrador</option>
+                    <option value="ACTIVE">Activo</option>
+                    <option value="ARCHIVED">Archivado</option>
+                  </select>
+                </ds-select>
+              </label>
+              <p class="field__hint publish-status__hint">
+                @switch (productForm.controls.status.value) {
+                  @case ('ACTIVE') { Disponible para la venta en los canales marcados. }
+                  @case ('ARCHIVED') { Oculto en todos los canales. }
+                  @default { Guardado, sin publicar en canales. }
+                }
+              </p>
+            </div>
 
-          <ds-form-section title="Publicación" density="compact">
-            <div class="avail-row">
-              <ds-checkbox variant="inline">
-                <input type="checkbox" formControlName="channelWhatsapp" [disabled]="productForm.controls.status.value !== 'ACTIVE'" />
-                <span>WhatsApp</span>
-              </ds-checkbox>
-            </div>
-            <div class="avail-row">
-              <ds-checkbox variant="inline">
-                <input type="checkbox" formControlName="channelInstagram" [disabled]="productForm.controls.status.value !== 'ACTIVE'" />
-                <span>Instagram</span>
-              </ds-checkbox>
-            </div>
-            @if (storeActive()) {
-              <div class="avail-row">
-                <ds-checkbox variant="inline">
-                  <input type="checkbox" formControlName="channelStore" [disabled]="productForm.controls.status.value !== 'ACTIVE'" />
-                  <span>Tienda web</span>
+            <ul class="channel-list" role="list">
+              <li class="channel-list__row">
+                <span class="channel-list__icon" aria-hidden="true"><ds-icon name="whatsapp" [size]="1" /></span>
+                <span class="channel-list__copy">
+                  <strong>WhatsApp</strong>
+                  <small>Catálogo y pedidos en el chat</small>
+                </span>
+                <ds-checkbox>
+                  <input type="checkbox" formControlName="channelWhatsapp" [disabled]="productForm.controls.status.value !== 'ACTIVE'" aria-label="Publicar en WhatsApp" />
                 </ds-checkbox>
-              </div>
-              @if (storePhotoWarning()) {
-                <p class="field__hint" role="status">Añade una foto antes de mostrarlo en la tienda.</p>
+              </li>
+              <li class="channel-list__row">
+                <span class="channel-list__icon" aria-hidden="true"><ds-icon name="instagram" [size]="1" /></span>
+                <span class="channel-list__copy">
+                  <strong>Instagram</strong>
+                  <small>Respuestas y ventas en Direct</small>
+                </span>
+                <ds-checkbox>
+                  <input type="checkbox" formControlName="channelInstagram" [disabled]="productForm.controls.status.value !== 'ACTIVE'" aria-label="Publicar en Instagram" />
+                </ds-checkbox>
+              </li>
+              @if (storeActive()) {
+                <li class="channel-list__row">
+                  <span class="channel-list__icon" aria-hidden="true"><ds-icon name="store" [size]="1" /></span>
+                  <span class="channel-list__copy">
+                    <strong>Tienda web</strong>
+                    <small>Ficha pública en tu tienda</small>
+                  </span>
+                  <ds-checkbox>
+                    <input type="checkbox" formControlName="channelStore" [disabled]="productForm.controls.status.value !== 'ACTIVE'" aria-label="Publicar en la tienda web" />
+                  </ds-checkbox>
+                </li>
               }
-            } @else {
+            </ul>
+            @if (storeActive() && storePhotoWarning()) {
+              <p class="field__hint" role="status">Añade una foto antes de mostrarlo en la tienda.</p>
+            }
+            @if (!storeActive()) {
               <p class="field__hint">Cuando actives la tienda web, podrás publicarlo ahí.</p>
             }
             @if (productForm.controls.status.value !== 'ACTIVE') {
-              <p class="field__hint">Activa el producto para publicarlo en un canal.</p>
+              <p class="field__hint">Pasa el estado a Activo para habilitar los canales.</p>
             }
           </ds-form-section>
 
-          <ds-form-section title="Organización" density="compact">
-            <ng-container [ngTemplateOutlet]="productType" />
-
-            <label class="field">
-              <span>Marca</span>
-              <input class="tw:console-field" formControlName="brand" aria-label="Marca" maxlength="60" autocomplete="off" />
-            </label>
-            <label class="field">
-              <span>SKU</span>
-              <input class="tw:console-field" formControlName="sku" aria-label="SKU" maxlength="60" autocomplete="off" />
-            </label>
-            <label class="field">
-              <span>Línea</span>
-              <input class="tw:console-field" formControlName="line" aria-label="Línea" maxlength="80" autocomplete="off" />
+          <ds-form-section title="Organización del producto" density="compact">
+            <label class="publish-row">
+              <span class="publish-row__label">Tipo</span>
+              <ds-select class="publish-row__control">
+                <select [value]="productForm.controls.kind.value" aria-label="Qué vendes" (change)="setKind($any($event.target).value)">
+                  <option value="PRODUCT">Producto físico</option>
+                  <option value="SERVICE">Servicio</option>
+                  <option value="DIGITAL">Producto digital</option>
+                </select>
+              </ds-select>
             </label>
 
             @if (classificationError()) {
               <p role="alert">No pudimos cargar la clasificación. <button type="button" class="link-btn" (click)="loadCategories()">Reintentar</button></p>
             }
-            <label class="field">
-              <span>Categoría</span>
-              <ds-select>
-                <select [ngModel]="categoryId()" [ngModelOptions]="{ standalone: true }" (ngModelChange)="setCategory($event)">
-                  <option value="">Sin categoría específica</option>
+            <label class="publish-row">
+              <span class="publish-row__label">Categoría</span>
+              <ds-select class="publish-row__control">
+                <select [ngModel]="categoryId()" [ngModelOptions]="{ standalone: true }" aria-label="Categoría" (ngModelChange)="setCategory($event)">
+                  <option value="">Seleccionar</option>
                   @for (category of kindCategories(); track category.id) {
                     <option [value]="category.id">{{ categoryPath(category) }}</option>
                   }
                 </select>
               </ds-select>
-              <span class="field__hint">Clasificación del producto.</span>
             </label>
 
-            <div class="field">
-              <span>Colecciones</span>
-              <span class="field__hint">Agrupación en la tienda; no es la categoría.</span>
-              <div class="chips">
-                @for (cat of categoryChips(); track cat) {
-                  <button
-                    type="button"
-                    class="chip"
-                    (click)="removeCategory(cat)"
-                    [attr.aria-label]="'Quitar ' + cat"
-                  >
-                    {{ cat }}
-                    <ds-icon name="x" />
-                  </button>
-                }
-              </div>
-              <div class="media-drop__row">
-                <input class="tw:console-field"
-                  type="text"
-                  [value]="categoryDraft()"
-                  (input)="onCategoryDraftInput($any($event.target).value)"
-                  placeholder="Nombre de la colección"
-                  aria-label="Nombre de la colección"
-                  (keydown.enter)="$event.preventDefault(); addCategoryFromDraft()"
-                />
-                <ds-button type="button" variant="secondary" (click)="addCategoryFromDraft()">Añadir</ds-button>
-              </div>
-              <input type="hidden" formControlName="categoriesText" />
+            <label class="publish-row">
+              <span class="publish-row__label">Marca</span>
+              <input class="tw:console-field publish-row__control" formControlName="brand" aria-label="Marca" maxlength="60" autocomplete="off" placeholder="Ninguna" />
+            </label>
+            <label class="publish-row">
+              <span class="publish-row__label">SKU</span>
+              <input class="tw:console-field publish-row__control" formControlName="sku" aria-label="SKU" maxlength="60" autocomplete="off" placeholder="—" />
+            </label>
+            <label class="publish-row">
+              <span class="publish-row__label">Línea</span>
+              <input class="tw:console-field publish-row__control" formControlName="line" aria-label="Línea" maxlength="80" autocomplete="off" placeholder="Ninguna" />
+            </label>
+          </ds-form-section>
+
+          <ds-form-section title="Colecciones" density="compact">
+            <div class="chips">
+              @for (cat of categoryChips(); track cat) {
+                <button
+                  type="button"
+                  class="chip"
+                  (click)="removeCategory(cat)"
+                  [attr.aria-label]="'Quitar ' + cat"
+                >
+                  {{ cat }}
+                  <ds-icon name="x" />
+                </button>
+              }
             </div>
+            <div class="publish-collection-add">
+              <input class="tw:console-field"
+                type="text"
+                [value]="categoryDraft()"
+                (input)="onCategoryDraftInput($any($event.target).value)"
+                placeholder="Nombre de la colección"
+                aria-label="Nombre de la colección"
+                (keydown.enter)="$event.preventDefault(); addCategoryFromDraft()"
+              />
+              <button type="button" class="publish-add-pill" (click)="addCategoryFromDraft()">
+                <ds-icon name="plus" [size]="0.85" />
+                Agregar
+              </button>
+            </div>
+            <input type="hidden" formControlName="categoriesText" />
           </ds-form-section>
           @if (isEditing()) {
             <div class="publish-danger">
@@ -742,9 +872,6 @@
     </div>
   }
 </section>
-<ng-template #productType>
-  <label class="field"><span>Qué vendes</span><ds-select><select [value]="productForm.controls.kind.value" (change)="setKind($any($event.target).value)"><option value="PRODUCT">Producto físico</option><option value="SERVICE">Servicio</option><option value="DIGITAL">Producto digital</option></select></ds-select></label>
-</ng-template>
 @if (variantPhotoTarget(); as target) {
   <dialog dsModal (dsModalClose)="variantPhotoTarget.set(null)" class="tw:console-scope tw:modal-frame" aria-labelledby="variant-photo-title">
     <div class="tw:grid tw:max-h-full tw:w-full tw:max-w-lg tw:gap-3 tw:overflow-y-auto tw:rounded-lg tw:border tw:border-solid tw:border-border tw:bg-surface tw:p-4 tw:shadow-dropdown">

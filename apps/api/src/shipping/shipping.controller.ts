@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import type { UbigeoDistrict } from '@vendedoria/contracts';
+import type { UbigeoDistrict } from '@agopify/contracts';
 import { CurrentUser } from '../common/decorators/auth.decorators';
 import type { AuthUserPayload } from '../common/types/auth-user';
 import { UBIGEO_DISTRICTS } from '../ubigeo/ubigeo';

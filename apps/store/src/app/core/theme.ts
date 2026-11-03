@@ -1,4 +1,4 @@
-import type { StoreTemplateTheme, StoreThemeCorners, StoreThemeFont, StorefrontView } from '@vendedoria/contracts';
+import type { StoreTemplateTheme, StoreThemeCorners, StoreThemeFont, StorefrontView } from '@agopify/contracts';
 
 /** Release defaults never replace persisted merchant overrides, including explicit empty values. */
 export function storeTheme(store: StorefrontView): StoreTemplateTheme {

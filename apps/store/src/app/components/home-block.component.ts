@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import type { StoreTemplateFaq } from '@vendedoria/contracts';
-import { DsIconComponent } from '@vendedoria/ui';
+import type { StoreTemplateFaq } from '@agopify/contracts';
+import { DsIconComponent } from '@agopify/ui';
 import { STORE_EDITOR, StoreEditorBridge } from '../core/store-editor';
 import type { HomeBlock } from '../core/store-layout';
 

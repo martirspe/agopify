@@ -71,9 +71,9 @@ describe('AI Sales Engine integration (e2e)', () => {
     await app.init();
     prisma = app.get(PrismaService);
     config = app.get(ConfigService);
-    if (!config.get<string>('DATABASE_URL')?.includes('/vendedoria_test?'))
+    if (!config.get<string>('DATABASE_URL')?.includes('/agopify_test?'))
       throw new Error(
-        'Sales e2e requires the isolated vendedoria_test database',
+        'Sales e2e requires the isolated agopify_test database',
       );
     config.set('SALES_ENGINE_MODE', 'sales-engine-v2');
     config.set('SALES_DEBOUNCE_MS', 0);

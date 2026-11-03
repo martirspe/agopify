@@ -31,17 +31,17 @@
         <span class="brand-word">{{ s.displayName }}</span>
       }
     </a>
-    <nav aria-label="Principal">
-      @if (!inCheckout()) {
+    @if (!inCheckout()) {
+      <nav class="header-nav" aria-label="Principal">
         @if (navigation(); as links) { @for (link of links; track $index) { <a [routerLink]="link.to">{{ link.label }}</a> } }
         @else { <a routerLink="/">Inicio</a><a routerLink="/tienda">Tienda</a> }
-      }
-      <a routerLink="/carrito" class="cart-link" [attr.aria-label]="'Mi bolsa, ' + cart.count() + ' productos'">
-        <app-icon name="bag" />
-        <span>Mi bolsa</span>
-        <b>{{ cart.count() }}</b>
-      </a>
-    </nav>
+      </nav>
+    }
+    <a routerLink="/carrito" class="cart-link" [attr.aria-label]="'Mi bolsa, ' + cart.count() + ' productos'">
+      <app-icon name="bag" />
+      <span>Mi bolsa</span>
+      <b>{{ cart.count() }}</b>
+    </a>
   </header>
   <main id="main"><router-outlet /></main>
   <footer storeSection="footer" [class.is-checkout]="inCheckout()">
@@ -77,7 +77,7 @@
       <small storeEditText="footer.note" editKind="multiline" [editValue]="note"></small>
     }
     @if (s.showPlatformBadge) {
-      <small>Tienda creada con VendedorIA</small>
+      <small>Tienda creada con Agopify</small>
     }
   </footer>
   @if (!inCheckout() && !footerInView() && whatsapp(); as href) {

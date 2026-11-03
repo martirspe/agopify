@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import type { Storefront } from '@prisma/client';
-import { compatibility, getTheme, type ThemeManifest, type ThemeCompatibility } from '@vendedoria/themes';
-import type { StoreThemeRelease } from '@vendedoria/contracts';
+import { compatibility, getTheme, type ThemeManifest, type ThemeCompatibility } from '@agopify/themes';
+import type { StoreThemeRelease } from '@agopify/contracts';
 
 export type ThemeSelection = { template: string; version: string };
 export type ThemeStatus = {

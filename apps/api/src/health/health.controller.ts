@@ -10,7 +10,7 @@ export class HealthController {
   getHealth() {
     return {
       status: 'ok',
-      service: 'vendedoria-api',
+      service: 'agopify-api',
       timestamp: new Date().toISOString(),
     };
   }

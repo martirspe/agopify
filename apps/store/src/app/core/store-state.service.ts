@@ -1,5 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
-import type { StorefrontView } from '@vendedoria/contracts';
+import type { StorefrontView } from '@agopify/contracts';
 
 @Injectable({ providedIn: 'root' })
 export class StoreStateService {

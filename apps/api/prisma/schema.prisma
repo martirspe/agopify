@@ -1,4 +1,4 @@
-// VendedorIA — multi-tenant domain foundation
+// Agopify — multi-tenant domain foundation
 // Code and schema identifiers in English (Project Constitution)
 
 generator client {
@@ -26,7 +26,7 @@ enum MembershipRole {
   AGENT
 }
 
-/// VendedorIA staff role, unrelated to any tenant membership. Granted only through the create-admin CLI.
+/// Agopify staff role, unrelated to any tenant membership. Granted only through the create-admin CLI.
 enum PlatformRole {
   SUPERADMIN
   ADMIN
@@ -198,6 +198,8 @@ model User {
   updatedAt     DateTime       @updatedAt
   memberships   Membership[]
   refreshTokens RefreshToken[]
+  consoleAssistantPreferences   ConsoleAssistantPreference[]
+  consoleAssistantConversations ConsoleAssistantConversation[]
 }
 
 model Tenant {
@@ -206,12 +208,12 @@ model Tenant {
   slug      String   @unique
   country   String   @default("PE")
   currency  String   @default("PEN")
-  /// New businesses start a 14-day trial of Crece.
+  /// New businesses start a 7-day trial of Crece.
   planTier  PlanTier @default(GROW)
   /// Trial period: Crece with the reduced trial limits until planExpiresAt. Cleared by the first paid plan.
   planTrial Boolean  @default(true)
   /// End of the trial or paid period; after it the plan is expired. Null: no expiry (granted by the team).
-  planExpiresAt DateTime? @default(dbgenerated("(now() + '14 days'::interval)"))
+  planExpiresAt DateTime? @default(dbgenerated("(now() + '7 days'::interval)"))
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -249,6 +251,37 @@ model Tenant {
   salesTurns        SalesEngineTurn[]
   salesSearchJobs   SalesSearchJob[]
   commerceIntegrations CommerceIntegration[]
+  consoleAssistantPreferences   ConsoleAssistantPreference[]
+  consoleAssistantConversations ConsoleAssistantConversation[]
+}
+
+/// Console home/editor assistant memory toggle — per staff member in a tenant.
+model ConsoleAssistantPreference {
+  userId        String
+  tenantId      String
+  memoryEnabled Boolean  @default(true)
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@id([userId, tenantId])
+  @@index([tenantId])
+}
+
+/// Console assistant chat threads — personal to the staff member, scoped to the business.
+model ConsoleAssistantConversation {
+  id        String   @id
+  userId    String
+  tenantId  String
+  title     String
+  messages  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([userId, tenantId, updatedAt(sort: Desc)])
+  @@index([tenantId])
 }
 
 model ConversionSettings {

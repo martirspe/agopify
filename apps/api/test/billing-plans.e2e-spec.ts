@@ -80,10 +80,10 @@ describe('Plan billing (e2e)', () => {
     await app?.close();
   });
 
-  it('starts every business on a 14-day Crece trial with the trial limits', async () => {
+  it('starts every business on a 7-day Crece trial with the trial limits', async () => {
     const tenant = await prisma.tenant.findUniqueOrThrow({ where: { id: owner.tenantId } });
     expect(tenant).toMatchObject({ planTier: 'GROW', planTrial: true });
-    const expected = Date.now() + 14 * DAY_MS;
+    const expected = Date.now() + 7 * DAY_MS;
     expect(Math.abs((tenant.planExpiresAt?.getTime() ?? 0) - expected)).toBeLessThan(60_000);
 
     const usage = await limits.getUsage(owner.tenantId);

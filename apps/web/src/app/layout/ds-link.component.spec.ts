@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { RouterLink, provideRouter } from '@angular/router';
-import { DsLinkComponent } from '@vendedoria/ui';
+import { DsLinkComponent } from '@agopify/ui';
 import { afterEach, describe, expect, it } from 'vitest';
 
 @Component({

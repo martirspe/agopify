@@ -1,20 +1,22 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
-import { DsActionBarComponent, DsButtonComponent, DsDisclosureComponent, DsEmptyStateComponent, DsFormSectionComponent, DsIconComponent, DsPageHeaderComponent, DsSelectComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsDisclosureComponent, DsEmptyStateComponent, DsFormSectionComponent, DsIconComponent, DsPageHeaderComponent, DsSelectComponent } from '@agopify/ui';
 import { AuthorizedWhatsAppPhone, ChannelDto, ChannelDiagnostics, MessagingApiService, WhatsAppSignupConfiguration, WhatsAppSignupSession, WhatsAppManualWebhook } from '../../core/api/messaging-api.service';
 import { IntegrationsStateService } from '../../core/integrations/integrations-state.service';
 import { InstagramChannelPanel } from '../instagram/instagram-channel.panel';
 import { MetaWhatsAppSignupService } from './meta-whatsapp-signup.service';
 
 export type SalesChannelTab = 'whatsapp' | 'instagram';
+/** Primary sticky header CTA for the WhatsApp tab (Admin `.actions` / Shopify page-header). */
+export type WhatsAppHeaderAction = 'verify-manual' | 'activate-manual' | 'confirm-phone' | 'connect-meta';
 
 @Component({
   selector: 'app-channels-page', standalone: true,
-  imports: [ReactiveFormsModule, InstagramChannelPanel, DsActionBarComponent, DsSelectComponent, DsButtonComponent, DsEmptyStateComponent, DsIconComponent, DsDisclosureComponent, DsFormSectionComponent, DsPageHeaderComponent],
+  imports: [ReactiveFormsModule, InstagramChannelPanel, DsSelectComponent, DsButtonComponent, DsEmptyStateComponent, DsIconComponent, DsDisclosureComponent, DsFormSectionComponent, DsPageHeaderComponent],
   templateUrl: './channels.page.html', changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChannelsPage implements OnDestroy {
@@ -24,6 +26,7 @@ export class ChannelsPage implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly integrations = inject(IntegrationsStateService);
+  readonly instagramPanel = viewChild(InstagramChannelPanel);
   private session: WhatsAppSignupSession | null = null;
   private destroyed = false;
   private attemptVersion = 0;
@@ -65,6 +68,19 @@ export class ChannelsPage implements OnDestroy {
   readonly whatsappConnected = computed(() => {
     const channel = this.channels().find((item) => item.type === 'WHATSAPP');
     return !!channel && channel.healthStatus === 'CONNECTED';
+  });
+  /** Which primary page-header action the WhatsApp tab should show (Shopify `.actions`). */
+  readonly whatsappHeaderAction = computed<WhatsAppHeaderAction | null>(() => {
+    if (this.tab() !== 'whatsapp' || this.loading() || this.loadFailed()) return null;
+    const config = this.configuration();
+    if (!config?.canManage) return null;
+    if (this.mode() === 'manual') {
+      if (this.manualConnection) return 'activate-manual';
+      if (this.hasConnection || !config.manualAvailable) return null;
+      return 'verify-manual';
+    }
+    if (this.manualConnection || !config.available) return null;
+    return this.phones().length ? 'confirm-phone' : 'connect-meta';
   });
 
   constructor() { void this.load(); }
@@ -170,7 +186,7 @@ export class ChannelsPage implements OnDestroy {
       await this.api.disconnectWhatsApp(this.whatsapp.id);
       this.manualWebhook.set(null);
       this.channels.set(await this.api.listChannels());
-      this.successMessage.set('WhatsApp desconectado de VendedorIA.');
+      this.successMessage.set('WhatsApp desconectado de Agopify.');
       await this.loadDiagnostics(); await this.prepare();
     } catch (error) { this.errorMessage.set(this.message(error, 'No pudimos desconectar WhatsApp. Inténtalo de nuevo.')); }
     finally { this.saving.set(false); this.operation.set(null); }

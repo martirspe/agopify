@@ -1,4 +1,4 @@
-import type { StoreEditorSection, StoreTemplateContent } from '@vendedoria/contracts';
+import type { StoreEditorSection, StoreTemplateContent } from '@agopify/contracts';
 import type { ThemeEnvironment, ThemeManifest } from './catalog';
 export * from './catalog';
 export const RENDERER_SECTIONS: Record<string, StoreEditorSection[]>;

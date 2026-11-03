@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
-import { DsButtonComponent, DsIconComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsIconComponent } from '@agopify/ui';
 import { StoreApiService, type StoreThemeCatalog } from '../../core/api/store-api.service';
-import { compareVersions } from '@vendedoria/themes/catalog';
+import { compareVersions } from '@agopify/themes/catalog';
 
 @Component({
   selector: 'app-theme-manager',
@@ -15,7 +15,12 @@ import { compareVersions } from '@vendedoria/themes/catalog';
 export class ThemeManagerComponent {
   private readonly api = inject(StoreApiService);
   readonly inEditor = input(false);
+  /** Merchant-facing store name shown on the current-theme card (Shopify Online Store pattern). */
+  readonly storeName = input('');
+  /** Host without protocol, e.g. `tienda.ejemplo.pe`. */
+  readonly storeHost = input('');
   readonly staged = output<void>();
+  readonly published = output<void>();
   readonly data = signal<StoreThemeCatalog | null>(null);
   readonly loading = signal(true);
   readonly busy = signal(false);
@@ -38,6 +43,10 @@ export class ThemeManagerComponent {
   readonly pending = computed(() => {
     const status = this.data()?.status;
     return status && (status.active.template !== status.editing.template || status.active.version !== status.editing.version);
+  });
+  readonly canPublish = computed(() => {
+    const status = this.data()?.status.compatibility.status;
+    return this.pending() && status !== 'incompatible' && status !== 'update_required';
   });
 
   constructor() { void this.load(); }
@@ -64,11 +73,29 @@ export class ThemeManagerComponent {
           : data.status.editing;
       await this.api.stageTheme(selection.template, selection.version, data.savedAt, action === 'preset' ? preset : undefined);
       this.data.set(await this.api.themes());
-      this.notice.set(action === 'preset' ? 'Muestra preparada: tus textos y fotos personalizados se conservan. No se importaron productos de ejemplo.' : 'Diseño preparado en tu borrador. Revísalo en el editor y publica cuando esté listo.');
+      this.notice.set(action === 'preset' ? 'Muestra preparada: tus textos y fotos personalizados se conservan. No se importaron productos de ejemplo.' : 'Diseño preparado en tu borrador. Revísalo en el editor y publícalo para aplicarlo a tu tienda.');
       this.staged.emit();
     } catch (error) {
       const message = error instanceof HttpErrorResponse ? error.error?.message : null;
       this.error.set(typeof message === 'string' ? message : 'No pudimos preparar el diseño. Recarga y vuelve a intentarlo.');
+    } finally { this.busy.set(false); }
+  }
+
+  /** Applies the staged theme (and any content draft) to the live storefront. */
+  async publish(): Promise<void> {
+    const data = this.data();
+    if (!data || !this.canPublish() || this.busy()) return;
+    this.busy.set(true);
+    this.error.set(null);
+    this.notice.set(null);
+    try {
+      await this.api.publishDraft(data.savedAt);
+      this.data.set(await this.api.themes());
+      this.notice.set('Diseño publicado. Tu tienda ya muestra la plantilla seleccionada.');
+      this.published.emit();
+    } catch (error) {
+      const message = error instanceof HttpErrorResponse ? error.error?.message : null;
+      this.error.set(typeof message === 'string' ? message : 'No pudimos publicar el diseño. Vuelve a intentarlo.');
     } finally { this.busy.set(false); }
   }
 }

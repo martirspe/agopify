@@ -1,4 +1,4 @@
-# Plan técnico — Tienda web por tenant (integración del catálogo digital en VendedorIA)
+# Plan técnico — Tienda web por tenant (integración del catálogo digital en Agopify)
 
 Estado: propuesta · Fecha: 2 de octubre de 2026
 Origen del código a portar: `PROYECTOS/catalogo-digital/catalogo` (tienda de una sola marca, en producción).
@@ -7,7 +7,7 @@ Origen del código a portar: `PROYECTOS/catalogo-digital/catalogo` (tienda de un
 
 ## 1. Objetivo y cuña
 
-Cada merchant de VendedorIA obtiene, además de su vendedor IA en WhatsApp/Instagram, una **tienda web propia** que comparte el mismo catálogo, pedidos, cupones y cobros.
+Cada merchant de Agopify obtiene, además de su vendedor IA en WhatsApp/Instagram, una **tienda web propia** que comparte el mismo catálogo, pedidos, cupones y cobros.
 
 **Cuña frente al referente de categoría:** "Commerce en el hilo **y en la web**":
 
@@ -22,7 +22,7 @@ Posicionamiento: *tienda simple que vende sola por WhatsApp*. No se construye un
 
 ## 2. Punto de partida (diagnóstico)
 
-| Tema | VendedorIA (base) | Catálogo (origen) |
+| Tema | Agopify (base) | Catálogo (origen) |
 | --- | --- | --- |
 | Tenancy | Multi-tenant (`tenantId` en todo) | Una tienda; identidad por variables de entorno |
 | Versiones | NestJS 11 · Prisma 6 · Angular 22 | NestJS 12 · Prisma 7 · Angular 22 |
@@ -170,11 +170,11 @@ Ampliaciones de modelos existentes:
 
 ---
 
-## 5. Mapa de portado (catálogo → VendedorIA)
+## 5. Mapa de portado (catálogo → Agopify)
 
-Todo se **reescribe** al estilo de VendedorIA: componentes formateados, Design System, class-validator e identificadores en inglés. Solo el copy visible queda en español. Nada se copia tal cual.
+Todo se **reescribe** al estilo de Agopify: componentes formateados, Design System, class-validator e identificadores en inglés. Solo el copy visible queda en español. Nada se copia tal cual.
 
-| Origen (`catalogo`) | Destino (`vendedoria`) | Nota |
+| Origen (`catalogo`) | Destino (`agopify`) | Nota |
 | --- | --- | --- |
 | `web/home.ts` (grilla, filtros, FAQ) | `apps/store/.../home.page.ts`, `catalog.page.ts` | Las FAQ vienen de `KnowledgeFaq` publicadas, la misma fuente que usa el agente |
 | `web/product.ts`, `photo-view.ts`, `product-image.ts`, slider de relacionados | `apps/store/.../product.page.ts` + componentes DS | Variantes reales (`ProductVariant`) |
@@ -188,7 +188,7 @@ Todo se **reescribe** al estilo de VendedorIA: componentes formateados, Design S
 | `api/shipping.ts` | `apps/api/src/storefront/shipping.ts` | Reglas desde `Storefront.shipping` |
 | `api/payments.ts` | `apps/api/src/payments/mercadopago.provider.ts` | Orders API + firma, con credenciales por tenant |
 | `docker/nginx/security-headers.conf` | cabeceras del servidor de `apps/store` | CSP construida por tenant |
-| `web/admin.ts`, `api/admin.ts` | — | No se porta: la consola de VendedorIA lo reemplaza |
+| `web/admin.ts`, `api/admin.ts` | — | No se porta: la consola de Agopify lo reemplaza |
 | `photo-frames.json` y contenido de la marca | — | Específico de esa tienda; pasa a datos del tenant cero |
 
 ---
@@ -222,7 +222,7 @@ Toda pieza visual nueva se agrega primero al Design System.
 
 - El centro legal se genera con los datos de `Storefront`. No se puede publicar sin razón social, RUC, domicilio, correo y enlace del Libro de Reclamaciones.
 - Libro de Reclamaciones: durante el onboarding se pide al merchant que se registre en ReclamoFácil, cree su libro con los mismos datos y pegue el enlace público. No se construye un libro nativo.
-- VendedorIA actúa como **encargado de tratamiento** de los datos de los compradores del merchant. Hay que redactar y aceptar un contrato de encargo y actualizar los términos del SaaS (skill `legal-digital-peru`).
+- Agopify actúa como **encargado de tratamiento** de los datos de los compradores del merchant. Hay que redactar y aceptar un contrato de encargo y actualizar los términos del SaaS (skill `legal-digital-peru`).
 - Banner de cookies con Consent Mode v2 cuando el tenant configura píxeles (skill `web-tracking-pixels`, incluido el fix del stub de `gtag`).
 
 ---
@@ -243,7 +243,7 @@ Propuesta, a validar con el modelo de negocio:
 
 | Plan | Tienda |
 | --- | --- |
-| FREE | Subdominio, marca "Hecho con VendedorIA", modo "pedir por WhatsApp" |
+| FREE | Subdominio, marca "Hecho con Agopify", modo "pedir por WhatsApp" |
 | STARTER | + checkout con Mercado Pago, cupones básicos |
 | PRO | + dominio propio, píxeles, cupones avanzados, sin marca de plataforma |
 | BUSINESS | + varios dominios, prioridad de soporte |
@@ -290,7 +290,7 @@ Se aplica en `plan-limits.service.ts`, como el resto de límites.
 ### Fase 4 — Migrar la tienda existente como tenant cero (M)
 - Script de migración: productos del catálogo (`slug`, `content` JSON, stock, inventario) → `Product`, `ProductVariant` y `ProductMedia`, más cupones y configuración legal.
 - Se ejecuta en paralelo con el catálogo actual; se cambia el DNS solo cuando hay paridad verificada (checkout real con un monto mínimo).
-- **Hecho cuando:** la tienda funciona sobre VendedorIA con las mismas URLs (`/producto/:slug` mantiene la ruta o redirige con 301) y el catálogo antiguo queda en solo lectura.
+- **Hecho cuando:** la tienda funciona sobre Agopify con las mismas URLs (`/producto/:slug` mantiene la ruta o redirige con 301) y el catálogo antiguo queda en solo lectura.
 
 ---
 
@@ -301,7 +301,7 @@ Se aplica en `plan-limits.service.ts`, como el resto de límites.
 | Cobros del comprador a la cuenta de la plataforma | Fase 2 bloquea el checkout sin `MerchantPaymentAccount` verificada; test explícito |
 | Filtración entre tenants en endpoints públicos | El `tenantId` sale solo del host o slug resueltos en el servidor; tests de aislamiento en CI |
 | Pérdida de foco (dos productos a la vez) | Fase 1 limitada a una tienda de lectura; el editor visual queda fuera de alcance |
-| Divergencia de versiones (Nest 12 / Prisma 7 en el origen) | Se porta a las versiones de VendedorIA; la actualización va en una tarea aparte |
+| Divergencia de versiones (Nest 12 / Prisma 7 en el origen) | Se porta a las versiones de Agopify; la actualización va en una tarea aparte |
 | Responsabilidad legal sobre datos de compradores | Contrato de encargo de tratamiento y términos SaaS actualizados antes de abrir el registro público |
 | CSP y píxeles rompen el checkout | CSP por tenant generada desde una lista blanca por proveedor; verificación en red (skill `web-tracking-pixels`) |
 

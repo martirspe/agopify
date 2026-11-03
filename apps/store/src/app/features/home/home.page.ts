@@ -7,8 +7,8 @@ import {
   input,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import type { PublicProductList } from '@vendedoria/contracts';
-import { DsIconComponent, type DsIconName } from '@vendedoria/ui';
+import type { PublicProductList } from '@agopify/contracts';
+import { DsIconComponent, type DsIconName } from '@agopify/ui';
 import { HomeBlockComponent, sharedBlockType } from '../../components/home-block.component';
 import { ProductCardComponent } from '../../components/product-card.component';
 import { SeoService } from '../../core/seo.service';

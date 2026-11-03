@@ -1,4 +1,4 @@
-const KEY = 'vendedoria-campaign-coupon';
+const KEY = 'agopify-campaign-coupon';
 const CODE = /^[A-Za-z0-9_-]{3,30}$/;
 
 /** Keeps the `?cupon=` code of a campaign link for the checkout of this browser session. */

@@ -1,12 +1,15 @@
 import type {
   StoreEditorField,
   StoreEditorSection,
-} from '@vendedoria/contracts';
+} from '@agopify/contracts';
 import {
   buildPagePrompt,
+  buildSectionFillPrompt,
   buildSectionPrompt,
   buildTextPrompt,
+  filterPageToEmptyFields,
   pickPageTexts,
+  pickSectionFillTexts,
   pickSectionTexts,
   pickSuggestions,
 } from './store-ai-text';
@@ -218,6 +221,7 @@ describe('store AI text', () => {
           { type: 'imageText', texts: { title: 'Nuestra historia' } },
           { type: 'questions', texts: { title: 'Dudas' } },
         ],
+        mode: 'rewrite',
       });
     });
 
@@ -249,5 +253,96 @@ describe('store AI text', () => {
       ]);
       expect(payload.tiposDeSeccion).toHaveLength(5);
     });
+
+    it('asks only for empty fields and strips blocks in fillEmpty mode', () => {
+      const { system, user } = buildPagePrompt({
+        ...request,
+        mode: 'fillEmpty',
+        blocks: [],
+        emptyTargets: [{ sectionId: 'hero', fieldIds: ['title'] }],
+        business: {
+          name: 'Luma',
+          industry: 'belleza',
+          tagline: null,
+          categories: [],
+          products: [],
+        },
+      });
+      expect(system).toContain('camposVacios');
+      const payload = JSON.parse(user) as {
+        modo: string;
+        camposVacios: { sectionId: string }[];
+        tiposDeSeccion?: unknown;
+      };
+      expect(payload.modo).toBe('rellenarVacios');
+      expect(payload.camposVacios).toEqual([{ sectionId: 'hero', fieldIds: ['title'] }]);
+      expect(payload.tiposDeSeccion).toBeUndefined();
+      expect(
+        filterPageToEmptyFields(
+          {
+            sections: {
+              hero: { title: 'Nuevo', subtitle: 'Ignorado' },
+              catalog: { title: 'No vacío' },
+            },
+            blocks: [{ type: 'cta', texts: { title: 'No' } }],
+          },
+          [{ sectionId: 'hero', fieldIds: ['title'] }],
+        ),
+      ).toEqual({
+        sections: { hero: { title: 'Nuevo' } },
+        blocks: [],
+        mode: 'fillEmpty',
+      });
+    });
+  });
+
+  describe('section fill', () => {
+    const section: StoreEditorSection = {
+      id: 'hero',
+      label: 'Portada',
+      role: 'builtin',
+      canHide: true,
+      faq: false,
+      fields: [
+        title,
+        { id: 'text', label: 'Texto', kind: 'multiline', maxLength: 120 },
+      ],
+    };
+
+    it('asks the model to fill one existing section', () => {
+      const { user } = buildSectionFillPrompt({
+        business: {
+          name: 'Luma',
+          industry: 'belleza',
+          tagline: null,
+          categories: [],
+          products: [],
+        },
+        section,
+        target: 'hero',
+        prompt: 'Más cercano',
+        current: { title: 'Hola' },
+      });
+      const payload = JSON.parse(user) as {
+        seccion: { claveContenido: string; campos: { id: string; vacio: boolean }[] };
+      };
+      expect(payload.seccion.claveContenido).toBe('hero');
+      expect(payload.seccion.campos).toEqual([
+        expect.objectContaining({ id: 'title', vacio: false }),
+        expect.objectContaining({ id: 'text', vacio: true }),
+      ]);
+    });
+
+    it('picks filled texts and drops invented figures', () => {
+      expect(
+        pickSectionFillTexts(
+          { texts: { title: 'Cuida tu piel', text: 'Todo a S/ 10' } },
+          section,
+          'Más vendedor',
+        ),
+      ).toEqual({ title: 'Cuida tu piel' });
+      expect(pickSectionFillTexts({ texts: {} }, section, 'x')).toBeNull();
+    });
   });
 });
+

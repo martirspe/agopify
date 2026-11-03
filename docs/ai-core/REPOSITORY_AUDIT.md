@@ -1,4 +1,4 @@
-# Phase 0 — Repository audit (VendedorIA AI Core)
+# Phase 0 — Repository audit (Agopify AI Core)
 
 **Date:** 2026-10-30  
 **Authority:** Executable code > this report.  

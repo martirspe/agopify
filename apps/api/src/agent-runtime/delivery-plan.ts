@@ -1,4 +1,4 @@
-import type { UbigeoDistrict } from '@vendedoria/contracts';
+import type { UbigeoDistrict } from '@agopify/contracts';
 import { quoteShipping, ShippingCharge, ShippingRules, shippingOptions } from '../storefront/shipping';
 import { UBIGEO_DISTRICTS } from '../ubigeo/ubigeo';
 import { normalizeText } from './conversation-context';

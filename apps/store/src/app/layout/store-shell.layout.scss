@@ -89,11 +89,16 @@
   gap: var(--ds-space-5);
   font-weight: 600;
   color: var(--store-muted);
+  min-width: 0;
 }
 
 .nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--ds-touch-target);
   padding: var(--ds-space-2) 0;
   border-bottom: 2px solid transparent;
+  white-space: nowrap;
 }
 
 .nav a:hover,
@@ -253,8 +258,8 @@
 
 .wa-fab {
   position: fixed;
-  right: var(--ds-space-5);
-  bottom: var(--ds-space-5);
+  right: calc(var(--ds-space-5) + var(--store-safe-right, 0px));
+  bottom: var(--store-mobile-fab-offset, var(--ds-space-5));
   z-index: 30;
   display: inline-flex;
   align-items: center;
@@ -301,6 +306,14 @@
     width: 100%;
     gap: var(--ds-space-4);
     font-size: 0.925rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .nav::-webkit-scrollbar {
+    display: none;
   }
 
   .search {

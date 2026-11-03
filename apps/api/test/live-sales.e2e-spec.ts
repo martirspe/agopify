@@ -13,7 +13,7 @@ import { LiveService } from '../src/live/live.service';
 import { CheckoutService } from '../src/checkout/checkout.service';
 import { TikTokIntegrationService } from '../src/live/tiktok-integration.service';
 import type { AuthUserPayload } from '../src/common/types/auth-user';
-import type { PublicOrder } from '@vendedoria/contracts';
+import type { PublicOrder } from '@agopify/contracts';
 import { TikTokClient } from '../src/live/tiktok-client';
 import { decryptSecret } from '../src/payments/credentials-cipher';
 

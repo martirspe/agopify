@@ -1,4 +1,9 @@
-<div class="tw:console-scope tw:flex tw:h-dvh tw:items-stretch tw:gap-0 tw:overflow-hidden tw:bg-navigation">
+<div
+  class="tw:console-scope tw:flex tw:h-dvh tw:items-stretch tw:gap-0 tw:overflow-hidden tw:bg-navigation"
+  [attr.data-trial]="trialLabel() ? '' : null"
+  [attr.data-rail-collapsed]="railCollapsed() ? '' : null"
+  [style.--ds-console-assistant-inset-start]="assistantInsetStart()"
+>
   <a [href]="contentHref()" class="tw:sr-only tw:focus:not-sr-only tw:focus:fixed tw:focus:left-4 tw:focus:top-4 tw:focus:z-50 tw:console-action-link">Saltar al contenido</a>
   <aside id="console-navigation" class="tw:console-navigation tw:sticky tw:top-0 tw:hidden tw:h-dvh tw:shrink-0 tw:flex-col tw:gap-0 tw:overflow-y-auto tw:overflow-x-hidden tw:px-0 tw:pt-3 tw:pb-2 tw:text-navigation-foreground tw:console:flex" [class.tw:w-sidebar]="!railCollapsed()" [class.tw:w-rail]="railCollapsed()" [attr.data-collapsed]="railCollapsed() || null" [attr.data-context-locked]="context() ? '' : null" [attr.data-trial]="trialLabel() ? '' : null" aria-label="Navegación de consola">
     <ng-container [ngTemplateOutlet]="navigation" [ngTemplateOutletContext]="{ compact: railCollapsed(), contextLocked: !!context() }" />
@@ -70,7 +75,11 @@
       </nav>
     </aside>
   }
-  <div class="tw:console-frame" [attr.data-assistant-dock]="assistantLayout.dockOpen() ? '' : null">
+  <div
+    class="tw:console-frame tw:relative"
+    [attr.data-assistant-dock]="assistant.dockOpen() ? '' : null"
+    [attr.aria-hidden]="assistant.fullOpen() ? 'true' : null"
+  >
     <header
       class="tw:flex tw:min-h-12 tw:shrink-0 tw:items-center tw:justify-between tw:gap-3 tw:px-gutter tw:py-2"
       [class.tw:console:hidden]="!isHome()"
@@ -102,7 +111,57 @@
         <router-outlet />
       </div>
     </main>
+
+    @if (showAssistantFloat()) {
+      <div class="tw:console-assistant-float">
+        <app-assistant-composer
+          variant="compact"
+          inputId="console-assistant-float-input"
+          ariaLabel="Asistente de la consola"
+          placeholder="Trabaja con tu asistente"
+          [value]="assistant.prompt()"
+          (valueChange)="assistant.prompt.set($event)"
+          [active]="assistant.composerActive()"
+          [docked]="assistant.open()"
+          [busy]="assistant.drafting()"
+          [dictating]="assistant.dictating()"
+          [dictationSupported]="assistant.dictationSupported()"
+          [dictationError]="assistant.dictationError()"
+          [plusOpen]="assistant.plusOpen()"
+          [plusItems]="assistant.plusItems"
+          [generateApps]="assistant.generateApps()"
+          [plusMenuUp]="true"
+          [showDockToggle]="true"
+          [dockOpen]="assistant.open()"
+          (submitted)="assistant.onComposerSubmitted($event)"
+          (plusToggle)="assistant.togglePlus($event)"
+          (plusAction)="assistant.onPlus($event)"
+          (generateAppsToggle)="assistant.toggleGenerateApps()"
+          (dictationStart)="assistant.startDictation()"
+          (dictationCancel)="assistant.cancelDictation()"
+          (dictationConfirm)="assistant.confirmDictation()"
+          (dockToggle)="assistant.toggleDock()"
+          (focused)="assistant.composerActive.set(true)"
+          (activated)="assistant.composerActive.set(true)"
+        />
+      </div>
+    }
   </div>
+
+  @if (assistant.open()) {
+    <app-home-assistant-panel
+      [mode]="assistant.mode()"
+      [title]="assistant.title()"
+      [messages]="assistant.messages()"
+      [drafting]="assistant.drafting()"
+      (closed)="assistant.close()"
+      (modeChange)="assistant.setMode($event)"
+      (newChat)="assistant.resetChat()"
+      (restoreConversation)="assistant.restoreConversation($event)"
+      (sent)="assistant.onPanelSent($event)"
+      (plusAction)="assistant.onPlus($event)"
+    />
+  }
 </div>
 
 <ng-template #navigation let-mobile="mobile" let-compact="compact" let-contextLocked="contextLocked">
@@ -139,7 +198,7 @@
         </button>
       }
     } @else {
-      <a class="tw:flex tw:h-9 tw:min-w-0 tw:items-center tw:gap-2 tw:px-1 tw:text-[13px] tw:font-semibold tw:text-[color:var(--ds-console-nav-text-active)] tw:no-underline" [class.tw:px-0.5]="!mobile" routerLink="/app/get-started" aria-label="VendedorIA" (click)="closeNavigation()"><span class="tw:grid tw:size-7 tw:shrink-0 tw:place-items-center tw:rounded-sm tw:bg-primary tw:text-ink" aria-hidden="true"><ds-icon name="sparkles" [size]="1.05" /></span><span class="tw:console-nav-label">VendedorIA</span></a>
+      <a class="tw:flex tw:h-9 tw:min-w-0 tw:items-center tw:gap-2 tw:px-1 tw:text-[13px] tw:font-semibold tw:text-[color:var(--ds-console-nav-text-active)] tw:no-underline" [class.tw:px-0.5]="!mobile" routerLink="/app/get-started" aria-label="Agopify" (click)="closeNavigation()"><span class="tw:grid tw:size-7 tw:shrink-0 tw:place-items-center tw:rounded-sm tw:bg-primary tw:text-ink" aria-hidden="true"><ds-icon name="sparkles" [size]="1.05" /></span><span class="tw:console-nav-label">Agopify</span></a>
     }
     @if (mobile) {
       <button type="button" class="tw:console-rail-button" aria-label="Cerrar navegación" (click)="closeNavigation()"><ds-icon name="x" /></button>
@@ -213,31 +272,7 @@
         </li>
       }
     </ul>
-    @if (compact) {
- <!-- condensed : 16px centered — never full-bleed like expanded border-t. -->
-      <hr class="tw:console-nav-divider" aria-hidden="true" />
-    }
-    @if (trialLabel(); as label) {
-      @if (!compact) {
-        <div class="tw:console-trial-notice" role="status">
-          <p class="tw:console-trial-notice__label">{{ label }}</p>
-          <a routerLink="/app/plans" class="tw:console-trial-notice__cta" (click)="closeNavigation()">Suscribirse</a>
-        </div>
-      } @else {
-        <ul class="tw:m-0 tw:grid tw:list-none tw:justify-items-center tw:gap-0 tw:p-0" aria-label="Suscripción">
-          <li class="tw:w-8">
-            <a
-              routerLink="/app/plans"
-              class="tw:console-rail-link"
-              [attr.aria-label]="label + '. Suscribirse'"
-              [consoleRailTooltip]="label"
-              [consoleRailTooltipWhen]="true"
-              (click)="closeNavigation()"
-            ><ds-icon name="creditCard" [size]="1" [strokeWidth]="1.75" /><span class="tw:console-nav-label" aria-hidden="true">Suscribirse</span></a>
-          </li>
-        </ul>
-      }
-    }
+    <!-- Admin order: footer links + account ABOVE the hairline; trial/subscribe pinned below. -->
     <div
       class="tw:min-w-0 tw:pt-2"
       [class.tw:px-3]="!compact"
@@ -283,6 +318,31 @@
         </div>
       </ds-menu>
     </div>
+    @if (compact && trialLabel()) {
+      <!-- condensed: 16px centered — never full-bleed like expanded border-t. -->
+      <hr class="tw:console-nav-divider" aria-hidden="true" />
+    }
+    @if (trialLabel(); as label) {
+      @if (!compact) {
+        <div class="tw:console-trial-notice" role="status">
+          <p class="tw:console-trial-notice__label">{{ label }}</p>
+          <a routerLink="/app/plans" class="tw:console-trial-notice__cta" (click)="closeNavigation()">Suscribirse</a>
+        </div>
+      } @else {
+        <ul class="tw:m-0 tw:grid tw:list-none tw:justify-items-center tw:gap-0 tw:p-0" aria-label="Suscripción">
+          <li class="tw:w-8">
+            <a
+              routerLink="/app/plans"
+              class="tw:console-rail-link"
+              [attr.aria-label]="label + '. Suscribirse'"
+              [consoleRailTooltip]="label"
+              [consoleRailTooltipWhen]="true"
+              (click)="closeNavigation()"
+            ><ds-icon name="creditCard" [size]="1" [strokeWidth]="1.75" /><span class="tw:console-nav-label" aria-hidden="true">Suscribirse</span></a>
+          </li>
+        </ul>
+      }
+    }
   </div>
 </ng-template>
 

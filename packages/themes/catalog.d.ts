@@ -1,4 +1,4 @@
-import type { StoreLayoutItem, StoreTemplateContent, StoreTemplateTheme, StoreThemeOption } from '@vendedoria/contracts';
+import type { StoreLayoutItem, StoreTemplateContent, StoreTemplateTheme, StoreThemeOption } from '@agopify/contracts';
 
 export type ThemeContracts = { engine: number; editor: number; storefront: number; content: number };
 export type ThemeManifest = {

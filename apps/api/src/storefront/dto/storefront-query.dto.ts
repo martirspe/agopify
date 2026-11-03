@@ -9,7 +9,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import type { ProductKind, PublicProductSort } from '@vendedoria/contracts';
+import type { ProductKind, PublicProductSort } from '@agopify/contracts';
 
 const SORTS: PublicProductSort[] = ['featured', 'newest', 'price-asc', 'price-desc'];
 const KINDS: ProductKind[] = ['PRODUCT', 'SERVICE', 'DIGITAL'];

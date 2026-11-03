@@ -1,9 +1,9 @@
 # Alta de usuarios y accesos
 
-VendedorIA tiene dos mundos de usuarios que nunca se mezclan:
+Agopify tiene dos mundos de usuarios que nunca se mezclan:
 
-- **Usuarios de un negocio**: entran a la consola (`app.marrso.com`) y solo ven los datos de su negocio.
-- **Operadores de la plataforma**: el equipo de VendedorIA. Tienen una sesión aparte para la futura consola de operaciones y no usan los roles de los negocios.
+- **Usuarios de un negocio**: entran a la consola (`app.agopify.com`) y solo ven los datos de su negocio.
+- **Operadores de la plataforma**: el equipo de Agopify. Tienen una sesión aparte para la futura consola de operaciones y no usan los roles de los negocios.
 
 Los compradores de las tiendas no tienen cuenta: compran como invitados.
 
@@ -22,7 +22,7 @@ El `ADMIN` de un negocio y el `ADMIN` de plataforma son roles distintos: el prim
 La persona entra a `/auth/register` en la consola y completa nombre, correo, contraseña (mínimo 8 caracteres) y nombre del negocio.
 
 - En una sola operación se crean la cuenta, el negocio, su membresía como `OWNER` y un vendedor IA inicial; luego queda con la sesión iniciada.
-- El negocio empieza con 14 días de prueba del plan Crece.
+- El negocio empieza con 7 días de prueba del plan Crece.
 - Protecciones: Cloudflare Turnstile (acción `register`) y límite de 5 intentos por minuto por IP. Un correo solo puede tener una cuenta.
 - API: `POST /api/v1/auth/register`. Inicio de sesión: `/auth/login` (`POST /api/v1/auth/login`).
 
@@ -37,7 +37,7 @@ Disponible desde el plan Crece, con la integración **Equipo** activada en Integ
 Reglas:
 
 - Los miembros más las invitaciones pendientes cuentan contra los usuarios del plan.
-- El correo invitado no puede tener ya una cuenta en VendedorIA.
+- El correo invitado no puede tener ya una cuenta en Agopify.
 - Invitar de nuevo al mismo correo reemplaza la invitación anterior sin ocupar otro cupo.
 - Una invitación pendiente se puede cancelar; el enlace deja de funcionar.
 - Al cambiar el rol de un miembro se cierran sus sesiones.
@@ -80,10 +80,10 @@ El modo interactivo pide correo, rol, nombre y contraseña (oculta, con confirma
 ### Otros comandos
 
 ```bash
-docker compose exec api npm run create-admin -- --role=ADMIN --email=ops@marrso.com --name="Ops"
-docker compose exec api npm run create-admin -- --role=SUPERADMIN --email=ops@marrso.com   # cambiar rol
-docker compose exec api npm run create-admin -- --email=ops@marrso.com --role=ADMIN --reset-password
-docker compose exec api npm run create-admin -- --revoke --email=ops@marrso.com
+docker compose exec api npm run create-admin -- --role=ADMIN --email=ops@agopify.com --name="Ops"
+docker compose exec api npm run create-admin -- --role=SUPERADMIN --email=ops@agopify.com   # cambiar rol
+docker compose exec api npm run create-admin -- --email=ops@agopify.com --role=ADMIN --reset-password
+docker compose exec api npm run create-admin -- --revoke --email=ops@agopify.com
 docker compose exec api npm run create-admin -- --help
 ```
 

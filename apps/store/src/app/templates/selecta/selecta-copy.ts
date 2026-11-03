@@ -1,4 +1,4 @@
-import type { StoreTemplateFaq, StorefrontView } from '@vendedoria/contracts';
+import type { StoreTemplateFaq, StorefrontView } from '@agopify/contracts';
 import { defaultFaq } from '../../core/store-faq';
 
 const SELECTA_CART = {

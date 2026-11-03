@@ -1,6 +1,6 @@
 # Plantilla Impulso
 
-Plantilla `stride` para tiendas del rubro `moda`, integrada en VendedorIA. Toma la composición editorial de la referencia: portada de gran formato, selección de cuatro productos, dos paneles de inspiración, tres categorías, campaña de producto, dos paneles de colección y cierre de compra.
+Plantilla `stride` para tiendas del rubro `moda`, integrada en Agopify. Toma la composición editorial de la referencia: portada de gran formato, selección de cuatro productos, dos paneles de inspiración, tres categorías, campaña de producto, dos paneles de colección y cierre de compra.
 
 ## Activación
 
@@ -46,7 +46,7 @@ Comprobación en el stack de desarrollo: antes del reinicio `/stride.css` devolv
 ## Evidencia de verificación — 4 de octubre de 2026
 
 - `npm run build:api`, `npm run build:web` y `npm run build:store`: aprobados. Angular necesitó ejecución fuera del sandbox por restricciones de lectura de directorios padre. Web conserva advertencias previas de tamaño de estilos en consola, vendedor y catálogo.
-- `npm run test -w @vendedoria/api -- store-templates --runInBand`: 16 pruebas aprobadas, incluida elegibilidad por rubro y conservación de contenido/layout de Impulso.
+- `npm run test -w @agopify/api -- store-templates --runInBand`: 16 pruebas aprobadas, incluida elegibilidad por rubro y conservación de contenido/layout de Impulso.
 - Renderizado en navegador con API local aislada y datos/ilustraciones de prueba: inicio, catálogo, producto, carrito, compra, recibo aprobado y producto inexistente a **360, 390, 768 y 1440 px**, sin desbordamiento horizontal.
 - Talla no disponible: acción de compra bloqueada. Talla disponible: agregada con variante y precio correctos al carrito; resumen coherente en la compra.
 - Datos y consentimiento vacíos: errores junto a los campos, sin reserva ni cobro.

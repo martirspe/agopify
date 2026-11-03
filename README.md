@@ -1,4 +1,4 @@
-# VendedorIA
+# Agopify
 
 Premium AI Sales Agents SaaS — WhatsApp/Instagram sales agents from greeting to payment.
 
@@ -37,30 +37,28 @@ npm run dev
 Eso:
 
 1. Crea o completa `apps/api/.env` desde `.env.example` (secretos locales aleatorios si faltan).
-2. Levanta **solo** lo necesario: Postgres + API + consola (`web`).  
+2. Levanta Postgres + API + consola (`web`) + tienda (`store`).  
    `deps` es un one-shot (`npm ci` + Prisma generate) y sale; no queda un contenedor de más corriendo.
 3. Aplica migraciones (`0001_init` en base vacía) y arranca Nest / Angular con recarga en caliente.
 
-Cuando `docker compose ps` muestre `api` y `web` healthy:
+Cuando `docker compose ps` muestre `api`, `web` y `store` healthy:
 
 | Qué | URL |
 |-----|-----|
 | Consola | http://localhost:4201 |
 | API / health | http://localhost:3100/api/v1/health |
 | Swagger | http://localhost:3100/docs |
-| Postgres (host) | `localhost:5432` — usuario/clave/db: `postgres` / `postgres` / `vendedoria` |
+| Tiendas | http://`{slug}`.localhost:4300 |
+| Postgres (host) | `localhost:5432` — usuario/clave/db: `postgres` / `postgres` / `agopify` |
 
 Usa siempre **`localhost`** (no `127.0.0.1` en el navegador): los puertos escuchan en loopback y los enlaces de Docker Desktop redirigen a `localhost`.
 
 ### Servicios opcionales
 
-No son obligatorios para vender por WhatsApp ni para la consola:
-
 | Comando | Qué añade | Cuándo |
 |---------|-----------|--------|
-| `npm run dev:store` | Tienda en http://`{slug}`.localhost:4300 | Probar storefront / checkout web |
 | `npm run dev:redis` | Redis | Recuperación / caché conversion; luego `REDIS_URL=redis://redis:6379/0` en `apps/api/.env` y reinicia el API |
-| `npm run dev:all` | Tienda + Redis | Stack completo local |
+| `npm run dev:all` | Igual que `dev:redis` (la tienda ya va en `dev`) | Alias cómodo |
 | Profile `recommendations-vector` | Qdrant | Búsqueda semántica (sin él basta el full-text de Postgres) |
 
 ```bash
@@ -74,7 +72,7 @@ docker compose -f docker-compose.dev.yml --profile recommendations-vector up -d 
 npm run docker:ps      # estado
 npm run docker:logs    # api + web (añade store si lo levantaste: npm run docker:logs -- store)
 npm run docker:down    # apaga el stack (incluye perfiles)
-npm run test:docker    # unit + e2e en DB aislada vendedoria_test (stack core debe estar up)
+npm run test:docker    # unit + e2e en DB aislada agopify_test (stack core debe estar up)
 ```
 
 ### Configuración local
@@ -96,7 +94,7 @@ npm run test:docker    # unit + e2e en DB aislada vendedoria_test (stack core de
 
 **No hace falta `create-admin` para usar la consola del negocio.** El registro público en http://localhost:4201 crea el negocio y su `OWNER`. Con eso pruebas vendedor, catálogo, playground, canales, etc.
 
-`create-admin` solo crea **operadores de plataforma** (`SUPERADMIN` / `ADMIN` de VendedorIA), sesión distinta (`/platform/…`), para el backoffice global — no es el admin del tenant. En local solo si trabajas esa consola:
+`create-admin` solo crea **operadores de plataforma** (`SUPERADMIN` / `ADMIN` de Agopify), sesión distinta (`/platform/…`), para el backoffice global — no es el admin del tenant. En local solo si trabajas esa consola:
 
 ```bash
 docker compose -f docker-compose.dev.yml exec api npm run create-admin

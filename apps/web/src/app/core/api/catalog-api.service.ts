@@ -78,7 +78,8 @@ export type ChannelListingDto = {
   isPublished: boolean;
   publishedAt?: string | null;
 };
-export type OptionDefinitionDto = { id?: string; name: string; position?: number; values: string[] };
+export type OptionValueDto = { value: string; color?: string };
+export type OptionDefinitionDto = { id?: string; name: string; position?: number; values: Array<string | OptionValueDto> };
 export type CollectionDto = {
   id: string;
   handle: string;
@@ -186,7 +187,7 @@ export type CreateProductPayload = ProductExtrasPayload & {
   currency?: string;
   status?: ProductStatus;
   channelListings?: Array<{ channel: ProductChannelKind; isPublished: boolean }>;
-  optionDefinitions?: Array<{ name: string; values: string[] }>;
+  optionDefinitions?: Array<{ name: string; values: OptionValueDto[] }>;
   isAvailable?: boolean;
   stockUnlimited?: boolean;
   stockQty?: number;
@@ -209,7 +210,7 @@ export type UpdateProductPayload = ProductExtrasPayload & {
   currency?: string;
   status?: ProductStatus;
   channelListings?: Array<{ channel: ProductChannelKind; isPublished: boolean }>;
-  optionDefinitions?: Array<{ name: string; values: string[] }>;
+  optionDefinitions?: Array<{ name: string; values: OptionValueDto[] }>;
   isAvailable?: boolean;
   stockUnlimited?: boolean;
   stockQty?: number | null;
@@ -337,7 +338,7 @@ export class CatalogApiService {
     ).then((response) => {
       const disposition = response.headers.get('Content-Disposition') ?? '';
       const match = /filename="([^"]+)"/i.exec(disposition);
-      const filename = match?.[1] || 'catalogo-vendedoria.zip';
+      const filename = match?.[1] || 'catalogo-agopify.zip';
       let warnings: string[] = [];
       const raw = response.headers.get('X-Catalog-Export-Warnings');
       if (raw) {

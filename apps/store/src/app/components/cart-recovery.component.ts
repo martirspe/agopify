@@ -13,8 +13,8 @@ import {
 } from "@angular/core";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { FormsModule } from "@angular/forms";
-import type { CheckoutItemInput, RecoveryOptions } from "@vendedoria/contracts";
-import { DsTurnstileComponent } from "@vendedoria/ui";
+import type { CheckoutItemInput, RecoveryOptions } from "@agopify/contracts";
+import { DsTurnstileComponent } from "@agopify/ui";
 import { CartService } from "../core/cart.service";
 import { ConversionSession } from "../core/conversion-session.service";
 import { StoreApiService } from "../core/store-api.service";
@@ -251,7 +251,7 @@ export class CartRecoveryComponent {
         this.cart.restore(restored.lines);
         this.session.remember(recover!);
         try {
-          sessionStorage.removeItem("vendedoria-checkout-key");
+          sessionStorage.removeItem("agopify-checkout-key");
         } catch {
           /* Storage may be blocked. */
         }

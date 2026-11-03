@@ -1,4 +1,4 @@
-import type { DsIconName } from '@vendedoria/ui';
+import type { DsIconName } from '@agopify/ui';
 
 export type ContextLink = { label: string; path: string; icon: DsIconName; section?: string };
 export type ConsoleContext = { id: 'store' | 'settings'; label: string; groups: { label: string; items: ContextLink[] }[] };

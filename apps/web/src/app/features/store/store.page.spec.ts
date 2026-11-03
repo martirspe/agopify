@@ -19,7 +19,12 @@ async function setup(render = false) {
   TestBed.configureTestingModule({ imports: [StorePage], providers: [
     { provide: ActivatedRoute, useValue: { queryParamMap: params } },
     { provide: Router, useValue: { navigate } },
-    { provide: StoreApiService, useValue: { get: async () => { if (render) return storeView; throw new Error('Offline'); }, update, publish } },
+    { provide: StoreApiService, useValue: {
+      get: async () => { if (render) return storeView; throw new Error('Offline'); },
+      update,
+      publish,
+      themes: async () => ({ status: storeView.themeStatus, savedAt: '2026-10-08T12:00:00Z', themes: [] }),
+    } },
     { provide: IntegrationsStateService, useValue: { refresh: async () => undefined, isActive: () => true } },
   ] });
   if (!render) TestBed.overrideComponent(StorePage, { set: { template: '' } });
@@ -31,6 +36,14 @@ afterEach(() => TestBed.resetTestingModule());
 describe('store settings sections', () => {
   it('offers Rosaline for a general business and sends its selection without changing industry', async () => {
     const {page, update}=await setup(true);
+    update.mockResolvedValueOnce({
+      ...storeView,
+      themeStatus: {
+        ...storeView.themeStatus,
+        editing: { template: 'rosaline', version: '1.1.0' },
+      },
+      storefront: { ...storeView.storefront, template: 'classic' },
+    });
     expect(page.templates().find(option=>option.value==='rosaline')?.available).toBe(true);
     page.pickTemplate('rosaline');
     expect(page.form.controls.template.value).toBe('rosaline');
@@ -38,6 +51,7 @@ describe('store settings sections', () => {
     expect(page.templatePreviewUrl('rosaline')).toBe('https://prueba.example.test/_templates/rosaline/');
     await page.save();
     expect(update).toHaveBeenCalledWith(expect.objectContaining({template:'rosaline',industry:'general'}));
+    expect(page.successMessage()).toContain('Publícalo');
   });
   it('keeps an unsaved identity when navigating between subsections and falls back to themes', async () => {
     const { page, params } = await setup();
@@ -77,10 +91,12 @@ describe('store settings sections', () => {
     const { page, fixture, update, publish } = await setup(true);
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelector('ds-save-bar')).toBeNull();
+    expect(root.querySelector('.ds-page-header__actions')?.textContent).toContain('Ver tienda');
     expect(root.querySelector('.ds-page-header__actions')?.textContent).toContain('Publicar tienda');
     page.form.controls.displayName.setValue('Nombre editado');
     page.form.markAsDirty();
     fixture.detectChanges();
+    expect(root.querySelector('.ds-page-header__actions')?.textContent).toContain('Ver tienda');
     expect(root.querySelector('.ds-page-header__actions')?.textContent).not.toContain('Publicar tienda');
     const save = root.querySelector('ds-save-bar button[type="submit"]') as HTMLButtonElement;
     expect(save.closest('form')).toBeNull();

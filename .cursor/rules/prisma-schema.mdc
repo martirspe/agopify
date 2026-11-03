@@ -5,4 +5,4 @@ globs:
 alwaysApply: false
 ---
 
-Before editing the schema or any migration, read `.agents/skills/vendedoria-data/SKILL.md` and follow its Invariants and Procedure. Never modify an existing migration directory.
+Before editing the schema or any migration, read `.agents/skills/agopify-data/SKILL.md` and follow its Invariants and Procedure. Never modify an existing migration directory.

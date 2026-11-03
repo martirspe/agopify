@@ -9,7 +9,7 @@
  * Usage:
  *   npm run train:ai-core
  *   npm run train:ai-core -- --with-unit
- *   docker compose -f docker-compose.dev.yml exec -T api npm run train:ai-core -w @vendedoria/api -- --skip-build --with-unit
+ *   docker compose -f docker-compose.dev.yml exec -T api npm run train:ai-core -w @agopify/api -- --skip-build --with-unit
  */
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';

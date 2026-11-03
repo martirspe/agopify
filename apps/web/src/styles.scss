@@ -118,9 +118,55 @@ button {
   place-content: center;
   margin: 0;
   padding: 2.5rem 1.5rem 4rem;
-  border-radius: var(--ds-console-card-radius, 0.75rem);
-  border: 1px solid var(--ds-console-border, var(--ds-color-border));
+  border: 0;
+  border-radius: var(--ds-console-card-radius, 1.25rem);
   background: var(--ds-color-surface);
+  box-shadow: var(--ds-console-card-shadow);
+}
+
+/*
+ * Admin Next form density inside console cards:
+ * field labels 13/400–500, selects share field ring chrome.
+ * Scoped to `label.field` so CTA labels (file pickers, action pills) keep their own contrast.
+ */
+[class~='tw:console-scope'] ds-form-section label.field,
+[class~='tw:console-scope'] .ds-form-section-body label.field {
+  font-size: var(--ds-console-type-sm, 0.8125rem);
+  font-weight: 400 !important; /* quiet Admin labels — overrides utility font-semibold */
+  line-height: 1.25rem;
+  letter-spacing: -0.005em;
+  color: var(--ds-console-text, var(--ds-color-text-primary));
+}
+[class~='tw:console-scope'] ds-select > select,
+[class~='tw:console-scope'] ds-select .ds-select-trigger {
+  min-height: var(--ds-console-control-height, 2rem);
+  padding: 0.375rem 0.75rem;
+  border: 0;
+  border-radius: var(--ds-console-field-radius, 0.75rem);
+  background: var(--ds-color-surface);
+  box-shadow: var(--ds-console-field-shadow);
+  font-size: var(--ds-console-type-sm, 0.8125rem);
+  font-weight: 400;
+  line-height: 1.25rem;
+  color: var(--ds-console-text, var(--ds-color-text-primary));
+  transition: box-shadow var(--ds-motion-fast) var(--ds-ease-out);
+}
+[class~='tw:console-scope'] ds-select .ds-select-trigger:hover:not(:disabled),
+[class~='tw:console-scope'] ds-select > select:hover:not(:disabled) {
+  box-shadow:
+    rgb(0 0 0 / 4%) 0 1px 2px 0,
+    rgb(0 0 0 / 12%) 0 0 0 1px;
+}
+[class~='tw:console-scope'] ds-select .ds-select-trigger:focus-visible,
+[class~='tw:console-scope'] ds-select > select:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-console-field-shadow-focus);
+}
+@media (max-width: 40rem) {
+  [class~='tw:console-scope'] ds-select > select,
+  [class~='tw:console-scope'] ds-select .ds-select-trigger {
+    min-height: var(--ds-touch-target);
+  }
 }
 
 /* Nested empties stay flush inside index/filter panels ( IndexTable empty). */

@@ -1,9 +1,9 @@
 /**
- * Creates, updates or revokes VendedorIA staff (SUPERADMIN | ADMIN). The only way to grant a platform role.
+ * Creates, updates or revokes Agopify staff (SUPERADMIN | ADMIN). The only way to grant a platform role.
  *
- *   npm run create-admin -w @vendedoria/api
- *   npm run create-admin -w @vendedoria/api -- --role=ADMIN --email=ops@vendedoria.pe --name="Ops"
- *   npm run create-admin -w @vendedoria/api -- --revoke --email=ops@vendedoria.pe
+ *   npm run create-admin -w @agopify/api
+ *   npm run create-admin -w @agopify/api -- --role=ADMIN --email=ops@agopify.com --name="Ops"
+ *   npm run create-admin -w @agopify/api -- --revoke --email=ops@agopify.com
  *
  * The password never goes in argv: interactive hidden prompt, CREATE_ADMIN_PASSWORD or --password-stdin.
  */
@@ -32,9 +32,9 @@ type Args = {
 
 const HELP = `
 Uso:
-  npm run create-admin -w @vendedoria/api                       (interactivo)
-  npm run create-admin -w @vendedoria/api -- --role=SUPERADMIN|ADMIN --email=... [--name=...] [--reset-password]
-  npm run create-admin -w @vendedoria/api -- --revoke --email=...
+  npm run create-admin -w @agopify/api                       (interactivo)
+  npm run create-admin -w @agopify/api -- --role=SUPERADMIN|ADMIN --email=... [--name=...] [--reset-password]
+  npm run create-admin -w @agopify/api -- --revoke --email=...
   Producción: docker compose exec api npm run create-admin -- ...
 
 Roles:
@@ -232,8 +232,8 @@ async function run(
     args.name ??
     (!existing
       ? prompt
-        ? await prompt.ask('Nombre completo', 'Equipo VendedorIA')
-        : 'Equipo VendedorIA'
+        ? await prompt.ask('Nombre completo', 'Equipo Agopify')
+        : 'Equipo Agopify'
       : undefined);
   const password = needsPassword
     ? await resolvePassword(args, prompt)

@@ -6,8 +6,15 @@ import {
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
-import { DsButtonComponent, DsFormSectionComponent, DsSelectComponent, DsDisclosureComponent, DsActionBarComponent, DsEmptyStateComponent, DsPageHeaderComponent } from '@vendedoria/ui';
-import { DsIconComponent } from '@vendedoria/ui';
+import {
+  DsBannerComponent,
+  DsButtonComponent,
+  DsDisclosureComponent,
+  DsEmptyStateComponent,
+  DsFormSectionComponent,
+  DsIconComponent,
+  DsPageHeaderComponent,
+} from '@agopify/ui';
 import {
   BillingApiService,
   BillingOverview,
@@ -25,7 +32,17 @@ type PlanOption = BillingOverview['currentPlan'] & { prepay?: PrepayPrice[] };
 @Component({
   selector: 'app-plans-page',
   standalone: true,
-  imports: [DsButtonComponent, DsIconComponent, RouterLink, PlanCheckoutComponent, DsFormSectionComponent, DsSelectComponent, DsDisclosureComponent, DsActionBarComponent, DsEmptyStateComponent, DsPageHeaderComponent],
+  imports: [
+    DsBannerComponent,
+    DsButtonComponent,
+    DsDisclosureComponent,
+    DsEmptyStateComponent,
+    DsFormSectionComponent,
+    DsIconComponent,
+    DsPageHeaderComponent,
+    PlanCheckoutComponent,
+    RouterLink,
+  ],
   templateUrl: './plans.page.html',
   styleUrl: './plans.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -194,6 +211,12 @@ export class PlansPage {
     if (data.planStatus === 'TRIAL') return `${data.currentPlan.name} (prueba gratis)`;
     if (data.planStatus === 'EXPIRED') return `${data.currentPlan.name} (vencido)`;
     return data.currentPlan.name;
+  }
+
+  statusBadge(data: BillingOverview): string {
+    if (data.planStatus === 'TRIAL') return 'En prueba';
+    if (data.planStatus === 'EXPIRED') return 'Plan vencido';
+    return 'Plan actual';
   }
 
   periodLabel(data: BillingOverview): string | null {

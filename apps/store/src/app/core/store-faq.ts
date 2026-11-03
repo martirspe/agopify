@@ -1,4 +1,4 @@
-import type { StoreTemplateFaq, StorefrontView } from '@vendedoria/contracts';
+import type { StoreTemplateFaq, StorefrontView } from '@agopify/contracts';
 
 /** Rounded amount for marketing lines: 50000 → "S/ 500". */
 export function wholeMoney(store: StorefrontView, cents: number): string {

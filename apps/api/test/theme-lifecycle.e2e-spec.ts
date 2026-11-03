@@ -20,7 +20,7 @@ const isolated = process.env.RUN_ISOLATED_COMMERCE_TESTS === '1';
   let counter = 0;
 
   beforeAll(async () => {
-    if (!process.env.DATABASE_URL?.includes('/vendedoria_test')) throw new Error('Theme E2E requires the isolated test database.');
+    if (!process.env.DATABASE_URL?.includes('/agopify_test')) throw new Error('Theme E2E requires the isolated test database.');
     const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = module.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));

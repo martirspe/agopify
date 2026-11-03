@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DsIconComponent, DsPageHeaderComponent } from '@vendedoria/ui';
+import { DsIconComponent, DsPageHeaderComponent } from '@agopify/ui';
 
 type HelpTopic = {
   title: string;
@@ -45,7 +45,7 @@ export class HelpPage {
     },
     {
       title: 'Plan y límites',
-      body: 'Tu plan en VendedorIA es independiente de los cobros a tus compradores. Sube de plan antes de llegar al límite.',
+      body: 'Tu plan en Agopify es independiente de los cobros a tus compradores. Sube de plan antes de llegar al límite.',
       link: '/app/plans',
       cta: 'Ver planes',
     },

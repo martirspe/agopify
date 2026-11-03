@@ -24,8 +24,8 @@ import type {
   PublicCatalogSelection,
   PublicProductList,
   PublicProductSort,
-} from "@vendedoria/contracts";
-import { DsIconComponent, DsSelectComponent } from "@vendedoria/ui";
+} from "@agopify/contracts";
+import { DsIconComponent, DsSelectComponent } from "@agopify/ui";
 import { CatalogFiltersComponent } from "../../components/catalog-filters.component";
 import { ProductCardComponent } from "../../components/product-card.component";
 import {

@@ -15,8 +15,8 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import type { PayOrderRequest, PublicOrder } from '@vendedoria/contracts';
-import { DsIconComponent } from '@vendedoria/ui';
+import type { PayOrderRequest, PublicOrder } from '@agopify/contracts';
+import { DsIconComponent } from '@agopify/ui';
 import { AnalyticsService } from '../../core/analytics.service';
 import { CartService } from '../../core/cart.service';
 import {

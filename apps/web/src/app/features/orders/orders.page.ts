@@ -1,4 +1,4 @@
-import { DsModalDirective, DsSelectComponent } from '@vendedoria/ui';
+import { DsModalDirective, DsSelectComponent } from '@agopify/ui';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -15,10 +15,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { map, startWith } from 'rxjs';
-import { DsButtonComponent } from '@vendedoria/ui';
-import { DsEmptyStateComponent } from '@vendedoria/ui';
-import { DsIconComponent } from '@vendedoria/ui';
-import { DsBannerComponent, DsPageHeaderComponent } from '@vendedoria/ui';
+import { DsButtonComponent } from '@agopify/ui';
+import { DsEmptyStateComponent } from '@agopify/ui';
+import { DsIconComponent } from '@agopify/ui';
+import { DsBannerComponent, DsPageHeaderComponent } from '@agopify/ui';
 import {
   OrderDto,
   OrderStatus,

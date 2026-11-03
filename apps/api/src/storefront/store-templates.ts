@@ -1,4 +1,4 @@
-import { getTheme, latestThemes, RENDERER_SECTIONS } from '@vendedoria/themes';
+import { getTheme, latestThemes, RENDERER_SECTIONS } from '@agopify/themes';
 import type { Prisma } from '@prisma/client';
 import type {
   StoreEditorField,
@@ -11,7 +11,7 @@ import type {
   StoreThemeCorners,
   StoreThemeFont,
   StoreThemeOption,
-} from '@vendedoria/contracts';
+} from '@agopify/contracts';
 
 export const INDUSTRIES = [
   'general',

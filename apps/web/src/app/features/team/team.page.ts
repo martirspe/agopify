@@ -1,4 +1,4 @@
-import { DsSelectComponent } from '@vendedoria/ui';
+import { DsSelectComponent } from '@agopify/ui';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -8,7 +8,7 @@ import {
   DsEmptyStateComponent,
   DsIconComponent,
   DsPageHeaderComponent,
-} from '@vendedoria/ui';
+} from '@agopify/ui';
 import { messageFrom } from '../../core/api/api-error';
 import {
   AssignableRole,

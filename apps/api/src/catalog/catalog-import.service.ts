@@ -233,7 +233,7 @@ export class CatalogImportService {
 
     const stamp = new Date().toISOString().slice(0, 10);
     return {
-      filename: `catalogo-vendedoria-${stamp}.zip`,
+      filename: `catalogo-agopify-${stamp}.zip`,
       bytes: buildStoredZip(files),
       warnings: built.warnings,
     };

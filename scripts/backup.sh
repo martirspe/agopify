@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VendedorIA backup: Postgres dump (custom format) + .env snapshot + product photos from the
+# Agopify backup: Postgres dump (custom format) + .env snapshot + product photos from the
 # `uploads` volume (MEDIA_STORAGE=local, and photos uploaded before switching to s3).
 # Photos already on S3 stay there and are not copied.
 #
@@ -7,9 +7,9 @@
 #   bash scripts/backup.sh
 #   bash scripts/backup.sh --keep 14
 #   bash scripts/backup.sh --no-media          # database + .env only (pre-deploy)
-#   BACKUP_DIR=/var/backups/vendedoria BACKUP_KEEP=20 bash scripts/backup.sh
+#   BACKUP_DIR=/var/backups/agopify BACKUP_KEEP=20 bash scripts/backup.sh
 #
-# Output: ${BACKUP_DIR}/vendedoria-YYYYMMDDTHHMMSSZ.tar.gz (chmod 600: contains secrets)
+# Output: ${BACKUP_DIR}/agopify-YYYYMMDDTHHMMSSZ.tar.gz (chmod 600: contains secrets)
 
 set -euo pipefail
 
@@ -65,8 +65,8 @@ command -v docker >/dev/null 2>&1 || { err "Docker not found"; exit 1; }
 
 POSTGRES_USER="$(env_get POSTGRES_USER)"
 POSTGRES_DB="$(env_get POSTGRES_DB)"
-POSTGRES_USER="${POSTGRES_USER:-vendedoria}"
-POSTGRES_DB="${POSTGRES_DB:-vendedoria}"
+POSTGRES_USER="${POSTGRES_USER:-agopify}"
+POSTGRES_DB="${POSTGRES_DB:-agopify}"
 
 if ! "${COMPOSE[@]}" ps --status running --services 2>/dev/null | grep -qx postgres; then
   err "Postgres is not running. Start the stack first (docker compose up -d postgres)."
@@ -75,9 +75,9 @@ fi
 
 mkdir -p "$BACKUP_DIR"
 chmod 700 "$BACKUP_DIR" 2>/dev/null || true
-WORK="$(mktemp -d "${TMPDIR:-/tmp}/vendedoria-backup.XXXXXX")"
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/agopify-backup.XXXXXX")"
 chmod 700 "$WORK"
-ARCHIVE_NAME="vendedoria-${STAMP}.tar.gz"
+ARCHIVE_NAME="agopify-${STAMP}.tar.gz"
 ARCHIVE_PATH="${BACKUP_DIR}/${ARCHIVE_NAME}"
 
 GIT_COMMIT=""
@@ -125,7 +125,7 @@ tar -C "$WORK" -czf "$ARCHIVE_PATH" "${FILES[@]}"
 chmod 600 "$ARCHIVE_PATH"
 log "Wrote ${ARCHIVE_PATH} ($(wc -c <"$ARCHIVE_PATH" | tr -d ' ') bytes)"
 
-mapfile -t OLD < <(ls -1t "${BACKUP_DIR}"/vendedoria-*.tar.gz 2>/dev/null || true)
+mapfile -t OLD < <(ls -1t "${BACKUP_DIR}"/agopify-*.tar.gz 2>/dev/null || true)
 if (( ${#OLD[@]} > BACKUP_KEEP )); then
   for stale in "${OLD[@]:$BACKUP_KEEP}"; do
     warn "Pruning old backup: ${stale}"

@@ -11,4 +11,4 @@ globs:
 alwaysApply: false
 ---
 
-These files guard money, credentials or tenant isolation. Before changing them, read `.agents/skills/vendedoria-security/SKILL.md` and check every invariant your diff touches.
+These files guard money, credentials or tenant isolation. Before changing them, read `.agents/skills/agopify-security/SKILL.md` and check every invariant your diff touches.

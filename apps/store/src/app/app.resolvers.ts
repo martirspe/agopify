@@ -6,7 +6,7 @@ import type {
   PublicProductSort,
   StoreTemplate,
   StorefrontView,
-} from '@vendedoria/contracts';
+} from '@agopify/contracts';
 import { kindTab } from './core/catalog-kinds';
 import { catalogPriceCents, catalogSelections } from './core/catalog-query';
 import { StoreApiService } from './core/store-api.service';
@@ -14,6 +14,13 @@ import { StoreStateService } from './core/store-state.service';
 
 export const CATALOG_PAGE_SIZE = 24;
 const SORTS: PublicProductSort[] = ['featured', 'newest', 'price-asc', 'price-desc'];
+const EMPTY_FEATURED: PublicProductList = {
+  items: [],
+  total: 0,
+  page: 1,
+  pageSize: 8,
+  facets: { categories: [], groups: [], price: null },
+};
 
 /** Loads the store of this host once; call it inside an injection context. */
 function loadStore(): Promise<StorefrontView | null> {
@@ -39,8 +46,15 @@ export const templateMatch =
     return (store?.themeRelease?.renderer ?? store?.template) === template;
   };
 
-export const featuredResolver: ResolveFn<PublicProductList> = () =>
-  inject(StoreApiService).products({ sort: 'featured', pageSize: 8 });
+/** Draft/unpublished hosts resolve without a preview cookie; never let that crash SSR into Express "Cannot GET /". */
+export const featuredResolver: ResolveFn<PublicProductList> = async () => {
+  if (!inject(StoreStateService).store()) return EMPTY_FEATURED;
+  try {
+    return await inject(StoreApiService).products({ sort: 'featured', pageSize: 8 });
+  } catch {
+    return EMPTY_FEATURED;
+  }
+};
 
 export const catalogResolver: ResolveFn<PublicProductList | null> = (route) => {
   const params = route.queryParamMap;

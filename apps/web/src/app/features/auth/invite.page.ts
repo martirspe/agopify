@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { DsButtonComponent, DsIconComponent, DsTurnstileComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsIconComponent, DsTurnstileComponent } from '@agopify/ui';
 import { messageFrom } from '../../core/api/api-error';
 import { AuthApiService, InvitePreview } from '../../core/auth/auth-api.service';
 import { authErrorMessage, CHALLENGE_PENDING } from './auth-errors';

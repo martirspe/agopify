@@ -1,0 +1,251 @@
+<form
+  class="ac"
+  [class.ac--compact]="variant() === 'compact'"
+  [class.ac--box]="variant() === 'box'"
+  [class.is-active]="active()"
+  [class.is-dictating]="dictating()"
+  [attr.data-dictating]="dictating() ? '' : null"
+  [attr.aria-label]="ariaLabel()"
+  (submit)="onSubmit($event)"
+  (mousedown)="activated.emit()"
+>
+  @if (variant() === 'compact') {
+    @if (dictating()) {
+      <div class="ac__dictation" role="status" aria-live="polite" aria-label="Dictando">
+        <button type="button" class="ac__btn" aria-label="Cancelar dictado" (click)="dictationCancel.emit()">
+          <ds-icon name="x" [size]="0.9" />
+        </button>
+        <div class="ac__waveform" aria-hidden="true">
+          @for (_ of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]; track $index) {
+            <span class="ac__wave" [style.animation-delay]="($index % 8) * 90 + 'ms'"></span>
+          }
+        </div>
+        <button type="button" class="ac__btn ac__btn--send" aria-label="Listo" (click)="dictationConfirm.emit()">
+          <ds-icon name="check" [size]="0.9" />
+        </button>
+      </div>
+    } @else {
+      <span class="ac__avatar" aria-hidden="true">
+        <ds-icon name="sparkles" [size]="0.85" />
+      </span>
+      <label class="tw:sr-only" [attr.for]="inputId()">Mensaje</label>
+      <textarea
+        #composerInput
+        [id]="inputId()"
+        class="ac__input"
+        rows="1"
+        enterkeyhint="send"
+        data-focus-chrome="parent"
+        [attr.maxlength]="maxlength()"
+        [placeholder]="placeholder()"
+        [ngModel]="value()"
+        [ngModelOptions]="{ standalone: true }"
+        [disabled]="disabled() || busy()"
+        (ngModelChange)="value.set($event)"
+        (keydown.enter)="onEnter($event)"
+        (focus)="focused.emit()"
+        (blur)="blurred.emit()"
+      ></textarea>
+      @if (dictationError(); as err) {
+        <p class="ac__error" role="alert">{{ err }}</p>
+      }
+      <div class="ac__actions">
+        <div class="ac__plus">
+          @if (plusOpen()) {
+            <div
+              class="ac__plus-menu"
+              [class.ac__plus-menu--up]="plusMenuUp()"
+              role="menu"
+              aria-label="Acciones del asistente"
+              (mousedown)="$event.preventDefault()"
+            >
+              @for (item of plusItems(); track item.id) {
+                @if (item.dividerBefore) {
+                  <div class="ac__plus-divider" role="separator"></div>
+                }
+                <button type="button" class="ac__plus-item" role="menuitem" [disabled]="item.disabled" (click)="onPlus(item)">
+                  <span class="ac__plus-icon" aria-hidden="true"><ds-icon [name]="item.icon" [size]="1.25" /></span>
+                  <span class="ac__plus-label">{{ item.label }}</span>
+                </button>
+              }
+            </div>
+          }
+          <button
+            type="button"
+            class="ac__btn"
+            aria-label="Agregar archivos y más"
+            [attr.aria-expanded]="plusOpen()"
+            (mousedown)="$event.preventDefault()"
+            (click)="plusToggle.emit($event)"
+          >
+            <ds-icon name="plus" [size]="1" />
+          </button>
+        </div>
+        @if (canSend()) {
+          <button type="submit" class="ac__btn ac__btn--send" aria-label="Enviar" [disabled]="busy()">
+            <ds-icon name="arrowUp" [size]="0.9" />
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="ac__btn"
+            aria-label="Dictar"
+            [disabled]="!dictationSupported() || busy() || disabled()"
+            (click)="dictationStart.emit()"
+          >
+            <ds-icon name="mic" [size]="1" />
+          </button>
+        }
+        @if (showDockToggle()) {
+          <span class="ac__sep" aria-hidden="true"></span>
+          <button
+            type="button"
+            class="ac__btn"
+            [attr.aria-pressed]="dockOpen()"
+            [attr.aria-label]="dockOpen() ? 'Ocultar panel del asistente' : 'Abrir panel del asistente'"
+            title="Panel del asistente"
+            (click)="dockToggle.emit()"
+          >
+            <ds-icon name="panelRight" [size]="1" />
+          </button>
+        }
+      </div>
+    }
+  } @else {
+    <label class="tw:sr-only" [attr.for]="inputId()">Mensaje</label>
+    <textarea
+      #composerInput
+      [id]="inputId()"
+      class="ac__input"
+      rows="2"
+      enterkeyhint="send"
+      data-focus-chrome="parent"
+      [attr.maxlength]="maxlength()"
+      [placeholder]="placeholder()"
+      [ngModel]="value()"
+      [ngModelOptions]="{ standalone: true }"
+      [disabled]="disabled() || busy()"
+      (ngModelChange)="value.set($event)"
+      (keydown.enter)="onEnter($event)"
+      (focus)="focused.emit()"
+      (blur)="blurred.emit()"
+    ></textarea>
+    @if (dictationError(); as err) {
+      <p class="ac__error ac__error--inline" role="alert">{{ err }}</p>
+    }
+    <div class="ac__bar">
+      @if (dictating()) {
+        <div class="ac__dictation" role="status" aria-live="polite" aria-label="Dictando">
+          <button type="button" class="ac__btn" aria-label="Cancelar dictado" (click)="dictationCancel.emit()">
+            <ds-icon name="x" [size]="0.9" />
+          </button>
+          <div class="ac__waveform" aria-hidden="true">
+            @for (_ of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]; track $index) {
+              <span class="ac__wave" [style.animation-delay]="($index % 8) * 90 + 'ms'"></span>
+            }
+          </div>
+          <button type="button" class="ac__btn ac__btn--send" aria-label="Listo" (click)="dictationConfirm.emit()">
+            <ds-icon name="check" [size]="0.9" />
+          </button>
+        </div>
+      } @else {
+        <span class="ac__avatar" aria-hidden="true">
+          <ds-icon name="sparkles" [size]="0.85" />
+        </span>
+        <div class="ac__actions">
+          @if (showRecents()) {
+            <button type="button" class="ac__pill" (click)="recentsClick.emit()">
+              <ds-icon name="history" [size]="0.85" />
+              Recientes
+            </button>
+          }
+          <div class="ac__plus">
+            @if (plusOpen()) {
+              <div
+                class="ac__plus-menu"
+                [class.ac__plus-menu--up]="plusMenuUp()"
+                role="menu"
+                aria-label="Acciones del asistente"
+                (mousedown)="$event.preventDefault()"
+              >
+                @for (item of plusItems(); track item.id) {
+                  @if (item.dividerBefore) {
+                    <div class="ac__plus-divider" role="separator"></div>
+                  }
+                  @if (item.kind === 'toggle') {
+                    <div class="ac__plus-item ac__plus-item--toggle" role="none">
+                      <span class="ac__plus-icon" aria-hidden="true"><ds-icon [name]="item.icon" [size]="1.25" /></span>
+                      <span class="ac__plus-label">{{ item.label }}</span>
+                      <button
+                        type="button"
+                        class="ac__switch"
+                        role="switch"
+                        [attr.aria-checked]="generateApps()"
+                        [attr.aria-label]="item.label"
+                        (click)="generateAppsToggle.emit()"
+                      >
+                        <span class="ac__switch-thumb" aria-hidden="true"></span>
+                      </button>
+                      <button type="button" class="ac__plus-info" aria-label="Más información" disabled>
+                        <ds-icon name="info" [size]="1.25" />
+                      </button>
+                    </div>
+                  } @else {
+                    <button type="button" class="ac__plus-item" role="menuitem" [disabled]="item.disabled" (click)="onPlus(item)">
+                      <span class="ac__plus-icon" aria-hidden="true"><ds-icon [name]="item.icon" [size]="1.25" /></span>
+                      <span class="ac__plus-label">{{ item.label }}</span>
+                      @if (item.hint || item.trailingIcon || item.submenu) {
+                        <span class="ac__plus-meta" aria-hidden="true">
+                          @if (item.hint) {
+                            <span class="ac__plus-hint">{{ item.hint }}</span>
+                          }
+                          @if (item.trailingIcon) {
+                            <span class="ac__plus-trailing">
+                              <ds-icon [name]="item.trailingIcon" [size]="1.125" />
+                            </span>
+                          }
+                          @if (item.submenu) {
+                            <ds-icon name="chevronRight" [size]="1.25" />
+                          }
+                        </span>
+                      }
+                    </button>
+                  }
+                }
+              </div>
+            }
+            <button
+              type="button"
+              class="ac__btn"
+              aria-label="Agregar archivos y más"
+              [attr.aria-expanded]="plusOpen()"
+              (mousedown)="$event.preventDefault()"
+              (click)="plusToggle.emit($event)"
+            >
+              <ds-icon name="plus" [size]="1" />
+            </button>
+          </div>
+          @if (canSend()) {
+            <button type="submit" class="ac__btn ac__btn--send" aria-label="Enviar" [disabled]="busy()">
+              <ds-icon name="arrowUp" [size]="0.9" />
+            </button>
+          } @else if (busy()) {
+            <button type="button" class="ac__btn ac__btn--send" disabled aria-label="Generando respuesta">
+              <ds-icon name="pause" [size]="0.9" />
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="ac__btn"
+              aria-label="Dictar"
+              [disabled]="!dictationSupported() || disabled()"
+              (click)="dictationStart.emit()"
+            >
+              <ds-icon name="mic" [size]="1" />
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</form>

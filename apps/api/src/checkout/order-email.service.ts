@@ -111,7 +111,7 @@ export class OrderEmailService {
 <p>Un cliente pidió atención de tu equipo por ${channel}.</p>
 <p>${agentPaused ? 'Tu vendedor IA se pausó en esa conversación y no responderá hasta que lo reactives.' : 'Tu vendedor IA sigue respondiendo en esa conversación.'}</p>
 <p><a href="${esc(link)}" style="display:inline-block;padding:12px 20px;border-radius:8px;background:#0b0d12;color:#fff;text-decoration:none;font-weight:700">Responder ahora</a></p>
-<p style="font-size:12px;color:#667">Recibes este aviso porque eres parte del equipo de ${esc(conversation.tenant.name)} en VendedorIA.</p>
+<p style="font-size:12px;color:#667">Recibes este aviso porque eres parte del equipo de ${esc(conversation.tenant.name)} en Agopify.</p>
 </div>`;
     const subject = `Un cliente quiere hablar con una persona · ${channel}`;
     await Promise.all(

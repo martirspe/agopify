@@ -24,7 +24,7 @@ export class ConversionSession {
     this.consent() ? this.sessionId() : undefined,
   );
   private get key() {
-    return `vendedoria-conversion:${this.state.store()?.slug ?? ""}`;
+    return `agopify-conversion:${this.state.store()?.slug ?? ""}`;
   }
   init(): void {
     if (!this.browser || this.sessionId()) return;

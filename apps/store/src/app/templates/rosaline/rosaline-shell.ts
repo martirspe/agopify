@@ -24,7 +24,7 @@ import { StoreShellLayout } from "../../layout/store-shell.layout";
 import { ThemeSocialLinksComponent } from "../../components/theme-social-links.component";
 import { RosalineSourceMotion } from "./source-motion";
 import { RosalineSearch } from "./search";
-import type { PublicCatalogCard } from "@vendedoria/contracts";
+import type { PublicCatalogCard } from "@agopify/contracts";
 import { StoreApiService } from "../../core/store-api.service";
 import { TemplateDemo } from "../../core/template-demo";
 import { RosalineCartOverlay } from "./cart-overlay";

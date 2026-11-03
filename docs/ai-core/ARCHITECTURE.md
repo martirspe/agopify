@@ -1,7 +1,7 @@
-# VendedorIA AI Core — Architecture (v2, adapted)
+# Agopify AI Core — Architecture (v2, adapted)
 
 **Version:** 2.0.0 (adapted to repository evidence)  
-**Source:** Part A of *VendedorIA AI Core v2*; executable code wins.  
+**Source:** Part A of *Agopify AI Core v2*; executable code wins.  
 **Status:** Living — `apps/api/src/agent-runtime/` + `conversations/sales-gateway.service.ts`.
 
 ## 1. Vision and principles

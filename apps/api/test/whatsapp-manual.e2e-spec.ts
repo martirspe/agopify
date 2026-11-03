@@ -12,7 +12,7 @@ import { MetaInstagramClient } from '../src/channels/meta-instagram.client';
 import { ConversationsService } from '../src/conversations/conversations.service';
 import type { AuthUserPayload } from '../src/common/types/auth-user';
 
-const isolated = process.env.DATABASE_URL?.includes('/vendedoria_test?') === true;
+const isolated = process.env.DATABASE_URL?.includes('/agopify_test?') === true;
 (isolated ? describe : describe.skip)('WhatsApp customer-owned app lifecycle and signed routing (isolated DB)', () => {
   const prisma = new PrismaService();
   // No platform Meta configuration: customer-owned apps work independently.

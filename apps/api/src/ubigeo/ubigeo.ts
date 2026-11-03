@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { UbigeoDistrict } from '@vendedoria/contracts';
+import type { UbigeoDistrict } from '@agopify/contracts';
 
 type UbigeoRow = UbigeoDistrict & { lat: number | null; lon: number | null };
 

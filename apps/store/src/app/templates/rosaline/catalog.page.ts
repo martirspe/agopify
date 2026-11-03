@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import { DsIconComponent, DsSelectComponent } from "@vendedoria/ui";
+import { DsIconComponent, DsSelectComponent } from "@agopify/ui";
 import { CatalogPage } from "../../features/catalog/catalog.page";
 import { CatalogFiltersComponent } from "../../components/catalog-filters.component";
 import { RosalineProductCard } from "./product-card";

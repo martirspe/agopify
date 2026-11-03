@@ -1,6 +1,6 @@
 # Rosaline — verification
 
-Date: 2026-10-20 (America/Lima). Source: home-bold-modern.html. Release vendedoria/rosaline@1.0.0.
+Date: 2026-10-20 (America/Lima). Source: home-bold-modern.html. Release agopify/rosaline@1.0.0.
 
 ## Current source-based implementation
 

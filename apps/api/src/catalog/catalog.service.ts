@@ -36,6 +36,7 @@ import {
   type ChannelListingInput,
   type OptionDefinitionInput,
 } from './product-visibility';
+import { normalizeOptionValues } from './option-values';
 import { combinationKey, MAX_VARIANTS, normalizeOption, variantOptions, type OptionRecord } from './variant-options';
 
 const PRODUCT_INCLUDE = PRODUCT_RELATIONS_INCLUDE;
@@ -967,21 +968,22 @@ export class CatalogService {
     if (definitions?.length) {
       return definitions.map((definition) => ({
         name: definition.name.trim(),
-        values: [...new Set(definition.values.map((value) => value.trim()).filter(Boolean))],
-      }));
+        values: normalizeOptionValues(definition.values),
+      })).filter((definition) => definition.name && definition.values.length);
     }
-    const axes = new Map<string, { name: string; values: Set<string> }>();
+    const axes = new Map<string, { name: string; values: Map<string, string> }>();
     for (const variant of variants ?? []) {
       for (const option of variantOptions(variant)) {
         const key = normalizeOption(option.name);
-        const axis = axes.get(key) ?? { name: option.name.trim(), values: new Set<string>() };
-        axis.values.add(option.value.trim());
+        const axis = axes.get(key) ?? { name: option.name.trim(), values: new Map() };
+        const valueKey = normalizeOption(option.value);
+        if (!axis.values.has(valueKey)) axis.values.set(valueKey, option.value.trim());
         axes.set(key, axis);
       }
     }
     return [...axes.values()].map((axis) => ({
       name: axis.name,
-      values: [...axis.values],
+      values: [...axis.values.values()].map((value) => ({ value })),
     }));
   }
 

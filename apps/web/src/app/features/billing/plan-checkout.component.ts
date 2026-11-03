@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DsButtonComponent, DsIconComponent, DsModalDirective } from '@vendedoria/ui';
+import { DsButtonComponent, DsIconComponent, DsModalDirective } from '@agopify/ui';
 import { LEGAL_LINKS } from '../legal/legal-identity';
 import {
   BillingApiService,

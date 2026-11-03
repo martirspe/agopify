@@ -6,7 +6,7 @@ import {
   computed,
 } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import type { PublicCatalogCard } from "@vendedoria/contracts";
+import type { PublicCatalogCard } from "@agopify/contracts";
 import { RosalineProductCard } from "./product-card";
 @Component({
   selector: "rosaline-search",

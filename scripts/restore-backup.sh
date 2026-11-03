@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Restores a VendedorIA backup made by scripts/backup.sh: database, product photos
+# Restores a Agopify backup made by scripts/backup.sh: database, product photos
 # (uploads volume) and optionally .env.
 #
 # Usage:
-#   bash scripts/restore-backup.sh backups/vendedoria-….tar.gz
+#   bash scripts/restore-backup.sh backups/agopify-….tar.gz
 #   bash scripts/restore-backup.sh backups/latest.tar.gz --yes
-#   bash scripts/restore-backup.sh backups/vendedoria-….tar.gz --skip-env
+#   bash scripts/restore-backup.sh backups/agopify-….tar.gz --skip-env
 #
 # Moving to a new VPS: clone the repo (same commit), copy the archive, run this script,
 # then bash scripts/deploy.sh. Photos on S3 stay there: keep the same AWS_* values.
@@ -58,7 +58,7 @@ env_get() {
   printf '%s' "${line#*=}" | tr -d '\r' | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//"
 }
 
-WORK="$(mktemp -d "${TMPDIR:-/tmp}/vendedoria-restore.XXXXXX")"
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/agopify-restore.XXXXXX")"
 chmod 700 "$WORK"
 tar -xzf "$ARCHIVE" -C "$WORK"
 [[ -f "${WORK}/database.dump" ]] || { err "database.dump missing inside backup"; exit 1; }
@@ -85,8 +85,8 @@ fi
 
 POSTGRES_USER="$(env_get .env POSTGRES_USER)"
 POSTGRES_DB="$(env_get .env POSTGRES_DB)"
-POSTGRES_USER="${POSTGRES_USER:-vendedoria}"
-POSTGRES_DB="${POSTGRES_DB:-vendedoria}"
+POSTGRES_USER="${POSTGRES_USER:-agopify}"
+POSTGRES_DB="${POSTGRES_DB:-agopify}"
 
 log "Stopping nginx/store/web/api to avoid writes during restore..."
 "${COMPOSE[@]}" stop nginx store web api 2>/dev/null || true

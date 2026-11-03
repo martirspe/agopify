@@ -1,21 +1,37 @@
-<section class="tw:mx-auto tw:grid tw:w-full tw:min-w-0 tw:gap-5">
-  <ds-page-header title="Planes" icon="creditCard" />
+<section class="plans tw:mx-auto tw:grid tw:w-full tw:min-w-0 tw:gap-5">
+  <ds-page-header title="Planes" icon="creditCard">
+    @if (overview(); as data) {
+      <div dsPageActions>
+        <ds-button
+          variant="secondary"
+          [disabled]="loading() || saving() || !!activeCheckout()"
+          (click)="load()"
+        >
+          <ds-icon name="rotateCcw" [size]="0.875" />Actualizar uso
+        </ds-button>
+        @if (!activeCheckout() && !pendingSimulation() && canManage() && data.currentPlan.priceCents !== null) {
+          <ds-button [disabled]="!canSelect(data.currentPlan, data)" (click)="selectPlan(data.currentPlan)">
+            {{ buttonLabel(data.currentPlan, data) }}
+          </ds-button>
+        }
+      </div>
+    }
+  </ds-page-header>
 
   @if (errorMessage(); as error) {
-    <div class="tw:feedback tw:feedback-danger" role="alert"><ds-icon name="alert" /><span>{{ error }}</span></div>
+    <ds-banner tone="critical">{{ error }}</ds-banner>
   }
   @if (successMessage(); as success) {
-    <div class="tw:feedback tw:feedback-success" role="status"><ds-icon name="check" /><span>{{ success }}</span></div>
+    <ds-banner tone="success">{{ success }}</ds-banner>
   }
   @if (infoMessage(); as info) {
-    <div class="tw:feedback tw:feedback-info" role="status"><ds-icon name="info" /><span>{{ info }}</span></div>
+    <ds-banner tone="info">{{ info }}</ds-banner>
   }
   @if (overviewError(); as error) {
-    <div class="tw:feedback tw:feedback-danger" role="alert">
-      <ds-icon name="alert" />
-      <span>{{ error }} @if (overview()) { Se muestran los últimos datos disponibles. }</span>
-      <ds-button variant="secondary" [disabled]="loading() || saving()" (click)="load()">Reintentar</ds-button>
-    </div>
+    <ds-banner tone="critical">
+      {{ error }} @if (overview()) { Se muestran los últimos datos disponibles. }
+      <ds-button dsBannerAction variant="secondary" [disabled]="loading() || saving()" (click)="load()">Reintentar</ds-button>
+    </ds-banner>
   }
 
   @if (pendingSimulation()) {
@@ -40,205 +56,196 @@
       <div class="tw:console-list-skeleton" aria-hidden="true">@for (row of [1, 2, 3, 4]; track row) { <div></div> }</div>
     </div>
   } @else if (overview(); as data) {
-    <ds-action-bar layout="dock" label="Acciones del plan">
-      <span dsActionStatus role="status">
-        {{ saving() ? 'Procesando solicitud…' : loading() ? 'Actualizando plan…' : currentPlanLabel(data) }}
-      </span>
-      <ds-button variant="secondary" [disabled]="loading() || saving() || !!activeCheckout()" (click)="load()">
-        <ds-icon name="rotateCcw" />Actualizar uso
-      </ds-button>
-      @if (!activeCheckout() && !pendingSimulation() && canManage() && data.currentPlan.priceCents !== null) {
-        <ds-button [disabled]="!canSelect(data.currentPlan, data)" (click)="selectPlan(data.currentPlan)">
-          {{ buttonLabel(data.currentPlan, data) }}
-        </ds-button>
-      }
-    </ds-action-bar>
-
     @if (!canManage()) {
-      <div class="tw:feedback tw:feedback-info" role="status">
-        <ds-icon name="info" />
-        <span>Puedes consultar el plan y el uso. El propietario o un administrador puede gestionar las compras.</span>
-      </div>
+      <ds-banner tone="info">Puedes consultar el plan y el uso. El propietario o un administrador puede gestionar las compras.</ds-banner>
     }
     @if (data.planStatus === 'EXPIRED') {
-      <div class="tw:feedback tw:feedback-danger" role="alert">
-        <ds-icon name="alert" />
-        <span>Tu plan venció. El vendedor no atiende chats nuevos y no puedes agregar productos. Tus productos, pedidos y configuración se conservan. Renueva o elige un plan para reactivarlos.</span>
-      </div>
+      <ds-banner tone="critical">
+        Tu plan venció. El vendedor no atiende chats nuevos y no puedes agregar productos. Tus productos, pedidos y configuración se conservan. Renueva o elige un plan para reactivarlos.
+      </ds-banner>
     }
 
-    <ds-form-section density="compact" title="Tu plan y consumo" icon="creditCard">
-      <div class="tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-4">
-        <div>
-          <p class="tw:m-0 tw:text-caption tw:text-muted">Plan actual</p>
-          <p class="tw:m-0 tw:mt-1 tw:text-lg tw:font-semibold">{{ currentPlanLabel(data) }}</p>
+    <section class="plans-summary tw:console-card" aria-labelledby="plans-summary-title">
+      <div class="plans-summary__head">
+        <div class="plans-summary__identity">
+          <p class="plans-summary__eyebrow">Información del plan</p>
+          <div class="plans-summary__title-row">
+            <h2 id="plans-summary-title" class="plans-summary__name">{{ data.currentPlan.name }}</h2>
+            <span
+              class="plans-summary__badge"
+              [class.plans-summary__badge--trial]="data.planStatus === 'TRIAL'"
+              [class.plans-summary__badge--expired]="data.planStatus === 'EXPIRED'"
+              [class.plans-summary__badge--active]="data.planStatus === 'ACTIVE'"
+            >{{ statusBadge(data) }}</span>
+          </div>
           @if (periodLabel(data); as period) {
-            <p class="tw:m-0 tw:mt-1 tw:text-sm tw:text-muted">{{ period }}</p>
+            <p class="plans-summary__period">{{ period }}</p>
           }
         </div>
         @if (data.usage.extraChats) {
-          <p class="tw:m-0 tw:rounded-sm tw:bg-canvas tw:px-2 tw:py-1 tw:text-sm tw:text-muted">
-            Incluye {{ data.usage.extraChats }} chats extra este mes
-          </p>
+          <p class="plans-summary__extra">Incluye {{ data.usage.extraChats }} chats extra este mes</p>
         }
       </div>
 
-      <dl class="tw:m-0 tw:grid tw:gap-3 tw:sm:grid-cols-2 tw:lg:grid-cols-4">
-        <div class="tw:console-metric">
-          <div>
-            <dt>Chats nuevos este mes</dt>
-            <dd class="tw:m-0 tw:mt-1 tw:wrap-anywhere"><strong>{{ usageLabel(data, data.usage.conversationsUsed, data.usage.conversationQuota) }}</strong></dd>
-            <small>Se reinicia el 1 de cada mes</small>
-            @if (data.usage.conversationAtLimit) {
-              <small class="tw:font-semibold tw:text-warning-text">Límite alcanzado</small>
-            }
-          </div>
+      <dl class="plans-usage" aria-label="Consumo del plan">
+        <div class="plans-usage__cell">
+          <dt>Chats nuevos este mes</dt>
+          <dd>{{ usageLabel(data, data.usage.conversationsUsed, data.usage.conversationQuota) }}</dd>
+          <small>Se reinicia el 1 de cada mes</small>
+          @if (data.usage.conversationAtLimit) {
+            <small class="plans-usage__limit">Límite alcanzado</small>
+          }
         </div>
-        <div class="tw:console-metric">
-          <div>
-            <dt>Respuestas con IA este mes</dt>
-            <dd class="tw:m-0 tw:mt-1 tw:wrap-anywhere"><strong>{{ usageLabel(data, data.usage.aiRepliesUsed, data.usage.aiReplyQuota) }}</strong></dd>
-            <small>Al llegar al límite, el vendedor sigue con respuestas básicas</small>
-            @if (data.usage.aiAtLimit) {
-              <small class="tw:font-semibold tw:text-warning-text">Límite alcanzado</small>
-            }
-          </div>
+        <div class="plans-usage__cell">
+          <dt>Respuestas con IA este mes</dt>
+          <dd>{{ usageLabel(data, data.usage.aiRepliesUsed, data.usage.aiReplyQuota) }}</dd>
+          <small>Al llegar al límite, el vendedor sigue con respuestas básicas</small>
+          @if (data.usage.aiAtLimit) {
+            <small class="plans-usage__limit">Límite alcanzado</small>
+          }
         </div>
-        <div class="tw:console-metric">
-          <div>
-            <dt>Productos del catálogo</dt>
-            <dd class="tw:m-0 tw:mt-1 tw:wrap-anywhere"><strong>{{ usageLabel(data, data.usage.productsUsed, data.usage.productQuota) }}</strong></dd>
-            @if (data.usage.productAtLimit) {
-              <small class="tw:font-semibold tw:text-warning-text">Límite alcanzado</small>
-            }
-          </div>
+        <div class="plans-usage__cell">
+          <dt>Productos del catálogo</dt>
+          <dd>{{ usageLabel(data, data.usage.productsUsed, data.usage.productQuota) }}</dd>
+          @if (data.usage.productAtLimit) {
+            <small class="plans-usage__limit">Límite alcanzado</small>
+          }
         </div>
-        <div class="tw:console-metric">
-          <div>
-            <dt>Usuarios</dt>
-            <dd class="tw:m-0 tw:mt-1 tw:wrap-anywhere"><strong>{{ usageLabel(data, data.usage.seatsUsed, data.usage.seatQuota) }}</strong></dd>
-            <small>Incluye invitaciones pendientes</small>
-            @if (data.usage.seatAtLimit) {
-              <small class="tw:font-semibold tw:text-warning-text">Límite alcanzado</small>
-            }
-          </div>
+        <div class="plans-usage__cell">
+          <dt>Usuarios</dt>
+          <dd>{{ usageLabel(data, data.usage.seatsUsed, data.usage.seatQuota) }}</dd>
+          <small>Incluye invitaciones pendientes</small>
+          @if (data.usage.seatAtLimit) {
+            <small class="plans-usage__limit">Límite alcanzado</small>
+          }
         </div>
         @if (data.usage.couponQuota !== 0) {
-          <div class="tw:console-metric">
-            <div>
-              <dt>Descuentos activos</dt>
-              <dd class="tw:m-0 tw:mt-1 tw:wrap-anywhere"><strong>{{ usageLabel(data, data.usage.couponsActive, data.usage.couponQuota) }}</strong></dd>
-              @if (data.usage.couponAtLimit) {
-                <small class="tw:font-semibold tw:text-warning-text">Límite alcanzado</small>
-              }
-            </div>
+          <div class="plans-usage__cell">
+            <dt>Descuentos activos</dt>
+            <dd>{{ usageLabel(data, data.usage.couponsActive, data.usage.couponQuota) }}</dd>
+            @if (data.usage.couponAtLimit) {
+              <small class="plans-usage__limit">Límite alcanzado</small>
+            }
           </div>
         }
         @if (data.usage.aiTextQuota !== 0) {
-          <div class="tw:console-metric">
-            <div>
-              <dt>Textos con IA (tienda · acceso anticipado)</dt>
-              <dd class="tw:m-0 tw:mt-1 tw:wrap-anywhere"><strong>{{ usageLabel(data, data.usage.aiTextsUsed, data.usage.aiTextQuota) }}</strong></dd>
-              <small>No forman parte oficial del plan</small>
-              @if (data.usage.aiTextAtLimit) {
-                <small class="tw:font-semibold tw:text-warning-text">Límite alcanzado</small>
-              }
-            </div>
+          <div class="plans-usage__cell">
+            <dt>Textos con IA (tienda · acceso anticipado)</dt>
+            <dd>{{ usageLabel(data, data.usage.aiTextsUsed, data.usage.aiTextQuota) }}</dd>
+            <small>No forman parte oficial del plan</small>
+            @if (data.usage.aiTextAtLimit) {
+              <small class="plans-usage__limit">Límite alcanzado</small>
+            }
           </div>
         }
         @if (data.usage.aiImageQuota !== 0) {
-          <div class="tw:console-metric">
-            <div>
-              <dt>Imágenes con IA (tienda · acceso anticipado)</dt>
-              <dd class="tw:m-0 tw:mt-1 tw:wrap-anywhere"><strong>{{ usageLabel(data, data.usage.aiImagesUsed, data.usage.aiImageQuota) }}</strong></dd>
-              <small>No forman parte oficial del plan</small>
-              @if (data.usage.aiImageAtLimit) {
-                <small class="tw:font-semibold tw:text-warning-text">Límite alcanzado</small>
-              }
-            </div>
+          <div class="plans-usage__cell">
+            <dt>Imágenes con IA (tienda · acceso anticipado)</dt>
+            <dd>{{ usageLabel(data, data.usage.aiImagesUsed, data.usage.aiImageQuota) }}</dd>
+            <small>No forman parte oficial del plan</small>
+            @if (data.usage.aiImageAtLimit) {
+              <small class="plans-usage__limit">Límite alcanzado</small>
+            }
           </div>
         }
       </dl>
-    </ds-form-section>
+    </section>
 
-    <section class="tw:grid tw:gap-4" aria-labelledby="choose-plan-title">
-      <div class="tw:flex tw:flex-wrap tw:items-end tw:justify-between tw:gap-4">
+    <section class="plans-compare" aria-labelledby="choose-plan-title">
+      <div class="plans-compare__head">
         <div>
-          <h2 id="choose-plan-title" class="tw:m-0 tw:text-lg tw:font-semibold">Compara y elige tu plan</h2>
-          <p class="tw:mt-1 tw:text-caption tw:text-muted">
+          <h2 id="choose-plan-title" class="plans-compare__title">Compara y elige tu plan</h2>
+          <p class="plans-compare__lead">
             Todos incluyen WhatsApp, Instagram, catálogo y cobros en el chat. Entre planes solo cambia la capacidad.
           </p>
         </div>
         @if (periodOptions(data).length) {
-          <div class="tw:grid tw:gap-2">
-            <label for="plan-period" class="tw:text-sm tw:font-semibold">Período de pago</label>
-            <ds-select>
-              <select id="plan-period" [value]="months()" [disabled]="purchaseBlocked()" (change)="changePeriod($event)">
-                @for (option of periodOptions(data); track option.months) {
-                  <option [value]="option.months">
-                    {{ option.label }}{{ option.discountPercent ? ' · ' + option.discountPercent + ' % de descuento' : '' }}
-                  </option>
+          <div class="plan-period" role="group" aria-label="Período de pago">
+            @for (option of periodOptions(data); track option.months) {
+              <button
+                type="button"
+                class="plan-period__btn"
+                [attr.aria-pressed]="months() === option.months"
+                [disabled]="purchaseBlocked()"
+                (click)="setMonths(option.months)"
+              >
+                <span>{{ option.label }}</span>
+                @if (option.discountPercent) {
+                  <span class="plan-period__discount">−{{ option.discountPercent }}%</span>
                 }
-              </select>
-            </ds-select>
+              </button>
+            }
           </div>
         }
       </div>
 
       @if (months() === 1 && maxDiscount(data) > 0) {
-        <p class="tw:m-0 tw:text-sm tw:text-muted">Paga por adelantado y ahorra hasta {{ maxDiscount(data) }} %.</p>
+        <p class="plans-compare__hint">Paga por adelantado y ahorra hasta {{ maxDiscount(data) }} %.</p>
       }
 
-      <ds-form-section density="compact" title="Incluido en todos" icon="check">
-        <ul class="tw:m-0 tw:grid tw:list-none tw:gap-2 tw:p-0 tw:text-sm tw:sm:grid-cols-2">
-          @for (item of data.includedInAllPlans; track item) {
-            <li class="tw:flex tw:items-start tw:gap-2"><ds-icon name="check" /><span>{{ item }}</span></li>
-          }
-        </ul>
-      </ds-form-section>
+      @if (data.includedInAllPlans.length) {
+        <div class="plans-included">
+          <p class="plans-included__title">Incluido en todos</p>
+          <ul class="plans-included__list">
+            @for (item of data.includedInAllPlans; track item) {
+              <li><ds-icon name="check" [size]="0.9" /><span>{{ item }}</span></li>
+            }
+          </ul>
+        </div>
+      }
 
-      <ul class="plan-grid tw:m-0 tw:grid tw:list-none tw:gap-3 tw:p-0">
+      <ul class="plan-grid">
         @for (plan of data.plans; track plan.id) {
-          <li class="tw:min-w-0" [class.plan-card--current]="plan.id === data.currentPlan.id">
-            <ds-form-section density="compact" [title]="plan.name" [description]="plan.description">
+          <li>
+            <article class="plan-card" [class.plan-card--current]="plan.id === data.currentPlan.id">
+              <header class="plan-card__header">
+                <h3 class="plan-card__name">{{ plan.name }}</h3>
+                <p class="plan-card__desc">{{ plan.description }}</p>
+              </header>
+
               @if (plan.id === data.currentPlan.id) {
-                <span class="tw:w-fit tw:rounded-sm tw:bg-primary/20 tw:px-2 tw:py-1 tw:text-caption tw:font-semibold tw:text-ink">
-                  {{ data.planStatus === 'TRIAL' ? 'En prueba' : data.planStatus === 'EXPIRED' ? 'Plan vencido' : 'Plan actual' }}
-                </span>
+                <span
+                  class="plan-card__badge"
+                  [class.plan-card__badge--trial]="data.planStatus === 'TRIAL'"
+                  [class.plan-card__badge--expired]="data.planStatus === 'EXPIRED'"
+                >{{ statusBadge(data) }}</span>
               }
-              @if (priceFor(plan); as price) {
-                <p class="tw:m-0 tw:wrap-anywhere tw:text-lg tw:font-semibold">
-                  {{ money(price.monthlyCents) }}
-                  <span class="tw:text-sm tw:font-normal tw:text-muted">/mes equivalente</span>
-                </p>
-                <p class="tw:m-0 tw:text-sm">
-                  <strong>Total a pagar: {{ money(price.totalCents) }}</strong>
-                  por {{ price.months }} {{ price.months === 1 ? 'mes' : 'meses' }}
-                </p>
-                @if (price.discountPercent) {
-                  <p class="tw:m-0 tw:text-caption tw:text-success-text">
-                    {{ price.discountPercent }} % de descuento · ahorras {{ money((plan.priceCents ?? 0) * price.months - price.totalCents) }}
+
+              <div class="plan-card__price">
+                @if (priceFor(plan); as price) {
+                  <p class="plan-card__amount">
+                    <span class="plan-card__money">{{ money(price.monthlyCents) }}</span>
+                    <span class="plan-card__interval">/mes equivalente</span>
                   </p>
+                  <p class="plan-card__total">
+                    Total a pagar: <strong>{{ money(price.totalCents) }}</strong>
+                    por {{ price.months }} {{ price.months === 1 ? 'mes' : 'meses' }}
+                  </p>
+                  @if (price.discountPercent) {
+                    <p class="plan-card__save">
+                      {{ price.discountPercent }} % de descuento · ahorras {{ money((plan.priceCents ?? 0) * price.months - price.totalCents) }}
+                    </p>
+                  }
+                } @else {
+                  <p class="plan-card__amount">
+                    <span class="plan-card__money">{{ plan.priceLabel }}</span>
+                  </p>
+                  @if (plan.priceCents !== null) {
+                    <p class="plan-card__note">Este plan no ofrece el período seleccionado.</p>
+                  }
                 }
-              } @else {
-                <p class="tw:m-0 tw:text-lg tw:font-semibold">{{ plan.priceLabel }}</p>
-                @if (plan.priceCents !== null) {
-                  <p class="tw:m-0 tw:text-caption tw:text-muted">Este plan no ofrece el período seleccionado.</p>
-                }
-              }
+              </div>
+
               @if (plan.note) {
-                <p class="tw:m-0 tw:text-caption tw:text-muted">{{ plan.note }}</p>
+                <p class="plan-card__note">{{ plan.note }}</p>
               }
-              <p class="tw:m-0 tw:text-caption tw:font-semibold tw:text-muted">Capacidad</p>
-              <ul class="tw:m-0 tw:grid tw:list-none tw:gap-2 tw:p-0 tw:text-sm">
-                @for (item of plan.highlights; track item) {
-                  <li class="tw:flex tw:items-start tw:gap-2"><ds-icon name="check" /><span>{{ item }}</span></li>
-                }
-              </ul>
+
               @if (plan.priceCents === null) {
-                <a routerLink="/app/help" class="tw:console-action-secondary">Pedir cotización</a>
+                <a routerLink="/app/help" class="plan-card__cta tw:console-action-secondary">Pedir cotización</a>
               } @else {
                 <ds-button
+                  class="plan-card__cta"
+                  [block]="true"
                   [variant]="plan.id === data.currentPlan.id ? 'primary' : 'secondary'"
                   [disabled]="!canSelect(plan, data)"
                   (click)="selectPlan(plan)"
@@ -246,39 +253,48 @@
                   {{ buttonLabel(plan, data) }}
                 </ds-button>
               }
-            </ds-form-section>
+
+              <ul class="plan-card__features">
+                @for (item of plan.highlights; track item) {
+                  <li>{{ item }}</li>
+                }
+              </ul>
+            </article>
           </li>
         }
       </ul>
     </section>
 
     @if (data.chatPacks.length) {
-      <ds-form-section density="compact" title="Chats extra" description="Se usan hasta fin de mes e incluyen respuestas con IA." icon="message">
+      <section class="plans-packs tw:console-card" aria-labelledby="chat-packs-title">
+        <div class="plans-packs__head">
+          <h2 id="chat-packs-title" class="plans-packs__title">Chats extra</h2>
+          <p class="plans-packs__lead">Se usan hasta fin de mes e incluyen respuestas con IA.</p>
+        </div>
         @if (!data.chatPacksAvailable) {
-          <div class="tw:feedback tw:feedback-info"><ds-icon name="info" /><span>Disponibles con un plan pagado y activo.</span></div>
+          <ds-banner tone="info">Disponibles con un plan pagado y activo.</ds-banner>
         }
-        <ul class="tw:m-0 tw:grid tw:list-none tw:gap-3 tw:p-0 tw:sm:grid-cols-2 tw:lg:grid-cols-4">
+        <ul class="plans-packs__grid">
           @for (pack of data.chatPacks; track pack.chats) {
-            <li class="tw:console-metric tw:min-w-0">
-              <div class="tw:grid tw:w-full tw:gap-2">
-                <span>{{ pack.chats }} chats</span>
-                <strong>{{ money(pack.priceCents) }}</strong>
-                <small>{{ pack.aiReplies }} respuestas con IA</small>
-                <ds-button
-                  variant="secondary"
-                  [disabled]="!canManage() || purchaseBlocked() || !data.chatPacksAvailable || !data.checkoutEnabled"
-                  (click)="buyChatPack(pack)"
-                >
-                  Sumar {{ pack.chats }} chats
-                </ds-button>
-              </div>
+            <li class="plans-packs__item">
+              <span class="plans-packs__chats">{{ pack.chats }} chats</span>
+              <strong class="plans-packs__price">{{ money(pack.priceCents) }}</strong>
+              <small>{{ pack.aiReplies }} respuestas con IA</small>
+              <ds-button
+                variant="secondary"
+                [block]="true"
+                [disabled]="!canManage() || purchaseBlocked() || !data.chatPacksAvailable || !data.checkoutEnabled"
+                (click)="buyChatPack(pack)"
+              >
+                Sumar {{ pack.chats }} chats
+              </ds-button>
             </li>
           }
         </ul>
-      </ds-form-section>
+      </section>
     }
 
-    <p class="tw:m-0 tw:text-sm tw:text-muted">{{ data.checkoutHint }}</p>
+    <p class="plans-hint">{{ data.checkoutHint }}</p>
     <ds-disclosure title="Condiciones del plan">
       <ul class="tw:m-0 tw:grid tw:gap-2 tw:pl-5 tw:text-sm">
         @for (note of data.notes; track note) { <li>{{ note }}</li> }
@@ -291,7 +307,7 @@
     </ds-disclosure>
     <ds-disclosure title="¿Esta cuenta recibe los pagos de mis clientes?">
       <p class="tw:m-0 tw:text-sm tw:text-muted">
-        Esta sección corresponde a tu suscripción a VendedorIA. Configura los pagos de los pedidos de tus clientes desde Cobros.
+        Esta sección corresponde a tu suscripción a Agopify. Configura los pagos de los pedidos de tus clientes desde Cobros.
       </p>
     </ds-disclosure>
   } @else if (!loading()) {

@@ -54,7 +54,7 @@ test('all original demos resolve released presentation, retain isolated data and
 
 test('Rosaline uses independent presentation and merchant layouts without demo media leaking into presets', () => {
   const store = demoStore('rosaline');
-  assert.equal(store.themeRelease.id, 'vendedoria/rosaline');
+  assert.equal(store.themeRelease.id, 'agopify/rosaline');
   assert.equal(store.themeRelease.renderer, 'rosaline');
   const builtins = store.themeRelease.defaultLayout.map(item => item.type);
   store.templateContent.layouts = { rosaline: [{ id: 'hero', type: 'hero', hidden: true }, { id: 'featured', type: 'featured' }, { id: 'gallery-a1b2c3', type: 'gallery' }] };

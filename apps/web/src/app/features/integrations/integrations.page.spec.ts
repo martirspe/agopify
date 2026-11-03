@@ -3,7 +3,7 @@ import { convertToParamMap, provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BehaviorSubject } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { DsConfirmService } from '@vendedoria/ui';
+import { DsConfirmService } from '@agopify/ui';
 import { IntegrationsPage } from './integrations.page';
 import { IntegrationsApiService, type IntegrationState } from '../../core/api/integrations-api.service';
 import { MessagingApiService } from '../../core/api/messaging-api.service';

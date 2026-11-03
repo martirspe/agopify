@@ -1,5 +1,5 @@
-import type { StoreTemplate } from "@vendedoria/contracts";
-import { THEME_DEMO_INDEX } from '@vendedoria/themes/demo-index';
+import type { StoreTemplate } from "@agopify/contracts";
+import { THEME_DEMO_INDEX } from '@agopify/themes/demo-index';
 
 export const TEMPLATE_DEMO_PREFIX = "/_templates";
 export const TEMPLATE_DEMO_LABELS: Record<StoreTemplate, string> = Object.fromEntries(THEME_DEMO_INDEX.map(theme => [theme.slug, theme.displayName]));

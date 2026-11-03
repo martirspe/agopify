@@ -1,7 +1,7 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import type { PublicOrder, PublicProductCard, StoreTracking } from '@vendedoria/contracts';
+import type { PublicOrder, PublicProductCard, StoreTracking } from '@agopify/contracts';
 import { filter } from 'rxjs';
 import { StoreStateService } from './store-state.service';
 
@@ -23,8 +23,8 @@ type TrackingWindow = Window & {
   _fbq?: unknown;
 };
 
-const CONSENT_KEY = 'vendedoria-consent:';
-const PURCHASE_KEY = 'vendedoria-purchase:';
+const CONSENT_KEY = 'agopify-consent:';
+const PURCHASE_KEY = 'agopify-purchase:';
 
 /**
  * The store's only event layer: Meta Pixel and GA4 load after the buyer accepts cookies

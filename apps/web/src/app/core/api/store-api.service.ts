@@ -7,9 +7,9 @@ import type {
   StoreTemplate,
   StoreTemplateContent,
   StorefrontStatus,
-} from '@vendedoria/contracts';
+} from '@agopify/contracts';
 import { environment } from '../../../environments/environment';
-import type { ThemeManifest, ThemeCompatibility } from '@vendedoria/themes';
+import type { ThemeManifest, ThemeCompatibility } from '@agopify/themes';
 
 export type StoreThemeStatus = {
   active: { template: string; version: string };
@@ -68,7 +68,7 @@ export type StoreEditorView = StoreEditorState & {
   themeStatus: StoreThemeStatus;
   template: StoreTemplate;
   sections: StoreEditorSection[];
-  defaultLayout: import('@vendedoria/contracts').StoreLayoutItem[];
+  defaultLayout: import('@agopify/contracts').StoreLayoutItem[];
   theme: StoreEditorTheme;
   storeStatus: StorefrontStatus;
   /** Store home in edit mode; valid until `frameExpiresAt`. */
@@ -80,10 +80,20 @@ export type StoreEditorView = StoreEditorState & {
 
 export type StoreTextAiAction = 'write' | 'shorter' | 'persuasive' | 'friendly' | 'fix';
 
+export type StorePageAiMode = 'rewrite' | 'fillEmpty';
+
 /** A home page written by AI: texts per built-in section and library blocks in order. */
 export type StorePageAi = {
   sections: Record<string, Record<string, string>>;
   blocks: { type: string; texts: Record<string, string> }[];
+  mode?: StorePageAiMode;
+};
+
+export type StoreSectionAi = {
+  type: string;
+  texts: Record<string, string>;
+  /** Existing content key when rewriting a section already on the page. */
+  target?: string;
 };
 
 export type StoreTextAiRequest = {
@@ -243,16 +253,19 @@ export class StoreApiService {
     return firstValueFrom(this.http.post<{ suggestions: string[] }>(`${this.base}/editor/ai/text`, request));
   }
 
-  /** A library block type and its texts written from the merchant's request. */
-  suggestSection(prompt: string): Promise<{ type: string; texts: Record<string, string> }> {
+  /** A library block type and its texts, or texts for an existing `section` content key. */
+  suggestSection(prompt: string, section?: string): Promise<StoreSectionAi> {
     return firstValueFrom(
-      this.http.post<{ type: string; texts: Record<string, string> }>(`${this.base}/editor/ai/section`, { prompt }),
+      this.http.post<StoreSectionAi>(`${this.base}/editor/ai/section`, {
+        prompt,
+        ...(section ? { section } : {}),
+      }),
     );
   }
 
-  /** Texts of the built-in home sections and a few blocks, written from the merchant's request. */
-  suggestPage(prompt: string): Promise<StorePageAi> {
-    return firstValueFrom(this.http.post<StorePageAi>(`${this.base}/editor/ai/page`, { prompt }));
+  /** Home page texts (+ optional blocks). `fillEmpty` only proposes empty fields. */
+  suggestPage(prompt: string, mode: StorePageAiMode = 'rewrite'): Promise<StorePageAi> {
+    return firstValueFrom(this.http.post<StorePageAi>(`${this.base}/editor/ai/page`, { prompt, mode }));
   }
 
   /** An ambiance photo for an image field, already saved as an upload of the business. */

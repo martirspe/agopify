@@ -1,87 +1,78 @@
 <section class="theme-console" [class.theme-console--editor]="inEditor()" aria-labelledby="theme-status-title">
   @if (loading()) {
     <div class="theme-console__loading" aria-busy="true" aria-label="Cargando diseño de la tienda">
-      <span></span><span></span><span></span>
+      <span></span>
     </div>
   } @else if (data(); as d) {
     @if (current(); as theme) {
-      <div class="theme-console__hero">
+      <article class="theme-current tw:console-card">
         @if (!inEditor()) {
-          <a routerLink="/app/store/editor" class="theme-console__preview" aria-label="Abrir el editor del diseño de mi tienda">
+          <a routerLink="/app/store/editor" class="theme-current__preview" aria-label="Editar el diseño de mi tienda">
             @if (!coverFailed()) {
               <img [src]="theme.assets.cover" [alt]="'Vista previa del diseño ' + theme.displayName" width="1440" height="1000" (error)="coverFailed.set(true)" />
             } @else {
-              <span class="theme-console__preview-fallback">{{ theme.displayName }}</span>
+              <span class="theme-current__fallback">{{ theme.displayName }}</span>
             }
-            <span class="theme-console__preview-shade"></span>
-            <span class="theme-console__preview-copy">
-              <small>Vista previa de la plantilla</small>
-              <strong>Abrir editor <ds-icon name="arrowRight" [size]="1" /></strong>
-            </span>
           </a>
+        } @else {
+          <div class="theme-current__preview theme-current__preview--static" aria-hidden="true">
+            @if (!coverFailed()) {
+              <img [src]="theme.assets.cover" [alt]="" width="1440" height="1000" (error)="coverFailed.set(true)" />
+            }
+          </div>
         }
 
-        <div class="theme-console__summary">
-          <header class="theme-console__heading">
-            <div>
-              <p class="theme-console__eyebrow">Diseño actual</p>
-              <h2 id="theme-status-title">{{ theme.displayName }}</h2>
-              <p class="theme-console__description">Gestiona la apariencia de tu tienda antes de hacerla pública.</p>
-            </div>
-            @if (!inEditor()) {
-              <a class="tw:console-action-link" routerLink="/app/store/editor"><ds-icon name="pencil" [size]="1" />Editar diseño</a>
-            }
-          </header>
-
-          <dl class="theme-console__facts">
-            <div>
-              <dt>Versión</dt>
-              <dd>{{ d.status.editing.version }}</dd>
-            </div>
-            <div>
-              <dt>Autor</dt>
-              <dd>{{ theme.author || 'VendedorIA' }}</dd>
-            </div>
-            <div>
-              <dt>Estado</dt>
-              <dd>
-                @if (d.status.compatibility.status === 'compatible') {
-                  <span class="theme-console__state theme-console__state--success"><ds-icon name="check" [size]="0.9" />Compatible</span>
-                } @else {
-                  <span class="theme-console__state theme-console__state--warning"><ds-icon name="alert" [size]="0.9" />Requiere revisión</span>
-                }
-              </dd>
-            </div>
-          </dl>
-
-          @if (pending()) {
-            <div class="theme-console__callout theme-console__callout--info" role="status">
-              <ds-icon name="sparkles" />
-              <div><strong>Borrador preparado</strong><span>La tienda publicada continúa usando {{ activeName() }} {{ d.status.active.version }}.</span></div>
-            </div>
-          }
-
-          @if (d.status.compatibility.status !== 'compatible') {
-            <div class="theme-console__callout theme-console__callout--warning" role="alert">
-              <ds-icon name="alert" />
-              <div>
-                <strong>Revisa la compatibilidad</strong>
-                @for (issue of d.status.compatibility.issues; track issue.path + issue.message) { <span>{{ issue.message }}</span> }
-              </div>
+        <div class="theme-current__bar">
+          <div class="theme-current__meta">
+            <h2 id="theme-status-title">{{ storeHost() || storeName() || theme.displayName }}</h2>
+            <p>
+              <span>{{ theme.displayName }}</span>
+              <span aria-hidden="true">·</span>
+              <span>Versión {{ d.status.editing.version }}</span>
+              @if (d.status.compatibility.status === 'compatible') {
+                <span class="theme-current__ok"><ds-icon name="check" [size]="0.85" />Compatible</span>
+              } @else {
+                <span class="theme-current__warn"><ds-icon name="alert" [size]="0.85" />Requiere revisión</span>
+              }
+            </p>
+          </div>
+          @if (!inEditor()) {
+            <div class="theme-current__actions">
+              <a routerLink="/app/store/editor" class="theme-current__edit">
+                <ds-icon name="pencil" [size]="0.95" />
+                Editar tema
+              </a>
             </div>
           }
         </div>
-      </div>
+
+        @if (pending()) {
+          <div class="theme-current__footer" role="status">
+            <div>
+              <strong>Borrador preparado</strong>
+              <span>La tienda publicada sigue con {{ activeName() }} {{ d.status.active.version }}.</span>
+            </div>
+            @if (!inEditor()) {
+              <div class="theme-current__footer-actions">
+                <ds-button [disabled]="!canPublish() || busy()" (click)="publish()">
+                  {{ busy() ? 'Publicando…' : 'Publicar diseño' }}
+                </ds-button>
+                <a routerLink="/app/store/editor" class="theme-current__link">Revisar</a>
+              </div>
+            }
+          </div>
+        }
+      </article>
 
       @if (d.status.activeCompatibility.status === 'incompatible' || d.status.activeCompatibility.status === 'update_required') {
-        <div class="theme-console__recovery" role="alert">
+        <div class="theme-console__recovery tw:console-card" role="alert">
           <div><ds-icon name="alert" /><span><strong>La versión publicada necesita atención.</strong> El catálogo se muestra temporalmente con el diseño de recuperación.</span></div>
           <ds-button variant="secondary" [disabled]="busy()" (click)="prepare('recover')">Preparar diseño de recuperación</ds-button>
         </div>
       }
 
       @if (d.status.update; as update) {
-        <section class="theme-console__update" aria-labelledby="theme-update-title">
+        <section class="theme-console__update tw:console-card" aria-labelledby="theme-update-title">
           <div>
             <p class="theme-console__eyebrow">{{ update.required ? 'Actualización necesaria' : 'Actualización disponible' }}</p>
             <h3 id="theme-update-title">Versión {{ update.version }}</h3>
@@ -93,28 +84,36 @@
         </section>
       }
 
-      <div class="theme-console__details">
-        <details>
-          <summary><span>Funciones de esta plantilla</span><ds-icon name="chevronDown" [size]="1" /></summary>
-          <div class="theme-console__details-content">
-            <ul class="theme-console__capabilities">@for (name of functions(); track name) { <li>{{ name }}</li> }</ul>
-            <p>Algunas funciones requieren configuración adicional en tu negocio.</p>
+      @if (d.status.compatibility.status !== 'compatible') {
+        <div class="theme-console__callout theme-console__callout--warning" role="alert">
+          <ds-icon name="alert" />
+          <div>
+            <strong>Revisa la compatibilidad</strong>
+            @for (issue of d.status.compatibility.issues; track issue.path + issue.message) { <span>{{ issue.message }}</span> }
           </div>
-        </details>
-        <details>
-          <summary><span>Aplicar una muestra</span><ds-icon name="chevronDown" [size]="1" /></summary>
-          <div class="theme-console__details-content">
-            <p>Las muestras completan la apariencia inicial. Tus productos, precios y pedidos se conservan.</p>
+        </div>
+      }
+
+      <details class="theme-console__more">
+        <summary>Más opciones del tema</summary>
+        <div class="theme-console__more-body">
+          <div>
+            <h3>Funciones</h3>
+            <ul class="theme-console__capabilities">@for (name of functions(); track name) { <li>{{ name }}</li> }</ul>
+          </div>
+          <div>
+            <h3>Aplicar una muestra</h3>
+            <p>Completa la apariencia inicial. Tus productos y pedidos se conservan.</p>
             <div class="theme-console__presets">
               @for (preset of theme.presets; track preset.id) {
-                <ds-button variant="ghost" [disabled]="busy()" (click)="prepare('preset', preset.id)">Importar muestra: {{ preset.label }}</ds-button>
+                <ds-button variant="secondary" [disabled]="busy()" (click)="prepare('preset', preset.id)">{{ preset.label }}</ds-button>
               }
             </div>
           </div>
-        </details>
-      </div>
+        </div>
+      </details>
     } @else {
-      <div class="theme-console__empty">
+      <div class="theme-console__empty tw:console-card">
         <ds-icon name="alert" /><div><strong>No encontramos el diseño seleccionado.</strong><span>Elige una plantilla de la biblioteca para continuar.</span></div>
       </div>
     }

@@ -4,7 +4,7 @@
 
 - Phase 0 audit package: `ARCHITECTURE`, `REPOSITORY_AUDIT`, `DEPENDENCY_MAP`, `BASELINE`, `IMPLEMENTATION_PLAN`, `MODEL_ROUTING`, `MIGRATION`.  
 - Code: `agent-runtime/models` provider port + OpenAI adapter + router; `SALES_ENGINE_MODE` accepts `ai-core`; `SALES_MODEL_PROVIDER` env.  
-- Skill: `.agents/skills/vendedoria-ai-core`.
+- Skill: `.agents/skills/agopify-ai-core`.
 
 ## 2026-10-30 (continued)
 

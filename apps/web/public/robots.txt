@@ -6,4 +6,4 @@ Disallow: /invite/
 Disallow: /payment/
 Disallow: /api/
 
-Sitemap: https://marrso.com/sitemap.xml
+Sitemap: https://agopify.com/sitemap.xml

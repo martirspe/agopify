@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma, Storefront } from '@prisma/client';
-import type { ShippingOption } from '@vendedoria/contracts';
+import type { ShippingOption } from '@agopify/contracts';
 import { PrismaService } from '../prisma/prisma.service';
 import { shippingOptions } from '../storefront/shipping';
 import { ensureStorefront } from '../storefront/storefront-row';

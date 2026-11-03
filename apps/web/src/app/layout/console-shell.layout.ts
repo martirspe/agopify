@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   HostListener,
   Injector,
@@ -10,6 +11,7 @@ import {
   inject,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -27,13 +29,15 @@ import {
   DsIconName,
   DsMenuComponent,
   DsModalDirective,
-} from '@vendedoria/ui';
+} from '@agopify/ui';
 import { SELLER_SECTIONS } from '../features/seller/seller-config';
 import { initialsOf } from '../features/profile/profile-utils';
 import { CONSOLE_CONTEXTS, contextForUrl, isContextLinkActive, normalizeSearch, type ContextLink } from './console-context';
 import { ConsoleRailTooltipDirective } from './console-rail-tooltip.directive';
 import { ConsoleAssistantLayoutService } from './console-assistant-layout.service';
 import { CatalogApiService, type ProductDto } from '../core/api/catalog-api.service';
+import { AssistantComposer } from '../features/get-started/assistant-composer';
+import { HomeAssistantPanel } from '../features/get-started/home-assistant.panel';
 
 type ConsoleNavItem = {
   label: string;
@@ -70,6 +74,8 @@ type PaletteAction = {
     DsModalDirective,
     DsMenuComponent,
     ConsoleRailTooltipDirective,
+    AssistantComposer,
+    HomeAssistantPanel,
   ],
   templateUrl: './console-shell.layout.html',
  /* Fixed to the viewport like / — document scroll cannot move the white sheet. */
@@ -85,7 +91,11 @@ export class ConsoleShellLayout {
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
   private readonly catalog = inject(CatalogApiService);
-  readonly assistantLayout = inject(ConsoleAssistantLayoutService);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly assistant = inject(ConsoleAssistantLayoutService);
+  /** @deprecated Prefer `assistant` — kept for existing template/tests during rename. */
+  readonly assistantLayout = this.assistant;
+  private readonly assistantPanel = viewChild(HomeAssistantPanel);
 
   readonly paletteOpen = signal(false);
   readonly mobileNavOpen = signal(false);
@@ -228,6 +238,22 @@ export class ConsoleShellLayout {
  * (no Expandir control; preference restored on leave).
  */
   readonly railCollapsed = computed(() => !!this.context() || this.navCollapsed());
+  /** Floating chat on every console view except Inicio (hero composer owns that page). */
+  readonly showAssistantFloat = computed(() => !this.isHome() && !this.assistant.fullOpen());
+  /**
+   * Full-panel left inset: condensed rail, or rail + context sidebar when settings/store is open.
+   * Matches Shopify Sidekick fullscreen (sidebar stays visible).
+   */
+  readonly assistantInsetStart = computed(() => {
+    if (this.railCollapsed()) {
+      const rail = 'var(--ds-console-rail-width, 3.75rem)';
+      if (this.context()) {
+        return `calc(${rail} + var(--ds-console-context-sidebar-width, 15rem))`;
+      }
+      return rail;
+    }
+    return 'var(--ds-console-sidebar-width, 13.75rem)';
+  });
   readonly contextGroups = computed(() => this.context()?.groups.map(group => ({ ...group, items: group.items.filter(item => normalizeSearch(item.label).includes(normalizeSearch(this.contextQuery()))) })).filter(group => group.items.length) ?? []);
   readonly contextLocation = computed(() => this.context()?.groups.flatMap(group => group.items).find(item => this.isContextActive(item))?.label);
   isContextActive(item: ContextLink): boolean { return isContextLinkActive(item, this.currentUrl()); }
@@ -412,6 +438,12 @@ export class ConsoleShellLayout {
   readonly selectedSearchResult = computed(() => this.searchResults()[Math.min(this.paletteIndex(), Math.max(0, this.searchResults().length - 1))]);
 
   constructor() {
+    effect(() => {
+      const panel = this.assistantPanel();
+      this.assistant.registerHistoryOpener(panel ? () => panel.openHistory() : null);
+    });
+    this.destroyRef.onDestroy(() => this.assistant.registerHistoryOpener(null));
+
     let previousContext: string | undefined;
     let previousCollapsed = false;
     effect(() => {

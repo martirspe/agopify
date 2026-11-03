@@ -88,13 +88,13 @@ export class StorefrontController {
   @Post('editor/ai/section')
   @RateLimit('store-editor-ai', 20)
   suggestSection(@CurrentUser() user: AuthUserPayload, @Body() dto: SuggestTemplateSectionDto) {
-    return this.ai.suggestSection(user.tenantId, dto.prompt);
+    return this.ai.suggestSection(user.tenantId, dto.prompt, dto.section);
   }
 
   @Post('editor/ai/page')
   @RateLimit('store-editor-ai', 20)
   suggestPage(@CurrentUser() user: AuthUserPayload, @Body() dto: SuggestTemplatePageDto) {
-    return this.ai.suggestPage(user.tenantId, dto.prompt);
+    return this.ai.suggestPage(user.tenantId, dto.prompt ?? '', dto.mode ?? 'rewrite');
   }
 
   @Post('editor/ai/image')

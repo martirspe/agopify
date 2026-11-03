@@ -3,6 +3,7 @@ import {
   ProductChannelKind,
   ProductStatus,
 } from '@prisma/client';
+import { normalizeOptionValues } from './option-values';
 
 export const PRODUCT_STATUSES = ['DRAFT', 'ACTIVE', 'ARCHIVED'] as const;
 export const PRODUCT_CHANNELS = ['STORE', 'WHATSAPP', 'INSTAGRAM'] as const;
@@ -17,7 +18,7 @@ export type ChannelListingInput = {
 
 export type OptionDefinitionInput = {
   name: string;
-  values: string[];
+  values: Array<{ value: string; color?: string }>;
 };
 
 export const PRODUCT_RELATIONS_INCLUDE = {
@@ -161,6 +162,10 @@ export function presentProduct<T extends {
     components,
     collectionIds,
     collections,
+    optionDefinitions: (product.optionDefinitions ?? []).map((definition) => ({
+      ...definition,
+      values: normalizeOptionValues(definition.values),
+    })),
     isAvailable: derivedIsAvailable(product.status),
     isPublishedOnStore: derivedIsPublishedOnStore(channelListings),
   };

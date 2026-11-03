@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import type { PublicProductDetail } from '@vendedoria/contracts';
+import type { PublicProductDetail } from '@agopify/contracts';
 import { CartService } from '../../core/cart.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { SeoService } from '../../core/seo.service';

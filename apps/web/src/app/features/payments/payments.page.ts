@@ -1,10 +1,10 @@
-import { DsActionBarComponent } from '@vendedoria/ui';
-import { DsEmptyStateComponent } from '@vendedoria/ui';
+import { DsActionBarComponent } from '@agopify/ui';
+import { DsEmptyStateComponent } from '@agopify/ui';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthApiService } from '../../core/auth/auth-api.service';
-import { DsButtonComponent, DsConfirmService, DsIconComponent, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsConfirmService, DsIconComponent, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent } from '@agopify/ui';
 import {
   ConnectPaymentAccountPayload,
   PaymentAccountView,

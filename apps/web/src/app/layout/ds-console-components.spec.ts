@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { afterEach, describe, expect, it } from 'vitest';
-import { DsCheckboxComponent, DsDisclosureComponent, DsFormSectionComponent, DsSaveBarComponent } from '@vendedoria/ui';
+import { DsCheckboxComponent, DsDisclosureComponent, DsFormSectionComponent, DsSaveBarComponent } from '@agopify/ui';
 
 @Component({
   imports: [ReactiveFormsModule, DsCheckboxComponent, DsDisclosureComponent, DsFormSectionComponent, DsSaveBarComponent],

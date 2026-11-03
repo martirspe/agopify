@@ -28,7 +28,7 @@ describe('MediaService', () => {
         new ConfigService({
           MEDIA_STORAGE: 's3',
           AWS_REGION: 'us-east-1',
-          MEDIA_S3_BUCKET: 'vendedoria-media',
+          MEDIA_S3_BUCKET: 'agopify-media',
           MEDIA_CDN_URL: `${CDN}/`,
         }),
       );
@@ -41,7 +41,7 @@ describe('MediaService', () => {
       const command = send.mock.calls[0][0] as PutObjectCommand;
       expect(command).toBeInstanceOf(PutObjectCommand);
       expect(command.input).toMatchObject({
-        Bucket: 'vendedoria-media',
+        Bucket: 'agopify-media',
         Key: url.replace(`${CDN}/`, ''),
         ContentType: 'image/webp',
         CacheControl: MEDIA_CACHE_CONTROL,
@@ -176,7 +176,7 @@ describe('MediaService', () => {
         new ConfigService({
           MEDIA_STORAGE: 's3',
           AWS_REGION: 'us-east-1',
-          MEDIA_S3_BUCKET: 'vendedoria-media',
+          MEDIA_S3_BUCKET: 'agopify-media',
           MEDIA_CDN_URL: 'https://cdn-new.example.pe',
         }),
       );

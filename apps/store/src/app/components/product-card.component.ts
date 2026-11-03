@@ -12,8 +12,8 @@ import type {
   PublicCatalogCard,
   PublicCatalogSelection,
   PublicProductCard,
-} from "@vendedoria/contracts";
-import { DsIconComponent, DsSelectComponent } from "@vendedoria/ui";
+} from "@agopify/contracts";
+import { DsIconComponent, DsSelectComponent } from "@agopify/ui";
 import { CartService } from "../core/cart.service";
 import { StoreStateService } from "../core/store-state.service";
 import { MoneyPipe } from "../core/money.pipe";

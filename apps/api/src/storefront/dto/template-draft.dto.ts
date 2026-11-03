@@ -8,7 +8,12 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
-import { TEXT_AI_ACTIONS, type TextAiAction } from '../store-ai-text';
+import {
+  PAGE_AI_MODES,
+  TEXT_AI_ACTIONS,
+  type PageAiMode,
+  type TextAiAction,
+} from '../store-ai-text';
 
 export class EditorRevisionDto {
   @ApiPropertyOptional({ description: 'Revision returned by the editor; prevents concurrent overwrites.' })
@@ -69,18 +74,40 @@ export class SuggestTemplateSectionDto {
   @IsString()
   @MaxLength(300)
   prompt!: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Existing content key to rewrite (`hero`, `benefits-a1b2c3`). Omit to invent a new library block.',
+    example: 'hero',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  @Matches(/^[a-zA-Z]+(-[a-z0-9]{6})?$/)
+  section?: string;
 }
 
 export class SuggestTemplatePageDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     description:
-      'The business and what the home page should highlight, in the merchant words.',
+      'The business and what the home page should highlight, in the merchant words. Optional for `fillEmpty` (server uses a default).',
     example:
       'Cosmética natural hecha en Arequipa; quiero destacar los envíos y los regalos',
   })
+  @IsOptional()
   @IsString()
   @MaxLength(500)
-  prompt!: string;
+  prompt?: string;
+
+  @ApiPropertyOptional({
+    enum: PAGE_AI_MODES,
+    description:
+      '`rewrite` replaces home copy and proposes library blocks. `fillEmpty` only writes empty text fields and never changes layout.',
+    default: 'rewrite',
+  })
+  @IsOptional()
+  @IsIn(PAGE_AI_MODES)
+  mode?: PageAiMode;
 }
 
 export class SuggestTemplateImageDto {

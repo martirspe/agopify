@@ -1,4 +1,4 @@
-# Themes de VendedorIA: contrato y guía de desarrollo
+# Themes de Agopify: contrato y guía de desarrollo
 
 Contrato v1 · 2026-10-05. Fuente ejecutable: `packages/themes/manifest.schema.json`, `packages/themes/index.js`, `packages/themes/sections.json` y `packages/contracts/index.d.ts`. La [auditoría previa](THEMES-AUDIT.md) explica las decisiones; el [informe de entrega](THEMES-REPORT.md) registra resultados y límites.
 
@@ -54,7 +54,7 @@ packages/themes/
 
 No se crean carpetas vacías para componentes, rutas o locales que un paquete declarativo no ejecuta. Las imágenes de portada residen en `apps/web/public/template-previews`. Los assets de las demos originales están en `apps/store/public/template-demos`. CSS revisado de los renderers reside dentro de la app de tienda; su build produce `/selecta.css` y `/stride.css`.
 
-Exports públicos de Node: `THEME_CATALOG`, `THEME_ENVIRONMENT`, `RENDERER_SECTIONS`, `getTheme`, `latestThemes`, `compareVersions`, `validateManifest`, `validateCatalog`, `compatibility`, `migrationPath`, `migrateContent`, `importPreset`. Frontend usa `@vendedoria/themes/catalog`; el índice de demo es `@vendedoria/themes/demo-index`. Los datos son readonly/congelados. No importar Prisma, servicios Nest, rutas de carpetas privadas o funciones Angular internas desde un paquete de terceros.
+Exports públicos de Node: `THEME_CATALOG`, `THEME_ENVIRONMENT`, `RENDERER_SECTIONS`, `getTheme`, `latestThemes`, `compareVersions`, `validateManifest`, `validateCatalog`, `compatibility`, `migrationPath`, `migrateContent`, `importPreset`. Frontend usa `@agopify/themes/catalog`; el índice de demo es `@agopify/themes/demo-index`. Los datos son readonly/congelados. No importar Prisma, servicios Nest, rutas de carpetas privadas o funciones Angular internas desde un paquete de terceros.
 
 ## 4. Manifest: cada propiedad
 
@@ -91,7 +91,7 @@ No se añaden `minCoreVersion`, `maxCoreVersion`, dependencias npm, routes o scr
 
 ## 5. Identidad, versiones y duplicados
 
-`vendedoria/stride` identifica Impulso y `vendedoria/rosaline` identifica Rosaline (Bold Modern) en todas sus versiones. `slug` es técnico; `displayName` es comercial; `version` identifica un release; `namespace` distingue autor. La tienda guarda slug y versión instalada; el catálogo resuelve su ID completo.
+`agopify/stride` identifica Impulso y `agopify/rosaline` identifica Rosaline (Bold Modern) en todas sus versiones. `slug` es técnico; `displayName` es comercial; `version` identifica un release; `namespace` distingue autor. La tienda guarda slug y versión instalada; el catálogo resuelve su ID completo.
 
 Fork: crea namespace **y slug nuevos**; no reutilices un slug registrado. Clonar para crear un preset no crea otra identidad: añade otro preset al próximo release. Renombrar la identidad/comercial de un theme instalado no es un cambio de metadata permitido; exige un proceso explícito de migración de plataforma y comunicación. Nunca cambies un manifest sellado.
 
@@ -267,7 +267,7 @@ Conversión: recomendaciones/relacionados del core, información de variantes, s
 
 ## 17. Tutorial: crear un theme desde cero
 
-Requisitos: Node ≥22, npm workspaces y checkout de VendedorIA; stack Docker para validación integrada. No instalar otro framework ni SDK de ejecución. El starter oficial viene con el repo.
+Requisitos: Node ≥22, npm workspaces y checkout de Agopify; stack Docker para validación integrada. No instalar otro framework ni SDK de ejecución. El starter oficial viene con el repo.
 
 ```sh
 npm run theme:create -- estudio/tienda-local

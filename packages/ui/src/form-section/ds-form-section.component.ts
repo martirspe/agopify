@@ -10,7 +10,8 @@ import { DsIconComponent, type DsIconName } from '../icon/ds-icon.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DsFormSectionComponent {
-  readonly title = input.required<string>();
+  /** Empty title hides the section header (Admin untitled cards: title field as hero). */
+  readonly title = input('');
   readonly description = input('');
   readonly icon = input<DsIconName | null>(null);
   readonly variant = input<'panel' | 'plain'>('panel');

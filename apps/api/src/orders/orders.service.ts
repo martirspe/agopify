@@ -281,7 +281,7 @@ export class OrdersService {
     const payment = await this.paymentsService.createCommerceCheckout({
       tenantId,
       orderId: order.id,
-      title: `Pedido ${order.id.slice(-6).toUpperCase()} · VendedorIA`,
+      title: `Pedido ${order.id.slice(-6).toUpperCase()} · Agopify`,
       amountCents: order.totalCents,
       currency: order.currency,
     });

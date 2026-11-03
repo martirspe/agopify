@@ -9,7 +9,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 
-/** Run with npm run test:docker, which migrates the isolated vendedoria_test database. */
+/** Run with npm run test:docker, which migrates the isolated agopify_test database. */
 describe('Conversion tenant isolation (e2e)', () => {
   let app: NestFastifyApplication;
   let prisma: PrismaService;

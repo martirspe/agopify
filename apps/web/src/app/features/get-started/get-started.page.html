@@ -1,22 +1,8 @@
-@if (assistantOpen()) {
-  <app-home-assistant-panel
-    [mode]="assistantMode()"
-    [title]="assistantTitle()"
-    [messages]="assistantMessages()"
-    [drafting]="assistantDrafting()"
-    (closed)="closeAssistant()"
-    (modeChange)="setAssistantMode($event)"
-    (newChat)="resetAssistantChat()"
-    (sent)="onAssistantSent($event)"
-    (plusAction)="onAssistantPlus($event)"
-  />
-}
-
-<section class="home" aria-labelledby="home-welcome-title" [attr.aria-hidden]="assistantOpen() && assistantMode() === 'full' ? 'true' : null">
+<section class="home" aria-labelledby="home-welcome-title" [attr.aria-hidden]="assistant.fullOpen() ? 'true' : null">
   @if (loading()) {
     <div class="tw:grid tw:gap-4" aria-busy="true" role="status">
       <span class="tw:sr-only">Revisando tu avance…</span>
-      <div class="tw:mx-auto tw:h-16 tw:w-full tw:max-w-[38.75rem] tw:rounded-[1.625rem] tw:bg-canvas" aria-hidden="true"></div>
+      <div class="tw:mx-auto tw:h-[6.25rem] tw:w-full tw:max-w-[38.75rem] tw:rounded-[1.25rem] tw:bg-canvas" aria-hidden="true"></div>
       <div class="home-cards" aria-hidden="true">
         <div class="home-card tw:console-list-skeleton"><div></div><div></div><div></div></div>
         <div class="home-card tw:console-list-skeleton"><div></div><div></div><div></div></div>
@@ -31,7 +17,7 @@
   } @else {
     <header class="home__hero">
       <h1 id="home-welcome-title" class="home__welcome">
-        <span class="home__welcome-line">¡Te damos la bienvenida a VendedorIA!</span>
+        <span class="home__welcome-line">¡Te damos la bienvenida a Agopify!</span>
         <span class="home__welcome-line">Configuremos <span class="home__store">{{ businessName() }}</span></span>
       </h1>
 
@@ -44,140 +30,33 @@
         (focusout)="onComposerFocusOut($event)"
       >
         <div class="home-assistant__composer-wrap">
-          <form class="home-assistant__field" (submit)="submitPrompt($event)" aria-label="Asistente de configuración">
-            <label class="tw:sr-only" for="home-assistant-input">¿En qué te puedo ayudar?</label>
-            <textarea
-              id="home-assistant-input"
-              class="home-assistant__input"
-              name="assistantPrompt"
-              rows="2"
-              enterkeyhint="send"
-              data-focus-chrome="parent"
-              [placeholder]="placeholder()"
-              [ngModel]="prompt()"
-              [ngModelOptions]="{ standalone: true }"
-              (ngModelChange)="prompt.set($event)"
-              (keydown.enter)="onPromptEnter($event)"
-              (focus)="onPromptFocus()"
-              (blur)="onPromptBlur()"
-            ></textarea>
-            @if (homeDictationError(); as err) {
-              <p class="home-assistant__dictation-error" role="alert">{{ err }}</p>
-            }
-            <div class="home-assistant__toolbar" [attr.data-dictating]="homeDictating() ? '' : null">
-              @if (homeDictating()) {
-                <div class="home-assistant__dictation" role="status" aria-live="polite" aria-label="Dictando">
-                  <button type="button" class="home-assistant__dictation-cancel" aria-label="Cancelar dictado" (click)="cancelHomeDictation()">
-                    <ds-icon name="x" [size]="0.85" />
-                  </button>
-                  <div class="home-assistant__waveform" aria-hidden="true">
-                    @for (_ of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]; track $index) {
-                      <span class="home-assistant__waveform-bar" [style.animation-delay]="($index % 8) * 90 + 'ms'"></span>
-                    }
-                  </div>
-                  <button type="button" class="home-assistant__dictation-confirm" aria-label="Listo" (click)="confirmHomeDictation()">
-                    <ds-icon name="check" [size]="0.85" />
-                  </button>
-                </div>
-              } @else {
-                <span class="home-assistant__character" aria-hidden="true">
-                  <ds-icon name="sparkles" [size]="0.75" />
-                </span>
-                <div class="home-assistant__tools">
-                  <button type="button" class="home-assistant__pill" (click)="openSearch()">
-                    <ds-icon name="history" [size]="0.85" />
-                    Recientes
-                  </button>
-                  <div class="home-assistant__plus-anchor">
-                    @if (homePlusOpen()) {
-                      <div
-                        class="home-assistant__plus-menu"
-                        role="menu"
-                        aria-label="Acciones del asistente"
-                        (mousedown)="$event.preventDefault()"
-                      >
-                        @for (item of homePlusItems; track item.id) {
-                          @if (item.dividerBefore) {
-                            <div class="home-assistant__plus-divider" role="separator"></div>
-                          }
-                          @if (item.kind === 'toggle') {
-                            <div class="home-assistant__plus-item home-assistant__plus-item--toggle" role="none">
-                              <span class="home-assistant__plus-icon" aria-hidden="true"><ds-icon [name]="item.icon" [size]="1.25" /></span>
-                              <span class="home-assistant__plus-label">{{ item.label }}</span>
-                              <button
-                                type="button"
-                                class="home-assistant__switch"
-                                role="switch"
-                                [attr.aria-checked]="generateApps()"
-                                [attr.aria-label]="item.label"
-                                (click)="toggleGenerateApps()"
-                              >
-                                <span class="home-assistant__switch-thumb" aria-hidden="true"></span>
-                              </button>
-                              <button type="button" class="home-assistant__plus-info" aria-label="Más información" disabled>
-                                <ds-icon name="info" [size]="1.25" />
-                              </button>
-                            </div>
-                          } @else {
-                            <button
-                              type="button"
-                              class="home-assistant__plus-item"
-                              role="menuitem"
-                              [disabled]="item.disabled"
-                              (click)="onHomePlus(item.id)"
-                            >
-                              <span class="home-assistant__plus-icon" aria-hidden="true"><ds-icon [name]="item.icon" [size]="1.25" /></span>
-                              <span class="home-assistant__plus-label">{{ item.label }}</span>
-                              @if (item.hint || item.trailingIcon || item.submenu) {
-                                <span class="home-assistant__plus-meta" aria-hidden="true">
-                                  @if (item.hint) {
-                                    <span class="home-assistant__plus-hint">{{ item.hint }}</span>
-                                  }
-                                  @if (item.trailingIcon) {
-                                    <span class="home-assistant__plus-trailing">
-                                      <ds-icon [name]="item.trailingIcon" [size]="1.125" />
-                                    </span>
-                                  }
-                                  @if (item.submenu) {
-                                    <ds-icon name="chevronRight" [size]="1.25" />
-                                  }
-                                </span>
-                              }
-                            </button>
-                          }
-                        }
-                      </div>
-                    }
-                    <button
-                      type="button"
-                      class="home-assistant__icon-btn"
-                      aria-label="Agregar archivos y más"
-                      [attr.aria-expanded]="homePlusOpen()"
-                      (mousedown)="$event.preventDefault()"
-                      (click)="toggleHomePlus($event)"
-                    >
-                      <ds-icon name="plus" [size]="0.9" />
-                    </button>
-                  </div>
-                  @if (prompt().trim()) {
-                    <button type="submit" class="home-assistant__icon-btn home-assistant__send" aria-label="Enviar">
-                      <ds-icon name="arrowUp" [size]="0.85" />
-                    </button>
-                  } @else {
-                    <button
-                      type="button"
-                      class="home-assistant__icon-btn"
-                      aria-label="Dictar"
-                      [disabled]="!homeDictationSupported()"
-                      (click)="startHomeDictation()"
-                    >
-                      <ds-icon name="mic" [size]="0.9" />
-                    </button>
-                  }
-                </div>
-              }
-            </div>
-          </form>
+          <app-assistant-composer
+            variant="box"
+            inputId="home-assistant-input"
+            ariaLabel="Asistente de configuración"
+            [placeholder]="placeholder()"
+            [value]="prompt()"
+            (valueChange)="prompt.set($event)"
+            [active]="composerActive()"
+            [dictating]="homeDictating()"
+            [dictationSupported]="homeDictationSupported()"
+            [dictationError]="homeDictationError()"
+            [plusOpen]="homePlusOpen()"
+            [plusItems]="homePlusItems"
+            [generateApps]="generateApps()"
+            [showRecents]="true"
+            (submitted)="onHomeComposerSubmitted($event)"
+            (plusToggle)="toggleHomePlus($event)"
+            (plusAction)="onHomePlus($event)"
+            (generateAppsToggle)="toggleGenerateApps()"
+            (dictationStart)="startHomeDictation()"
+            (dictationCancel)="cancelHomeDictation()"
+            (dictationConfirm)="confirmHomeDictation()"
+            (recentsClick)="openRecentConversations()"
+            (focused)="onPromptFocus()"
+            (blurred)="onPromptBlur()"
+            (activated)="onComposerActivate()"
+          />
         </div>
 
         <ul

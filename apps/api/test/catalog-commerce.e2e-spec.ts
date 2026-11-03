@@ -17,7 +17,7 @@ suite('catalog commerce persistence (isolated PostgreSQL)', () => {
   beforeAll(async () => {
     await prisma.$connect();
     const [{ name }] = await prisma.$queryRaw<{ name: string }[]>`SELECT current_database() AS name`;
-    if (name !== 'vendedoria_test') throw new Error('Commerce persistence tests require the isolated vendedoria_test database.');
+    if (name !== 'agopify_test') throw new Error('Commerce persistence tests require the isolated agopify_test database.');
     for (const slug of [`commerce-${run}`, `commerce-other-${run}`]) {
       const tenant = await prisma.tenant.create({ data: { name: slug, slug, planTier: 'GROW', planTrial: false } });
       tenants.push(tenant.id);

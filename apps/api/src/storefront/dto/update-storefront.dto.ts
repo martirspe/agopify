@@ -154,7 +154,7 @@ export class UpdateStorefrontDto {
   @IsIn(INDUSTRIES)
   industry?: string;
 
-  @ApiPropertyOptional({ enum: ['classic', 'selecta', 'stride'] })
+  @ApiPropertyOptional({ enum: ['classic', 'selecta', 'stride', 'rosaline'] })
   @IsOptional()
   @IsIn(Object.keys(TEMPLATES))
   template?: string;

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DsButtonComponent, DsIconComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsIconComponent } from '@agopify/ui';
 import { AuthApiService } from '../../core/auth/auth-api.service';
 import { ConversionApiService, ConversionSummary } from '../../core/api/conversion-api.service';
 

@@ -108,7 +108,7 @@ Opciones de vista y corrección de resumen: panel de ordenamiento/columnas junto
 
 El componente ds-menu incorpora mode panel para controles de formulario: popover no modal, foco inicial, teclado nativo, Tab sin captura, Escape/cierre con retorno al trigger y cierre al salir con teclado. El modo menu de acciones conserva su contrato. Suite completa web: 127 pruebas / 26 archivos aprobados (11 de Inventario, 3 de panel). Builds web/store aprobados; store mantiene warning de 414,53 kB frente a 400 kB. JSDOM sigue emitiendo avisos de APIs ausentes en pruebas de otras secciones que pasan. Capturas, posición real del popover y móvil siguen pendientes por bloqueo de navegador.
 
-Referencia visual aportada por el usuario: se compacta la composición con franja de búsqueda/filtros, columnas de producto con miniatura, SKU, disponible y stock ilimitado; resumen al pie en lugar de tarjetas. Mantiene identidad y datos propios de VendedorIA. Checkbox inline y filas usan contratos compartidos. Paginación local sobre el inventario ya cargado: 25/50/100 registros, rango y total, límites de navegación y URL; filtros/tamaño reinician página, las ediciones sobreviven al cambio y guardar aplica el draft completo. “Revisar cantidad” abre la página del primer error y elimina filtros que lo oculten.
+Referencia visual aportada por el usuario: se compacta la composición con franja de búsqueda/filtros, columnas de producto con miniatura, SKU, disponible y stock ilimitado; resumen al pie en lugar de tarjetas. Mantiene identidad y datos propios de Agopify. Checkbox inline y filas usan contratos compartidos. Paginación local sobre el inventario ya cargado: 25/50/100 registros, rango y total, límites de navegación y URL; filtros/tamaño reinician página, las ediciones sobreviven al cambio y guardar aplica el draft completo. “Revisar cantidad” abre la página del primer error y elimina filtros que lo oculten.
 
 Verificación de esta ampliación: nueve pruebas de Inventario y cuatro de componentes compartidos aprobadas; el checkbox inline conserva comportamiento nativo/forms. Builds web y store aprobados; store conserva aviso de 414,53 kB frente al presupuesto de 400 kB. Revisión visual y scroll real pendientes por bloqueo de navegador; no se afirma rendimiento de paginación remota porque la API continúa entregando el conjunto completo.
 
@@ -285,7 +285,7 @@ Ejecución dentro del stack Docker de desarrollo, usando las dependencias Linux 
 
 | Comprobación | Resultado |
 | --- | --- |
-| `npm run test -w @vendedoria/web -- --watch=false` | 77 pruebas / 21 archivos pasan. |
+| `npm run test -w @agopify/web -- --watch=false` | 77 pruebas / 21 archivos pasan. |
 | `ng test --watch=false --include=src/app/layout/ds-modal.directive.spec.ts` | Las 3 pruebas de diálogo pasan tras añadir el stub de API nativa que jsdom no implementa. La modalidad nativa se comprobó además en navegador. |
 | `npm run build:web` | Pasa; bundles browser/server y 13 rutas prerenderizadas. Inicial: 428.64 kB, transferencia estimada 113.93 kB; CSS global 32.33 kB. |
 | `npm run build:store` | Pasa; bundles browser/server con SSR por host. Inicial: 414.01 kB. |

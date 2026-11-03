@@ -4,7 +4,7 @@
 Internet :80/:443
   → nginx del VPS (HTTPS automático)    ← scripts/bootstrap-host.sh
   → 127.0.0.1:8082 (nginx Docker)
-  → web comercial (marrso.com) · consola + API (app.marrso.com) · tiendas ({slug}.marrso.com)
+  → web comercial (agopify.com) · consola + API (app.agopify.com) · tiendas ({slug}.agopify.com)
 ```
 
 DNS en Cloudflare, solo DNS (nube gris): `A @` y `A *` → IP del VPS.
@@ -12,9 +12,9 @@ DNS en Cloudflare, solo DNS (nube gris): `A @` y `A *` → IP del VPS.
 ## 1. Código
 
 ```bash
-sudo mkdir -p /opt/vendedoria && sudo chown "$USER":"$USER" /opt/vendedoria
-cd /opt/vendedoria
-git clone https://github.com/martirspe/vendedoria.git .
+sudo mkdir -p /opt/agopify && sudo chown "$USER":"$USER" /opt/agopify
+cd /opt/agopify
+git clone https://github.com/martirspe/agopify.git .
 ```
 
 ## 2. `.env`
@@ -29,10 +29,10 @@ nano .env
 Mínimo:
 
 ```env
-STORE_BASE_DOMAIN=marrso.com
-CONSOLE_HOST=app.marrso.com
+STORE_BASE_DOMAIN=agopify.com
+CONSOLE_HOST=app.agopify.com
 CERTBOT_EMAIL=tu@correo.com
-CLOUDFLARE_API_TOKEN=...   # Cloudflare → Mi perfil → Tokens de API → "Editar DNS de zona" → marrso.com
+CLOUDFLARE_API_TOKEN=...   # Cloudflare → Mi perfil → Tokens de API → "Editar DNS de zona" → agopify.com
 ```
 
 Contraseñas y secretos se generan solos en el primer deploy (incluye `CHANNEL_CREDENTIALS_KEY` para cifrar WhatsApp). Meta, Mercado Pago, Turnstile, AWS y OpenAI son opcionales: el `.env.production.example` explica cada uno. Las fotos en S3/CloudFront y los correos con SES se crean con Terraform: [TERRAFORM.md](TERRAFORM.md).
@@ -43,7 +43,7 @@ Contraseñas y secretos se generan solos en el primer deploy (incluye `CHANNEL_C
 bash scripts/deploy.sh
 ```
 
-Hace todo: secretos, validación (incluido el token de Cloudflare), backup, build, arranque, nginx del VPS, firewall 80/443 y un certificado HTTPS comodín (`marrso.com` + `*.marrso.com`) que se renueva solo.
+Hace todo: secretos, validación (incluido el token de Cloudflare), backup, build, arranque, nginx del VPS, firewall 80/443 y un certificado HTTPS comodín (`agopify.com` + `*.agopify.com`) que se renueva solo.
 
 ## 4. Día a día
 
@@ -54,12 +54,12 @@ bash scripts/backup.sh                              # backup (base, .env y fotos
 bash scripts/restore-backup.sh backups/latest.tar.gz
 ```
 
-Operadores de VendedorIA (superadmin y admin de la plataforma). Es la única forma de dar ese rol: el registro público no puede. Usa el modo interactivo para que la contraseña no quede en el historial:
+Operadores de Agopify (superadmin y admin de la plataforma). Es la única forma de dar ese rol: el registro público no puede. Usa el modo interactivo para que la contraseña no quede en el historial:
 
 ```bash
 docker compose exec api npm run create-admin                                   # interactivo
-docker compose exec api npm run create-admin -- --role=ADMIN --email=ops@marrso.com
-docker compose exec api npm run create-admin -- --revoke --email=ops@marrso.com
+docker compose exec api npm run create-admin -- --role=ADMIN --email=ops@agopify.com
+docker compose exec api npm run create-admin -- --revoke --email=ops@agopify.com
 docker compose exec api npm run create-admin -- --help
 ```
 
@@ -67,26 +67,26 @@ Crea un SUPERADMIN después del primer deploy. No se puede quitar el rol al últ
 
 Webhooks a configurar fuera del VPS:
 
-- Meta (WhatsApp): `https://app.marrso.com/api/v1/webhooks/meta/whatsapp` con `META_VERIFY_TOKEN`.
-- Mercado Pago (cobro de planes): `https://app.marrso.com/api/v1/webhooks/billing/mercadopago`, evento Order (Mercado Pago). Detalle en [Mercado Pago](#mercado-pago).
-- Meta (Instagram): en la app de Meta, producto Instagram → Webhooks, URL `https://app.marrso.com/api/v1/webhooks/meta/instagram` con `META_VERIFY_TOKEN`, campo `messages`. Firma con `INSTAGRAM_APP_SECRET` (si falta, usa `META_APP_SECRET`).
+- Meta (WhatsApp): `https://app.agopify.com/api/v1/webhooks/meta/whatsapp` con `META_VERIFY_TOKEN`.
+- Mercado Pago (cobro de planes): `https://app.agopify.com/api/v1/webhooks/billing/mercadopago`, evento Order (Mercado Pago). Detalle en [Mercado Pago](#mercado-pago).
+- Meta (Instagram): en la app de Meta, producto Instagram → Webhooks, URL `https://app.agopify.com/api/v1/webhooks/meta/instagram` con `META_VERIFY_TOKEN`, campo `messages`. Firma con `INSTAGRAM_APP_SECRET` (si falta, usa `META_APP_SECRET`).
 
 ### Mercado Pago
 
-Hay dos configuraciones separadas que nunca se mezclan: el cobro de los planes de VendedorIA (lo que cada negocio te paga a ti) y el cobro de cada tienda (lo que el comprador le paga al negocio).
+Hay dos configuraciones separadas que nunca se mezclan: el cobro de los planes de Agopify (lo que cada negocio te paga a ti) y el cobro de cada tienda (lo que el comprador le paga al negocio).
 
-| | Planes de VendedorIA | Tienda de cada negocio |
+| | Planes de Agopify | Tienda de cada negocio |
 |---|---|---|
 | Cuenta de Mercado Pago | La tuya | La del negocio |
 | Credenciales | `.env` (`PLATFORM_MERCADOPAGO_*`) | Consola del negocio → Cobros (cifradas en la base) |
-| Webhook | `https://app.marrso.com/api/v1/webhooks/billing/mercadopago` | `https://app.marrso.com/api/v1/webhooks/mercadopago/{tenantId}` |
+| Webhook | `https://app.agopify.com/api/v1/webhooks/billing/mercadopago` | `https://app.agopify.com/api/v1/webhooks/mercadopago/{tenantId}` |
 | Eventos | Order (Mercado Pago) | Order (Mercado Pago) y Pagos |
 | Dónde se paga | En la consola, en Planes (tarjeta o Yape) | En la tienda, en la página del pedido (tarjeta o Yape); los links que envía el agente por chat abren Mercado Pago |
 
-**Planes de VendedorIA.** El negocio paga sin salir de la consola: el formulario de tarjeta (Card Payment Brick) y Yape de Mercado Pago se muestran en Planes, y la API cobra con la Orders API en tu cuenta. En tu aplicación de Mercado Pago:
+**Planes de Agopify.** El negocio paga sin salir de la consola: el formulario de tarjeta (Card Payment Brick) y Yape de Mercado Pago se muestran en Planes, y la API cobra con la Orders API en tu cuenta. En tu aplicación de Mercado Pago:
 
 1. Tus integraciones → Credenciales: copia el Access Token a `PLATFORM_MERCADOPAGO_ACCESS_TOKEN` y la Public Key a `PLATFORM_MERCADOPAGO_PUBLIC_KEY`. Las credenciales de prueba también empiezan por `APP_USR-`: usa las de prueba o las de producción, pero las dos del mismo ambiente que el webhook.
-2. Webhooks → Configurar notificaciones: URL `https://app.marrso.com/api/v1/webhooks/billing/mercadopago`, evento **Order (Mercado Pago)**. Guarda y copia la clave secreta a `PLATFORM_MERCADOPAGO_WEBHOOK_SECRET`.
+2. Webhooks → Configurar notificaciones: URL `https://app.agopify.com/api/v1/webhooks/billing/mercadopago`, evento **Order (Mercado Pago)**. Guarda y copia la clave secreta a `PLATFORM_MERCADOPAGO_WEBHOOK_SECRET`.
 3. `bash scripts/deploy.sh`.
 
 Sin las tres variables, comprar un plan pagado no está disponible en producción; el deploy falla si hay Access Token y clave secreta pero falta la Public Key. Para probar con credenciales de prueba, paga con las tarjetas de prueba de Mercado Pago (titular `APRO` aprobado, `OTHE` rechazado) o con Yape usando el celular `111111111`.
@@ -105,9 +105,9 @@ En los dos casos el backend verifica la firma `x-signature`, ignora notificacion
 
 Sin esto la integración «Dominio propio» aparece como «Próximamente» en producción.
 
-1. Cloudflare → `marrso.com` → SSL/TLS → Custom Hostnames: activa Cloudflare for SaaS.
+1. Cloudflare → `agopify.com` → SSL/TLS → Custom Hostnames: activa Cloudflare for SaaS.
 2. Crea `A customers` → IP del VPS **con nube naranja** y ponlo como Fallback Origin. Modo SSL de la zona: **Full** (el VPS responde con su certificado comodín).
-3. En `.env`: `CLOUDFLARE_SAAS_ZONE_ID` (ID de zona), `CLOUDFLARE_SAAS_API_TOKEN` (token con `SSL and Certificates · Edit` sobre la zona) y `CUSTOM_DOMAIN_CNAME_TARGET=customers.marrso.com`.
+3. En `.env`: `CLOUDFLARE_SAAS_ZONE_ID` (ID de zona), `CLOUDFLARE_SAAS_API_TOKEN` (token con `SSL and Certificates · Edit` sobre la zona) y `CUSTOM_DOMAIN_CNAME_TARGET=customers.agopify.com`.
 4. `bash scripts/deploy.sh`: el nginx del VPS pasa a aceptar cualquier dominio y lo envía a la tienda, que solo responde a dominios verificados.
 5. Turnstile: añade el dominio de cada tienda a los hostnames del widget (máximo 10 en el plan gratuito de Turnstile) o el checkout en ese dominio fallará la verificación.
 
@@ -144,4 +144,4 @@ docker compose exec api npm run create-admin
 | Health check agota el tiempo | `docker compose logs --tail 100 migrate api` |
 | Consola: «No pudimos cargar tu avance» / playground falla | Revisa `docker compose logs migrate api`. Suele ser schema a medias: haz el reset limpio de arriba tras backup, o corrige con una migración aditiva. |
 | HTTPS muestra otro sitio o certificado | DNS mal apuntado o con nube naranja; corrígelo y `sudo bash scripts/bootstrap-host.sh` |
-| `CLOUDFLARE_API_TOKEN cannot access the … zone` | El token no tiene permiso `Zona · DNS · Editar` sobre `marrso.com`; edítalo en Cloudflare |
+| `CLOUDFLARE_API_TOKEN cannot access the … zone` | El token no tiene permiso `Zona · DNS · Editar` sobre `agopify.com`; edítalo en Cloudflare |

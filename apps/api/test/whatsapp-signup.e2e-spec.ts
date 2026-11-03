@@ -10,7 +10,7 @@ import { MetaWhatsAppClient } from '../src/channels/meta-whatsapp.client';
 import type { AuthUserPayload } from '../src/common/types/auth-user';
 
 // Run only with npm run test:docker; never fall back to the development database.
-const isolated = process.env.DATABASE_URL?.includes('/vendedoria_test?') === true;
+const isolated = process.env.DATABASE_URL?.includes('/agopify_test?') === true;
 (isolated ? describe : describe.skip)('WhatsApp tenant authorization and concurrent claims (isolated DB)', () => {
   const prisma = new PrismaService();
   const env = { META_APP_ID: '123456', META_WHATSAPP_CONFIG_ID: '234567', META_APP_SECRET: 'synthetic-secret', META_VERIFY_TOKEN: 'synthetic-verify', PUBLIC_API_BASE_URL: 'https://example.test/api/v1', CHANNEL_CREDENTIALS_KEY: 'ab'.repeat(32) };

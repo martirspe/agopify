@@ -11,11 +11,15 @@
       <ds-button type="button" [disabled]="saving() || hasInvalidQty()" (click)="save()">{{ saving() ? 'Guardando…' : 'Guardar stock' }}</ds-button>
     </ds-action-bar>
   }
-  <ds-page-header title="Inventario" icon="list">
-    <div dsPageActions>
-      <a routerLink="/app/products" class="tw:console-action-secondary"><ds-icon name="chevronLeft" [size]="0.9" />Productos</a>
-    </div>
-  </ds-page-header>
+  <ds-page-header
+    title="Inventario"
+    icon="package"
+    parentTitle="Productos"
+    backHref="/app/products"
+    parentHref="/app/products"
+    backLabel="Volver a productos"
+    crumbsLabel="Ubicación en catálogo"
+  />
   <div class="ds-page-frame__body tw:grid tw:w-full tw:min-w-0 tw:gap-5">
   @if (errorMessage() && !loadFailed(); as error) {
     <div class="tw:feedback tw:feedback-danger" role="alert"><ds-icon name="alert" /><span>{{ error }} Tus cambios siguen disponibles para volver a intentar.</span></div>
@@ -50,11 +54,9 @@
     </section>
     <div class="tw:console-list-panel">
       <div class="tw:console-filter-bar tw:flex tw:flex-wrap tw:items-center tw:gap-3 tw:border-0 tw:border-b tw:border-solid tw:border-divider tw:px-4 tw:py-3">
-        <label class="tw:min-w-0 tw:flex-1">
-          <span class="tw:flex tw:min-w-0 tw:items-center tw:gap-2 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:px-3 tw:focus-within:border-focus">
-            <ds-icon name="search" class="tw:text-muted" />
-            <input type="search" aria-label="Buscar en inventario" class="tw:console-field tw:border-0! tw:px-0!" placeholder="Buscar por nombre, variante o SKU" maxlength="200" [value]="query()" (input)="setFilter('q', $any($event.target).value)" />
-          </span>
+        <label class="tw:console-filter-search">
+          <ds-icon name="search" [size]="1" class="tw:shrink-0 tw:text-muted" aria-hidden="true" />
+          <input type="search" aria-label="Buscar en inventario" placeholder="Buscar por nombre, variante o SKU" maxlength="200" [value]="query()" (input)="setFilter('q', $any($event.target).value)" />
         </label>
         <ds-checkbox variant="inline">
           <input type="checkbox" [checked]="lowOnly()" (change)="setFilter('stock', $any($event.target).checked ? 'bajo' : '')" />Stock bajo: 3 o menos

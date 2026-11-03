@@ -8,7 +8,7 @@ import { sellerIdentityComplete } from './seller-identity';
 import { shippingOptions } from './shipping';
 import { ensureStorefront } from './storefront-row';
 import { readTemplateContent, templateAllowed } from './store-templates';
-import { getTheme } from '@vendedoria/themes';
+import { getTheme } from '@agopify/themes';
 import { assertTheme, themeStatus, type ThemeStatus } from './theme-release';
 import { StorefrontEditorService } from './storefront-editor.service';
 import {

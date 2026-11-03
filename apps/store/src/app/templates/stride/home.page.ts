@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DsIconComponent } from '@vendedoria/ui';
+import { DsIconComponent } from '@agopify/ui';
 import {
   HomeBlockComponent,
   sharedBlockType,

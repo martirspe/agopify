@@ -8,4 +8,4 @@ export type PlatformOperator = {
 
 export const PLATFORM_PERMISSIONS_KEY = 'platformPermissions';
 export const PLATFORM_TOKEN_SCOPE = 'platform';
-export const PLATFORM_TOKEN_AUDIENCE = 'vendedoria-platform';
+export const PLATFORM_TOKEN_AUDIENCE = 'agopify-platform';

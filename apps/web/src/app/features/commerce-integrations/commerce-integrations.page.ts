@@ -16,7 +16,7 @@ import {
   DsIconComponent,
   DsPageHeaderComponent,
   DsSelectComponent,
-} from '@vendedoria/ui';
+} from '@agopify/ui';
 import { messageFrom } from '../../core/api/api-error';
 import {
   CommerceIntegrationView,

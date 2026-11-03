@@ -4,7 +4,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { DsButtonComponent, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent, DsEmptyStateComponent, DsIconComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent, DsEmptyStateComponent, DsIconComponent } from '@agopify/ui';
 import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { distinctUntilChanged, map } from 'rxjs';

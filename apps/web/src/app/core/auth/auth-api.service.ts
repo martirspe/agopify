@@ -1,7 +1,8 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, Injector, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { ConsoleAssistantApiService } from '../api/console-assistant-api.service';
 
 export type AuthTokensResponse = {
   accessToken: string;
@@ -18,13 +19,14 @@ export type InvitePreview = {
   role: MembershipRole;
 };
 
-const ACCESS_KEY = 'vendedoria.accessToken';
-const REFRESH_KEY = 'vendedoria.refreshToken';
+const ACCESS_KEY = 'agopify.accessToken';
+const REFRESH_KEY = 'agopify.refreshToken';
 const TURNSTILE_HEADER = 'X-Turnstile-Token';
 
 @Injectable({ providedIn: 'root' })
 export class AuthApiService {
   private readonly http = inject(HttpClient);
+  private readonly injector = inject(Injector);
   readonly isAuthenticated = signal(false);
   private refreshInFlight: Promise<AuthTokensResponse> | null = null;
   private turnstileConfig: Promise<string | null> | null = null;
@@ -191,6 +193,11 @@ export class AuthApiService {
       localStorage.removeItem(REFRESH_KEY);
     }
     this.isAuthenticated.set(false);
+    try {
+      this.injector.get(ConsoleAssistantApiService).clearLocal();
+    } catch {
+      /* store may be unavailable during teardown */
+    }
     if (!refreshToken) return Promise.resolve();
     return firstValueFrom(
       this.http

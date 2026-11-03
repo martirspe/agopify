@@ -29,7 +29,7 @@ WORKDIR /app/apps/api
 CMD ["npx", "prisma", "migrate", "deploy"]
 
 FROM manifests AS api-dependencies
-RUN npm ci --omit=dev --workspace=@vendedoria/api --no-audit --no-fund
+RUN npm ci --omit=dev --workspace=@agopify/api --no-audit --no-fund
 COPY --from=api-build /app/node_modules/.prisma ./node_modules/.prisma
 
 FROM base AS api

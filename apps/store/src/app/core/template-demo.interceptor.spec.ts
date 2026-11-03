@@ -1,7 +1,7 @@
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
-import type { PublicProductList } from '@vendedoria/contracts';
+import type { PublicProductList } from '@agopify/contracts';
 import { STORE_PROXY_PREFIX } from './store-context';
 import { TemplateDemo } from './template-demo';
 import { templateDemoInterceptor } from './template-demo.interceptor';

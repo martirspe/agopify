@@ -21,14 +21,18 @@ import {
   AI_EXCLUDED_BLOCKS,
   AI_PAGE_EXCLUDED_BLOCKS,
   AI_PAGE_EXCLUDED_SECTIONS,
+  PageAiMode,
   PageAiResult,
   TextAiAction,
   TextAiBusiness,
   buildPagePrompt,
+  buildSectionFillPrompt,
   buildSectionPrompt,
   buildTextPrompt,
+  filterPageToEmptyFields,
   needsCurrentText,
   pickPageTexts,
+  pickSectionFillTexts,
   pickSectionTexts,
   pickSuggestions,
   suggestionCount,
@@ -145,26 +149,81 @@ export class StorefrontAiService {
     return { suggestions };
   }
 
-  /** A library block chosen and written from the merchant's request; the console adds it to the draft. */
+  /**
+   * Library block from a free prompt, or texts for an existing section when `target` is set.
+   * The console previews the patch before applying it to the draft.
+   */
   async suggestSection(
     tenantId: string,
     prompt: string,
-  ): Promise<{ type: string; texts: Record<string, string> }> {
+    target?: string,
+  ): Promise<{
+    type: string;
+    texts: Record<string, string>;
+    target?: string;
+  }> {
     const apiKey = await this.assertReady(tenantId);
     const request = prompt.trim();
     if (request.length < 3)
-      throw new BadRequestException('Cuéntanos qué sección quieres crear.');
+      throw new BadRequestException(
+        target
+          ? 'Cuéntanos cómo quieres esta sección.'
+          : 'Cuéntanos qué sección quieres crear.',
+      );
     const storefront = await ensureStorefront(this.prisma, tenantId);
     const template = effectiveTemplate(
       storefront.template,
       storefront.industry,
     );
-    const blocks = TEMPLATE_SECTIONS[template].filter(
+    const schema = TEMPLATE_SECTIONS[template];
+    await this.assertQuota(tenantId);
+    const business = await this.business(tenantId, storefront);
+
+    if (target) {
+      const type = sectionType(target);
+      const section = schema.find((s) => s.id === type);
+      if (!section || AI_EXCLUDED_BLOCKS.includes(section.id)) {
+        throw new BadRequestException(
+          'Esa sección no se puede reescribir con IA.',
+        );
+      }
+      if (!section.fields.some(isTextField)) {
+        throw new BadRequestException('Esa sección no tiene textos editables.');
+      }
+      const content = readTemplateContent(
+        storefront.templateDraft ?? storefront.templateContent,
+      );
+      const saved = content.sections[target] ?? {};
+      const current: Record<string, string> = {};
+      for (const field of section.fields) {
+        if (!isTextField(field)) continue;
+        const value = (saved[field.id] ?? '').trim();
+        if (value) current[field.id] = value;
+      }
+      const raw = await this.complete(
+        tenantId,
+        apiKey,
+        buildSectionFillPrompt({
+          business,
+          section,
+          target,
+          prompt: request,
+          current,
+        }),
+        { temperature: 0.7, maxTokens: 900 },
+      );
+      const texts = pickSectionFillTexts(raw, section, request);
+      if (!texts) {
+        throw new ServiceUnavailableException(
+          'No salió un texto útil. Prueba con otra indicación.',
+        );
+      }
+      return { type: section.id, texts, target };
+    }
+
+    const blocks = schema.filter(
       (s) => s.role === 'block' && !AI_EXCLUDED_BLOCKS.includes(s.id),
     );
-    await this.assertQuota(tenantId);
-
-    const business = await this.business(tenantId, storefront);
     const raw = await this.complete(
       tenantId,
       apiKey,
@@ -184,12 +243,20 @@ export class StorefrontAiService {
   }
 
   /**
-   * Texts of the built-in home sections plus a few library blocks, in order. The console
-   * applies it to the draft as one undo step; it uses one editor text of the plan.
+   * Home page texts (+ optional library blocks). `fillEmpty` only writes empty draft fields
+   * and never proposes layout changes. The console previews before applying.
    */
-  async suggestPage(tenantId: string, prompt: string): Promise<PageAiResult> {
+  async suggestPage(
+    tenantId: string,
+    prompt: string,
+    mode: PageAiMode = 'rewrite',
+  ): Promise<PageAiResult> {
     const apiKey = await this.assertReady(tenantId);
-    const request = prompt.trim();
+    const request =
+      prompt.trim() ||
+      (mode === 'fillEmpty'
+        ? 'Rellena los textos vacíos de mi tienda con los datos del negocio.'
+        : '');
     if (request.length < 3)
       throw new BadRequestException(
         'Cuéntanos de tu negocio y qué quieres destacar.',
@@ -200,6 +267,9 @@ export class StorefrontAiService {
       storefront.industry,
     );
     const schema = TEMPLATE_SECTIONS[template];
+    const content = readTemplateContent(
+      storefront.templateDraft ?? storefront.templateContent,
+    );
     const sections = schema.filter(
       (s) =>
         s.role === 'builtin' &&
@@ -209,19 +279,69 @@ export class StorefrontAiService {
     const blocks = schema.filter(
       (s) => s.role === 'block' && !AI_PAGE_EXCLUDED_BLOCKS.includes(s.id),
     );
+
+    let emptyTargets: { sectionId: string; fieldIds: string[] }[] | undefined;
+    if (mode === 'fillEmpty') {
+      emptyTargets = [];
+      for (const section of sections) {
+        const saved = content.sections[section.id] ?? {};
+        const fieldIds = section.fields
+          .filter(isTextField)
+          .filter((f) => !(saved[f.id] ?? '').trim())
+          .map((f) => f.id);
+        if (fieldIds.length) emptyTargets.push({ sectionId: section.id, fieldIds });
+      }
+      for (const [sectionId, saved] of Object.entries(content.sections)) {
+        const type = sectionType(sectionId);
+        if (sections.some((s) => s.id === type)) continue;
+        const section = schema.find((s) => s.id === type);
+        if (
+          !section ||
+          section.role === 'fixed' ||
+          AI_PAGE_EXCLUDED_BLOCKS.includes(section.id) ||
+          AI_EXCLUDED_BLOCKS.includes(section.id)
+        ) {
+          continue;
+        }
+        const fieldIds = section.fields
+          .filter(isTextField)
+          .filter((f) => !(saved[f.id] ?? '').trim())
+          .map((f) => f.id);
+        if (fieldIds.length) emptyTargets.push({ sectionId, fieldIds });
+      }
+      if (!emptyTargets.length) {
+        throw new BadRequestException(
+          'No hay textos vacíos que rellenar. Usa «Crear página» si quieres reescribirlos.',
+        );
+      }
+    }
+
     await this.assertQuota(tenantId);
 
     const business = await this.business(tenantId, storefront);
+    const pageRequest = {
+      business,
+      sections,
+      blocks: mode === 'fillEmpty' ? [] : blocks,
+      prompt: request,
+      mode,
+      emptyTargets,
+    };
     const raw = await this.complete(
       tenantId,
       apiKey,
-      buildPagePrompt({ business, sections, blocks, prompt: request }),
+      buildPagePrompt(pageRequest),
       { temperature: 0.7, maxTokens: 2500, timeoutMs: OPENAI_PAGE_TIMEOUT_MS },
     );
-    const page = pickPageTexts(raw, { sections, blocks, prompt: request });
+    let page = pickPageTexts(raw, pageRequest);
+    if (page && mode === 'fillEmpty') {
+      page = filterPageToEmptyFields(page, emptyTargets ?? []);
+    }
     if (!page) {
       throw new ServiceUnavailableException(
-        'No salió una página útil. Prueba contándonos más de tu negocio.',
+        mode === 'fillEmpty'
+          ? 'No salieron textos para los campos vacíos. Inténtalo de nuevo.'
+          : 'No salió una página útil. Prueba contándonos más de tu negocio.',
       );
     }
     return page;

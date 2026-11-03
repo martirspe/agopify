@@ -1,12 +1,12 @@
 # INTEGRATION_CORE_ARCHITECTURE.md
 
-**Proyecto:** VendedorIA  
+**Proyecto:** Agopify  
 **Documento:** Arquitectura oficial del núcleo universal de integraciones  
 **Versión:** 1.0.0  
 **Estado:** Proposed — Pending Implementation  
 **Prioridad:** Estratégica  
 **Ámbito:** Backend, Frontend, Data Architecture, Integrations, AI Commerce  
-**Objetivo:** Construir una infraestructura universal, extensible y multi-tenant para conectar plataformas externas de comercio electrónico con VendedorIA.
+**Objetivo:** Construir una infraestructura universal, extensible y multi-tenant para conectar plataformas externas de comercio electrónico con Agopify.
 
 **Prioridad de adaptadores (decisión de producto):** Magento 2 / Adobe Commerce y WooCommerce son las primeras implementaciones de referencia. Otras plataformas quedan registradas y mapeadas en el registry; su adaptador completo es un hito posterior.
 
@@ -14,7 +14,7 @@
 
 # 1. VISIÓN Y OBJETIVO
 
-VendedorIA debe evolucionar hacia una plataforma AI-first de comercio conversacional que permita conectar diferentes plataformas de comercio electrónico y centralizar su información comercial.
+Agopify debe evolucionar hacia una plataforma AI-first de comercio conversacional que permita conectar diferentes plataformas de comercio electrónico y centralizar su información comercial.
 
 El objetivo es que cada negocio pueda conectar una o varias tiendas externas, sincronizar sus catálogos y utilizar sus productos mediante agentes vendedores de IA en los distintos canales de comunicación.
 
@@ -43,7 +43,7 @@ La arquitectura debe garantizar:
 3. Mantener actualizados productos, precios e inventarios.
 4. Permitir que los agentes IA consulten cualquier catálogo conectado.
 5. Reducir el tiempo de incorporación de nuevos comercios.
-6. Preparar VendedorIA para convertirse en una plataforma de integración comercial multicanal.
+6. Preparar Agopify para convertirse en una plataforma de integración comercial multicanal.
 
 ## 1.3 Capas objetivo
 
@@ -64,7 +64,7 @@ AI COMMERCE LAYER
   Catalog Search · Product Context · Availability · Recommendations
   (sales-agent-tools + catalog-search + Qdrant; sin catálogo paralelo)
 
-VENDEDORIA AI SALES AGENTS
+AGOPIFY AI SALES AGENTS
   WhatsApp · Instagram · Facebook · Messenger · Otros canales
 ```
 
@@ -76,7 +76,7 @@ VENDEDORIA AI SALES AGENTS
 
 Cada plataforma externa conserva la autoridad sobre los datos que administra.
 
-VendedorIA mantiene una representación normalizada de esos datos para utilizarlos en su propio ecosistema.
+Agopify mantiene una representación normalizada de esos datos para utilizarlos en su propio ecosistema.
 
 No modificar el catálogo externo desde los procesos de sincronización de lectura.
 
@@ -125,7 +125,7 @@ La incorporación del Integration Core no debe romper:
 - Canales conectados.
 - Sistema de conversaciones.
 - Memoria conversacional.
-- Funcionalidades existentes de VendedorIA.
+- Funcionalidades existentes de Agopify.
 - El módulo de plan `integrations` (`TenantIntegration`: store, custom_domain, tracking, …).
 
 ## 2.8 Naming en este repositorio
@@ -317,7 +317,7 @@ interface NormalizedProduct {
   status: ProductStatus;
   visibility?: string;
   currency?: string;
-  /** Integer cents — same invariant as the rest of VendedorIA. */
+  /** Integer cents — same invariant as the rest of Agopify. */
   priceCents?: number;
   compareAtPriceCents?: number;
   costPriceCents?: number;
@@ -498,7 +498,7 @@ Metodología: **INSPECT → UNDERSTAND → MEASURE → DESIGN → IMPLEMENT → 
 
 # 16. DECISIÓN ARQUITECTÓNICA FINAL
 
-VendedorIA adopta:
+Agopify adopta:
 
 - Adapter Pattern · Registry Pattern · Strategy (auth)
 - Event-Driven + Queue-Based Processing
@@ -507,6 +507,6 @@ VendedorIA adopta:
 
 Implementación incremental; sin reescritura general.
 
-**El Integration Core es la infraestructura oficial para todas las integraciones comerciales presentes y futuras de VendedorIA.**
+**El Integration Core es la infraestructura oficial para todas las integraciones comerciales presentes y futuras de Agopify.**
 
 Documento de análisis vs código: `docs/architecture/INTEGRATION_CORE_GAP_ANALYSIS.md`.

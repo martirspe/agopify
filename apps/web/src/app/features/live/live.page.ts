@@ -16,7 +16,7 @@ import {
   DsEmptyStateComponent,
   DsIconComponent,
   DsPageHeaderComponent,
-} from '@vendedoria/ui';
+} from '@agopify/ui';
 import {
   LiveApiService,
   LiveCampaign,

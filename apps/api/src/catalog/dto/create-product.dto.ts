@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -9,6 +9,7 @@ import {
   IsObject,
   IsString,
   IsUrl,
+  Matches,
   Max,
   MaxLength,
   Min,
@@ -405,6 +406,19 @@ export class ChannelListingDto {
   isPublished!: boolean;
 }
 
+export class OptionValueDto {
+  @ApiProperty({ example: 'Negro' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(200)
+  value!: string;
+
+  @ApiPropertyOptional({ example: '#111111', description: 'Hex swatch for color axes (#rrggbb)' })
+  @IsOptional()
+  @Matches(/^#[0-9A-Fa-f]{6}$/)
+  color?: string;
+}
+
 export class OptionDefinitionDto {
   @ApiProperty({ example: 'Color' })
   @IsString()
@@ -412,12 +426,22 @@ export class OptionDefinitionDto {
   @MaxLength(60)
   name!: string;
 
-  @ApiProperty({ type: [String], example: ['Negro', 'Blanco'] })
+  @ApiProperty({
+    type: [OptionValueDto],
+    example: [{ value: 'Negro', color: '#111111' }, { value: 'Blanco', color: '#ffffff' }],
+    description: 'Legacy string entries are also accepted and normalized to { value }.',
+  })
   @IsArray()
   @ArrayMaxSize(50)
-  @IsString({ each: true })
-  @MaxLength(200, { each: true })
-  values!: string[];
+  @ValidateNested({ each: true })
+  @Type(() => OptionValueDto)
+  @Transform(({ value }) => {
+    if (!Array.isArray(value)) return value;
+    return value.map((entry: unknown) =>
+      typeof entry === 'string' ? { value: entry } : entry,
+    );
+  })
+  values!: OptionValueDto[];
 }
 
 /** Fields shared by create and update for templates, sets, inventory and services. */

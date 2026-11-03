@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DsIconComponent } from '@vendedoria/ui';
+import { DsIconComponent } from '@agopify/ui';
 import { type Inline, LEGAL_DOCS, type LegalSlug, legalUpdatedLabel } from './legal-content';
 import { PLATFORM_LEGAL } from './legal-identity';
 
@@ -24,9 +24,9 @@ export class LegalPage {
   readonly year = new Date().getFullYear();
 
   constructor() {
-    const title = this.doc ? `${this.doc.title} · VendedorIA` : 'Centro legal · VendedorIA';
+    const title = this.doc ? `${this.doc.title} · Agopify` : 'Centro legal · Agopify';
     const description =
-      this.doc?.description ?? 'Términos, políticas y Libro de Reclamaciones de VendedorIA.';
+      this.doc?.description ?? 'Términos, políticas y Libro de Reclamaciones de Agopify.';
     inject(Title).setTitle(title);
     inject(Meta).updateTag({ name: 'description', content: description });
   }

@@ -74,17 +74,25 @@
             <legend>
               {{ group.name }}: <strong>{{ selection()[group.name] ?? 'elige una opción' }}</strong>
             </legend>
-            <div class="options__values">
+            <div class="options__values" [class.options__values--swatches]="group.values.some((option) => option.color)">
               @for (option of group.values; track option.value) {
                 <button
                   type="button"
                   class="options__value"
+                  [class.options__value--swatch]="!!option.color"
                   [class.is-active]="isSelected(group.name, option.value)"
                   [class.is-unavailable]="!option.available"
+                  [attr.aria-label]="option.color ? group.name + ' ' + option.value : null"
                   [attr.aria-pressed]="isSelected(group.name, option.value)"
+                  [attr.title]="option.value"
                   (click)="select(group.name, option.value)"
                 >
-                  {{ option.value }}
+                  @if (option.color) {
+                    <span class="options__swatch" [style.background]="option.color" aria-hidden="true"></span>
+                    <span class="options__swatch-label">{{ option.value }}</span>
+                  } @else {
+                    {{ option.value }}
+                  }
                 </button>
               }
             </div>

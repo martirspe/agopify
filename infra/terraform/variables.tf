@@ -1,6 +1,6 @@
 variable "app_name" {
   type    = string
-  default = "vendedoria"
+  default = "agopify"
   validation {
     condition     = can(regex("^[a-z0-9-]{3,20}$", var.app_name))
     error_message = "app_name: 3 to 20 lowercase letters, digits or hyphens."
@@ -80,7 +80,7 @@ variable "email_domain" {
 
 variable "email_from" {
   type        = string
-  description = "EMAIL_FROM of the API, e.g. \"VendedorIA <pedidos@example.pe>\"."
+  description = "EMAIL_FROM of the API, e.g. \"Agopify <pedidos@example.pe>\"."
   validation {
     condition     = can(regex("@[^>]+>?$", var.email_from))
     error_message = "email_from must contain an address."

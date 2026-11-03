@@ -1,4 +1,4 @@
-import type { DsIconName } from '@vendedoria/ui';
+import type { DsIconName } from '@agopify/ui';
 
 export type SellerSectionId =
   | 'profile'

@@ -193,6 +193,29 @@
   text-decoration: line-through;
 }
 
+.options__value--swatch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding-inline: var(--ds-space-3);
+}
+
+.options__swatch {
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--store-text) 18%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 35%, transparent);
+}
+
+.options__swatch-label {
+  font-size: 0.9em;
+}
+
+.options__value--swatch.is-unavailable .options__swatch {
+  opacity: 0.45;
+}
+
 .info__stock {
   display: flex;
   align-items: center;

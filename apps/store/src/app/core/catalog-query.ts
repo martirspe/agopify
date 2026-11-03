@@ -1,4 +1,4 @@
-import type { PublicCatalogSelection } from "@vendedoria/contracts";
+import type { PublicCatalogSelection } from "@agopify/contracts";
 
 /** Invalid deep links fall back to an unfiltered discovery collection. */
 export function catalogSelections(

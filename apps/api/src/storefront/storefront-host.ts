@@ -10,7 +10,7 @@ export const RESERVED_SLUGS = new Set([
   'admin', 'api', 'app', 'apps', 'assets', 'auth', 'billing', 'blog', 'cdn', 'checkout', 'consola', 'console',
   'dashboard', 'dev', 'docs', 'email', 'ftp', 'help', 'imap', 'login', 'mail', 'media', 'ns1', 'ns2', 'pagos',
   'panel', 'pay', 'payments', 'pop', 'preview', 'smtp', 'soporte', 'staging', 'static', 'status', 'store',
-  'support', 'test', 'tienda', 'tiendas', 'vendedoria', 'webhook', 'webhooks', 'webmail', 'www',
+  'support', 'test', 'tienda', 'tiendas', 'agopify', 'webhook', 'webhooks', 'webmail', 'www',
 ]);
 
 export function isValidStoreSlug(slug: string): boolean {

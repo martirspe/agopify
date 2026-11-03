@@ -1,6 +1,9 @@
 .consent {
   position: fixed;
-  inset: auto 1rem 1rem;
+  inset: auto
+    max(1rem, var(--store-safe-right, env(safe-area-inset-right, 0px)))
+    max(1rem, var(--store-safe-bottom, env(safe-area-inset-bottom, 0px)))
+    max(1rem, var(--store-safe-left, env(safe-area-inset-left, 0px)));
   z-index: 60;
   display: flex;
   flex-wrap: wrap;

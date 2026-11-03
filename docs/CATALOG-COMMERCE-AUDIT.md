@@ -119,7 +119,7 @@ Las verificaciones de navegador utilizaron demos locales sin cobros. El test de 
 
 Pruebas agregadas: opciones canónicas/compatibilidad, herencia y validación de categorías, materialización de hechos, IDs y duplicados, versión antigua, stock concurrente, eliminación reservada, lote de 500 variantes, stock propio sobre producto ilimitado, frontera de expiración, mapper público, generador cartesiano, conservación de ediciones, límites, ciclo de sets y cambios de ejes. Las pruebas de carrito cubren compra directa/cancelación/recibo ajeno, tiendas distintas, datos antiguos/corruptos, recarga, cantidades añadidas posteriormente, liquidación repetida, claves de reintento y mutaciones compartidas con Web Locks.
 
-`npm run test:docker` ahora activa los nuevos e2e únicamente en la base `vendedoria_test`. Cubren sets guardados/editados/releídos, aislamiento y rollback, cinco ejes, IDs/precio/foto y dos reservas competidoras sobre una sola unidad. Esa ejecución todavía es necesaria.
+`npm run test:docker` ahora activa los nuevos e2e únicamente en la base `agopify_test`. Cubren sets guardados/editados/releídos, aislamiento y rollback, cinco ejes, IDs/precio/foto y dos reservas competidoras sobre una sola unidad. Esa ejecución todavía es necesaria.
 
 ## Riesgos y trabajo pendiente
 

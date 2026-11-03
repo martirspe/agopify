@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import type { PublicProductDetails } from '@vendedoria/contracts';
+import type { PublicProductDetails } from '@agopify/contracts';
 
 /** Merchant-written product sheet: specifications, contents, policies and questions. */
 @Component({

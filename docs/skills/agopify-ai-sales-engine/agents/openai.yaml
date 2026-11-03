@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agopify AI Sales Engine"
+  short_description: "Maintain state, sales tools and grounded buyer replies"
+  default_prompt: "Use $agopify-ai-sales-engine to implement, diagnose or evaluate the Agopify buyer-facing sales runtime."

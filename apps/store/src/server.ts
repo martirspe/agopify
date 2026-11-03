@@ -6,7 +6,7 @@ import {
 } from '@angular/ssr/node';
 import express, { NextFunction, Request, Response } from 'express';
 import { join } from 'node:path';
-import type { SitemapEntry, StoreResolveResult } from '@vendedoria/contracts';
+import type { SitemapEntry, StoreResolveResult } from '@agopify/contracts';
 import {
   PREVIEW_HEADER,
   STORE_PROXY_PREFIX,
@@ -155,7 +155,13 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
     apiBase: '', previewToken: null, origin: origin(req), editorOrigin: null, demoTemplate,
   };
   angularApp.handle(req, context)
-    .then((response) => response ? writeResponseToNodeResponse(response, res) : next())
+    .then((response) => {
+      if (response) {
+        writeResponseToNodeResponse(response, res);
+        return;
+      }
+      res.status(404).type('html').send(statusPage('Plantilla no encontrada', 'Vuelve a la selección de plantillas.'));
+    })
     .catch(next);
 });
 
@@ -322,7 +328,17 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     : angularApp;
   engine
     .handle(req, context)
-    .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
+    .then((response) => {
+      if (response) {
+        writeResponseToNodeResponse(response, res);
+        return;
+      }
+      // Never fall through to Express's bare "Cannot GET /" for tenant hosts.
+      res
+        .status(404)
+        .type('html')
+        .send(statusPage('Tienda no disponible', 'Puede que aún no esté publicada o que el enlace no sea correcto.'));
+    })
     .catch(next);
 });
 

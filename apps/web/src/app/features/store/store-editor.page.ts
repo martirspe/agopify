@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import type {
@@ -26,19 +27,38 @@ import type {
   StoreTemplateFaq,
   StoreTemplateTheme,
   StoreThemeOption,
-} from '@vendedoria/contracts';
-import { DsChoiceCardComponent, DsDisclosureComponent, DsEmptyStateComponent, DsButtonComponent, DsConfirmService, DsIconComponent } from '@vendedoria/ui';
+} from '@agopify/contracts';
+import {
+  DsChoiceCardComponent,
+  DsDisclosureComponent,
+  DsEmptyStateComponent,
+  DsButtonComponent,
+  DsConfirmService,
+  DsIconComponent,
+  type DsIconName,
+} from '@agopify/ui';
 import { CatalogApiService } from '../../core/api/catalog-api.service';
 import {
   StoreApiService,
   StoreEditorState,
   StoreEditorVersion,
   StoreEditorView,
+  type StorePageAi,
+  type StorePageAiMode,
+  type StoreSectionAi,
   StoreTextAiAction,
 } from '../../core/api/store-api.service';
 import { IntegrationsStateService } from '../../core/integrations/integrations-state.service';
 import { resizeImage } from '../../core/media/resize-image';
 import { IntegrationGateComponent } from '../integrations/integration-gate.component';
+import { AssistantComposer } from '../get-started/assistant-composer';
+import {
+  HomeAssistantPanel,
+  type AssistantConversation,
+  type AssistantPanelMessage,
+  type AssistantPanelMode,
+} from '../get-started/home-assistant.panel';
+import { ConsoleDictationSession } from '../get-started/console-dictation';
 import {
   ContentHistory,
   MAX_BLOCKS,
@@ -47,9 +67,11 @@ import {
   THEME_CORNERS,
   THEME_FONTS,
   THEME_CHOICES,
+  type AiTextChange,
   type ThemeColorOption,
   addBlock,
   applyPage,
+  applyTextChanges,
   canGenerateImage,
   clampValue,
   displayValue,
@@ -57,6 +79,7 @@ import {
   isOverridden,
   isTextField,
   layoutOf,
+  listPageTextChanges,
   moveItem,
   newBlockId,
   removeBlock,
@@ -78,7 +101,8 @@ const FRAME_TIMEOUT_MS = 20_000;
 const NOTICE_MS = 4000;
 
 type SaveState = 'saved' | 'pending' | 'saving' | 'error';
-type Device = 'desktop' | 'mobile';
+type Device = 'desktop' | 'tablet' | 'mobile';
+const DEVICE_ORDER = ['desktop', 'tablet', 'mobile'] as const satisfies readonly Device[];
 
 /** A section as the panel lists it: `id` is the content key (`hero`, `text-a1b2c3`). */
 type PanelSection = Pick<StoreEditorSection, 'label' | 'fields' | 'faq' | 'role' | 'canHide' | 'description'> & {
@@ -114,16 +138,32 @@ function panelSection(section: StoreEditorSection, id: string, label: string, hi
   return { id, label, fields, faq, role, canHide, description, hidden, page };
 }
 
+type EditorPlusItem = { id: string; label: string; icon: DsIconName; hint?: string; disabled?: boolean; dividerBefore?: boolean };
+
 @Component({
   selector: 'app-store-editor-page',
   standalone: true,
-  imports: [RouterLink, NgTemplateOutlet, DsChoiceCardComponent, DsDisclosureComponent, DsEmptyStateComponent, DsButtonComponent, DsIconComponent, IntegrationGateComponent],
+  imports: [
+    RouterLink,
+    NgTemplateOutlet,
+    FormsModule,
+    DsChoiceCardComponent,
+    DsDisclosureComponent,
+    DsEmptyStateComponent,
+    DsButtonComponent,
+    DsIconComponent,
+    IntegrationGateComponent,
+    HomeAssistantPanel,
+    AssistantComposer,
+  ],
   templateUrl: './store-editor.page.html',
   styleUrls: [
+    '../get-started/home-assistant.composer.scss',
     './store-editor.panel.scss',
     './store-editor.versions.scss',
     './store-editor.ai.scss',
     './store-editor.page.scss',
+    './store-editor.shell.scss',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:message)': 'onMessage($event)', '(window:beforeunload)': 'onBeforeUnload($event)' },
@@ -138,6 +178,8 @@ export class StoreEditorPage {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly frame = viewChild<ElementRef<HTMLIFrameElement>>('frame');
   private readonly filePicker = viewChild<ElementRef<HTMLInputElement>>('filePicker');
+  private readonly assistantPanel = viewChild(HomeAssistantPanel);
+  private readonly homeDictation = new ConsoleDictationSession();
   private readonly history = new ContentHistory();
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
   private frameTimer: ReturnType<typeof setTimeout> | null = null;
@@ -147,6 +189,10 @@ export class StoreEditorPage {
   private savedAt: string | undefined;
   private imageTarget: { section: string; field: string } | null = null;
   private aiRequest = 0;
+  private messageSeq = 0;
+  readonly homeDictating = this.homeDictation.active;
+  readonly homeDictationSupported = this.homeDictation.supported;
+  readonly homeDictationError = this.homeDictation.error;
 
   readonly active = computed(() => this.integrations.isActive('store'));
   readonly loading = signal(true);
@@ -160,10 +206,53 @@ export class StoreEditorPage {
   readonly selectedSection = signal<string | null>(null);
   readonly selectedField = signal<string | null>(null);
   readonly device = signal<Device>('desktop');
-  readonly panelOpen = signal(true);
+  readonly deviceAria = computed(() => {
+    switch (this.device()) {
+      case 'tablet':
+        return 'Vista tablet. Clic para celular';
+      case 'mobile':
+        return 'Vista celular. Clic para computadora';
+      default:
+        return 'Vista de computadora. Clic para tablet';
+    }
+  });
+  readonly deviceIcon = computed(() => {
+    switch (this.device()) {
+      case 'tablet':
+        return 'tablet' as const;
+      case 'mobile':
+        return 'smartphone' as const;
+      default:
+        return 'monitor' as const;
+    }
+  });
+  readonly deviceTitle = computed(() => {
+    switch (this.device()) {
+      case 'tablet':
+        return 'Tablet';
+      case 'mobile':
+        return 'Celular';
+      default:
+        return 'Computadora';
+    }
+  });
+  /** Structure drawer over the preview; closed by default so the canvas dominates. */
+  readonly structureOpen = signal(false);
+  /** Inspector drawer; opens when a section is selected. */
+  readonly inspectorOpen = signal(false);
   readonly sectionQuery = signal('');
   readonly libraryQuery = signal('');
   readonly refreshingFrame = signal(false);
+  /** Same home-assistant dock panel as `/app/get-started`. */
+  readonly assistantOpen = signal(false);
+  readonly assistantMode = signal<AssistantPanelMode>('dock');
+  readonly assistantTitle = signal('Diseño de tu tienda');
+  readonly assistantMessages = signal<AssistantPanelMessage[]>([]);
+  readonly assistantDrafting = signal(false);
+  readonly prompt = signal('');
+  readonly composerActive = signal(false);
+  readonly promptFocused = signal(false);
+  readonly homePlusOpen = signal(false);
   readonly saveState = signal<SaveState>('saved');
   readonly hasUnpublished = signal(false);
   readonly scheduledAt = signal<string | null>(null);
@@ -188,9 +277,21 @@ export class StoreEditorPage {
   readonly aiActions = AI_ACTIONS;
   readonly aiSectionBusy = signal(false);
   readonly aiSectionError = signal<string | null>(null);
+  /** Pending library-block or section-fill proposal awaiting Aplicar. */
+  readonly aiSectionDraft = signal<StoreSectionAi | null>(null);
+  readonly aiSectionChanges = signal<AiTextChange[]>([]);
+  readonly aiSectionSelected = signal<ReadonlySet<string>>(new Set());
+  readonly aiSectionIncludeBlock = signal(true);
   readonly aiPageOpen = signal(false);
   readonly aiPageBusy = signal(false);
   readonly aiPageError = signal<string | null>(null);
+  readonly aiPageMode = signal<StorePageAiMode>('rewrite');
+  /** Pending page proposal awaiting Aplicar / Regenerar / Descartar. */
+  readonly aiPageDraft = signal<StorePageAi | null>(null);
+  readonly aiPageChanges = signal<AiTextChange[]>([]);
+  readonly aiPageSelected = signal<ReadonlySet<string>>(new Set());
+  readonly aiPageIncludeBlocks = signal(true);
+  readonly aiPagePromptValue = signal('');
   /** `section.field` whose AI photo is being created; it lands in that field even if the panel closes. */
   readonly aiImageBusy = signal<string | null>(null);
   readonly fieldKey = fieldKey;
@@ -275,12 +376,25 @@ export class StoreEditorPage {
     }
   });
 
+  readonly assistantPlaceholder = computed(() =>
+    this.view()?.aiText ? 'Trabaja con Agopify' : 'La IA del editor no está disponible',
+  );
+
+  readonly homePlusItems: EditorPlusItem[] = [
+    { id: 'fill', label: 'Rellenar vacíos', icon: 'sparkles' },
+    { id: 'rewrite', label: 'Crear página', icon: 'layers' },
+    { id: 'structure', label: 'Abrir estructura', icon: 'layers', dividerBefore: true },
+    { id: 'files', label: 'Archivos', icon: 'fileText', disabled: true },
+    { id: 'voice', label: 'Llamada de voz', icon: 'radio', disabled: true, dividerBefore: true },
+  ];
+
   constructor() {
     void this.load();
     inject(DestroyRef).onDestroy(() => {
       if (this.saveTimer) clearTimeout(this.saveTimer);
       if (this.frameTimer) clearTimeout(this.frameTimer);
       if (this.noticeTimer) clearTimeout(this.noticeTimer);
+      this.homeDictation.destroy();
       if (this.dirty) void this.api.saveDraft(this.content(), this.savedAt).catch(() => undefined);
     });
   }
@@ -324,7 +438,7 @@ export class StoreEditorPage {
     const view = this.view();
     if (!frame || !view || event.source !== frame.contentWindow || event.origin !== new URL(view.frameUrl).origin) return;
     const message = event.data as StoreEditorFrameMessage | null;
-    if (message?.source !== 'vendedoria-store') return;
+    if (message?.source !== 'agopify-store') return;
     switch (message.type) {
       case 'snapshot':
         this.snapshot.set(message.snapshot);
@@ -333,15 +447,16 @@ export class StoreEditorPage {
           this.frameFailed.set(false);
           if (this.frameTimer) clearTimeout(this.frameTimer);
           this.push();
+          this.syncFrameSelection();
         }
         break;
       case 'select':
-        this.panelOpen.set(true);
-        this.panelTab.set('sections');
-        this.sectionQuery.set('');
-        this.selectedSection.set(message.section);
-        this.selectedField.set(message.field);
-        this.reveal('.inspector__content');
+        if (!message.section) {
+          this.selectedSection.set(null);
+          this.selectedField.set(null);
+          break;
+        }
+        this.applySelection(message.section, message.field, false);
         break;
       case 'input':
         this.edit(message.section, message.field, message.value, false);
@@ -353,6 +468,7 @@ export class StoreEditorPage {
         break;
       }
       case 'image':
+        this.applySelection(message.section, message.field, false);
         this.chooseImage(message.section, message.field);
         break;
     }
@@ -365,24 +481,23 @@ export class StoreEditorPage {
   /** Accordion header: opens the section (and scrolls the store to it) or closes it. */
   toggleSection(id: string): void {
     if (this.selectedSection() === id) {
-      this.selectedSection.set(null);
-      this.selectedField.set(null);
-      this.post({ source: 'vendedoria-editor', type: 'select', section: null });
+      this.clearSelection();
       return;
     }
     this.selectSection(id);
   }
 
   selectSection(id: string): void {
-    if (![...this.bodySections(), ...this.fixedSections()].some(s => s.id === id)) return;
-    this.panelOpen.set(true);
-    this.panelTab.set('sections');
-    this.sectionQuery.set('');
-    this.selectedSection.set(id);
+    if (![...this.bodySections(), ...this.fixedSections()].some((s) => s.id === id)) return;
+    this.applySelection(id, null);
+  }
+
+  /** Clears host + preview selection (Escape or accordion collapse). */
+  clearSelection(): void {
+    this.selectedSection.set(null);
     this.selectedField.set(null);
-    const page = [...this.bodySections(), ...this.fixedSections()].find((s) => s.id === id)?.page ?? undefined;
-    this.post({ source: 'vendedoria-editor', type: 'select', section: id, page });
-    this.reveal(`.section[data-section="${id}"] .section__bar`);
+    this.inspectorOpen.set(false);
+    this.post({ source: 'agopify-editor', type: 'select', section: null, field: null });
   }
 
   toggleLibrary(): void {
@@ -390,73 +505,230 @@ export class StoreEditorPage {
     if (this.libraryOpen()) this.reveal('#section-library');
   }
 
-  /** Adds a block written by AI as one undo step; images keep the block defaults. */
-  async createSectionWithAi(input: HTMLTextAreaElement): Promise<void> {
-    const prompt = input.value.trim();
-    if (!prompt) {
-      this.aiSectionError.set('Cuéntanos qué sección quieres crear.');
-      return;
-    }
-    this.aiSectionBusy.set(true);
-    this.aiSectionError.set(null);
-    try {
-      const { type, texts } = await this.api.suggestSection(prompt);
-      const view = this.view();
-      const block = this.library().find((b) => b.id === type);
-      if (!view || !block || this.blockCount() >= MAX_BLOCKS) throw new Error('block');
-      const id = newBlockId(block.id);
-      const added = addBlock(this.content(), view.template, this.layout(), block, id, this.insertAfter()?.id ?? null);
-      const fields = new Set(block.fields.filter(isTextField).map((f) => f.id));
-      const written = Object.entries(texts).filter(([field]) => fields.has(field));
-      this.change(
-        { ...added, sections: { ...added.sections, [id]: { ...added.sections[id], ...Object.fromEntries(written) } } },
-        null,
-      );
-      this.push();
-      input.value = '';
-      this.libraryOpen.set(false);
-      this.selectSection(id);
-      this.success(`Sección «${block.label}» creada. Revisa sus textos y agrega fotos si lleva.`);
-    } catch (error) {
-      this.aiSectionError.set(this.messageFrom(error, 'No pudimos crear la sección. Inténtalo de nuevo.'));
-    } finally {
-      this.aiSectionBusy.set(false);
-    }
+  setAiPageMode(mode: StorePageAiMode): void {
+    this.aiPageMode.set(mode);
+    this.discardPageAi();
   }
 
-  /** Rewrites the home page from the merchant's request as one undo step. */
-  async createPageWithAi(input: HTMLTextAreaElement): Promise<void> {
-    const prompt = input.value.trim();
-    if (!prompt) {
+  /** Generates a page patch for preview (does not write the draft until Aplicar). */
+  async generatePageWithAi(): Promise<void> {
+    const mode = this.aiPageMode();
+    const prompt =
+      this.aiPagePromptValue().trim() ||
+      (mode === 'fillEmpty' ? 'Rellena los textos vacíos de mi tienda con los datos del negocio.' : '');
+    if (prompt.length < 3) {
       this.aiPageError.set('Cuéntanos de tu negocio y qué quieres destacar.');
       return;
     }
-    if (this.blockCount() > 0) {
+    if (mode === 'rewrite' && this.blockCount() > 0 && !this.aiPageDraft()) {
       const confirmed = await this.confirmDialog.confirm({
         title: '¿Crear tu página con IA?',
         message:
-          'Reescribe los textos de tus secciones y reemplaza las secciones que agregaste. Tus fotos se mantienen y puedes deshacerlo con Ctrl+Z.',
-        confirmLabel: 'Crear página',
+          'Vas a ver una propuesta antes de aplicarla. Si la aceptas con secciones nuevas, reemplazará las que agregaste. Tus fotos se mantienen.',
+        confirmLabel: 'Generar propuesta',
       });
       if (!confirmed) return;
     }
     this.aiPageBusy.set(true);
     this.aiPageError.set(null);
     try {
-      const page = await this.api.suggestPage(prompt);
+      const page = await this.api.suggestPage(prompt, mode);
       const view = this.view();
       if (!view) return;
-      this.change(applyPage(this.content(), view.template, view.sections, page), null);
-      this.push();
-      input.value = '';
-      this.aiPageOpen.set(false);
-      this.selectedSection.set(null);
-      this.success('Página creada. Revisa los textos, agrega tus fotos y publica cuando quieras.');
+      const changes = listPageTextChanges(this.content(), view.sections, page);
+      if (!changes.length && !(mode === 'rewrite' && page.blocks.length)) {
+        this.aiPageError.set(
+          mode === 'fillEmpty'
+            ? 'No hay cambios que aplicar en los textos vacíos.'
+            : 'No salió una propuesta útil. Prueba contándonos más de tu negocio.',
+        );
+        this.aiPageDraft.set(null);
+        this.aiPageChanges.set([]);
+        return;
+      }
+      this.aiPageDraft.set(page);
+      this.aiPageChanges.set(changes);
+      this.aiPageSelected.set(new Set(changes.map((c) => c.key)));
+      this.aiPageIncludeBlocks.set(mode === 'rewrite' && page.blocks.length > 0);
     } catch (error) {
       this.aiPageError.set(this.messageFrom(error, 'No pudimos crear la página. Inténtalo de nuevo.'));
+      this.aiPageDraft.set(null);
+      this.aiPageChanges.set([]);
     } finally {
       this.aiPageBusy.set(false);
     }
+  }
+
+  togglePageAiChange(key: string): void {
+    const next = new Set(this.aiPageSelected());
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    this.aiPageSelected.set(next);
+  }
+
+  applyPageAi(): void {
+    const page = this.aiPageDraft();
+    const view = this.view();
+    if (!page || !view) return;
+    const includeBlocks = this.aiPageIncludeBlocks() && page.blocks.length > 0;
+    if (!this.aiPageSelected().size && !includeBlocks) {
+      this.aiPageError.set('Elige al menos un texto o las secciones nuevas para aplicar.');
+      return;
+    }
+    this.change(
+      applyPage(this.content(), view.template, view.sections, page, (type) => newBlockId(type), {
+        selectedKeys: this.aiPageSelected(),
+        includeBlocks,
+      }),
+      null,
+    );
+    this.push();
+    this.discardPageAi();
+    this.aiPageOpen.set(false);
+    this.aiPagePromptValue.set('');
+    this.clearSelection();
+    this.success(
+      includeBlocks
+        ? 'Propuesta aplicada. Revisa los textos, agrega tus fotos y publica cuando quieras.'
+        : 'Textos aplicados. Puedes deshacerlo con Ctrl+Z.',
+    );
+  }
+
+  discardPageAi(): void {
+    this.aiPageDraft.set(null);
+    this.aiPageChanges.set([]);
+    this.aiPageSelected.set(new Set());
+    this.aiPageIncludeBlocks.set(true);
+    this.aiPageError.set(null);
+  }
+
+  /** Generates a new library block or fills the selected section; preview before apply. */
+  async generateSectionWithAi(promptOrInput: string | HTMLTextAreaElement, targetSection: string | null = null): Promise<void> {
+    const prompt = (typeof promptOrInput === 'string' ? promptOrInput : promptOrInput.value).trim();
+    if (!prompt) {
+      this.aiSectionError.set(
+        targetSection ? 'Cuéntanos cómo quieres esta sección.' : 'Cuéntanos qué sección quieres crear.',
+      );
+      return;
+    }
+    this.aiSectionBusy.set(true);
+    this.aiSectionError.set(null);
+    try {
+      const draft = await this.api.suggestSection(prompt, targetSection ?? undefined);
+      const view = this.view();
+      if (!view) return;
+      if (draft.target) {
+        const section = sectionSchema(view.sections, typeOf(draft.target));
+        if (!section) throw new Error('section');
+        const changes = listPageTextChanges(this.content(), view.sections, {
+          sections: { [draft.target]: draft.texts },
+          blocks: [],
+        });
+        if (!changes.length) {
+          this.aiSectionError.set('No hay cambios que aplicar en esta sección.');
+          this.aiSectionDraft.set(null);
+          return;
+        }
+        this.aiSectionDraft.set(draft);
+        this.aiSectionChanges.set(changes);
+        this.aiSectionSelected.set(new Set(changes.map((c) => c.key)));
+        this.aiSectionIncludeBlock.set(false);
+      } else {
+        const block = this.library().find((b) => b.id === draft.type);
+        if (!block || this.blockCount() >= MAX_BLOCKS) throw new Error('block');
+        const changes: AiTextChange[] = block.fields
+          .filter(isTextField)
+          .filter((f) => typeof draft.texts[f.id] === 'string')
+          .map((f) => ({
+            key: fieldKey(`new:${block.id}`, f.id),
+            sectionId: `new:${block.id}`,
+            sectionLabel: block.label,
+            fieldId: f.id,
+            fieldLabel: f.label,
+            from: '',
+            to: clampValue(f, draft.texts[f.id]),
+          }));
+        this.aiSectionDraft.set(draft);
+        this.aiSectionChanges.set(changes);
+        this.aiSectionSelected.set(new Set(changes.map((c) => c.key)));
+        this.aiSectionIncludeBlock.set(true);
+      }
+    } catch (error) {
+      this.aiSectionError.set(this.messageFrom(error, 'No pudimos preparar la sección. Inténtalo de nuevo.'));
+      this.aiSectionDraft.set(null);
+      this.aiSectionChanges.set([]);
+    } finally {
+      this.aiSectionBusy.set(false);
+    }
+  }
+
+  toggleSectionAiChange(key: string): void {
+    const next = new Set(this.aiSectionSelected());
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    this.aiSectionSelected.set(next);
+  }
+
+  applySectionAi(input?: HTMLTextAreaElement): void {
+    const draft = this.aiSectionDraft();
+    const view = this.view();
+    if (!draft || !view) return;
+    if (draft.target) {
+      if (!this.aiSectionSelected().size) {
+        this.aiSectionError.set('Elige al menos un texto para aplicar.');
+        return;
+      }
+      this.change(applyTextChanges(this.content(), this.aiSectionChanges(), this.aiSectionSelected()), null);
+      this.push();
+      this.selectSection(draft.target);
+      this.success('Textos de la sección aplicados. Puedes deshacerlo con Ctrl+Z.');
+    } else {
+      const block = this.library().find((b) => b.id === draft.type);
+      if (!block || this.blockCount() >= MAX_BLOCKS) {
+        this.aiSectionError.set('No pudimos agregar esa sección.');
+        return;
+      }
+      const id = newBlockId(block.id);
+      const added = addBlock(this.content(), view.template, this.layout(), block, id, this.insertAfter()?.id ?? null);
+      const selected = this.aiSectionSelected();
+      const written = Object.fromEntries(
+        block.fields
+          .filter(isTextField)
+          .filter((f) => selected.has(fieldKey(`new:${block.id}`, f.id)) && typeof draft.texts[f.id] === 'string')
+          .map((f) => [f.id, clampValue(f, draft.texts[f.id])]),
+      );
+      this.change(
+        { ...added, sections: { ...added.sections, [id]: { ...added.sections[id], ...written } } },
+        null,
+      );
+      this.push();
+      this.libraryOpen.set(false);
+      this.selectSection(id);
+      this.success(`Sección «${block.label}» creada. Revisa sus textos y agrega fotos si lleva.`);
+    }
+    if (input) input.value = '';
+    this.discardSectionAi();
+  }
+
+  discardSectionAi(): void {
+    this.aiSectionDraft.set(null);
+    this.aiSectionChanges.set([]);
+    this.aiSectionSelected.set(new Set());
+    this.aiSectionIncludeBlock.set(true);
+    this.aiSectionError.set(null);
+  }
+
+  /** Intent: rewrite / complete texts of the selected section. */
+  fillSelectedSectionWithAi(): void {
+    const selected = this.section();
+    if (!selected || !this.view()?.aiText) return;
+    this.libraryOpen.set(false);
+    this.aiPageOpen.set(false);
+    this.discardSectionAi();
+    void this.generateSectionWithAi(
+      `Mejora o completa los textos de la sección «${selected.label}» con los datos de mi negocio.`,
+      selected.id,
+    );
   }
 
   moveSection(id: string, delta: number): void {
@@ -484,7 +756,7 @@ export class StoreEditorPage {
     if (!view) return;
     this.change(removeBlock(this.content(), view.template, this.layout(), id), null);
     this.push();
-    if (this.selectedSection() === id) this.selectedSection.set(null);
+    if (this.selectedSection() === id) this.clearSelection();
     this.success('Sección quitada. Puedes deshacerlo con Ctrl+Z.');
   }
 
@@ -605,8 +877,6 @@ export class StoreEditorPage {
   }
 
   chooseImage(section: string, field: string): void {
-    this.selectedSection.set(section);
-    this.selectedField.set(field);
     this.imageTarget = { section, field };
     this.filePicker()?.nativeElement.click();
   }
@@ -715,8 +985,70 @@ export class StoreEditorPage {
     if (next) this.apply(next);
   }
 
-  /** Ctrl/Cmd+Z outside text fields; inside them the browser undoes the typing. */
+  /**
+   * Ctrl/Cmd+S saves; Ctrl/Cmd+Z undoes outside text fields; Escape clears the selection
+   * (or closes the AI / library overlays first).
+   */
   onKeydown(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement | null;
+    const typing = Boolean(target?.closest('input, textarea, select, [role="combobox"], [contenteditable="true"]'));
+
+    if (event.key === 'Escape') {
+      if (typing || event.defaultPrevented) return;
+      if (this.aiField()) {
+        event.preventDefault();
+        this.aiRequest++;
+        this.aiBusy.set(null);
+        this.aiSuggestions.set(null);
+        this.aiError.set(null);
+        this.aiInstruction.set('');
+        this.aiField.set(null);
+        return;
+      }
+      if (this.aiPageDraft()) {
+        event.preventDefault();
+        this.discardPageAi();
+        return;
+      }
+      if (this.aiSectionDraft()) {
+        event.preventDefault();
+        this.discardSectionAi();
+        return;
+      }
+      if (this.assistantOpen()) {
+        event.preventDefault();
+        this.closeAssistant();
+        return;
+      }
+      if (this.aiPageOpen()) {
+        event.preventDefault();
+        this.aiPageOpen.set(false);
+        this.discardPageAi();
+        return;
+      }
+      if (this.libraryOpen()) {
+        event.preventDefault();
+        this.libraryOpen.set(false);
+        this.discardSectionAi();
+        return;
+      }
+      if (this.structureOpen()) {
+        event.preventDefault();
+        this.structureOpen.set(false);
+        return;
+      }
+      if (this.inspectorOpen() && this.selectedSection() === null && this.selectedField() === null) {
+        event.preventDefault();
+        this.inspectorOpen.set(false);
+        return;
+      }
+      if (this.selectedSection() !== null || this.selectedField() !== null) {
+        event.preventDefault();
+        this.clearSelection();
+      }
+      return;
+    }
+
     if (!(event.ctrlKey || event.metaKey)) return;
     if (event.key.toLowerCase() === 's') {
       event.preventDefault();
@@ -724,8 +1056,7 @@ export class StoreEditorPage {
       return;
     }
     if (event.key.toLowerCase() !== 'z') return;
-    const target = event.target as HTMLElement | null;
-    if (target?.closest('input, textarea, select, [role="combobox"], [contenteditable="true"]')) return;
+    if (typing) return;
     event.preventDefault();
     if (event.shiftKey) this.redo();
     else this.undo();
@@ -886,12 +1217,264 @@ export class StoreEditorPage {
     return sectionSchema(this.view()?.sections ?? [], typeOf(section))?.fields.find((f) => f.id === field);
   }
 
+  /**
+   * Opens the content inspector on a section/field. When `mirror` is true (host-originated),
+   * the preview scrolls/highlights to match; frame-originated selections already did that.
+   */
+  /** Cycles desktop → tablet → mobile → desktop (same control, Aloja-style). */
+  cycleDevice(): void {
+    const current = this.device();
+    const next = DEVICE_ORDER[(DEVICE_ORDER.indexOf(current) + 1) % DEVICE_ORDER.length];
+    this.device.set(next);
+  }
+
+  toggleStructure(): void {
+    this.structureOpen.update((open) => !open);
+  }
+
+  toggleInspector(): void {
+    this.inspectorOpen.update((open) => !open);
+  }
+
+  toggleAssistant(): void {
+    if (this.assistantOpen()) {
+      this.closeAssistant();
+      return;
+    }
+    this.assistantOpen.set(true);
+    this.assistantMode.set('dock');
+    queueMicrotask(() => this.assistantPanel()?.focusInput());
+  }
+
+  closeAssistant(): void {
+    this.assistantOpen.set(false);
+    this.assistantDrafting.set(false);
+    this.assistantMode.set('dock');
+  }
+
+  setAssistantMode(mode: AssistantPanelMode): void {
+    this.assistantMode.set(mode);
+  }
+
+  resetAssistantChat(): void {
+    this.assistantMessages.set([]);
+    this.assistantDrafting.set(false);
+    this.assistantTitle.set('Diseño de tu tienda');
+    this.discardPageAi();
+    queueMicrotask(() => this.assistantPanel()?.focusInput());
+  }
+
+  onRestoreConversation(conversation: AssistantConversation): void {
+    this.assistantDrafting.set(false);
+    this.assistantTitle.set(conversation.title || 'Diseño de tu tienda');
+    this.assistantMessages.set(conversation.messages.map((m) => ({ ...m })));
+    this.discardPageAi();
+    queueMicrotask(() => this.assistantPanel()?.focusInput());
+  }
+
+  onAssistantSent(text: string): void {
+    void this.runAssistantPrompt(text);
+  }
+
+  onAssistantPlus(id: string): void {
+    this.onHomePlus(id);
+  }
+
+  openStructureFromChat(): void {
+    this.structureOpen.set(true);
+    this.homePlusOpen.set(false);
+  }
+
+  startHomeDictation(): void {
+    if (this.homeDictating() || this.aiPageBusy()) return;
+    this.homePlusOpen.set(false);
+    this.composerActive.set(true);
+    this.homeDictation.start({
+      getText: () => this.prompt(),
+      setText: (value) => this.prompt.set(value),
+    });
+  }
+
+  cancelHomeDictation(): void {
+    this.homeDictation.cancel();
+  }
+
+  confirmHomeDictation(): void {
+    this.homeDictation.confirm();
+  }
+
+  onComposerActivate(): void {
+    this.composerActive.set(true);
+  }
+
+  onComposerFocusIn(): void {
+    this.composerActive.set(true);
+  }
+
+  onComposerFocusOut(event: FocusEvent): void {
+    const root = event.currentTarget as HTMLElement | null;
+    window.setTimeout(() => {
+      if (!root?.contains(document.activeElement)) {
+        this.composerActive.set(false);
+        this.promptFocused.set(false);
+        this.homePlusOpen.set(false);
+      }
+    }, 0);
+  }
+
+  onPromptFocus(): void {
+    this.promptFocused.set(true);
+    this.composerActive.set(true);
+    this.homePlusOpen.set(false);
+  }
+
+  onPromptBlur(): void {
+    window.setTimeout(() => {
+      const active = document.activeElement;
+      if (active?.id === 'editor-assistant-input') return;
+      if (active?.closest?.('.home-assistant__suggestions')) return;
+      this.promptFocused.set(false);
+    }, 0);
+  }
+
+  toggleHomePlus(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.composerActive.set(true);
+    this.promptFocused.set(false);
+    this.homePlusOpen.update((open) => !open);
+  }
+
+  onHomePlus(id: string): void {
+    this.homePlusOpen.set(false);
+    if (id === 'fill') {
+      void this.openAssistantWith('Rellenar los textos vacíos de mi tienda', 'fillEmpty');
+      return;
+    }
+    if (id === 'rewrite') {
+      void this.openAssistantWith('Crea la página de inicio de mi tienda con los datos del negocio.', 'rewrite');
+      return;
+    }
+    if (id === 'structure') {
+      this.openStructureFromChat();
+    }
+  }
+
+  onPromptEnter(event: Event): void {
+    const keyboard = event as KeyboardEvent;
+    if (keyboard.shiftKey) return;
+    keyboard.preventDefault();
+    this.submitPrompt();
+  }
+
+  onFloatComposerSubmitted(text: string): void {
+    if (!this.view()?.aiText || this.aiPageBusy()) return;
+    if (text.trim().length < 3) {
+      this.aiPageError.set('Escribe qué quieres cambiar en tu tienda.');
+      return;
+    }
+    this.prompt.set('');
+    this.homePlusOpen.set(false);
+    void this.openAssistantWith(text.trim(), 'rewrite');
+  }
+
+  submitPrompt(event?: Event): void {
+    event?.preventDefault();
+    if (!this.view()?.aiText || this.aiPageBusy()) return;
+    const text = this.prompt().trim();
+    if (text.length < 3) {
+      this.aiPageError.set('Escribe qué quieres cambiar en tu tienda.');
+      return;
+    }
+    this.prompt.set('');
+    this.homePlusOpen.set(false);
+    void this.openAssistantWith(text, 'rewrite');
+  }
+
+  /** Opens the home dock panel and runs a store page-AI proposal (preview before apply). */
+  private async openAssistantWith(text: string, mode: StorePageAiMode): Promise<void> {
+    this.assistantOpen.set(true);
+    this.assistantMode.set('dock');
+    this.assistantTitle.set(text.slice(0, 72) || 'Diseño de tu tienda');
+    queueMicrotask(() => this.assistantPanel()?.focusInput());
+    await this.runAssistantPrompt(text, mode);
+  }
+
+  private async runAssistantPrompt(text: string, mode: StorePageAiMode = 'rewrite'): Promise<void> {
+    if (!this.view()?.aiText) return;
+    const user: AssistantPanelMessage = { id: `u-${++this.messageSeq}`, role: 'user', text };
+    this.assistantMessages.update((messages) => [...messages, user]);
+    this.assistantDrafting.set(true);
+    this.discardPageAi();
+    this.aiPageOpen.set(true);
+    this.aiPageMode.set(mode);
+    this.aiPagePromptValue.set(mode === 'fillEmpty' ? '' : text);
+    await this.generatePageWithAi();
+    this.assistantDrafting.set(false);
+    const draft = this.aiPageDraft();
+    const n = this.aiPageChanges().length;
+    const blocks = draft?.blocks.length ?? 0;
+    const reply =
+      this.aiPageError() ??
+      (draft
+        ? n || blocks
+          ? `Propuesta lista${n ? `: ${n} texto${n === 1 ? '' : 's'}` : ''}${blocks ? ` y ${blocks} sección${blocks === 1 ? '' : 'es'} nueva${blocks === 1 ? '' : 's'}` : ''}. Revísala sobre la vista y aplícala cuando quieras.`
+          : 'No encontré cambios que proponer. Prueba con otra indicación.'
+        : 'No pudimos generar la propuesta.');
+    this.assistantMessages.update((messages) => [
+      ...messages,
+      { id: `a-${++this.messageSeq}`, role: 'assistant', text: reply },
+    ]);
+  }
+
+  private applySelection(sectionId: string, fieldId: string | null, mirror = true): void {
+    if (![...this.bodySections(), ...this.fixedSections()].some((s) => s.id === sectionId)) return;
+    this.inspectorOpen.set(true);
+    this.panelTab.set('sections');
+    this.sectionQuery.set('');
+    this.selectedSection.set(sectionId);
+    this.selectedField.set(fieldId);
+    if (mirror) {
+      const page = [...this.bodySections(), ...this.fixedSections()].find((s) => s.id === sectionId)?.page ?? undefined;
+      this.post({ source: 'agopify-editor', type: 'select', section: sectionId, page, field: fieldId });
+    }
+    this.revealSelection(sectionId, fieldId);
+  }
+
+  /** Re-applies the current selection after the preview frame reconnects. */
+  private syncFrameSelection(): void {
+    const sectionId = this.selectedSection();
+    if (!sectionId) return;
+    const page = [...this.bodySections(), ...this.fixedSections()].find((s) => s.id === sectionId)?.page ?? undefined;
+    this.post({
+      source: 'agopify-editor',
+      type: 'select',
+      section: sectionId,
+      page,
+      field: this.selectedField(),
+    });
+  }
+
   /** Brings a panel element into view once the pending render (new section, opened library) is in the DOM. */
   private reveal(selector: string): void {
     afterNextRender(
       () => this.host.nativeElement.querySelector(selector)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }),
       { injector: this.injector },
     );
+  }
+
+  /** Scrolls structure + inspector to the active section/field without stealing canvas focus. */
+  private revealSelection(sectionId: string, fieldId: string | null): void {
+    afterNextRender(() => {
+      const root = this.host.nativeElement;
+      root
+        .querySelector(`.section[data-section="${CSS.escape(sectionId)}"] .section__bar`)
+        ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      const inspectorTarget = fieldId
+        ? root.querySelector(`[data-inspector-field="${CSS.escape(fieldKey(sectionId, fieldId))}"]`)
+        : root.querySelector('.inspector__heading') ?? root.querySelector('.inspector__content');
+      inspectorTarget?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }, { injector: this.injector });
   }
 
   private changeLayout(layout: StoreLayoutItem[]): void {
@@ -974,6 +1557,8 @@ export class StoreEditorPage {
   private startFrame(url: string): void {
     const parsed = new URL(url);
     if (!/^https?:$/.test(parsed.protocol)) {
+      this.frameSrc.set(null);
+      this.frameReady.set(false);
       this.frameFailed.set(true);
       return;
     }
@@ -987,7 +1572,7 @@ export class StoreEditorPage {
   }
 
   private push(): void {
-    this.post({ source: 'vendedoria-editor', type: 'content', content: this.content() });
+    this.post({ source: 'agopify-editor', type: 'content', content: this.content() });
   }
 
   private post(message: StoreEditorHostMessage): void {

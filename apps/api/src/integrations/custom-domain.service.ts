@@ -108,7 +108,7 @@ export class CustomDomainService {
       domain.endsWith(`.${this.baseDomain}`) ||
       this.consoleHosts.has(domain)
     ) {
-      throw new BadRequestException('Ese dominio pertenece a VendedorIA. Usa un dominio tuyo.');
+      throw new BadRequestException('Ese dominio pertenece a Agopify. Usa un dominio tuyo.');
     }
 
     const current = await this.storefront(user.tenantId);

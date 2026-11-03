@@ -1,5 +1,11 @@
 export type OptionPair = { name: string; value: string };
-export type VariantAxis = { name: string; values: string };
+/** `colors` maps a trimmed option value → `#rrggbb` for color axes (Shopify-style swatches). */
+export type VariantAxis = { name: string; values: string; colors?: Record<string, string> };
+
+export function isColorAxisName(name: string): boolean {
+  const key = name.trim().normalize('NFKC').toLocaleLowerCase('es');
+  return key === 'color' || key === 'colour' || key === 'colors' || key === 'colores';
+}
 export type CombinationDraft = {
   expectedStockQty?: number | null;
   id?: string; sku: string; options: OptionPair[]; imageUrl: string | null;

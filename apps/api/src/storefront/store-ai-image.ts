@@ -1,4 +1,4 @@
-import type { StoreEditorSection, StoreTemplate } from '@vendedoria/contracts';
+import type { StoreEditorSection, StoreTemplate } from '@agopify/contracts';
 import type { TextAiBusiness } from './store-ai-text';
 
 /** Photos of the merchant's own products, place or team: a generated one would deceive the buyer. */

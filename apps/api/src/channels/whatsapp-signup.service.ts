@@ -170,7 +170,7 @@ export class WhatsAppSignupService {
         const subscribed = Boolean(phone && await this.meta.subscribed(metadata.wabaId, token));
         healthy = Boolean(phone?.registered && subscribed);
         checks.push({ id: 'authorization', label: 'Permisos del negocio', status: phone ? 'ok' : 'error', detail: phone ? 'Meta confirma el acceso al número de tu negocio.' : 'La autorización ya no permite acceder al número.' });
-        checks.push({ id: 'subscription', label: 'Recepción de mensajes', status: subscribed ? 'ok' : 'error', detail: subscribed ? 'La cuenta está suscrita a VendedorIA.' : 'Vuelve a conectar WhatsApp para habilitar la recepción.' });
+        checks.push({ id: 'subscription', label: 'Recepción de mensajes', status: subscribed ? 'ok' : 'error', detail: subscribed ? 'La cuenta está suscrita a Agopify.' : 'Vuelve a conectar WhatsApp para habilitar la recepción.' });
         checks.push({ id: 'registration', label: 'Número activo en la API', status: phone?.registered ? 'ok' : 'error', detail: phone?.registered ? 'Meta confirma la activación del número.' : 'Completa la activación del número en Meta.' });
       } else if (metadata) {
         healthy = (await this.messenger.verifyCredentials(metadata)).ok;

@@ -8,7 +8,8 @@ resource "aws_s3_bucket" "media" {
   bucket = "${var.app_name}-media-${var.environment}-${data.aws_caller_identity.current.account_id}"
 
   lifecycle {
-    prevent_destroy = true
+    # Temporarily false while destroying unused staging; restore after apply.
+    prevent_destroy = false
     precondition {
       condition     = terraform.workspace == var.environment
       error_message = "Select the workspace of this environment first: terraform workspace select ${var.environment}"

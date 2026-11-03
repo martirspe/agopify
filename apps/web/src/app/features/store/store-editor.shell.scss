@@ -1,0 +1,610 @@
+/* Visual editor chrome: one slim toolbar (Aloja/Lovable) + dominant store preview.
+   Chat visuals stay in home-assistant.* — do not restyle them. */
+
+.editor__workspace {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  flex: 1;
+  position: relative;
+}
+
+.editor__stage {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--ds-color-divider, #f1f1f1);
+}
+
+/* Single 48px toolbar — preview gets the rest of the sheet. */
+.editor__toolbar {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.25rem;
+  height: 3rem;
+  padding: 0 0.75rem;
+  border-bottom: 1px solid rgb(0 0 0 / 6%);
+  background: #fff;
+}
+
+.editor__toolbar-meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: 0.25rem;
+}
+
+.editor__toolbar-title {
+  margin: 0;
+  overflow: hidden;
+  color: var(--ds-console-text, #101010);
+  font-family: var(--ds-font-ui);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.25rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor__toolbar-spacer {
+  flex: 1;
+  min-width: 0.5rem;
+}
+
+.editor__toolbar-divider {
+  display: none;
+  width: 1px;
+  height: 1.25rem;
+  margin-inline: 0.25rem;
+  background: rgb(0 0 0 / 8%);
+
+  @media (min-width: 720px) {
+    display: block;
+  }
+}
+
+.editor__toolbar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.editor__tool {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--ds-console-text, #101010);
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--ds-console-text, #101010) 6%, transparent);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  &[aria-pressed='true'] {
+    background: color-mix(in srgb, var(--ds-console-text, #101010) 8%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ds-color-focus-ring, #005bd3);
+    outline-offset: 1px;
+  }
+}
+
+.editor__text-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 0.625rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--ds-console-text, #101010);
+  font-family: var(--ds-font-ui);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--ds-console-text, #101010) 6%, transparent);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
+.editor__publish {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--ds-console-text, #101010);
+  color: #fff;
+  font-family: var(--ds-font-ui);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--ds-console-text, #101010) 88%, #fff);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ds-color-focus-ring, #005bd3);
+    outline-offset: 2px;
+  }
+}
+
+.editor__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  color: var(--ds-color-text-secondary, #707070);
+  font-size: 0.75rem;
+  line-height: 1;
+  white-space: nowrap;
+
+  &.is-error {
+    color: var(--ds-color-danger-text, #8e0b21);
+  }
+}
+
+.status-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--ds-color-success, #0c6);
+
+  &.is-pending {
+    background: var(--ds-color-warning, #c60);
+  }
+}
+
+/* Drawers = dock sheets over the preview (not competing with the canvas). */
+.editor__drawer {
+  position: absolute;
+  top: calc(3rem + var(--ds-space-1));
+  bottom: var(--ds-space-1);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--ds-console-assistant-width, 22.25rem), calc(100% - 2 * var(--ds-space-1)));
+  max-width: 100%;
+  overflow: clip;
+  border-radius: var(--ds-console-frame-radius, 1rem);
+  background: #fff;
+  color: var(--ds-console-text, #101010);
+  font-family: var(--ds-font-ui);
+  box-shadow: none;
+  overscroll-behavior: contain;
+}
+
+.editor__drawer--structure {
+  left: var(--ds-space-1);
+}
+
+.editor__drawer--inspector {
+  right: var(--ds-space-1);
+}
+
+.editor__drawer-scrim {
+  position: absolute;
+  inset: 3rem 0 0;
+  z-index: 3;
+  border: 0;
+  background: color-mix(in srgb, var(--ds-console-nav-bg, #0a0a0a) 28%, transparent);
+  cursor: pointer;
+}
+
+/* Preview dominates: gutter only, frame fills the stage. */
+.editor__canvas.is-shell {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  padding: 0.5rem;
+  background: transparent;
+}
+
+.editor__canvas.is-shell .editor__frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: calc(var(--ds-console-frame-radius, 1rem) - 0.25rem);
+  box-shadow: none;
+}
+
+.editor__canvas.is-shell.is-tablet .editor__frame {
+  width: min(100%, 48rem);
+  max-height: none;
+  justify-self: center;
+}
+
+.editor__canvas.is-shell.is-mobile .editor__frame {
+  width: min(100%, 24.375rem);
+  max-height: none;
+  justify-self: center;
+}
+
+/*
+  Floating AI capsule — visual parity with modern admin floating assistants
+  (Polaris-era metrics: 40px pill, 28px avatar, 13px placeholder #616161,
+  hairline border, soft layered elevation). No commercial naming/mascot.
+*/
+.editor__assistant-float {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  /* Hug content like Sidekick (~300px idle) — never stretch to stage width. */
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.editor__assistant-float .editor__ai-patch,
+.editor__assistant-float .editor-float-chat,
+.editor__assistant-float app-assistant-composer {
+  pointer-events: auto;
+}
+
+.editor__assistant-float .editor__ai-patch {
+  width: min(36rem, calc(100vw - 2rem));
+  max-width: 100%;
+}
+
+.editor-float-chat {
+  --efc-height: 2.5rem; /* 40px */
+  --efc-avatar: 1.75rem; /* 28px */
+  --efc-btn: 1.75rem;
+  --efc-icon: #4a4a4a;
+  --efc-placeholder: #616161;
+  --efc-border: #e3e3e3;
+  --efc-sep: #e3e3e3;
+  --efc-avatar-bg: var(--ds-color-primary, #c8f542);
+  --efc-avatar-fg: var(--ds-color-ink, #101010);
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem; /* 10px avatar → text */
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(22.5rem, 100%); /* ~360px ceiling; idle hugs placeholder */
+  height: var(--efc-height);
+  min-height: var(--efc-height);
+  max-height: var(--efc-height);
+  margin: 0;
+  padding: 0.25rem 0.375rem 0.25rem 0.375rem; /* 4px 6px */
+  border: 1px solid var(--efc-border);
+  border-radius: 9999px;
+  background: #fff;
+  color: #101010;
+  font-family: var(--ds-font-ui);
+  overflow: visible; /* + menu escapes the 40px pill */
+  box-shadow:
+    0 1px 0 rgb(0 0 0 / 4%),
+    0 1px 2px rgb(0 0 0 / 6%),
+    0 4px 12px rgb(0 0 0 / 8%),
+    0 8px 24px -4px rgb(0 0 0 / 10%);
+  transition:
+    opacity 220ms cubic-bezier(0.25, 0.1, 0.25, 1),
+    transform 220ms cubic-bezier(0.25, 0.1, 0.25, 1),
+    visibility 220ms,
+    box-shadow 160ms ease,
+    border-color 160ms ease;
+}
+
+.editor-float-chat.is-active,
+.editor-float-chat:focus-within {
+  border-color: #d4d4d4;
+  box-shadow:
+    0 1px 0 rgb(0 0 0 / 5%),
+    0 2px 4px rgb(0 0 0 / 6%),
+    0 6px 16px rgb(0 0 0 / 10%),
+    0 12px 28px -6px rgb(0 0 0 / 12%);
+}
+
+.editor-float-chat.is-docked {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(0.5rem);
+  pointer-events: none;
+}
+
+.editor-float-chat--notice {
+  justify-content: center;
+  color: var(--efc-placeholder);
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  text-align: center;
+}
+
+.editor-float-chat__avatar {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: var(--efc-avatar);
+  height: var(--efc-avatar);
+  border-radius: 9999px;
+  background: var(--efc-avatar-bg);
+  color: var(--efc-avatar-fg);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%);
+}
+
+.editor-float-chat__input {
+  flex: 0 1 auto;
+  /* Compact like Sidekick: sized to placeholder, grows only while typing. */
+  width: 10.75rem; /* ~172px — “Trabaja con Agopify” at 13px (Sidekick-compact) */
+  min-width: 10.75rem;
+  max-width: 14rem;
+  height: 1.5rem;
+  min-height: 1.5rem;
+  max-height: 1.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  background: transparent;
+  color: #101010;
+  font: inherit;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.5rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  box-shadow: none;
+  field-sizing: content;
+}
+
+.editor-float-chat__input:focus,
+.editor-float-chat__input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.editor-float-chat__input::placeholder {
+  color: var(--efc-placeholder);
+  opacity: 1;
+}
+
+.editor-float-chat__actions {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.125rem; /* 2px between icon hits */
+  margin-inline-end: 0.125rem;
+}
+
+.editor-float-chat__plus {
+  position: relative;
+  z-index: 8;
+  display: inline-flex;
+}
+
+.editor-float-chat__btn {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: var(--efc-btn);
+  height: var(--efc-btn);
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--efc-icon);
+  cursor: pointer;
+  appearance: none;
+
+  &:hover:not(:disabled) {
+    background: #f1f1f1;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #3573f6;
+    outline-offset: 1px;
+  }
+}
+
+.editor-float-chat__btn--send {
+  background: #303030;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: #1a1a1a;
+  }
+}
+
+.editor-float-chat__btn--confirm {
+  background: #303030;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: #1a1a1a;
+  }
+}
+
+.editor-float-chat__sep {
+  display: block;
+  width: 1px;
+  height: 1rem; /* 16px */
+  margin-inline: 0.375rem; /* 6px */
+  background: var(--efc-sep);
+  flex-shrink: 0;
+}
+
+.editor-float-chat__dictation {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  width: 100%;
+  padding-inline: 0.25rem;
+}
+
+.editor-float-chat__waveform {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1875rem;
+  min-width: 0;
+  height: 1rem;
+  overflow: hidden;
+}
+
+.editor-float-chat__wave {
+  display: block;
+  width: 0.1875rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: #b5b5b5;
+  animation: editor-float-chat-wave 1.05s ease-in-out infinite;
+}
+
+@keyframes editor-float-chat-wave {
+  0%,
+  100% {
+    height: 0.25rem;
+    opacity: 0.55;
+  }
+  50% {
+    height: 0.875rem;
+    opacity: 1;
+  }
+}
+
+.editor-float-chat__error {
+  position: absolute;
+  inset-inline: 0.75rem;
+  bottom: calc(100% + 0.35rem);
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #8e0b21;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+}
+
+/* Float sits at the stage bottom — open the + menu upward, right-aligned. */
+.editor-float-chat .home-assistant__plus-menu {
+  top: auto;
+  bottom: calc(100% + 0.5rem);
+  left: auto;
+  right: 0;
+  z-index: 9;
+}
+
+.editor__ai-patch {
+  margin-bottom: 0.75rem;
+  max-height: min(36dvh, 20rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--ds-console-frame-radius, 1rem);
+  background: #fff;
+  box-shadow:
+    0 0 0.125rem 0 rgba(0, 0, 0, 0.24),
+    0 0.125rem 0.75rem 0 rgba(0, 0, 0, 0.02),
+    0 0.25rem 1rem 0 rgba(0, 0, 0, 0.02),
+    0 0.25rem 3rem 0 rgba(0, 0, 0, 0.02);
+}
+
+.editor__ai-patch .ai {
+  margin: 0;
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border: 0;
+  background: transparent;
+}
+
+@media (max-width: 900px) {
+  .editor__sheet[data-assistant-dock] {
+    margin-inline-end: 0;
+  }
+
+  .editor__assistant-float {
+    max-width: calc(100% - 1.25rem);
+    bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+    padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
+  }
+
+  .editor-float-chat {
+    max-width: 100%;
+  }
+
+  .editor-float-chat__input {
+    width: 10.5rem;
+    min-width: 9.5rem;
+  }
+
+  .editor__toolbar-meta .editor__status {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .editor__canvas.is-shell {
+    padding: 0.25rem;
+  }
+
+  .editor__drawer {
+    top: calc(3rem + 0.25rem);
+    width: calc(100% - 0.5rem);
+  }
+
+  .editor__publish {
+    padding-inline: 0.625rem;
+  }
+
+  .editor__text-btn {
+    display: none;
+  }
+}

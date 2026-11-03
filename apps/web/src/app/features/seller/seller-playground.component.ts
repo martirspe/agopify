@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { DsButtonComponent, DsIconComponent, DsModalDirective } from '@vendedoria/ui';
+import { DsButtonComponent, DsIconComponent, DsModalDirective } from '@agopify/ui';
 import {
   AgentsApiService,
   AgentToolTrace,

@@ -19,7 +19,7 @@ const SETUP_VISUALS: Record<SetupKind, { icon: DsIconName; label: string }> = {
       <div class="visual__sheet visual__sheet--back"><span></span><span></span><span></span></div>
       <div class="visual__sheet visual__sheet--side"><ds-icon [name]="visual().icon" [size]="2" /></div>
       <div class="visual__front">
-        <span class="visual__brand"><ds-icon name="sparkles" [size]="0.85" /> VendedorIA</span>
+        <span class="visual__brand"><ds-icon name="sparkles" [size]="0.85" /> Agopify</span>
         <span class="visual__icon"><ds-icon [name]="visual().icon" [size]="2.6" /></span>
         <span class="visual__label">{{ visual().label }}</span>
       </div>

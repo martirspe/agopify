@@ -20,7 +20,7 @@ import type {
   ShippingMode,
   ShippingQuote,
   UbigeoDistrict,
-} from '@vendedoria/contracts';
+} from '@agopify/contracts';
 import { couponCustomerKey, CouponsService } from '../coupons/coupons.service';
 import type { CouponLine } from '../coupons/coupon-engine';
 import { releaseOrder, settlePaidOrder } from '../orders/settlement';

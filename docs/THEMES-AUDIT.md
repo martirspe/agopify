@@ -1,6 +1,6 @@
 # Auditoría del ecosistema de plantillas
 
-Fecha: 2026-10-05. Alcance: registro, editor, persistencia y las tres presentaciones de VendedorIA + Tienda. El repositorio estaba limpio al iniciar. El stack Docker activo incluye API, consola, tienda, PostgreSQL, Redis y Qdrant. Las 24 pruebas iniciales de contenido, preview y host pasaron en Docker.
+Fecha: 2026-10-05. Alcance: registro, editor, persistencia y las tres presentaciones de Agopify + Tienda. El repositorio estaba limpio al iniciar. El stack Docker activo incluye API, consola, tienda, PostgreSQL, Redis y Qdrant. Las 24 pruebas iniciales de contenido, preview y host pasaron en Docker.
 
 ## 1. Estado inicial y flujo comprobado en código
 
@@ -57,7 +57,7 @@ Actions ejecutan callbacks en momentos definidos y filters transforman valores; 
 
 Los widgets tienen identidad, controles/settings y renderer; documentos JSON separan estructura, versión y contenido. Los estilos globales son referencias compartidas, mientras skins cambian presentación. Adoptamos schemas de controles, datos persistidos y renderer separado; evitamos serializar componentes Angular o copiar el estado del editor. [Widgets](https://developers.elementor.com/docs/widgets/), [documentos](https://developers.elementor.com/docs/data-structure/general-structure/), [estilos](https://developers.elementor.com/docs/editor-controls/global-style/), [skins](https://developers.elementor.com/docs/hooks/widget-skins/).
 
-Los addons verifican versiones mínimas antes de cargar. Theme conditions elige dónde presentar templates. Para VendedorIA el control equivalente debe suceder antes de activar/publicar, y las rutas comerciales permanecen propiedad del core; no necesitamos un lenguaje libre de condiciones ni un ecosistema PHP. [Compatibilidad](https://developers.elementor.com/docs/addons/compatibility/), [condiciones](https://developers.elementor.com/docs/theme-conditions/).
+Los addons verifican versiones mínimas antes de cargar. Theme conditions elige dónde presentar templates. Para Agopify el control equivalente debe suceder antes de activar/publicar, y las rutas comerciales permanecen propiedad del core; no necesitamos un lenguaje libre de condiciones ni un ecosistema PHP. [Compatibilidad](https://developers.elementor.com/docs/addons/compatibility/), [condiciones](https://developers.elementor.com/docs/theme-conditions/).
 
 Dynamic tags conectan controles con contenido obtenido por proveedores registrados. Adaptamos el principio a DTO públicos y componentes tipados que reciben datos autoritativos; v1 no evalúa expresiones libres en el manifest. Templates/documentos y estilos globales reutilizan estructura visual, mientras el renderer de plataforma resuelve la presentación del runtime. [Dynamic tags](https://developers.elementor.com/docs/dynamic-tags/).
 
@@ -77,7 +77,7 @@ Estas son adaptaciones al código existente, no una afirmación de equivalencia 
 
 Core: datos, seguridad, rutas comerciales, checkout, SEO, validación, catálogo de capacidades y renderer ABI. Editor: controles, composición, bridge API, borrador y publicación. Theme: manifest declarativo, renderer soportado, tokens, presets, assets locales y changelog. Merchant: catálogo, identidad, contenido, overrides y datos comerciales que sobreviven al cambio de theme.
 
-Identidad estable = namespace + slug (`vendedoria/stride`); nombre público sigue siendo Impulso. Release SemVer es distinto de content schema v1 y editor/API ABI v1. No se inventan min/max de toda la app cuando el contrato de presentación es la dependencia real. La compatibilidad enumera manifest, ABI, capacidades, renderer, secciones, tokens, assets y ruta de migración. Versiones anteriores permanecen registradas. Los cambios visuales incompatibles exigen otro renderer ABI conservando el anterior.
+Identidad estable = namespace + slug (`agopify/stride`); nombre público sigue siendo Impulso. Release SemVer es distinto de content schema v1 y editor/API ABI v1. No se inventan min/max de toda la app cuando el contrato de presentación es la dependencia real. La compatibilidad enumera manifest, ABI, capacidades, renderer, secciones, tokens, assets y ruta de migración. Versiones anteriores permanecen registradas. Los cambios visuales incompatibles exigen otro renderer ABI conservando el anterior.
 
 Migración aditiva: fijar tiendas existentes a 1.0.0; conservar JSON, productos, pedidos, páginas legales, branding, fechas y drafts. Incorporar identidad/release al nuevo historial. Las versiones históricas sin identidad se identifican como legado; no se les inventa una plantilla original. Nuevas selecciones/actualizaciones pasan a draft. Publicar usa una transacción con revisión de fila; restaurar vuelve a draft para revisión.
 

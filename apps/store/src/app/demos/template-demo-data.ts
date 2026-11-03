@@ -7,8 +7,8 @@ import type {
   StoreCatalogProduct,
   StorefrontView,
   StoreTemplate,
-} from "@vendedoria/contracts";
-import { getTheme } from '@vendedoria/themes/catalog';
+} from "@agopify/contracts";
+import { getTheme } from '@agopify/themes/catalog';
 import { ROSALINE_REFERENCE_SECTIONS } from './rosaline-reference-data.mjs';
 
 const media = (file: string) => `/template-demos/media/${file}.webp`;

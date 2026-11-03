@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DsMenuComponent } from '@vendedoria/ui';
+import { DsMenuComponent } from '@agopify/ui';
 
 @Component({ imports: [DsMenuComponent], template: `<ds-menu label="Cuenta" menuId="test-menu"><span dsMenuTrigger>Abrir cuenta</span><a role="menuitem" href="/perfil">Mi perfil</a><button role="menuitem" disabled>No disponible</button><button role="menuitem">Salir</button></ds-menu>` })
 class MenuHost {}

@@ -67,6 +67,8 @@
 
 @utility console-scope {
  /* consola / surface (scoped; marketing keeps brand tokens). */
+  position: relative;
+  isolation: isolate;
   --ds-font-ui: var(--ds-font-console);
   --ds-color-primary: var(--ds-console-primary);
   --ds-color-primary-contrast: var(--ds-console-primary-contrast);
@@ -90,7 +92,7 @@
   --ds-radius-sm: 0.5rem;
   --ds-radius-md: 0.5rem;
   --ds-radius-lg: 0.75rem;
-  --ds-console-card-radius: 0.75rem;
+  --ds-console-card-radius: 1.25rem; /* Admin Next card 20px */
   --ds-button-radius: 0.5rem; /* console controls ~8px; brand lime on primary CTAs */
   --ds-button-padding-inline: 0.75rem;
   --ds-action-bg: var(--ds-console-action-bg);
@@ -160,7 +162,7 @@
   & input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
   & textarea,
   & select {
-    border-radius: var(--ds-radius-sm);
+    border-radius: var(--ds-console-field-radius, 0.75rem); /* Admin Next fields 12px */
   }
 
   & .ds-button--primary:not(:disabled):hover,
@@ -169,14 +171,14 @@
   }
 
   /* Navigation utilities own their desktop density and touch interaction floor.
- búsqueda chips/actions keep ’s compact 20px hit targets. */
-  & button:not([class~='tw:console-rail-button']):not([class~='tw:console-rail-expand']):not([class~='tw:console-rail-link']):not([class~='tw:console-rail-search-field']):not([class~='tw:console-context-search__clear']):not([class~='tw:console-search-panel__chip']):not([class~='tw:console-search-panel__icon-btn']):not([class~='tw:console-search-panel__open']):not([class~='tw:console-search-panel__result']):not([class~='tw:console-account-menu__item']):not(.ds-menu-trigger):not(.home-assistant__plus-item):not(.assistant-panel__plus-item):not(.home-assistant__switch):not(.assistant-panel__switch):not(.home-assistant__plus-info):not(.assistant-panel__plus-info),
+     Compact assistant/composer controls keep their designed 16–28px targets. */
+  & button:not([class~='tw:console-rail-button']):not([class~='tw:console-rail-expand']):not([class~='tw:console-rail-link']):not([class~='tw:console-rail-search-field']):not([class~='tw:console-context-search__clear']):not([class~='tw:console-search-panel__chip']):not([class~='tw:console-search-panel__icon-btn']):not([class~='tw:console-search-panel__open']):not([class~='tw:console-search-panel__result']):not([class~='tw:console-account-menu__item']):not(.ds-menu-trigger):not(.home-assistant__plus-item):not(.assistant-panel__plus-item):not(.home-assistant__switch):not(.assistant-panel__switch):not(.home-assistant__plus-info):not(.assistant-panel__plus-info):not(.ac__btn):not(.ac__switch):not(.ac__plus-info):not(.ac__plus-item):not(.ac__pill):not(.assistant-panel__icon-btn):not(.assistant-panel__chrome-btn):not(.assistant-panel__history-more):not(.assistant-panel__history-rename-btn):not(.assistant-panel__send):not(.catalog-index-filters__chip):not(.catalog-index-filters__add),
   & summary,
   & .switch {
     @apply tw:min-h-touch! tw:min-w-touch!;
   }
 
- /* console scrollbars: thin thumb only — no arrow buttons (Windows Chrome). */
+  /* console scrollbars: thin thumb only — no ↑/↓ buttons (Windows Chrome). */
   scrollbar-width: thin;
   scrollbar-color: var(--ds-console-scrollbar-thumb) transparent;
 
@@ -196,10 +198,14 @@
   & ::-webkit-scrollbar-button:vertical:start:decrement,
   & ::-webkit-scrollbar-button:vertical:end:increment,
   & ::-webkit-scrollbar-button:horizontal:start:decrement,
-  & ::-webkit-scrollbar-button:horizontal:end:increment {
+  & ::-webkit-scrollbar-button:horizontal:end:increment,
+  & ::-webkit-scrollbar-button:start:decrement,
+  & ::-webkit-scrollbar-button:end:increment {
     display: none;
     width: 0;
     height: 0;
+    background: transparent;
+    background-size: 0;
   }
 
   & ::-webkit-scrollbar-track {
@@ -208,9 +214,10 @@
 
   & ::-webkit-scrollbar-thumb {
     background-color: var(--ds-console-scrollbar-thumb);
-    border: 0.125rem solid transparent;
-    border-radius: 0.75rem;
-    background-clip: content-box;
+    border: 0;
+    border-radius: 9999px;
+    background-clip: padding-box;
+    min-height: 2rem;
   }
 
   & *:hover::-webkit-scrollbar-thumb {
@@ -223,6 +230,55 @@
 
   & ::-webkit-scrollbar-corner {
     background: transparent;
+  }
+
+  /*
+    Single foot glow — only while trial/demo CTA is shown (`data-trial`).
+    Hidden otherwise. Soft mask fades under Main without a hard edge.
+  */
+  &::after {
+    content: '';
+    pointer-events: none;
+    position: absolute;
+    z-index: 0;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 22rem;
+    background: radial-gradient(
+      130% 100% at 10% 110%,
+      color-mix(in srgb, var(--ds-color-primary) 56%, transparent) 0%,
+      color-mix(in srgb, var(--ds-color-primary) 28%, transparent) 26%,
+      color-mix(in srgb, var(--ds-color-primary) 12%, transparent) 48%,
+      transparent 72%
+    );
+    opacity: 0;
+    transition: opacity var(--ds-motion-base) var(--ds-ease-out);
+    -webkit-mask-image: linear-gradient(90deg, #000 0, transparent 48vw);
+    mask-image: linear-gradient(90deg, #000 0, transparent 48vw);
+  }
+
+  &[data-trial]::after {
+    opacity: 0.92;
+  }
+
+  &[data-trial][data-rail-collapsed]::after {
+    background: radial-gradient(
+      120% 100% at 4% 110%,
+      color-mix(in srgb, var(--ds-color-primary) 50%, transparent) 0%,
+      color-mix(in srgb, var(--ds-color-primary) 20%, transparent) 32%,
+      transparent 68%
+    );
+    -webkit-mask-image: linear-gradient(90deg, #000 0, transparent 40vw);
+    mask-image: linear-gradient(90deg, #000 0, transparent 40vw);
+  }
+
+  /* Sheet/rail above the single wash; nav stays transparent so the glow shows through. */
+  & > #console-navigation,
+  & > [class~='tw:console-frame'],
+  & > [class~='tw:console-context-sidebar'] {
+    position: relative;
+    z-index: 1;
   }
 }
 
@@ -572,16 +628,10 @@
 }
 
 /*
- settings + under `[data-subnav-active]`:
- link pad-inline 16; content pad 4 / gap 6; ::before inset-inline -2 (chip @14),
- r12; hover = nav-bg-surface-hover (6%); selected = nav-selected (11%) + shadow.
+ settings / store subnav — hover chip matches primary rail (`console-rail-link`):
+ same 30px row, radius-300 / 13px chip, full-bleed ::before (not a narrow capsule).
 */
 @utility console-context-link {
-  /*
- + + `::before`:
- Link pad-inline 16 → Content pad 4 / gap 6 / icon 20 → Content::before inset-inline -2.
- Flattened: pad 4×20, chip inset 14 (=16−2), icon 4px inside content / ~6px inside chip.
- */
   position: relative;
   z-index: 0;
   isolation: isolate;
@@ -589,12 +639,12 @@
   align-items: center;
   gap: 0.375rem; /* space-150 */
   box-sizing: border-box;
-  width: 100%;
-  min-height: 1.75rem; /* 28px */
-  margin: 0;
-  padding: 0.25rem 1.25rem; /* 4px + (16 link + 4 content) */
+  width: calc(100% - 1rem);
+  min-height: 1.875rem; /* 30px — match rail */
+  margin: 0 0.5rem;
+  padding: 1px 0.5rem 1px 0.5rem;
   border: 0;
-  border-radius: 0;
+  border-radius: 0.75rem; /* radius-300 — same as rail link */
   background: transparent;
   color: #dcdcdc !important;
   font-size: 0.8125rem;
@@ -607,11 +657,10 @@
     content: '';
     position: absolute;
     z-index: -1;
-    /* 0.5px block gap vs neighbour; 14px inline = link 16 − Content::before overhang 2. */
     inset-block: 0.03125rem;
-    inset-inline: 0.875rem;
+    inset-inline: 0;
     pointer-events: none;
- border-radius: 0.8125rem; /* 13px — pill */
+    border-radius: 0.8125rem; /* --nav-pill-radius 13px — same as rail */
     background: transparent;
     box-shadow: none;
     transition:
@@ -818,6 +867,7 @@
  /* consola : viewport-locked white sheet; content scrolls inside
  . Document/html do not scroll — the rounded panel stays put. */
   @apply tw:min-w-0 tw:flex-1 tw:bg-workspace;
+  position: relative;
   display: flex;
   flex-direction: column;
   border-radius: var(--ds-console-frame-radius, 1rem);
@@ -829,15 +879,33 @@
   overflow: hidden;
   transition: margin-inline-end var(--ds-motion-fast) var(--ds-ease-out);
   /*
- Assistant dock: main frame keeps its own sheet and cedes
- margin-inline-end = assistant width + 4px gap (356 + 4 → 364).
- The assistant is a separate fixed white sheet — not a column inside Main.
- */
+  Assistant dock: main frame keeps its own sheet and cedes
+  margin-inline-end = assistant width + 4px gap (356 + 4 → 364).
+  The assistant is a separate fixed white sheet — not a column inside Main.
+  */
   &[data-assistant-dock] {
     /* width + gap(4) + sidebar right inset(4) = 364 when assistant is 356. */
     margin-inline-end: calc(
       var(--ds-console-assistant-width, 22.25rem) + 2 * var(--ds-space-1)
     );
+  }
+}
+
+/*
+  Global Sidekick-style float — bottom-center of the white frame, every console view.
+  Hidden on Inicio (hero composer owns that surface) and while the dock/full panel is open.
+*/
+@utility console-assistant-float {
+  position: absolute;
+  z-index: 25;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  transform: translateX(-50%);
+  pointer-events: none;
+  & > * {
+    pointer-events: auto;
   }
 }
 
@@ -863,6 +931,11 @@
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+
+  /* Leave room for the global assistant float + home-indicator on phones. */
+  @media (max-width: 56.249rem) {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /*
@@ -1068,51 +1141,85 @@
   }
 }
 
-/* Trial countdown — full-bleed content; glow lives on the rail (::after), not here. */
+/*
+  Trial countdown — Admin subscription entry (_Section / _SectionInner / _Card*):
+  inset hairline (not full-bleed), label medium 13, pill CTA 184×30 + layered shadow.
+  Glow lives on `.console-scope::after` only — not here.
+*/
 @utility console-trial-notice {
   position: relative;
   z-index: 1;
-  display: grid;
-  gap: 0.5rem;
+  display: block;
   width: 100%;
-  /* Gap above the divider so the last footer chip (Ajustes) never kisses the rule. */
-  margin: 0.5rem 0 0;
-  padding: 0.75rem 0.75rem 0.625rem;
-  border-block-start: 1px solid var(--ds-console-nav-border);
+  /* --p-space-250 above the section; content pad 12/20/16 like SectionInner + Card. */
+  margin: 0.625rem 0 0;
+  padding: 0.75rem 1.25rem 1rem;
+  border: 0;
   background: transparent;
+
+  /* _SectionInner::before — inset-inline space-500 (20px), rgba(255,255,255,0.18). */
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 1.25rem;
+    block-size: 0.0625rem;
+    background: rgb(255 255 255 / 0.18);
+  }
 }
 
 @utility console-trial-notice__label {
   position: relative;
   z-index: 1;
+  display: block;
   margin: 0;
-  padding-inline: 0.25rem;
-  color: var(--ds-console-nav-text-active);
-  font-size: 0.8125rem;
-  font-weight: 650;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fff;
+  font-size: 0.8125rem; /* --p-font-size-325 */
+  font-weight: 500; /* --p-font-weight-medium */
+  line-height: 1.25rem; /* --p-font-line-height-500 */
+  letter-spacing: -0.005em; /* --p-font-letter-spacing-dense */
 }
 
 @utility console-trial-notice__cta {
+  position: relative;
+  z-index: 1;
   display: flex;
+  place-content: center;
   align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 2rem;
-  padding: 0 0.75rem;
-  border-radius: 999px;
-  background: #fff;
-  color: #0a0a0a !important;
-  font-size: 0.8125rem;
-  font-weight: 650;
-  line-height: 1;
-  text-decoration: none;
   box-sizing: border-box;
-  transition: background-color var(--ds-motion-fast) var(--ds-ease-out);
+  width: 11.5rem; /* measured _CardButton inline-size */
+  max-width: 100%;
+  height: 1.875rem; /* --nav-control-block-size 30px */
+  margin-block-start: 0.75rem; /* --p-space-300 */
+  margin-inline: auto;
+  padding: 0.25rem 0.625rem; /* space-100 / space-250 */
+  border-radius: 9999px;
+  background: #fff;
+  color: #000 !important;
+  font-size: 0.75rem; /* --p-font-size-300 */
+  font-weight: 500;
+  line-height: 1.25rem;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  /* Admin _CardButton layered elevation */
+  box-shadow:
+    rgb(0 0 0 / 0.07) 0 0 0 0.0625rem,
+    rgb(0 0 0 / 0.03) 0 0.125rem 1.25rem,
+    rgb(0 0 0 / 0.03) 0 0.3125rem 1.25rem,
+    rgb(0 0 0 / 0.03) 0 0.5rem 3.75rem;
+  transition:
+    background-color var(--ds-motion-fast) var(--ds-ease-out),
+    transform var(--ds-motion-fast) var(--ds-ease-out);
 
   &:hover {
-    background: #f3f3f3;
+    background: #f2f2f2;
+  }
+
+  &:active {
+    transform: scale(0.975);
   }
 
   &:focus-visible {
@@ -1141,43 +1248,7 @@
   &:hover::-webkit-scrollbar-thumb {
     background-color: var(--ds-console-scrollbar-rail-thumb-hover);
   }
-  /*
-   Trial foot glow — same technique as Admin: soft radial from bottom-left,
-   olive wash behind footer + trial (sampled ~rgb(75,102,21) → brand primary mixed into nav).
-   Idle rail keeps a faint wash; [data-trial] intensifies like the subscribe panel.
- */
-  &::after {
-    content: '';
-    pointer-events: none;
-    position: absolute;
-    z-index: 0;
-    inset-inline: 0;
-    bottom: 0;
-    height: 16rem;
-    background: radial-gradient(
-      180% 110% at 18% 108%,
-      color-mix(in srgb, var(--ds-color-primary) 42%, var(--ds-console-nav-bg)) 0%,
-      color-mix(in srgb, var(--ds-color-primary) 22%, transparent) 32%,
-      color-mix(in srgb, var(--ds-color-primary) 8%, transparent) 52%,
-      transparent 72%
-    );
-    opacity: 0.28;
-    transition: opacity var(--ds-motion-base) var(--ds-ease-out);
-  }
-
-  &[data-trial]::after {
-    opacity: 0.92;
-  }
-
-  &[data-collapsed]::after {
-    height: 12rem;
-    background: radial-gradient(
-      220% 100% at 50% 110%,
-      color-mix(in srgb, var(--ds-color-primary) 36%, var(--ds-console-nav-bg)) 0%,
-      color-mix(in srgb, var(--ds-color-primary) 12%, transparent) 40%,
-      transparent 68%
-    );
-  }
+  /* Foot glow lives only on `.console-scope::after` — never a second rail layer. */
   /*
  Collapsed rail — measured:
  rail 60px; items 32×30 at x=14; pad 1 0 1 6; icon 16 at x+8 (no trail margin);
@@ -1395,13 +1466,93 @@
 }
 
 @utility console-card {
-  @apply tw:min-w-0 tw:rounded-lg tw:border tw:border-solid tw:border-border tw:bg-surface tw:p-4;
-  border-color: var(--ds-console-border, var(--ds-color-border));
-  box-shadow: none; /* console cards are flat bordered surfaces */
+  @apply tw:min-w-0 tw:bg-surface tw:p-4;
+  border: 0;
+  border-radius: var(--ds-console-card-radius, 1.25rem);
+  box-shadow: var(--ds-console-card-shadow);
+}
+
+/* Quiet selectable tile (channel hubs, mode pickers) — no ink border stamp. */
+@utility console-choice {
+  @apply tw:flex tw:min-h-touch tw:min-w-0 tw:items-center tw:gap-3 tw:bg-surface tw:px-4 tw:py-3 tw:text-left tw:transition-[box-shadow,background-color] tw:duration-150;
+  border: 0;
+  border-radius: var(--ds-console-card-radius, 1.25rem);
+  box-shadow: var(--ds-console-card-shadow);
+  color: var(--ds-console-text, var(--ds-color-text-primary));
+  cursor: pointer;
+  &:hover {
+    background: #fafafa;
+  }
+  &[aria-selected='true'],
+  &[aria-pressed='true'],
+  &.is-selected {
+    background: #f7f7f7;
+    box-shadow: var(--ds-console-card-shadow-selected);
+  }
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--ds-console-field-shadow-focus);
+  }
 }
 
 @utility console-filter-bar {
   @apply tw:flex tw:min-w-0 tw:flex-wrap tw:items-center tw:gap-2 tw:rounded-card tw:border tw:border-solid tw:border-border tw:bg-surface tw:p-2;
+}
+
+/* Admin IndexTable search: one soft ring shell + bare input. Never nest console-field. */
+@utility console-filter-search {
+  @apply tw:flex tw:min-w-0 tw:flex-1 tw:items-center tw:gap-2 tw:bg-surface tw:px-3;
+  box-sizing: border-box;
+  min-height: var(--ds-console-control-height, 2rem);
+  border: 0;
+  border-radius: var(--ds-console-field-radius, 0.75rem);
+  box-shadow: var(--ds-console-field-shadow);
+  color: var(--ds-color-text-secondary);
+  transition: box-shadow var(--ds-motion-fast) var(--ds-ease-out);
+
+  &:hover {
+    box-shadow:
+      rgb(0 0 0 / 4%) 0 1px 2px 0,
+      rgb(0 0 0 / 12%) 0 0 0 1px;
+  }
+
+  &:focus-within {
+    box-shadow: var(--ds-console-field-shadow-focus);
+    color: var(--ds-console-text, var(--ds-color-text-primary));
+  }
+
+  & input {
+    @apply tw:w-full tw:min-w-0 tw:font-ui;
+    box-sizing: border-box;
+    min-height: calc(var(--ds-console-control-height, 2rem) - 2px);
+    padding: 0;
+    border: 0 !important;
+    border-radius: 0;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: var(--ds-console-type-sm, 0.8125rem);
+    font-weight: 400;
+    line-height: 1.25rem;
+    color: var(--ds-console-text, var(--ds-color-text-primary));
+    outline: none;
+  }
+
+  & input::placeholder {
+    color: var(--ds-color-text-secondary);
+  }
+
+  & input::-webkit-search-cancel-button,
+  & input::-webkit-search-decoration {
+    appearance: none;
+  }
+
+  @media (max-width: 40rem) {
+    min-height: var(--ds-touch-target);
+
+    & input {
+      min-height: calc(var(--ds-touch-target) - 2px);
+    }
+  }
 }
 
 @utility console-index-table {
@@ -1413,10 +1564,36 @@
 }
 
 @utility console-field {
-  &[aria-invalid=true] { border-color: var(--ds-color-danger); }
-  @apply tw:w-full tw:min-w-0 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:bg-surface tw:font-ui tw:text-body tw:text-foreground;
-  min-height: var(--ds-touch-target);
-  padding: var(--ds-control-padding-block) var(--ds-control-padding-inline);
+  /* Quiet Admin field: 32px, 12px radius, soft ring — no hard border. */
+  @apply tw:w-full tw:min-w-0 tw:bg-surface tw:font-ui;
+  box-sizing: border-box;
+  min-height: var(--ds-console-control-height, 2rem);
+  padding: 0.375rem 0.75rem;
+  border: 0;
+  border-radius: var(--ds-console-field-radius, 0.75rem);
+  box-shadow: var(--ds-console-field-shadow);
+  font-size: var(--ds-console-type-sm, 0.8125rem);
+  font-weight: 400;
+  line-height: 1.25rem;
+  color: var(--ds-console-text, var(--ds-color-text-primary));
+  outline: none;
+  transition: box-shadow var(--ds-motion-fast) var(--ds-ease-out);
+  &:hover:not(:disabled):not(:focus-visible) {
+    box-shadow:
+      rgb(0 0 0 / 4%) 0 1px 2px 0,
+      rgb(0 0 0 / 12%) 0 0 0 1px;
+  }
+  &:focus-visible {
+    box-shadow: var(--ds-console-field-shadow-focus);
+  }
+  &[aria-invalid='true'] {
+    box-shadow:
+      rgb(0 0 0 / 3%) 0 1px 2px 0,
+      0 0 0 1px var(--ds-color-danger);
+  }
+  @media (max-width: 40rem) {
+    min-height: var(--ds-touch-target);
+  }
 }
 
 @utility console-icon-button {

@@ -120,10 +120,12 @@ export class DsSelectComponent {
     if (this.disabled() || !this.enhanced()) return;
     const panel = this.panel(); const trigger = this.trigger();
     if (!panel || !trigger) return;
-    this.positionPanel();
     const selected = this.options().findIndex(option => option.selected && !option.disabled);
     this.active.set(selected >= 0 ? selected : this.options().findIndex(option => !option.disabled));
-    panel.showPopover(); this.open.set(true);
+    // Open first so layout can measure real option widths (closed popovers are display:none).
+    panel.showPopover();
+    this.open.set(true);
+    this.positionPanel();
     this.scrollActive();
   }
 
@@ -138,11 +140,34 @@ export class DsSelectComponent {
     const above = rect.top - gap * 2;
     const upward = below < 180 && above > below;
     const maxHeight = Math.min(320, Math.max(80, upward ? above : below));
-    panel.style.width = `${Math.min(rect.width, win.innerWidth - gap * 2)}px`;
-    panel.style.left = `${Math.max(gap, Math.min(rect.left, win.innerWidth - rect.width - gap))}px`;
+    const viewportMax = win.innerWidth - gap * 2;
+    const triggerWidth = Math.round(rect.width);
+
     panel.style.maxHeight = `${maxHeight}px`;
     panel.style.top = upward ? 'auto' : `${rect.bottom + gap}px`;
     panel.style.bottom = upward ? `${win.innerHeight - rect.top + gap}px` : 'auto';
+
+    // Grow to the longest option; never narrower than the trigger; clamp to viewport.
+    panel.style.minWidth = `${triggerWidth}px`;
+    panel.style.maxWidth = 'none';
+    panel.style.width = 'max-content';
+    const spans = panel.querySelectorAll<HTMLElement>('.ds-select-option > span');
+    spans.forEach((span) => {
+      span.style.minWidth = 'max-content';
+      span.style.overflow = 'visible';
+      span.style.textOverflow = 'clip';
+    });
+    const intrinsic = Math.ceil(panel.getBoundingClientRect().width) || Math.ceil(panel.scrollWidth);
+    spans.forEach((span) => {
+      span.style.minWidth = '';
+      span.style.overflow = '';
+      span.style.textOverflow = '';
+    });
+
+    const width = Math.min(Math.max(intrinsic, triggerWidth), viewportMax);
+    panel.style.maxWidth = `${viewportMax}px`;
+    panel.style.width = `${width}px`;
+    panel.style.left = `${Math.max(gap, Math.min(Math.round(rect.left), win.innerWidth - width - gap))}px`;
   }
 
   readonly close = () => {

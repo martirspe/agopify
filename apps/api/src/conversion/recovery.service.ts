@@ -11,7 +11,7 @@ import type {
   RecoveryCaptureResult,
   RecoveredCart,
   RecoveryCartLine,
-} from '@vendedoria/contracts';
+} from '@agopify/contracts';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   PRODUCT_INCLUDE,

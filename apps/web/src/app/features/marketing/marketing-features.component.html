@@ -1,47 +1,202 @@
-<section id="funcionalidades" class="mk-section mk-shell" aria-labelledby="features-title">
-  <div class="feature-intro">
-    <header class="mk-heading">
-      <p class="mk-kicker">UN VENDEDOR. TODA TU OPERACIÓN.</p>
-      <h2 id="features-title">Responder es el inicio.<br /><span>Vender es el objetivo.</span></h2>
+<section class="pillars mk-section" id="plataforma" aria-labelledby="pillars-title">
+  <div class="mk-shell">
+    <header class="mk-heading pillars__intro">
+      <p class="mk-kicker">LA PLATAFORMA</p>
+      <h2 id="pillars-title">Todo lo que necesitas<br /><span>para vender con más claridad.</span></h2>
+      <p>
+        Dos pilares de un mismo ecosistema: el vendedor IA que cierra en el chat, y tu escaparate web
+        en camino — compartiendo catálogo y operación.
+      </p>
     </header>
+
+    <div class="pillars__grid">
+      <article class="pillar" aria-labelledby="pillar-agent-title">
+        <div class="pillar__icon"><ds-icon name="bot" [size]="1.5" /></div>
+        <p class="mk-kicker">PILAR 01</p>
+        <h3 id="pillar-agent-title">Agentes de ventas con IA</h3>
+        <p>
+          Atienden en WhatsApp e Instagram, entienden tu catálogo, recomiendan con precio y stock, y
+          guían la compra hasta el enlace de pago.
+        </p>
+        <ul class="story__points">
+          <li><ds-icon name="check" [size]="1" /> Contexto de conversación</li>
+          <li><ds-icon name="check" [size]="1" /> Catálogo como fuente de verdad</li>
+          <li><ds-icon name="check" [size]="1" /> Handoff al operador cuando hace falta</li>
+        </ul>
+        <a class="pillar__link" href="#demo"
+          >Ver cómo vende <ds-icon name="arrowRight" [size]="1"
+        /></a>
+      </article>
+
+      <article class="pillar pillar--soon" aria-labelledby="pillar-store-title">
+        <div class="pillar__icon"><ds-icon name="store" [size]="1.5" /></div>
+        <p class="mk-kicker">PILAR 02 · PRÓXIMAMENTE</p>
+        <h3 id="pillar-store-title">Tu tienda online</h3>
+        <p>
+          Un escaparate profesional con tu marca, conectado al mismo catálogo y a tus pedidos. Hoy
+          está en desarrollo; si aparece en la consola es acceso anticipado.
+        </p>
+        <ul class="story__points">
+          <li><ds-icon name="check" [size]="1" /> Plantillas alineadas a tu marca</li>
+          <li><ds-icon name="check" [size]="1" /> Mismo catálogo que el chat</li>
+          <li><ds-icon name="check" [size]="1" /> Continuidad con la operación</li>
+        </ul>
+        <a class="pillar__link" href="#tienda"
+          >Ver la visión de tienda <ds-icon name="arrowRight" [size]="1"
+        /></a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="stories" aria-labelledby="stories-title">
+  <div class="mk-shell stories__intro">
+    <p class="mk-kicker">VENDEDOR IA</p>
+    <h2 id="stories-title">El agente que trabaja<br /><span>para tu negocio.</span></h2>
     <p>
-      De la consulta al pedido, tu vendedor IA trabaja con la información de tu negocio. Tú
-      supervisas la operación desde una misma consola.
+      Responde consultas, recomienda con tu catálogo, mantiene el hilo y apoya a tu equipo — sin
+      inventar precio ni stock.
     </p>
   </div>
-  <ul class="features">
-    @for (feature of features; track feature.title) {
-      <li>
-        <ds-icon [name]="feature.icon" [size]="1.5" />
-        <h3>{{ feature.title }}</h3>
-        <p>{{ feature.text }}</p>
-      </li>
-    }
-  </ul>
 
-  <div class="store-story">
-    <div class="store-story__copy">
-      <p class="mk-kicker">PRÓXIMAMENTE</p>
-      <h2>Tu marca.<br />Tu escaparate.<br /><span>El mismo vendedor.</span></h2>
+  <article class="story story--chat" aria-labelledby="story-chat-title">
+    <div class="mk-shell story__grid">
+      <div class="story__copy">
+        <p class="mk-kicker">01 · CONVERSACIÓN COMERCIAL</p>
+        <h3 id="story-chat-title">Vende en el chat.<br />No en otra pantalla.</h3>
+        <p>
+          Tu vendedor IA recomienda con precios, variantes y stock de tu catálogo. Arma el pedido y
+          envía el enlace de Mercado Pago sin sacar al cliente del hilo.
+        </p>
+        <ul class="story__points">
+          <li><ds-icon name="check" [size]="1" /> Precio y disponibilidad desde tu catálogo</li>
+          <li><ds-icon name="check" [size]="1" /> Pedido y pago conectados en la conversación</li>
+          <li><ds-icon name="check" [size]="1" /> WhatsApp Business e Instagram Direct</li>
+        </ul>
+      </div>
+      <div class="story__visual" aria-hidden="true">
+        <div class="panel panel--chat">
+          <div class="panel__bar">
+            <span class="status-dot"></span> Vendedor IA activo
+          </div>
+          <div class="panel__bubble panel__bubble--in">¿Tienen la Urbana en talla 40?</div>
+          <div class="panel__bubble panel__bubble--out">
+            Sí, disponible. Talla 40 · S/ 189.00
+          </div>
+          <div class="panel__product">
+            <img
+              src="/marketing/urban-sneaker.webp"
+              alt=""
+              width="96"
+              height="96"
+              loading="lazy"
+              decoding="async"
+            />
+            <div>
+              <strong>Urbana Blanca</strong>
+              <span>De tu catálogo</span>
+            </div>
+          </div>
+          <div class="panel__pay">
+            <ds-icon name="wallet" [size]="1" /> Enlace de pago listo
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="story story--ops" aria-labelledby="story-ops-title">
+    <div class="mk-shell story__grid story__grid--flip">
+      <div class="story__copy">
+        <p class="mk-kicker">02 · CONTROL DEL OPERADOR</p>
+        <h3 id="story-ops-title">La IA vende.<br />Tú mandas cuando hace falta.</h3>
+        <p>
+          Mira el chat en vivo, responde cuando quieras y pausa al vendedor con un clic. El equipo
+          ve conversaciones, pedidos y contexto del cliente en la misma consola.
+        </p>
+        <ul class="story__points">
+          <li><ds-icon name="check" [size]="1" /> «Pausar IA» por conversación</li>
+          <li><ds-icon name="check" [size]="1" /> Inbox unificado para el equipo</li>
+          <li><ds-icon name="check" [size]="1" /> Playground para probar antes de activar</li>
+        </ul>
+      </div>
+      <div class="story__visual" aria-hidden="true">
+        <div class="panel panel--ops">
+          <div class="panel__ops-row">
+            <span>Conversación</span>
+            <strong>María · WhatsApp</strong>
+          </div>
+          <div class="panel__ops-row">
+            <span>Estado</span>
+            <strong class="panel__badge">Tú estás atendiendo</strong>
+          </div>
+          <div class="panel__ops-row">
+            <span>Pedido</span>
+            <strong>Urbana · S/ 189.00</strong>
+          </div>
+          <div class="panel__ops-cta">
+            <ds-icon name="pause" [size]="1" /> Pausar IA en este chat
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="story story--truth" aria-labelledby="story-truth-title">
+    <div class="mk-shell story__grid">
+      <div class="story__copy">
+        <p class="mk-kicker">03 · CONFIANZA COMERCIAL</p>
+        <h3 id="story-truth-title">Nunca inventa<br />precio ni stock.</h3>
+        <p>
+          El agente consulta tu catálogo y tus condiciones. Si algo no está claro, escala. Tú
+          defines el estilo; Agopify no improvisa datos de venta.
+        </p>
+        <ul class="story__points">
+          <li><ds-icon name="check" [size]="1" /> Catálogo como fuente de verdad</li>
+          <li><ds-icon name="check" [size]="1" /> Cobros a tu cuenta de Mercado Pago</li>
+          <li><ds-icon name="check" [size]="1" /> Plan SaaS y cobros de clientes siempre separados</li>
+        </ul>
+      </div>
+      <div class="story__visual" aria-hidden="true">
+        <div class="panel panel--truth">
+          <p class="panel__truth-label">Fuente</p>
+          <strong>Tu catálogo Agopify</strong>
+          <ul>
+            <li>Precio · autorizado</li>
+            <li>Stock · autorizado</li>
+            <li>Variantes · autorizadas</li>
+          </ul>
+          <p class="panel__truth-note">Sin datos inventados en la conversación.</p>
+        </div>
+      </div>
+    </div>
+  </article>
+</section>
+
+<section class="storefront mk-section" id="tienda" aria-labelledby="storefront-title">
+  <div class="mk-shell storefront__grid">
+    <div class="storefront__copy">
+      <p class="mk-kicker">TIENDA WEB · PRÓXIMAMENTE</p>
+      <h2 id="storefront-title">Tu escaparate online.<br /><span>Diseñado para vender.</span></h2>
       <p>
-        Hoy vendes por WhatsApp e Instagram con tu vendedor IA. La tienda web llegará después,
-        con el mismo catálogo y pedidos. Aún no forma parte oficial de los planes.
+        Hoy vendes por WhatsApp e Instagram. La tienda web llegará con el mismo catálogo y los
+        mismos pedidos — un escaparate profesional conectado a tu ecosistema de ventas. Aún no
+        forma parte oficial de los planes.
       </p>
-      <ul class="store-story__list">
+      <ul class="story__points">
         <li><ds-icon name="check" [size]="1" /> Plantillas alineadas a tu marca</li>
-        <li><ds-icon name="check" [size]="1" /> Catálogo y pedidos compartidos con el chat</li>
-        <li><ds-icon name="check" [size]="1" /> Dominio propio y cobros en línea</li>
+        <li><ds-icon name="check" [size]="1" /> Catálogo, detalle de producto y compra online</li>
+        <li><ds-icon name="check" [size]="1" /> Continuidad con el chat y la consola</li>
       </ul>
       <a dsLink variant="secondary" href="#planes"
         >Ver planes del vendedor IA <ds-icon name="arrowRight" [size]="1"
       /></a>
-      <p class="store-story__note">Tienda web: en desarrollo. Acceso anticipado sin compromiso comercial.</p>
+      <p class="storefront__note">Acceso anticipado sin compromiso comercial.</p>
     </div>
-    <figure class="store-preview">
-      <div class="store-preview__toolbar">
-        <span class="store-preview__dots" aria-hidden="true"><i></i><i></i><i></i></span
-        ><span><ds-icon name="globe" [size]="0.875" /> Tienda · pronto</span
-        ><ds-icon name="store" [size]="1" />
+    <figure class="storefront__preview">
+      <div class="storefront__toolbar">
+        <span class="storefront__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span><ds-icon name="globe" [size]="0.875" /> tienda.agopify · pronto</span>
       </div>
       <img
         src="/template-previews/selecta.webp"
@@ -56,23 +211,61 @@
   </div>
 </section>
 
+<section class="ecosystem mk-section" id="ecosistema" aria-labelledby="ecosystem-title">
+  <div class="mk-shell">
+    <header class="mk-heading">
+      <p class="mk-kicker">COMERCIO CONECTADO</p>
+      <h2 id="ecosystem-title">Un ecosistema.<br /><span>Más oportunidades de vender.</span></h2>
+      <p>
+        Clientes, canales, catálogo, vendedor IA, pedidos y cobros trabajan juntos. Sin diagramas
+        técnicos: un flujo que un dueño de negocio puede entender.
+      </p>
+    </header>
+
+    <ol class="eco-flow" aria-label="Flujo del ecosistema Agopify">
+      <li>
+        <ds-icon name="users" [size]="1.25" />
+        <strong>Cliente</strong>
+        <span>Escribe por WhatsApp o Instagram</span>
+      </li>
+      <li aria-hidden="true" class="eco-flow__arrow"><ds-icon name="arrowRight" [size]="1" /></li>
+      <li>
+        <ds-icon name="bot" [size]="1.25" />
+        <strong>Vendedor IA</strong>
+        <span>Entiende y recomienda</span>
+      </li>
+      <li aria-hidden="true" class="eco-flow__arrow"><ds-icon name="arrowRight" [size]="1" /></li>
+      <li>
+        <ds-icon name="package" [size]="1.25" />
+        <strong>Catálogo</strong>
+        <span>Precio, stock y variantes</span>
+      </li>
+      <li aria-hidden="true" class="eco-flow__arrow"><ds-icon name="arrowRight" [size]="1" /></li>
+      <li>
+        <ds-icon name="wallet" [size]="1.25" />
+        <strong>Pedido</strong>
+        <span>Pago en el chat · consola</span>
+      </li>
+    </ol>
+    <p class="eco-note">
+      La tienda web se sumará al mismo flujo con el catálogo compartido.
+      <a href="#tienda">Ver estado de la tienda</a>
+    </p>
+  </div>
+</section>
+
 <section id="como-funciona" class="setup" aria-labelledby="steps-title">
   <div class="mk-section mk-shell">
-    <header class="mk-heading">
-      <p class="mk-kicker">DE TU NEGOCIO A TU VENDEDOR IA</p>
-      <h2 id="steps-title">Prepáralo a tu manera.<br />Ponlo a trabajar contigo.</h2>
-      <p>
-        Empieza con tu catálogo y tus canales. Prueba la experiencia antes de atender a tus
-        clientes.
-      </p>
+    <header class="mk-heading setup__heading">
+      <p class="mk-kicker">CÓMO FUNCIONA</p>
+      <h2 id="steps-title">De cero a vender<br />en tres pasos.</h2>
+      <p>Configuras una vez. Pruebas en el playground. Activas cuando estés listo.</p>
     </header>
     <ol class="steps">
       @for (step of steps; track step.title; let index = $index) {
         <li>
-          <div class="steps__top">
-            <span>0{{ index + 1 }}</span
-            ><ds-icon [name]="step.icon" />
-          </div>
+          <span class="steps__num">0{{ index + 1 }}</span>
+          <ds-icon [name]="step.icon" [size]="1.25" />
           <h3>{{ step.title }}</h3>
           <p>{{ step.text }}</p>
         </li>
@@ -81,44 +274,123 @@
   </div>
 </section>
 
-<section class="mk-section mk-shell integrations" aria-labelledby="integrations-title">
-  <header class="mk-heading">
-    <p class="mk-kicker">DONDE YA ESTÁN TUS CLIENTES</p>
-    <h2 id="integrations-title">Conecta las piezas.<br />Conserva tu marca.</h2>
-    <p>La atención y la venta se encuentran en un mismo lugar.</p>
-  </header>
-  <ul class="integrations__list">
-    <li>
-      <ds-icon name="whatsapp" [size]="1.5" />
-      <div>
-        <h3>WhatsApp Business</h3>
-        <p>Tu número, las conversaciones de tus clientes y tu vendedor IA.</p>
-      </div>
-      <span>ATENCIÓN</span>
-    </li>
-    <li>
-      <ds-icon name="instagram" [size]="1.5" />
-      <div>
-        <h3>Instagram</h3>
-        <p>Lleva la atención de tus mensajes directos a tu consola.</p>
-      </div>
-      <span>ATENCIÓN</span>
-    </li>
-    <li>
-      <ds-icon name="wallet" [size]="1.5" />
-      <div>
-        <h3>Mercado Pago</h3>
-        <p>El pago del cliente llega a tu cuenta. Se aplican las tarifas del proveedor.</p>
-      </div>
-      <span>COBROS</span>
-    </li>
-    <li>
-      <ds-icon name="globe" [size]="1.5" />
-      <div>
-        <h3>Tienda web</h3>
-        <p>Escaparate con tu marca. Próximamente; no forma parte oficial del plan hoy.</p>
-      </div>
-      <span>PRONTO</span>
-    </li>
-  </ul>
+<section class="channels mk-section" aria-labelledby="channels-title">
+  <div class="mk-shell">
+    <header class="mk-heading">
+      <p class="mk-kicker">CANALES</p>
+      <h2 id="channels-title">Donde ya te escriben.<br /><span>Una sola operación.</span></h2>
+      <p>Canales verificados hoy. Sin promesas de integraciones que aún no existen.</p>
+    </header>
+    <ul class="channels__list">
+      <li>
+        <ds-icon name="whatsapp" [size]="1.75" />
+        <div>
+          <h3>WhatsApp Business</h3>
+          <p>API oficial de Meta. Tu número, tus conversaciones, tu vendedor IA.</p>
+        </div>
+      </li>
+      <li>
+        <ds-icon name="instagram" [size]="1.75" />
+        <div>
+          <h3>Instagram Direct</h3>
+          <p>Mensajes directos en la misma consola y el mismo catálogo.</p>
+        </div>
+      </li>
+      <li class="channels__item--soon">
+        <ds-icon name="globe" [size]="1.75" />
+        <div>
+          <h3>Tienda web</h3>
+          <p>Escaparate con tu marca. Próximamente, mismo ecosistema.</p>
+        </div>
+        <span>PRONTO</span>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="benefits mk-section" aria-labelledby="benefits-title">
+  <div class="mk-shell">
+    <header class="mk-heading">
+      <p class="mk-kicker">VALOR OPERATIVO</p>
+      <h2 id="benefits-title">Resultados concretos.<br /><span>Sin porcentajes inventados.</span></h2>
+      <p>Lo que cambia en el día a día de un negocio que vende por conversación.</p>
+    </header>
+    <ul class="benefits__grid">
+      @for (item of benefits; track item.title) {
+        <li>
+          <ds-icon [name]="item.icon" [size]="1.25" />
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.text }}</p>
+        </li>
+      }
+    </ul>
+  </div>
+</section>
+
+<section class="use-cases mk-section" id="casos" aria-labelledby="cases-title">
+  <div class="mk-shell">
+    <header class="mk-heading">
+      <p class="mk-kicker">CASOS DE USO</p>
+      <h2 id="cases-title">Hecho para negocios<br /><span>que ya venden por chat.</span></h2>
+    </header>
+    <ul class="use-cases__grid">
+      @for (item of useCases; track item.title) {
+        <li>
+          <p class="use-cases__problem">{{ item.problem }}</p>
+          <div class="use-cases__head">
+            <ds-icon [name]="item.icon" [size]="1.25" />
+            <h3>{{ item.title }}</h3>
+          </div>
+          <p>{{ item.text }}</p>
+          <a href="/auth/register"
+            >Empezar gratis <ds-icon name="arrowRight" [size]="1"
+          /></a>
+        </li>
+      }
+    </ul>
+  </div>
+</section>
+
+<section class="integrations mk-section" aria-labelledby="integrations-title">
+  <div class="mk-shell integrations__grid">
+    <header class="mk-heading">
+      <p class="mk-kicker">INTEGRACIONES</p>
+      <h2 id="integrations-title">Se conecta<br /><span>donde ya operas.</span></h2>
+      <p>Solo integraciones verificadas en el producto actual.</p>
+    </header>
+    <ul class="integrations__list">
+      <li>
+        <ds-icon name="whatsapp" [size]="1.75" />
+        <div>
+          <h3>WhatsApp Business</h3>
+          <p>API oficial de Meta. Tu número y tus conversaciones.</p>
+        </div>
+        <span>MENSAJERÍA</span>
+      </li>
+      <li>
+        <ds-icon name="instagram" [size]="1.75" />
+        <div>
+          <h3>Instagram</h3>
+          <p>Directos en la misma consola que WhatsApp.</p>
+        </div>
+        <span>MENSAJERÍA</span>
+      </li>
+      <li>
+        <ds-icon name="wallet" [size]="1.75" />
+        <div>
+          <h3>Mercado Pago</h3>
+          <p>Tarjeta y Yape según tu cuenta. Tarifas del proveedor.</p>
+        </div>
+        <span>COBROS</span>
+      </li>
+      <li>
+        <ds-icon name="globe" [size]="1.75" />
+        <div>
+          <h3>Tienda web</h3>
+          <p>Escaparate con tu marca. Próximamente.</p>
+        </div>
+        <span>PRONTO</span>
+      </li>
+    </ul>
+  </div>
 </section>

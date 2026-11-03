@@ -2,7 +2,7 @@ import { RecommendationsComponent } from '../../components/recommendations.compo
 import { CartRecoveryComponent } from '../../components/cart-recovery.component';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DsIconComponent } from '@vendedoria/ui';
+import { DsIconComponent } from '@agopify/ui';
 import { CartService } from '../../core/cart.service';
 import { MoneyPipe } from '../../core/money.pipe';
 import { SeoService } from '../../core/seo.service';

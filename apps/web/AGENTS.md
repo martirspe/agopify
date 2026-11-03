@@ -1,6 +1,6 @@
 # apps/web — Angular console + marketing
 
-Global rules live in the root `AGENTS.md`. UI/design-system work: `vendedoria-ui` skill.
+Global rules live in the root `AGENTS.md`. UI/design-system work: `agopify-ui` skill. Visual store editor (`features/store/store-editor.*`, AI copilot, draft/publish): `agopify-store-editor`.
 
 ## Structure
 - `src/app/core/api/*-api.service.ts`: one HTTP service per API domain (`HttpClient` + `firstValueFrom`, base URL from `environments/`). Console response types are declared in these services; only store types live in `packages/contracts`.
@@ -22,4 +22,4 @@ Global rules live in the root `AGENTS.md`. UI/design-system work: `vendedoria-ui
 
 ## Verify
 - `npm run build:web` (also what `npm run lint` runs for web).
-- `npm run test -w @vendedoria/web` (Vitest; coverage is minimal, so add a spec when logic is non-trivial).
+- `npm run test -w @agopify/web` (Vitest; coverage is minimal, so add a spec when logic is non-trivial).

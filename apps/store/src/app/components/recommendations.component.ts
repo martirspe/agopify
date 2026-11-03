@@ -13,7 +13,7 @@ import { RouterLink } from "@angular/router";
 import type {
   PublicProductCard,
   StoreRecommendations,
-} from "@vendedoria/contracts";
+} from "@agopify/contracts";
 import { CartService } from "../core/cart.service";
 import { ConversionSession } from "../core/conversion-session.service";
 import { MoneyPipe } from "../core/money.pipe";

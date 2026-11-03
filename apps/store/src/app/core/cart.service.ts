@@ -20,7 +20,7 @@ export type CartLine = {
 };
 
 const MAX_QUANTITY = 99;
-const STORAGE_PREFIX = 'vendedoria-cart:';
+const STORAGE_PREFIX = 'agopify-cart:';
 
 /** Browser-only cart, one per store (keyed by slug in localStorage). */
 @Injectable({ providedIn: 'root' })
@@ -74,10 +74,10 @@ export class CartService {
         } catch { /* Ignore unavailable storage. */ }
       };
       window.addEventListener('storage', sync);
-      window.addEventListener('vendedoria-cart-updated', sameTab);
+      window.addEventListener('agopify-cart-updated', sameTab);
       this.destroy.onDestroy(() => {
         window.removeEventListener('storage', sync);
-        window.removeEventListener('vendedoria-cart-updated', sameTab);
+        window.removeEventListener('agopify-cart-updated', sameTab);
       });
       this.listening = true;
     }
@@ -179,7 +179,7 @@ export class CartService {
       try {
         const storage = this.demo.active ? sessionStorage : localStorage;
         storage.setItem(this.storageKey, JSON.stringify({ lines: this.lines(), settledOrders: this.settledOrders }));
-        window.dispatchEvent(new Event('vendedoria-cart-updated'));
+        window.dispatchEvent(new Event('agopify-cart-updated'));
       } catch {
         // Storage full or blocked (private mode): the cart still works for this visit.
       }

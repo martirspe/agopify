@@ -1,19 +1,18 @@
-import { DsActionBarComponent } from '@vendedoria/ui';
-import { DsEmptyStateComponent } from '@vendedoria/ui';
+import { DsEmptyStateComponent } from '@agopify/ui';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DsButtonComponent, DsDisclosureComponent, DsFormSectionComponent, DsConfirmService, DsIconComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsDisclosureComponent, DsFormSectionComponent, DsConfirmService, DsIconComponent } from '@agopify/ui';
 import { messageFrom } from '../../core/api/api-error';
 import { InstagramStatus, IntegrationsApiService } from '../../core/api/integrations-api.service';
 import { AuthApiService } from '../../core/auth/auth-api.service';
 import { IntegrationsStateService } from '../../core/integrations/integrations-state.service';
 import { IntegrationGateComponent } from '../integrations/integration-gate.component';
 
-/** Instagram Direct setup — embedded in the Canales hub (no page chrome). */
+/** Instagram Direct setup — embedded in the Canales hub (page CTAs live in the hub header). */
 @Component({
   selector: 'app-instagram-channel-panel',
   standalone: true,
-  imports: [DsActionBarComponent, DsEmptyStateComponent, DsDisclosureComponent, DsFormSectionComponent, ReactiveFormsModule, DsButtonComponent, DsIconComponent, IntegrationGateComponent],
+  imports: [DsEmptyStateComponent, DsDisclosureComponent, DsFormSectionComponent, ReactiveFormsModule, DsButtonComponent, DsIconComponent, IntegrationGateComponent],
   templateUrl: './instagram-channel.panel.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { DsConfirmDialogComponent } from '@vendedoria/ui';
+import { DsConfirmDialogComponent } from '@agopify/ui';
 
 @Component({
   selector: 'app-root',

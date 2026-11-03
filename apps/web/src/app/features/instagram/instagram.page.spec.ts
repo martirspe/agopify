@@ -4,7 +4,7 @@ import { InstagramChannelPanel } from './instagram-channel.panel';
 import { IntegrationsApiService, type InstagramStatus } from '../../core/api/integrations-api.service';
 import { AuthApiService } from '../../core/auth/auth-api.service';
 import { IntegrationsStateService } from '../../core/integrations/integrations-state.service';
-import { DsConfirmService } from '@vendedoria/ui';
+import { DsConfirmService } from '@agopify/ui';
 
 const status: InstagramStatus = { channel: { id: 'channel', displayName: 'Cuenta de prueba', externalId: 'account', healthStatus: 'CONNECTED', lastActiveAt: null, metadata: null }, webhook: { callbackUrl: 'https://example.test/callback', verifyTokenConfigured: false, signatureConfigured: false } };
 async function setup() {

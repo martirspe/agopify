@@ -28,7 +28,7 @@ describe('Plan comparison and checkout recovery', () => {
     const data = { ...overview, currentPlan: { ...plan } };
     Reflect.deleteProperty(data.currentPlan, 'prepay');
     const { page, fixture } = await setup(data);
-    expect(fixture.nativeElement.textContent).toContain('Tu plan');
+    expect(fixture.nativeElement.textContent).toContain('Información del plan');
     expect(page.priceFor(data.currentPlan)?.totalCents).toBe(10000);
   });
   it('shows the total and monthly equivalent for the selected period', async () => {

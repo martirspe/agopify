@@ -1,4 +1,5 @@
 import type { Prisma, ProductStatus } from '@prisma/client';
+import { colorForOptionValue } from '../catalog/option-values';
 import { derivedIsAvailable } from '../catalog/product-visibility';
 import { variantOptions } from '../catalog/variant-options';
 import type {
@@ -12,7 +13,7 @@ import type {
   PublicVariant,
   ServiceMode,
   StoreCatalogProduct,
-} from '@vendedoria/contracts';
+} from '@agopify/contracts';
 
 type VariantRecord = {
   options?: Prisma.JsonValue | null;
@@ -65,6 +66,7 @@ export type StoreProductRecord = {
   line?: string | null;
   details?: Prisma.JsonValue | null;
   variants: VariantRecord[];
+  optionDefinitions?: Array<{ name: string; values: Prisma.JsonValue }>;
   media: Array<{
     url: string;
     sortOrder: number;
@@ -121,7 +123,10 @@ function toVariant(
   product: StoreProductRecord,
   variant: VariantRecord,
 ): PublicVariant {
-  const options = variantOptions(variant);
+  const options = variantOptions(variant).map((option) => ({
+    ...option,
+    color: colorForOptionValue(product.optionDefinitions, option.name, option.value),
+  }));
   return {
     id: variant.id,
     label: options.map((option) => option.value).join(' / ') || 'Única',

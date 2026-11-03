@@ -172,7 +172,7 @@ class EnvironmentVariables {
   @Matches(/^([0-9a-fA-F]{64}|[A-Za-z0-9+/_-]{43}=?)$/)
   PAYMENT_CREDENTIALS_KEY?: string;
 
-  /** VendedorIA's own Mercado Pago account, charging plans to tenants (flow A). */
+  /** Agopify's own Mercado Pago account, charging plans to tenants (flow A). */
   @IsOptional()
   @IsString()
   PLATFORM_MERCADOPAGO_ACCESS_TOKEN?: string;

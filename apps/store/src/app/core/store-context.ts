@@ -16,5 +16,5 @@ export type StoreRequestContext = {
   /** Console origin allowed to drive the visual editor; set only for signed editor requests. */
   editorOrigin: string | null;
   /** Bundled template demo: independent of tenant data and merchant previews. */
-  demoTemplate?: import('@vendedoria/contracts').StoreTemplate;
+  demoTemplate?: import('@agopify/contracts').StoreTemplate;
 };

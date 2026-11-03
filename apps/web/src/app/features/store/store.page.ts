@@ -1,4 +1,4 @@
-import { latestThemes } from '@vendedoria/themes/catalog';
+import { latestThemes } from '@agopify/themes/catalog';
 import { ConversionSettingsComponent } from './conversion-settings.component';
 import { ThemeManagerComponent } from './theme-manager.component';
 import {
@@ -18,7 +18,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { STORE_SECTIONS } from '../../layout/console-context';
-import type { StoreTemplate } from '@vendedoria/contracts';
+import type { StoreTemplate } from '@agopify/contracts';
 import {
   DsButtonComponent,
   DsDisclosureComponent,
@@ -29,7 +29,7 @@ import {
   DsPageHeaderComponent,
   DsSaveBarComponent,
   DsSelectComponent,
-} from '@vendedoria/ui';
+} from '@agopify/ui';
 import {
   SellerType,
   StoreApiService,
@@ -75,9 +75,25 @@ export class StorePage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly section = toSignal(this.route.queryParamMap.pipe(map(params => STORE_SECTIONS.find(item => item.section === params.get('seccion'))?.section ?? 'temas')), { initialValue: 'temas' });
-  readonly sectionTitle = computed(() => STORE_SECTIONS.find(item => item.section === this.section())!.label);
-  readonly sectionIcon = computed(() => STORE_SECTIONS.find(item => item.section === this.section())!.icon);
+  readonly sectionTitle = computed(() =>
+    this.section() === 'temas' ? 'Tienda web' : STORE_SECTIONS.find(item => item.section === this.section())!.label,
+  );
+  readonly sectionIcon = computed(() =>
+    this.section() === 'temas' ? 'store' : STORE_SECTIONS.find(item => item.section === this.section())!.icon,
+  );
   readonly sectionDescription = computed(() => ({ temas: 'Personaliza el diseño de tu tienda y prepara tu próxima publicación.', identidad: 'La información que tus clientes ven al visitar tu tienda.', preferencias: 'Dirección, buscadores y opciones para vender online.', legal: 'Información del vendedor y políticas de la tienda.', automatizaciones: 'Configura las acciones que acompañan la compra.' })[this.section() as 'temas']);
+  readonly storeHost = computed(() => {
+    const url = this.view()?.url;
+    if (!url) return '';
+    try { return new URL(url).host; } catch { return url.replace(/^https?:\/\//, ''); }
+  });
+  readonly visibilityLabel = computed(() => {
+    const view = this.view();
+    if (!view) return 'Borrador';
+    if (view.availability.public) return 'Pública';
+    if (view.storefront.status === 'PUBLISHED') return 'Pausada';
+    return 'Privada';
+  });
 
   readonly active = computed(() => this.integrations.isActive('store'));
   readonly loading = signal(true);
@@ -88,6 +104,7 @@ export class StorePage {
   readonly successMessage = signal<string | null>(null);
   readonly view = signal<StoreSettingsView | null>(null);
   readonly failedCovers = signal<StoreTemplate[]>([]);
+  private readonly themeManager = viewChild(ThemeManagerComponent);
 
   readonly isPublished = computed(() => this.view()?.storefront.status === 'PUBLISHED');
   readonly hiddenProducts = computed(() => {
@@ -241,16 +258,32 @@ export class StorePage {
       industry: values.industry,
       template: values.template,
     };
+    const templateChanged = this.form.controls.template.dirty;
     this.saving.set(true);
     this.clearMessages();
     try {
       this.apply(await this.api.update(payload));
-      this.successMessage.set('Tienda actualizada.');
+      await this.themeManager()?.load();
+      this.successMessage.set(
+        templateChanged
+          ? 'Diseño preparado en borrador. Publícalo para que se vea en tu tienda.'
+          : 'Tienda actualizada.',
+      );
     } catch (error) {
       this.errorMessage.set(this.messageFrom(error, 'No se pudo guardar. Revisa los datos de la tienda.'));
     } finally {
       this.saving.set(false);
     }
+  }
+
+  async onThemeStaged(): Promise<void> {
+    await this.load();
+  }
+
+  async onThemePublished(): Promise<void> {
+    this.clearMessages();
+    this.successMessage.set('Diseño publicado. Tu tienda ya muestra la plantilla seleccionada.');
+    await this.load();
   }
 
   startSubdomainEdit(): void {
@@ -328,6 +361,17 @@ export class StorePage {
     );
   }
 
+  /** Opens the live storefront when published; otherwise a signed preview of the draft. */
+  async openStore(): Promise<void> {
+    const view = this.view();
+    if (!view || this.mutationBusy()) return;
+    if (view.availability.public) {
+      window.open(view.url, '_blank', 'noopener');
+      return;
+    }
+    await this.openPreview();
+  }
+
   async openPreview(): Promise<void> {
     if (this.mutationBusy()) return;
     const preview = window.open('', '_blank');
@@ -343,7 +387,7 @@ export class StorePage {
       }
     } catch (error) {
       preview?.close();
-      this.errorMessage.set(this.messageFrom(error, 'No pudimos generar la vista previa.'));
+      this.errorMessage.set(this.messageFrom(error, 'No pudimos abrir la tienda.'));
     } finally {
       this.busyAction.set(null);
     }

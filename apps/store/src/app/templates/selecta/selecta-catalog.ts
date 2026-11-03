@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { ResolveFn } from '@angular/router';
-import type { PublicMedia, PublicVariant, StoreCatalogProduct } from '@vendedoria/contracts';
+import type { PublicMedia, PublicVariant, StoreCatalogProduct } from '@agopify/contracts';
 import type { CartLine } from '../../core/cart.service';
 import { StoreApiService } from '../../core/store-api.service';
 

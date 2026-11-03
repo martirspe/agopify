@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import type {
   PublicCatalogFacets,
   PublicCatalogSelection,
-} from '@vendedoria/contracts';
+} from '@agopify/contracts';
 
 const DETAIL_LABELS: Record<string, string> = {
   size: 'Presentación',

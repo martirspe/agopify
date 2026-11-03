@@ -319,6 +319,30 @@ fieldset {
 }
 @media (max-width: 400px) {
   .catalog__search {
+    flex-wrap: wrap;
     gap: var(--ds-space-2);
+  }
+
+  .catalog__search .store-btn {
+    width: 100%;
+  }
+
+  .catalog__toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .catalog__size,
+  .catalog__count,
+  .catalog__views {
+    grid-column: 1;
+  }
+
+  .catalog__views {
+    width: 100%;
+  }
+
+  .catalog__views button {
+    flex: 1;
+    justify-content: center;
   }
 }

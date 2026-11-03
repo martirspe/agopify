@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prepara el VPS (Ubuntu/Debian) para exponer VendedorIA en Internet.
+# Prepara el VPS (Ubuntu/Debian) para exponer Agopify en Internet.
 #
 # Genera el vhost nginx del servidor → 127.0.0.1:WEB_PORT para la consola (CONSOLE_HOST)
 # y las tiendas (*.STORE_BASE_DOMAIN). Con root/sudo también instala nginx + Certbot,
@@ -61,7 +61,7 @@ read_env() {
 }
 
 SITE_NAME="$(read_env NGINX_SITE_NAME)"
-SITE_NAME="${SITE_NAME:-vendedoria}"
+SITE_NAME="${SITE_NAME:-agopify}"
 WEB_PORT="$(read_env WEB_PORT)"
 WEB_PORT="${WEB_PORT:-8082}"
 CONSOLE_HOST="$(read_env CONSOLE_HOST)"
@@ -72,7 +72,7 @@ CUSTOM_DOMAINS_ZONE="$(read_env CLOUDFLARE_SAAS_ZONE_ID)"
 DOMAIN_RE='^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$'
 for pair in "CONSOLE_HOST=${CONSOLE_HOST}" "STORE_BASE_DOMAIN=${STORE_BASE_DOMAIN}"; do
   if [[ ! "${pair#*=}" =~ $DOMAIN_RE ]]; then
-    err "${pair%%=*} must be a public domain without https:// in .env (e.g. app.vendedoria.pe)"
+    err "${pair%%=*} must be a public domain without https:// in .env (e.g. app.agopify.com)"
     exit 1
   fi
 done
@@ -90,7 +90,7 @@ STORE_CERT_NAME="${SITE_NAME}-stores"
 # Without the token: HTTP-01 for the bare domain, www and the console so they still get HTTPS.
 SITE_CERT_NAME="${SITE_NAME}-site"
 CF_INI="/etc/letsencrypt/cloudflare-${SITE_NAME}.ini"
-# app.marrso.com under marrso.com: the wildcard certificate already covers the console.
+# app.agopify.com under agopify.com: the wildcard certificate already covers the console.
 CONSOLE_IN_WILDCARD=false
 if [[ "$CONSOLE_HOST" == *".${STORE_BASE_DOMAIN}" && "${CONSOLE_HOST%".${STORE_BASE_DOMAIN}"}" != *.* ]]; then
   CONSOLE_IN_WILDCARD=true
@@ -245,7 +245,7 @@ generate_vhost() {
 
   generated="$(mktemp)"
   {
-    echo "# VendedorIA — nginx del VPS → Docker (generado por scripts/bootstrap-host.sh)"
+    echo "# Agopify — nginx del VPS → Docker (generado por scripts/bootstrap-host.sh)"
     echo "# No editar a mano; vuelve a ejecutar: sudo bash scripts/bootstrap-host.sh"
     echo
     cat <<NGINX

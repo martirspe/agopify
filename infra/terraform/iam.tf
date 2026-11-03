@@ -29,7 +29,7 @@ data "aws_iam_policy_document" "api" {
 
 resource "aws_iam_policy" "api" {
   name        = "${local.name}-api"
-  description = "VendedorIA API: product media in S3 and transactional email through SES"
+  description = "Agopify API: product media in S3 and transactional email through SES"
   policy      = data.aws_iam_policy_document.api.json
 }
 

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
-import { DsButtonComponent, DsIconComponent, DsPageHeaderComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsIconComponent, DsPageHeaderComponent } from '@agopify/ui';
 import {
   CatalogApiService,
   CatalogImportFile,

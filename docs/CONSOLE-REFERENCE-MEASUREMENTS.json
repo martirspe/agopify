@@ -1940,7 +1940,7 @@
       "viewportHeight": 844,
       "viewportWidth": 390,
       "dialogs": 1,
-      "focus": "VendedorIA"
+      "focus": "Agopify"
     },
     {
       "case": "Mobile Shift Tab wraps",
@@ -1950,7 +1950,7 @@
     {
       "case": "Mobile Tab wraps",
       "dialogs": 1,
-      "focus": "VendedorIA"
+      "focus": "Agopify"
     },
     {
       "case": "Mobile Escape restores trigger",

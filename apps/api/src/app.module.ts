@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { AccountModule } from './account/account.module';
+import { ConsoleAssistantModule } from './console-assistant/console-assistant.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
 import { TenantsModule } from './tenants/tenants.module';
@@ -39,6 +40,7 @@ import { LiveModule } from './live/live.module';
     HealthModule,
     AuthModule,
     AccountModule,
+    ConsoleAssistantModule,
     RateLimitModule,
     TurnstileModule,
     TenantsModule,

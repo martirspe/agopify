@@ -1,10 +1,10 @@
 # PROJECT CONSTITUTION
 
-# VendedorIA — Premium AI Sales Agents SaaS
+# Agopify — Premium AI Sales Agents SaaS
 
 ## Angular 22 + NestJS + PostgreSQL + Cursor AI
 
-A partir de este momento actuarás como el equipo completo de ingeniería de VendedorIA.
+A partir de este momento actuarás como el equipo completo de ingeniería de Agopify.
 
 Asume simultáneamente los siguientes roles:
 
@@ -57,7 +57,7 @@ Todas las tareas futuras deberán respetarlo estrictamente.
 
 # OBJETIVO DEL PRODUCTO
 
-VendedorIA es un **SaaS premium** de agentes vendedores con IA para marcas de ecommerce y tiendas de productos.
+Agopify es un **SaaS premium** de agentes vendedores con IA para marcas de ecommerce y tiendas de productos.
 
 Slogan (provisional):
 
@@ -68,7 +68,7 @@ Estamos construyendo un producto comercial 2027: confiable, medible, monetizable
 
 ## Tesis competitiva (obligatoria)
 
-VendedorIA compite en la categoría de **agentes IA que venden en WhatsApp/Instagram del saludo al pago** (referente de mercado: YaVendió y similares).
+Agopify compite en la categoría de **agentes IA que venden en WhatsApp/Instagram del saludo al pago** (referente de mercado: YaVendió y similares).
 
 **La paridad de categoría es el piso, no el techo.**  
 No clonamos su producto, UI, naming, mascota, flujos pixel-a-pixel ni roadmap. Usamos el referente solo para entender qué espera el mercado — y **debemos ser mejores en craft, confianza y resultado de venta**.
@@ -103,7 +103,7 @@ Nunca copiar naming, mascota, slogan, assets, estructura de menú, copy ni ident
 
 Debe parecer un SaaS listo para vender — y **preferible** al referente de categoría cuando el merchant compare lado a lado.
 
-## Ventajas que VendedorIA debe ganar (cuñas “un paso más allá”)
+## Ventajas que Agopify debe ganar (cuñas “un paso más allá”)
 
 Priorizar estas cuñas sobre features cosméticas de paridad:
 
@@ -182,7 +182,7 @@ El shell puede ser contextual (marketing full-bleed; consola con nav densa; slim
 # MAPA FUNCIONAL DE CONSOLA (VISIÓN PRODUCTO)
 
 Este mapa describe **capacidades de categoría** (piso) que un SaaS completo debe cubrir.  
-**No** es un brief para clonar el dashboard de un competidor: naming, IA, layout, copy e identidad son de VendedorIA.  
+**No** es un brief para clonar el dashboard de un competidor: naming, IA, layout, copy e identidad son de Agopify.  
 Cada sección debe shippearse con al menos una **cuña** de la tabla “un paso más allá”.
 
 ## Navegación principal de consola (IA)
@@ -255,7 +255,7 @@ Acciones globales frecuentes: **Connect WhatsApp**, command palette (`Ctrl+K`), 
 
 ## Billing (flujo A)
 
-**Piso:** sin plan gratuito: prueba de 14 días en Crece con cuota reducida y visible, apoyada por una sesión de configuración por Zoom; Inicia / Crece / Escala / Lidera + A medida; pago por 1, 3, 6 o 12 meses; chats extra del mes como overage explícito; tope de respuestas con IA por plan; funciones de plan (tienda web desde Crece, dominio, píxel, Instagram, equipo) que se activan en Integraciones.
+**Piso:** sin plan gratuito: prueba de 7 días en Crece con cuota reducida y visible, apoyada por una sesión de configuración por Zoom; Inicia / Crece / Escala / Lidera + A medida; pago por 1, 3, 6 o 12 meses; chats extra del mes como overage explícito; tope de respuestas con IA por plan; funciones de plan (tienda web desde Crece, dominio, píxel, Instagram, equipo) que se activan en Integraciones.
 
 **Cuña:** cuotas y overage **transparentes** antes del bloqueo; copy que no confunda A con B.
 
@@ -468,7 +468,7 @@ El producto debe sentirse:
 Reglas:
 
 - Jerarquía tipográfica clara; el brand es señal hero en superficies de marca
-- **Brand test:** si quitas el nav de la landing, debe seguir leyéndose como VendedorIA
+- **Brand test:** si quitas el nav de la landing, debe seguir leyéndose como Agopify
 - Hero de marketing: brand + un headline + una frase corta + un grupo CTA + un plano visual dominante (producto/chat). Sin overlays, stickers ni chips flotantes sobre el media
 - Atmósfera con tokens (superficies, bordes, sombra sutil, gradientes controlados) — no fondo flat único sin ritmo
 - Evitar look de dashboard admin en marketing
@@ -535,7 +535,7 @@ Al tocar una superficie, aplica esta barra:
 - Distinguir siempre en copy y UI el flujo de dinero A (suscripción) vs B (comprador)
 - Restricciones Meta (24h, plantillas, salud de canal) explicadas en el momento del error — no solo en docs
 - Preferir composición del DS a CSS one-off
-- **Test del referente:** si quitamos el logo, ¿la pantalla podría pasar por un clon del competidor? Si sí, rediseñar jerarquía, copy o interacción hasta que sea *de VendedorIA* y mejore al menos una cuña
+- **Test del referente:** si quitamos el logo, ¿la pantalla podría pasar por un clon del competidor? Si sí, rediseñar jerarquía, copy o interacción hasta que sea *de Agopify* y mejore al menos una cuña
 - **Test del paso más allá:** la superficie deja al operador más seguro, más rápido o más capaz de cobrar que el piso de categoría — no solo “bonita”
 
 ---

@@ -3,10 +3,11 @@ import { Meta, Title } from '@angular/platform-browser';
 import { MARKETING_PLANS } from './marketing-content';
 
 /** Public marketing origin documented in docs/DEPLOY.md; auth redirects to the console. */
-export const MARKETING_ORIGIN = 'https://marrso.com';
-export const MARKETING_TITLE = 'VendedorIA | Tu vendedor IA en WhatsApp e Instagram';
+export const MARKETING_ORIGIN = 'https://agopify.com';
+export const MARKETING_TITLE =
+  'Agopify | Agentes de ventas con IA y comercio conectado';
 export const MARKETING_DESCRIPTION =
-  'Convierte conversaciones en pedidos con tu vendedor IA en WhatsApp e Instagram. Catálogo y cobros en el chat. Prueba 14 días sin tarjeta.';
+  'Plataforma de comercio con IA: vendedor inteligente en WhatsApp e Instagram, catálogo real, cobros en el chat y tienda web en camino. Prueba 7 días sin tarjeta.';
 
 /** Runs in the Angular injection context and also during prerendering. */
 export function installMarketingSeo(): () => void {
@@ -20,7 +21,7 @@ export function installMarketingSeo(): () => void {
   const tags = meta.addTags([
     { property: 'og:type', content: 'website' },
     { property: 'og:locale', content: 'es_PE' },
-    { property: 'og:site_name', content: 'VendedorIA' },
+    { property: 'og:site_name', content: 'Agopify' },
     { property: 'og:title', content: MARKETING_TITLE },
     { property: 'og:description', content: MARKETING_DESCRIPTION },
     { property: 'og:url', content: `${MARKETING_ORIGIN}/` },
@@ -29,7 +30,7 @@ export function installMarketingSeo(): () => void {
     { property: 'og:image:height', content: '630' },
     {
       property: 'og:image:alt',
-      content: 'VendedorIA. Del hola al pago. Tu vendedor IA en WhatsApp e Instagram.',
+      content: 'Agopify. IA que vende. Comercio que conecta. WhatsApp e Instagram.',
     },
     { name: 'twitter:card', content: 'summary_large_image' },
     { name: 'twitter:title', content: MARKETING_TITLE },
@@ -51,7 +52,7 @@ export function installMarketingSeo(): () => void {
   schema.textContent = JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'VendedorIA',
+    name: 'Agopify',
     url: `${MARKETING_ORIGIN}/`,
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',

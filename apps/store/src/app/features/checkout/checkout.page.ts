@@ -1,7 +1,7 @@
 import { ConversionSession } from '../../core/conversion-session.service';
 import { RecommendationsComponent } from '../../components/recommendations.component';
 import { CartRecoveryComponent } from '../../components/cart-recovery.component';
-import { DsSelectComponent } from '@vendedoria/ui';
+import { DsSelectComponent } from '@agopify/ui';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -24,8 +24,8 @@ import type {
   ShippingMode,
   ShippingQuote,
   UbigeoDistrict,
-} from '@vendedoria/contracts';
-import { DsIconComponent, DsTurnstileComponent } from '@vendedoria/ui';
+} from '@agopify/contracts';
+import { DsIconComponent, DsTurnstileComponent } from '@agopify/ui';
 import { AnalyticsService } from '../../core/analytics.service';
 import { CheckoutPaymentComponent } from '../../components/checkout-payment.component';
 import { campaignCoupon, forgetCampaignCoupon } from '../../core/campaign-coupon';

@@ -10,7 +10,7 @@ import type {
   StoreThemeCorners,
   StoreThemeFont,
   StoreThemeOption,
-} from '@vendedoria/contracts';
+} from '@agopify/contracts';
 import type { StorePageAi } from '../../core/api/store-api.service';
 
 export const MAX_FAQ = 12;
@@ -117,10 +117,66 @@ export function removeBlock(
     sections,
   };
 }
+/** One proposed text change from a page/section AI patch (before the merchant applies it). */
+export type AiTextChange = {
+  key: string;
+  sectionId: string;
+  sectionLabel: string;
+  fieldId: string;
+  fieldLabel: string;
+  from: string;
+  to: string;
+};
+
+/** Lists text field changes a page patch would apply (builtin section ids and existing block ids). */
+export function listPageTextChanges(
+  content: StoreTemplateContent,
+  schema: StoreEditorSection[],
+  page: StorePageAi,
+): AiTextChange[] {
+  const changes: AiTextChange[] = [];
+  for (const [sectionId, texts] of Object.entries(page.sections)) {
+    const section = sectionSchema(schema, typeOf(sectionId)) ?? sectionSchema(schema, sectionId);
+    if (!section) continue;
+    for (const field of section.fields) {
+      if (!isTextField(field)) continue;
+      const to = texts[field.id];
+      if (typeof to !== 'string') continue;
+      const from = content.sections[sectionId]?.[field.id] ?? '';
+      if (from === to) continue;
+      changes.push({
+        key: fieldKey(sectionId, field.id),
+        sectionId,
+        sectionLabel: section.label,
+        fieldId: field.id,
+        fieldLabel: field.label,
+        from,
+        to: clampValue(field, to),
+      });
+    }
+  }
+  return changes;
+}
+
+/** Writes selected text changes into the draft without touching layout. */
+export function applyTextChanges(
+  content: StoreTemplateContent,
+  changes: AiTextChange[],
+  selectedKeys: ReadonlySet<string> | null = null,
+): StoreTemplateContent {
+  let next = content;
+  for (const change of changes) {
+    if (selectedKeys && !selectedKeys.has(change.key)) continue;
+    next = withField(next, change.sectionId, change.fieldId, change.to);
+  }
+  return next;
+}
+
 /**
  * Applies a generated page: new texts for the built-in sections, and the generated blocks (when
  * any) in place of the ones the merchant had added, below the product grid (else the cover) so
  * products stay near the top. Visibility of built-in sections and their images stay as they were.
+ * When `selectedKeys` is set, only those text keys are written (new blocks still added if requested).
  */
 export function applyPage(
   content: StoreTemplateContent,
@@ -128,11 +184,17 @@ export function applyPage(
   schema: StoreEditorSection[],
   page: StorePageAi,
   newId: (type: string) => string = (type) => newBlockId(type),
+  options?: { selectedKeys?: ReadonlySet<string> | null; includeBlocks?: boolean },
 ): StoreTemplateContent {
+  const includeBlocks = options?.includeBlocks !== false;
+  const selectedKeys = options?.selectedKeys ?? null;
   const isBlock = (type: string) => sectionSchema(schema, type)?.role === 'block';
   let next = content;
   let layout = layoutOf(content, template, schema);
-  const replaced = page.blocks.some((b) => isBlock(b.type)) ? layout.filter((i) => isBlock(i.type)) : [];
+  const replaced =
+    includeBlocks && page.blocks.some((b) => isBlock(b.type))
+      ? layout.filter((i) => isBlock(i.type))
+      : [];
   for (const item of replaced) {
     next = removeBlock(next, template, layout, item.id);
     layout = layout.filter((i) => i.id !== item.id);
@@ -140,13 +202,16 @@ export function applyPage(
   const write = (id: string, section: StoreEditorSection, texts: Record<string, string>) => {
     for (const field of section.fields) {
       const text = texts[field.id];
-      if (isTextField(field) && typeof text === 'string') next = withField(next, id, field.id, clampValue(field, text));
+      if (!isTextField(field) || typeof text !== 'string') continue;
+      if (selectedKeys && !selectedKeys.has(fieldKey(id, field.id))) continue;
+      next = withField(next, id, field.id, clampValue(field, text));
     }
   };
   for (const [id, texts] of Object.entries(page.sections)) {
-    const section = sectionSchema(schema, id);
-    if (section?.role === 'builtin') write(id, section, texts);
+    const section = sectionSchema(schema, typeOf(id)) ?? sectionSchema(schema, id);
+    if (section && (section.role === 'builtin' || section.role === 'block')) write(id, section, texts);
   }
+  if (!includeBlocks) return withLayout(next, template, layout);
   let after = (layout.find((i) => PRODUCT_SECTIONS.includes(i.type)) ?? layout.find((i) => i.type === 'hero'))?.id ?? null;
   for (const generated of page.blocks) {
     const block = sectionSchema(schema, generated.type);

@@ -167,7 +167,7 @@
       "line": 251,
       "rule": "dev-jargon",
       "level": "high",
-      "text": "Tu tienda dejará de abrir en tu dominio y volverá a su dirección de VendedorIA. Puedes activarla de nuevo cuando quieras."
+      "text": "Tu tienda dejará de abrir en tu dominio y volverá a su dirección de Agopify. Puedes activarla de nuevo cuando quieras."
     },
     {
       "file": "apps/web/src/app/features/legal/legal-content.ts",

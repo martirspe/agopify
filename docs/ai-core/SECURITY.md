@@ -17,4 +17,4 @@
 - Shadow delivery strips any live `orderId` / payment URL from metadata (`shadow_live_artifact_blocked`) even if a tool bug returned them.
 - Playground send is rate-limited (`agent-playground-send`, 20/min per IP) to bound LLM cost abuse.
 
-Use `vendedoria-security` when changing webhooks, payments or public store routes.
+Use `agopify-security` when changing webhooks, payments or public store routes.

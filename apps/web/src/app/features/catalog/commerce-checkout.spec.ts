@@ -37,9 +37,9 @@ describe('checkout cart isolation and persistence', () => {
     expect(cart.lines().find((item) => item.handle === 'shoe')?.quantity).toBe(1);
   });
   it('reads existing array storage and discards corrupt records', () => {
-    localStorage.setItem('vendedoria-cart:store-a', JSON.stringify([{ ...line, key: 'shoe::black-38', quantity: 2 }, { ...line, key: 'bad', quantity: -1 }]));
+    localStorage.setItem('agopify-cart:store-a', JSON.stringify([{ ...line, key: 'shoe::black-38', quantity: 2 }, { ...line, key: 'bad', quantity: -1 }]));
     cart.load('store-a'); expect(cart.count()).toBe(2);
-    localStorage.setItem('vendedoria-cart:store-a', '{bad'); cart.load('store-a'); expect(cart.count()).toBe(0);
+    localStorage.setItem('agopify-cart:store-a', '{bad'); cart.load('store-a'); expect(cart.count()).toBe(0);
   });
   it('separates keys by tenant, intent, variant and quantity and reuses them for retry', () => {
     const items = [{ handle: 'shoe', variantId: 'v', quantity: 1 }];

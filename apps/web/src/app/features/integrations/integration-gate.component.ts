@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { DsButtonComponent, DsEmptyStateComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsEmptyStateComponent } from '@agopify/ui';
 import type { IntegrationKey } from '../../core/api/billing-api.service';
 import {
   IntegrationsStateService,

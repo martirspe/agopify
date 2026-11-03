@@ -1,34 +1,60 @@
-<figure id="demo" class="demo" aria-label="Ejemplo interactivo de una venta">
-  <div class="demo__topline">
-    <span>Vendedor<span class="demo__brand-accent">IA</span></span
-    ><span>Ejemplo de una venta</span>
+<figure class="demo" aria-label="Ejemplo interactivo de una venta">
+  <div class="demo__chrome">
+    <div class="demo__chrome-left">
+      <span class="demo__brand">Agopify</span>
+      <span class="demo__sep" aria-hidden="true"></span>
+      <span>Simulación de venta</span>
+    </div>
+    <div class="demo__chrome-right" aria-hidden="true">
+      <ds-icon name="whatsapp" [size]="1" />
+      <ds-icon name="instagram" [size]="1" />
+    </div>
   </div>
+
   <div class="demo__controls" role="group" aria-label="Explorar la conversación">
     <ds-button
       [variant]="demoStage() === 'recommend' ? 'secondary' : 'ghost'"
       [pressed]="demoStage() === 'recommend'"
-      (click)="demoStage.set('recommend')"
+      (click)="selectStage('recommend')"
       ><span>01</span> Recomienda</ds-button
     >
     <ds-button
       [variant]="demoStage() === 'checkout' ? 'secondary' : 'ghost'"
       [pressed]="demoStage() === 'checkout'"
-      (click)="demoStage.set('checkout')"
+      (click)="selectStage('checkout')"
       ><span>02</span> Cobra</ds-button
     >
     <ds-button
       [variant]="demoStage() === 'handoff' ? 'secondary' : 'ghost'"
       [pressed]="demoStage() === 'handoff'"
-      (click)="demoStage.set('handoff')"
+      (click)="selectStage('handoff')"
       ><span>03</span> Tú decides</ds-button
     >
   </div>
+
+  <div class="demo__prompts" role="group" aria-label="Mensajes de ejemplo">
+    <p class="demo__prompts-label">Prueba un mensaje (simulado)</p>
+    <div class="demo__prompts-list">
+      @for (prompt of prompts; track prompt.id) {
+        <button
+          type="button"
+          class="demo__prompt"
+          [class.demo__prompt--active]="demoStage() === prompt.id"
+          [attr.aria-pressed]="demoStage() === prompt.id"
+          (click)="selectStage(prompt.id)"
+        >
+          {{ prompt.label }}
+        </button>
+      }
+    </div>
+  </div>
+
   <div class="demo__conversation">
     <header class="demo__chat-header">
       <span class="demo__avatar"><ds-icon name="shoppingBag" /></span>
       <div>
-        <strong>Tu negocio</strong
-        ><span
+        <strong>Tu negocio</strong>
+        <span
           ><span
             class="status-dot"
             [class.status-dot--paused]="demoStage() === 'handoff'"
@@ -39,17 +65,18 @@
       </div>
       <ds-icon name="whatsapp" />
     </header>
+
     <div class="demo__thread" aria-live="polite" aria-atomic="true">
       @switch (demoStage()) {
         @case ('recommend') {
           <div class="demo__bubble demo__bubble--buyer">
-            Hola 👋 ¿Tienes zapatillas blancas en talla 40?
+            {{ activePrompt() }}
           </div>
           <div class="demo__agent-label">
             <ds-icon name="sparkles" [size]="0.875" /> TU VENDEDOR IA
           </div>
           <div class="demo__bubble demo__bubble--agent">
-            ¡Sí! La Urbana está disponible en tu talla. Te la muestro:
+            Sí. La Urbana está disponible en tu talla. Te la muestro con el precio de tu catálogo:
           </div>
           <div class="demo__product">
             <img
@@ -60,25 +87,27 @@
               fetchpriority="high"
             />
             <div>
-              <span>DE TU CATÁLOGO</span><strong>Urbana Blanca</strong>
+              <span>DE TU CATÁLOGO</span>
+              <strong>Urbana Blanca</strong>
               <p>Talla 40 · Disponible</p>
               <b>S/ 189.00</b>
             </div>
           </div>
-          <div class="demo__bubble demo__bubble--buyer">¡Me encanta! Me llevo un par.</div>
+          <div class="demo__bubble demo__bubble--buyer">Perfecto, me la llevo.</div>
         }
         @case ('checkout') {
-          <div class="demo__bubble demo__bubble--buyer">Perfecto. ¿Cómo puedo pagar?</div>
+          <div class="demo__bubble demo__bubble--buyer">{{ activePrompt() }}</div>
           <div class="demo__agent-label">
             <ds-icon name="sparkles" [size]="0.875" /> TU VENDEDOR IA
           </div>
           <div class="demo__bubble demo__bubble--agent">
-            Aquí tienes el enlace de pago de tu pedido. Apenas se confirme, seguimos con la entrega.
+            Aquí tienes el enlace de pago de tu pedido. Cuando se confirme, seguimos con la entrega.
           </div>
           <div class="demo__order">
             <span class="demo__order-icon"><ds-icon name="wallet" /></span>
             <div>
-              <span>RESUMEN DEL PEDIDO</span><strong>Urbana Blanca · Talla 40</strong>
+              <span>RESUMEN DEL PEDIDO</span>
+              <strong>Urbana Blanca · Talla 40</strong>
               <p>1 unidad · Retiro en tienda</p>
             </div>
             <b>S/ 189.00</b>
@@ -90,27 +119,30 @@
         }
         @case ('handoff') {
           <div class="demo__bubble demo__bubble--buyer">
-            ¿Me ayudas a elegir la talla? Es para un regalo.
+            {{ activePrompt() }} Es para un regalo.
           </div>
           <div class="demo__agent-label"><ds-icon name="users" [size]="0.875" /> RESPONDES TÚ</div>
           <div class="demo__bubble demo__bubble--agent">
-            ¡Claro! Te ayudo personalmente. ¿Qué talla usa normalmente?
+            Claro. Te atiendo yo. ¿Qué talla usa normalmente?
           </div>
           <div class="demo__handoff">
-            <ds-icon name="pause" /><strong>El vendedor IA se pausa en este chat.</strong>
+            <ds-icon name="pause" />
+            <strong>El vendedor IA se pausa en este chat.</strong>
             <p>La conversación sigue contigo. Puedes reactivarlo cuando termines.</p>
           </div>
         }
       }
     </div>
   </div>
+
   <div class="demo__insight">
     <ds-icon
       [name]="
         demoStage() === 'handoff' ? 'users' : demoStage() === 'checkout' ? 'wallet' : 'package'
       "
       [size]="1"
-    /><span>{{
+    />
+    <span>{{
       demoStage() === 'handoff'
         ? 'La IA te acompaña. Tú mantienes el control.'
         : demoStage() === 'checkout'
@@ -118,5 +150,7 @@
           : 'Recomendaciones con tus productos, precios y stock.'
     }}</span>
   </div>
-  <figcaption>Productos e importes ilustrativos.</figcaption>
+  <figcaption>
+    Productos e importes ilustrativos. Simulación local — no envía mensajes ni crea registros.
+  </figcaption>
 </figure>

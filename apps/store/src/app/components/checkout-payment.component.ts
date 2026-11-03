@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { DsIconComponent } from '@vendedoria/ui';
+import { DsIconComponent } from '@agopify/ui';
 import { MoneyPipe } from '../core/money.pipe';
 import { OrderPage } from '../features/order/order.page';
 import { TemplateDemo } from '../core/template-demo';

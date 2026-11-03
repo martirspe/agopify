@@ -60,4 +60,4 @@ Golden cases in `docs/agent/evals/sales-engine.json` (ordinals, “sí quiero un
 
 Add patterns in `conversation-understanding.ts` or `resolveSalesReference` with a focused unit test and a golden case. Prefer deterministic rules for Spanish sales deixis; do not teach the LLM to invent products or prices.
 
-**Training workflow (multinicho):** `.agents/skills/vendedoria-ai-core-training` — Collect → Diagnose → Deterministic fix → Prompt/validator guard → Golden eval. Gap curriculum in that skill’s `references/gap-matrix.md`. Never ship vertical-only rules.
+**Training workflow (multinicho):** `.agents/skills/agopify-ai-core-training` — Collect → Diagnose → Deterministic fix → Prompt/validator guard → Golden eval. Gap curriculum in that skill’s `references/gap-matrix.md`. Never ship vertical-only rules.

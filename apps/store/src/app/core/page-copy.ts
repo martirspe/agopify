@@ -1,4 +1,4 @@
-import type { StoreTemplateContent } from '@vendedoria/contracts';
+import type { StoreTemplateContent } from '@agopify/contracts';
 
 /** Merchant texts of the product page (`product` section); '' hides that text. */
 export type ProductCopy = { whatsapp: string; note: string };

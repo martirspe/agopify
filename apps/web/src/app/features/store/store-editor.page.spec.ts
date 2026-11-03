@@ -1,12 +1,27 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { StoreEditorPage } from './store-editor.page';
 import { StoreApiService, type StoreEditorState, type StoreEditorView } from '../../core/api/store-api.service';
-import type { StoreTemplateContent } from '@vendedoria/contracts';
+import type { StoreTemplateContent } from '@agopify/contracts';
 import { CatalogApiService } from '../../core/api/catalog-api.service';
+import { ConsoleAssistantApiService } from '../../core/api/console-assistant-api.service';
 import { IntegrationsStateService } from '../../core/integrations/integrations-state.service';
-import { DsConfirmService } from '@vendedoria/ui';
+import { DsConfirmService } from '@agopify/ui';
+
+const assistantStore = {
+  memoryEnabled: signal(true),
+  conversations: signal([]),
+  ready: signal(true),
+  ensureLoaded: vi.fn(async () => undefined),
+  setMemoryEnabled: vi.fn(async () => undefined),
+  replaceConversations: vi.fn(),
+  scheduleUpsert: vi.fn(),
+  renameConversation: vi.fn(async () => undefined),
+  deleteConversation: vi.fn(async () => undefined),
+  clearLocal: vi.fn(),
+};
 
 const state: StoreEditorState = { template: 'classic', themeVersion: '1.0.0', content: { version: 1, sections: {} }, hasUnpublishedChanges: false, scheduledAt: null, savedAt: '2026-10-08T12:00:00Z' };
 const editorView: StoreEditorView = {
@@ -27,6 +42,7 @@ async function setup(render = false) {
   if (render) api.editor.mockResolvedValue(editorView);
   TestBed.configureTestingModule({ imports: [StoreEditorPage], providers: [
     { provide: StoreApiService, useValue: api }, { provide: CatalogApiService, useValue: {} },
+    { provide: ConsoleAssistantApiService, useValue: assistantStore },
     provideRouter([]),
     { provide: IntegrationsStateService, useValue: { refresh: async () => {}, isActive: () => true } },
     { provide: DsConfirmService, useValue: { confirm: async () => false } },
@@ -67,8 +83,12 @@ describe('store editor action recovery', () => {
   });
   it('edits the selected section from its inspector instead of duplicating fields in navigation', async () => {
     const { page, fixture } = await setup(true);
+    page.structureOpen.set(true);
+    fixture.detectChanges();
     const navigation = fixture.nativeElement.querySelector('.editor__navigator') as HTMLElement;
+    expect(navigation).toBeTruthy();
     (navigation.querySelector('[data-section="hero"] .section__head') as HTMLButtonElement).click(); fixture.detectChanges();
+    expect(page.inspectorOpen()).toBe(true);
     const field = fixture.nativeElement.querySelector('.editor__panel #field-hero-title') as HTMLInputElement;
     expect(field).toBeTruthy(); expect(navigation.querySelector('#field-hero-title')).toBeNull();
     field.value = 'Portada editada'; field.dispatchEvent(new Event('input', { bubbles: true })); fixture.detectChanges();
@@ -96,5 +116,49 @@ describe('store editor action recovery', () => {
     let reject!: (reason: Error) => void; api.editor.mockImplementationOnce(() => new Promise((_done, failure) => { reject = failure; }));
     const refreshing = page.reloadFrame(); await page.reloadFrame(); expect(api.editor).toHaveBeenCalledTimes(2);
     reject(new Error('Offline')); await refreshing; expect(page.content()).toEqual(draft); expect(page.refreshingFrame()).toBe(false); expect(page.notice()?.tone).toBe('danger');
+  });
+  it('clears selection with Escape after closing library overlays', async () => {
+    const { page } = await setup();
+    page.view.set(editorView);
+    page.selectSection('hero');
+    page.libraryOpen.set(true);
+    const closeLibrary = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+    page.onKeydown(closeLibrary);
+    expect(closeLibrary.defaultPrevented).toBe(true);
+    expect(page.libraryOpen()).toBe(false);
+    expect(page.selectedSection()).toBe('hero');
+    const clear = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+    page.onKeydown(clear);
+    expect(clear.defaultPrevented).toBe(true);
+    expect(page.selectedSection()).toBeNull();
+    expect(page.selectedField()).toBeNull();
+  });
+  it('highlights the inspector field that matches the canvas selection', async () => {
+    const { page, fixture } = await setup(true);
+    page['applySelection']('hero', 'title', false);
+    fixture.detectChanges();
+    expect(page.selectedSection()).toBe('hero');
+    expect(page.selectedField()).toBe('title');
+    expect(page.panelTab()).toBe('sections');
+    expect(page.inspectorOpen()).toBe(true);
+    expect(fixture.nativeElement.querySelector('[data-inspector-field="hero.title"].is-focused')).toBeTruthy();
+  });
+  it('keeps the preview dominant with the home floating composer and opens structure on demand', async () => {
+    const { page, fixture } = await setup(true);
+    page.view.set({ ...editorView, aiText: true });
+    fixture.detectChanges();
+    expect(page.assistantOpen()).toBe(false);
+    expect(page.structureOpen()).toBe(false);
+    expect(fixture.nativeElement.querySelector('.editor__navigator')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-assistant-composer')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.editor__stage')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-home-assistant-panel')).toBeNull();
+    page.toggleAssistant();
+    fixture.detectChanges();
+    expect(page.assistantOpen()).toBe(true);
+    expect(fixture.nativeElement.querySelector('app-home-assistant-panel')).toBeTruthy();
+    page.toggleStructure();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.editor__navigator')).toBeTruthy();
   });
 });

@@ -1,8 +1,8 @@
-import { DsActionBarComponent } from '@vendedoria/ui';
-import { DsEmptyStateComponent } from '@vendedoria/ui';
+import { DsActionBarComponent } from '@agopify/ui';
+import { DsEmptyStateComponent } from '@agopify/ui';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DsButtonComponent, DsIconComponent, DsPageHeaderComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsIconComponent, DsPageHeaderComponent } from '@agopify/ui';
 import { messageFrom } from '../../core/api/api-error';
 import { IntegrationsApiService, TrackingSettings } from '../../core/api/integrations-api.service';
 import { AuthApiService } from '../../core/auth/auth-api.service';

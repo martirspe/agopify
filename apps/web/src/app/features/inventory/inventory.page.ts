@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { DsActionBarComponent, DsButtonComponent, DsCheckboxComponent, DsDisclosureComponent, DsEmptyStateComponent, DsIconComponent, DsMenuComponent, DsPageFrameComponent, DsPageHeaderComponent, DsSelectComponent } from '@vendedoria/ui';
+import { DsActionBarComponent, DsButtonComponent, DsCheckboxComponent, DsDisclosureComponent, DsEmptyStateComponent, DsIconComponent, DsMenuComponent, DsPageFrameComponent, DsPageHeaderComponent, DsSelectComponent } from '@agopify/ui';
 import { CatalogApiService, InventoryRow, InventoryUpdate } from '../../core/api/catalog-api.service';
 
 type Draft = { unlimited: boolean; qty: string };

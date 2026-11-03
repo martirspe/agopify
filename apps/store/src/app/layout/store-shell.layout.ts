@@ -9,7 +9,7 @@ import {
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
-import { DsIconComponent } from '@vendedoria/ui';
+import { DsIconComponent } from '@agopify/ui';
 import { CartService } from '../core/cart.service';
 import { catalogNoun, visibleKindTabs } from '../core/catalog-kinds';
 import { markNotFound } from '../core/not-found-status';

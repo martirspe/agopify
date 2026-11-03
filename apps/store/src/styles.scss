@@ -50,19 +50,26 @@ html.store-editing {
     border-radius: var(--ds-radius-sm);
     outline: 1px dashed transparent;
     outline-offset: 3px;
-    transition: outline-color var(--ds-motion-fast) var(--ds-ease-out);
+    transition: outline-color var(--ds-motion-fast) var(--ds-ease-out), box-shadow var(--ds-motion-fast) var(--ds-ease-out);
   }
 
   [data-edit]:hover {
     outline-color: var(--ds-color-accent);
   }
 
-  [data-edit]:focus {
+  [data-edit]:focus,
+  .store-edit-selected {
     outline: 2px solid var(--ds-color-accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--ds-color-accent) 22%, transparent);
   }
 
   img[data-edit] {
     cursor: pointer;
+  }
+
+  img.store-edit-selected,
+  img[data-edit]:focus {
+    outline-offset: -2px;
   }
 
   [data-placeholder]:empty {

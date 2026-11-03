@@ -1,4 +1,4 @@
-import type { ProductKind } from '@vendedoria/contracts';
+import type { ProductKind } from '@agopify/contracts';
 
 export type KindTab = { param: string; kind: ProductKind; label: string; singular: string };
 

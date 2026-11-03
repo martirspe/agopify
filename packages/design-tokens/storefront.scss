@@ -68,6 +68,14 @@
   --store-summary-width: 24rem;
   --store-filter-width: 14rem;
   --store-legal-card-min: 18.75rem;
+  /* Mobile geometry — safe areas and sticky commerce chrome */
+  --store-safe-top: env(safe-area-inset-top, 0px);
+  --store-safe-right: env(safe-area-inset-right, 0px);
+  --store-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --store-safe-left: env(safe-area-inset-left, 0px);
+  --store-mobile-sticky-height: 4.5rem;
+  --store-mobile-fab-offset: calc(var(--ds-space-5) + var(--store-safe-bottom));
+  --store-mobile-panel-padding: var(--ds-space-4);
   --store-hero-surface: color-mix(in srgb, var(--store-brand) 5%, var(--store-bg));
   --store-overlay: rgb(17 19 24 / 72%);
   --store-on-overlay: #fff;

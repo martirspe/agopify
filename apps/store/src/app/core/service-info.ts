@@ -1,4 +1,4 @@
-import type { PublicServiceInfo, ServiceMode } from '@vendedoria/contracts';
+import type { PublicServiceInfo, ServiceMode } from '@agopify/contracts';
 
 const MODE_LABELS: Record<ServiceMode, string> = {
   onsite: 'En el local',

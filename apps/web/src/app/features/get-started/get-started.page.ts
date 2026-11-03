@@ -3,19 +3,17 @@ import {
   Component,
   computed,
   DestroyRef,
-  effect,
   inject,
   OnInit,
   signal,
-  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { interval } from 'rxjs';
-import { DsButtonComponent } from '@vendedoria/ui';
-import { DsIconComponent, type DsIconName } from '@vendedoria/ui';
+import { DsButtonComponent } from '@agopify/ui';
+import { DsIconComponent, type DsIconName } from '@agopify/ui';
 import { AccountApiService } from '../../core/api/account-api.service';
 import { AgentsApiService } from '../../core/api/agents-api.service';
 import { CatalogApiService } from '../../core/api/catalog-api.service';
@@ -28,11 +26,8 @@ import { StoreApiService } from '../../core/api/store-api.service';
 import { environment } from '../../../environments/environment';
 import { ConsoleAssistantLayoutService } from '../../layout/console-assistant-layout.service';
 import { ConsoleDictationSession } from './console-dictation';
-import {
-  HomeAssistantPanel,
-  type AssistantPanelMessage,
-  type AssistantPanelMode,
-} from './home-assistant.panel';
+import { AssistantComposer } from './assistant-composer';
+import type { AssistantPanelMessage } from './home-assistant.panel';
 
 type ChecklistItemId =
   | 'product'
@@ -87,9 +82,9 @@ const PLACEHOLDERS = [
 @Component({
   selector: 'app-get-started-page',
   standalone: true,
-  imports: [RouterLink, FormsModule, DsButtonComponent, DsIconComponent, HomeAssistantPanel],
+  imports: [RouterLink, FormsModule, DsButtonComponent, DsIconComponent, AssistantComposer],
   templateUrl: './get-started.page.html',
-  styleUrl: './get-started.page.scss',
+  styleUrls: ['./home-assistant.composer.scss', './get-started.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GetStartedPage implements OnInit {
@@ -104,9 +99,8 @@ export class GetStartedPage implements OnInit {
   private readonly integrationsApi = inject(IntegrationsApiService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly assistantLayout = inject(ConsoleAssistantLayoutService);
+  readonly assistant = inject(ConsoleAssistantLayoutService);
   private readonly homeDictation = new ConsoleDictationSession();
-  private readonly assistantPanel = viewChild(HomeAssistantPanel);
   private replyTimer: ReturnType<typeof setTimeout> | null = null;
   private messageSeq = 0;
 
@@ -135,26 +129,14 @@ export class GetStartedPage implements OnInit {
   readonly promptFocused = signal(false);
   readonly homePlusOpen = signal(false);
   readonly generateApps = signal(false);
-  readonly assistantOpen = signal(false);
- /** opens asistente as a parallel dock column by default. */
-  readonly assistantMode = signal<AssistantPanelMode>('dock');
-  readonly assistantTitle = signal('Empezar a configurar tu negocio');
-  readonly assistantMessages = signal<AssistantPanelMessage[]>([]);
-  readonly assistantDrafting = signal(false);
 
   constructor() {
-    effect(() => {
-      const docked = this.assistantOpen() && this.assistantMode() === 'dock';
-      this.assistantLayout.setDockOpen(docked);
-    });
-    this.destroyRef.onDestroy(() => {
-      this.assistantLayout.setDockOpen(false);
-      this.homeDictation.destroy();
-    });
+    // Reply timers write into the shell-owned assistant service — do not cancel on leave.
+    this.destroyRef.onDestroy(() => this.homeDictation.destroy());
   }
 
   startHomeDictation(): void {
-    if (this.homeDictating() || this.assistantOpen()) return;
+    if (this.homeDictating() || this.assistant.open()) return;
     this.homePlusOpen.set(false);
     this.composerActive.set(true);
     this.homeDictation.start({
@@ -181,7 +163,7 @@ export class GetStartedPage implements OnInit {
 
   /**
  * Home onboarding order : product → theme → payments →
- * domain → shipping, then VendedorIA channel proof (seller → WhatsApp → chat →
+ * domain → shipping, then Agopify channel proof (seller → WhatsApp → chat →
  * order). Optimiza stays last in the template. Completed cards drop out.
  */
   readonly items = computed<ChecklistItem[]>(() => [
@@ -273,7 +255,7 @@ export class GetStartedPage implements OnInit {
     this.items().filter((item) => !item.done).slice(0, 5),
   );
 
- /** Home prompt list (→ rows); adapted to VendedorIA modules. */
+ /** Home prompt list (→ rows); adapted to Agopify modules. */
   readonly suggestions = computed<AssistantSuggestion[]>(() => {
     const pending = this.items().filter((item) => !item.done);
     const catalog: AssistantSuggestion[] = [
@@ -443,6 +425,13 @@ export class GetStartedPage implements OnInit {
     );
   }
 
+  /** Home composer “Recientes” → full assistant panel on the Conversaciones list. */
+  openRecentConversations(): void {
+    this.homePlusOpen.set(false);
+    this.promptFocused.set(false);
+    this.assistant.openRecentConversations();
+  }
+
   onComposerActivate(): void {
     this.composerActive.set(true);
   }
@@ -505,50 +494,35 @@ export class GetStartedPage implements OnInit {
     const keyboard = event as KeyboardEvent;
     if (keyboard.shiftKey) return;
     keyboard.preventDefault();
-    this.submitPrompt(keyboard);
+    this.submitPrompt();
   }
 
-  submitPrompt(event: Event): void {
-    event.preventDefault();
+  onHomeComposerSubmitted(text: string): void {
+    const next = text.trim() || this.placeholder();
+    this.prompt.set('');
+    this.homePlusOpen.set(false);
+    this.openAssistantWith(next);
+  }
+
+  submitPrompt(event?: Event): void {
+    event?.preventDefault();
     const text = this.prompt().trim() || this.placeholder();
     this.prompt.set('');
     this.homePlusOpen.set(false);
     this.openAssistantWith(text);
   }
 
-  closeAssistant(): void {
-    this.clearReplyTimer();
-    this.assistantOpen.set(false);
-    this.assistantDrafting.set(false);
-  }
-
-  setAssistantMode(mode: AssistantPanelMode): void {
-    this.assistantMode.set(mode);
-  }
-
-  resetAssistantChat(): void {
-    this.clearReplyTimer();
-    this.assistantMessages.set([]);
-    this.assistantDrafting.set(false);
-    this.assistantTitle.set('Empezar a configurar tu negocio');
-    queueMicrotask(() => this.assistantPanel()?.focusInput());
-  }
-
-  onAssistantSent(text: string): void {
-    this.appendUserAndReply(text);
-  }
-
-  onAssistantPlus(id: string): void {
-    this.handlePlusAction(id);
-  }
-
   private openAssistantWith(text: string): void {
-    this.assistantOpen.set(true);
-    this.assistantMode.set('dock');
-    this.assistantTitle.set(text.slice(0, 72));
-    this.assistantMessages.set([]);
-    this.appendUserAndReply(text);
-    queueMicrotask(() => this.assistantPanel()?.focusInput());
+    const next = text.trim();
+    if (!next) return;
+    this.clearReplyTimer();
+    this.assistant.open.set(true);
+    this.assistant.mode.set('dock');
+    this.assistant.title.set(next.slice(0, 72));
+    this.assistant.messages.set([]);
+    this.assistant.drafting.set(false);
+    this.assistant.plusOpen.set(false);
+    this.appendUserAndReply(next);
   }
 
   private appendUserAndReply(text: string): void {
@@ -557,12 +531,12 @@ export class GetStartedPage implements OnInit {
       role: 'user',
       text,
     };
-    this.assistantMessages.update((messages) => [...messages, user]);
-    this.assistantDrafting.set(true);
+    this.assistant.messages.update((messages) => [...messages, user]);
+    this.assistant.drafting.set(true);
     this.clearReplyTimer();
     this.replyTimer = setTimeout(() => {
-      this.assistantDrafting.set(false);
-      this.assistantMessages.update((messages) => [...messages, this.buildAssistantReply(text)]);
+      this.assistant.drafting.set(false);
+      this.assistant.messages.update((messages) => [...messages, this.buildAssistantReply(text)]);
       this.replyTimer = null;
     }, 700);
   }
@@ -624,29 +598,12 @@ export class GetStartedPage implements OnInit {
 
   private handlePlusAction(id: string): void {
     const next = this.nextItem();
-    switch (id) {
-      case 'destination':
-        if (next) this.openAssistantWith(next.title);
-        else void this.router.navigate(['/app/seller/profile'], { queryParams: { playground: '1' } });
-        break;
-      case 'mention':
-        this.prompt.update((value) => (value.includes('@') ? value : `${value}@`.trimStart()));
-        this.composerActive.set(true);
-        break;
-      case 'skills':
-        this.prompt.update((value) => (value.includes('/') ? value : `${value}/`.trimStart()));
-        this.composerActive.set(true);
-        break;
-      case 'store':
-      case 'apps':
-        void this.router.navigate(['/app/store']);
-        break;
-      case 'channels':
-        void this.router.navigate(['/app/channels']);
-        break;
-      default:
-        break;
+    if (id === 'destination') {
+      if (next) this.openAssistantWith(next.title);
+      else void this.router.navigate(['/app/seller/profile'], { queryParams: { playground: '1' } });
+      return;
     }
+    this.assistant.onPlus(id);
   }
 
   private clearReplyTimer(): void {

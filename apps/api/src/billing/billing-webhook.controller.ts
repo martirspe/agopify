@@ -20,7 +20,7 @@ import { BillingService } from './billing.service';
 type NotificationBody = { type?: string; data?: { id?: string | number } };
 
 /**
- * Plan payments (flow A) on VendedorIA's own Mercado Pago account, signed with the platform
+ * Plan payments (flow A) on Agopify's own Mercado Pago account, signed with the platform
  * webhook secret. Without that secret every notification is rejected. `order` covers payments
  * made in the console; `payment` only older Checkout Pro payments.
  */

@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { DsButtonComponent, DsIconComponent, DsTurnstileComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsIconComponent, DsTurnstileComponent } from '@agopify/ui';
 import { AuthApiService } from '../../core/auth/auth-api.service';
 import { authErrorMessage, CHALLENGE_PENDING } from './auth-errors';
 import { LEGAL_LINKS } from '../legal/legal-identity';

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DsDisclosureComponent, DsIconComponent, DsLinkComponent } from '@vendedoria/ui';
+import { DsDisclosureComponent, DsIconComponent, DsLinkComponent } from '@agopify/ui';
 import { LEGAL_LINKS, PLATFORM_LEGAL } from '../legal/legal-identity';
 import {
   MARKETING_INCLUDED_IN_ALL,

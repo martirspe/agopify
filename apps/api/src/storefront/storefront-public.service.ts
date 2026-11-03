@@ -14,7 +14,7 @@ import type {
   StoreResolveResult,
   StorefrontCheckout,
   StorefrontView,
-} from '@vendedoria/contracts';
+} from '@agopify/contracts';
 import { resolvePlanState } from '../billing/plan-catalog';
 import { normalizeDomain } from '../integrations/custom-domain.service';
 import { activeCustomDomain, isIntegrationActive } from '../integrations/integration-state';
@@ -45,6 +45,7 @@ function shippingOrigin(ubigeo: string | null): string | null {
 export const PRODUCT_INCLUDE = {
   variants: { orderBy: { id: 'asc' } },
   media: { orderBy: { sortOrder: 'asc' } },
+  optionDefinitions: { orderBy: { position: 'asc' as const } },
   components: {
     orderBy: { id: 'asc' },
     select: {

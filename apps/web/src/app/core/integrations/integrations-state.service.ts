@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import type { DsIconName } from '@vendedoria/ui';
+import type { DsIconName } from '@agopify/ui';
 import type { IntegrationKey } from '../api/billing-api.service';
 import { IntegrationState, IntegrationsApiService } from '../api/integrations-api.service';
 

@@ -1,4 +1,4 @@
-﻿import type { StorefrontView } from '@vendedoria/contracts';
+﻿import type { StorefrontView } from '@agopify/contracts';
 import type { LegalSlug } from './legal-slugs';
 
 export type Inline =
@@ -235,7 +235,7 @@ export function legalDocs(store: StorefrontView): LegalDoc[] {
   };
 
   const recipients: Inline[][] = [
-    ['Proveedor de la plataforma de la tienda (VendedorIA)', 'Alojar la tienda, registrar pedidos y enviar correos por nuestra cuenta', 'Datos de contacto, entrega y pedido'],
+    ['Proveedor de la plataforma de la tienda (Agopify)', 'Alojar la tienda, registrar pedidos y enviar correos por nuestra cuenta', 'Datos de contacto, entrega y pedido'],
     ...(online
       ? [['Mercado Pago', 'Procesar el pago y prevenir fraude', 'Datos de pago, correo y, en Yape, tu celular'] as Inline[]]
       : []),
@@ -378,7 +378,7 @@ export function legalDocs(store: StorefrontView): LegalDoc[] {
 
   const tracking = store.tracking;
   const trackingRows: Inline[][] = [
-    ...(tracking ? [['vendedoria-consent:*', 'Propia, necesaria (localStorage)', 'Recordar si aceptaste o rechazaste la analítica', 'Hasta que borres los datos del sitio'] as Inline[]] : []),
+    ...(tracking ? [['agopify-consent:*', 'Propia, necesaria (localStorage)', 'Recordar si aceptaste o rechazaste la analítica', 'Hasta que borres los datos del sitio'] as Inline[]] : []),
     ...(tracking?.ga4MeasurementId
       ? [['_ga, _ga_*', 'De terceros (Google Analytics), opcional', 'Medir visitas y compras de forma estadística', 'Hasta 2 años'] as Inline[]]
       : []),
@@ -414,8 +414,8 @@ export function legalDocs(store: StorefrontView): LegalDoc[] {
           table(
             ['Nombre', 'Tipo', 'Finalidad', 'Duración'],
             [
-              ['vendedoria-cart:*', 'Propia, necesaria (localStorage)', 'Recordar los productos de tu carrito', 'Hasta que vacíes el carrito o borres los datos del sitio'],
-              ['vendedoria-checkout-key', 'Propia, necesaria (sessionStorage)', 'Evitar que un doble clic cree dos pedidos', 'Hasta cerrar la pestaña'],
+              ['agopify-cart:*', 'Propia, necesaria (localStorage)', 'Recordar los productos de tu carrito', 'Hasta que vacíes el carrito o borres los datos del sitio'],
+              ['agopify-checkout-key', 'Propia, necesaria (sessionStorage)', 'Evitar que un doble clic cree dos pedidos', 'Hasta cerrar la pestaña'],
               ['store_preview', 'Propia, necesaria (cookie HttpOnly)', 'Solo para el dueño de la tienda: ver la vista previa antes de publicar', '1 hora'],
               ...(online
                 ? [['Cookies de Mercado Pago', 'De terceros, necesarias', 'Procesar el pago de forma segura y prevenir fraude; se cargan solo en la página de pago', 'Según la política de Mercado Pago'] as Inline[]]

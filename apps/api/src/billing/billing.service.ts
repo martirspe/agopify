@@ -79,7 +79,7 @@ type ResolvedPurchase = {
   title: string;
 };
 
-/** Flow A: the tenant pays VendedorIA for its plan, on the platform's own Mercado Pago account. */
+/** Flow A: the tenant pays Agopify for its plan, on the platform's own Mercado Pago account. */
 @Injectable()
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
@@ -453,7 +453,7 @@ export class BillingService {
         planMonths: null,
         chatPackSize: pack.chats,
         amountCents: pack.priceCents,
-        title: `${pack.chats} chats extra VendedorIA · este mes`,
+        title: `${pack.chats} chats extra Agopify · este mes`,
       };
     }
     if (!purchase.planTier) {
@@ -474,8 +474,8 @@ export class BillingService {
       amountCents: prepayTotalCents(plan.priceCents, option),
       title:
         option.months === 1
-          ? `Plan ${plan.name} VendedorIA · ${PLAN_PERIOD_DAYS} días`
-          : `Plan ${plan.name} VendedorIA · ${option.months} meses`,
+          ? `Plan ${plan.name} Agopify · ${PLAN_PERIOD_DAYS} días`
+          : `Plan ${plan.name} Agopify · ${option.months} meses`,
     };
   }
 
@@ -515,8 +515,8 @@ export class BillingService {
 
   private paymentTitle(payment: Pick<Payment, 'planTier' | 'chatPackSize'>): string {
     return payment.planTier
-      ? `Plan ${getPlanDefinition(payment.planTier).name} VendedorIA`
-      : `${payment.chatPackSize ?? 0} chats extra VendedorIA`;
+      ? `Plan ${getPlanDefinition(payment.planTier).name} Agopify`
+      : `${payment.chatPackSize ?? 0} chats extra Agopify`;
   }
 
   private checkoutMode(): 'live' | 'simulated' | 'unavailable' {

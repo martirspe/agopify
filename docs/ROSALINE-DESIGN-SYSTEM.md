@@ -18,7 +18,7 @@ Angular state replaces Bootstrap offcanvas/modals, tab changes, quantity control
 
 Catalog cards and spotlight reuse the existing purchase component. The cart drawer uses CartService for lines, quantities and subtotal. Checkout, stock validation, host tenant resolution, SEO, signed previews and the visual editor remain in the existing engine. Product/cart/checkout/order/legal pages reuse existing domain views with Rosaline `--store-*` adapters (typography, square controls, brand CTAs); they are not ports of additional ThemeForest HTML pages.
 
-The current console release is vendedoria/rosaline@1.1.0, available for every industry; v1.0.0 is preserved unchanged. Renderer rosaline@1 and the bold-modern preset retain the same presentation. A no-op migration preserves merchant content between these versions. Existing themes retain their identities and manifests. Shared editor field names retain existing sanitizer types and limits.
+The current console release is agopify/rosaline@1.1.0, available for every industry; v1.0.0 is preserved unchanged. Renderer rosaline@1 and the bold-modern preset retain the same presentation. A no-op migration preserves merchant content between these versions. Existing themes retain their identities and manifests. Shared editor field names retain existing sanitizer types and limits.
 
 ## Data boundaries and remaining differences
 

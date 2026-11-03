@@ -14,7 +14,7 @@ import {
 import type { PlatformPermission } from './platform-permissions';
 
 /**
- * Restricts a route to VendedorIA staff using a platform session who hold every listed
+ * Restricts a route to Agopify staff using a platform session who hold every listed
  * permission. No permissions: any operator. The global business guard skips these routes.
  */
 export const PlatformPermissions = (...permissions: PlatformPermission[]) =>

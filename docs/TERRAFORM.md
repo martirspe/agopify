@@ -1,6 +1,6 @@
 # Infraestructura de AWS con Terraform
 
-Guía de despliegue y operación de la infraestructura AWS de VendedorIA: fotos de productos (S3 privado + CloudFront), correo transaccional (SES) y el usuario IAM de la API, con sus registros DNS en Cloudflare. Todo se declara en `infra/terraform/`.
+Guía de despliegue y operación de la infraestructura AWS de Agopify: fotos de productos (S3 privado + CloudFront), correo transaccional (SES) y el usuario IAM de la API, con sus registros DNS en Cloudflare. Todo se declara en `infra/terraform/`.
 
 Está escrita para que alguien que no participó en el primer despliegue pueda levantar **staging** o **producción** desde cero con PowerShell en Windows, y diagnosticar los problemas que ya aparecieron (sección 17 y anexo A).
 
@@ -18,7 +18,7 @@ Todo es opcional para la app: sin estas variables la API guarda las fotos en el 
 8. [Validaciones DNS previas (incluye CAA)](#8-validaciones-dns-previas-incluye-caa)
 9. [Plan y apply](#9-plan-y-apply)
 10. [Pasos manuales después del apply](#10-pasos-manuales-después-del-apply)
-11. [Configuración del backend de VendedorIA](#11-configuración-del-backend-de-vendedoria)
+11. [Configuración del backend de Agopify](#11-configuración-del-backend-de-agopify)
 12. [Verificación end-to-end](#12-verificación-end-to-end)
 13. [Limpieza de los objetos de prueba](#13-limpieza-de-los-objetos-de-prueba)
 14. [Seguridad](#14-seguridad)
@@ -45,7 +45,7 @@ flowchart LR
 
   Buyer["Comprador (tienda)"] -- HTTPS --> CF["CloudFront<br/>TLS 1.2+, GET/HEAD"]
   CF -- "OAC (SigV4)" --> S3["S3 privado<br/>media/{tenantId}/*.webp"]
-  API["API VendedorIA"] -- "PutObject / DeleteObject<br/>(usuario IAM)" --> S3
+  API["API Agopify"] -- "PutObject / DeleteObject<br/>(usuario IAM)" --> S3
   API -- "SendEmail<br/>(usuario IAM)" --> SES["Amazon SES<br/>identidad de dominio"]
   SES -- "eventos de entrega" --> SNS["SNS email-alerts"]
   SNS --> Alert["Suscriptor &lt;ALERT_EMAIL&gt;"]
@@ -74,7 +74,7 @@ Flujo de las fotos:
 Flujo del correo:
 
 ```text
-API VendedorIA
+API Agopify
        │  SESv2 SendEmail (configuration set <app>-<env>-transactional)
        ▼
 Amazon SES  ── identidad de dominio <email_domain>
@@ -106,19 +106,19 @@ Amazon SES  ── identidad de dominio <email_domain>
 
 ### Cómo se derivan los nombres
 
-Ningún nombre está fijo por entorno: se calculan con `app_name` (por defecto `vendedoria`), `environment` (`staging` o `prod`) y el id de la cuenta que ejecuta Terraform (`data.aws_caller_identity`). `local.name` = `<app_name>-<environment>`.
+Ningún nombre está fijo por entorno: se calculan con `app_name` (por defecto `agopify`), `environment` (`staging` o `prod`) y el id de la cuenta que ejecuta Terraform (`data.aws_caller_identity`). `local.name` = `<app_name>-<environment>`.
 
 | Recurso | Patrón | Staging (ejemplo) |
 |---|---|---|
-| Bucket del state (bootstrap) | `<app_name>-tfstate-<AWS_ACCOUNT_ID>` | `vendedoria-tfstate-<AWS_ACCOUNT_ID>` |
-| Bucket de fotos | `<app_name>-media-<environment>-<AWS_ACCOUNT_ID>` | `vendedoria-media-staging-<AWS_ACCOUNT_ID>` |
-| OAC | `<name>-media` | `vendedoria-staging-media` |
-| Configuration set SES | `<name>-transactional` | `vendedoria-staging-transactional` |
-| Tópico SNS | `<name>-email-alerts` | `vendedoria-staging-email-alerts` |
-| Usuario y política IAM | `<name>-api` | `vendedoria-staging-api` |
+| Bucket del state (bootstrap) | `<app_name>-tfstate-<AWS_ACCOUNT_ID>` | `agopify-tfstate-<AWS_ACCOUNT_ID>` |
+| Bucket de fotos | `<app_name>-media-<environment>-<AWS_ACCOUNT_ID>` | `agopify-media-staging-<AWS_ACCOUNT_ID>` |
+| OAC | `<name>-media` | `agopify-staging-media` |
+| Configuration set SES | `<name>-transactional` | `agopify-staging-transactional` |
+| Tópico SNS | `<name>-email-alerts` | `agopify-staging-email-alerts` |
+| Usuario y política IAM | `<name>-api` | `agopify-staging-api` |
 | Alarmas (solo con `manage_account_settings`) | `<name>-ses-bounce-rate`, `<name>-ses-complaint-rate` | no se crean en staging |
-| MAIL FROM | `<mail_from_subdomain>.<email_domain>` | `bounce.staging.marrso.com` |
-| URL del CDN | `https://<media_domain>` o, si es `null`, `https://<id>.cloudfront.net` | `https://media-staging.marrso.com` |
+| MAIL FROM | `<mail_from_subdomain>.<email_domain>` | `bounce.staging.agopify.com` |
+| URL del CDN | `https://<media_domain>` o, si es `null`, `https://<id>.cloudfront.net` | `https://media-staging.agopify.com` |
 | State remoto | `env:/<workspace>/aws.tfstate` en el bucket del state | `env:/staging/aws.tfstate` |
 
 Todos los recursos AWS llevan las etiquetas `app`, `environment` y `managed-by = terraform`.
@@ -192,7 +192,7 @@ Una sola vez por PC:
 
 ```powershell
 aws configure sso --profile ops
-# SSO session name:        vendedoria
+# SSO session name:        agopify
 # SSO start URL:           https://<SSO_START_URL>.awsapps.com/start
 # SSO region:              <REGION_DE_IDENTITY_CENTER>
 # SSO registration scopes: sso:account:access
@@ -205,7 +205,7 @@ Queda guardado en `%USERPROFILE%\.aws\config` (no contiene secretos de larga dur
 
 ### 3.6 Cloudflare
 
-- El dominio (en este proyecto, `marrso.com`) debe estar como zona activa en Cloudflare, con sus nameservers apuntando a Cloudflare.
+- El dominio (en este proyecto, `agopify.com`) debe estar como zona activa en Cloudflare, con sus nameservers apuntando a Cloudflare.
 - Necesitas su **Zone ID**: panel de Cloudflare → el dominio → *Overview* → columna derecha → *Zone ID*. En la documentación y los ejemplos se escribe `<CLOUDFLARE_ZONE_ID>`.
 - Un API token con permisos mínimos (sección 4.3).
 
@@ -293,7 +293,7 @@ Comprueba primero si ya existe (en la cuenta actual ya existe; no lo vuelvas a c
 
 ```powershell
 $account = aws sts get-caller-identity --profile ops --query Account --output text
-aws s3api head-bucket --bucket "vendedoria-tfstate-$account" --profile ops
+aws s3api head-bucket --bucket "agopify-tfstate-$account" --profile ops
 ```
 
 Si responde `404`/`Not Found`:
@@ -308,14 +308,14 @@ terraform output -raw backend_config | Out-File -Encoding ascii ..\backend.hcl
 
 `Out-File -Encoding ascii` importa: la redirección `>` de Windows PowerShell 5.1 escribe UTF-16 y Terraform no puede leer ese `backend.hcl`.
 
-El state del bootstrap queda en `bootstrap/terraform.tfstate` (git-ignored) **solo en esa PC**. Guárdalo en un lugar privado; si se pierde no pasa nada grave: se recupera con `terraform import aws_s3_bucket.state vendedoria-tfstate-<AWS_ACCOUNT_ID>` (y el resto de recursos del bootstrap del mismo modo).
+El state del bootstrap queda en `bootstrap/terraform.tfstate` (git-ignored) **solo en esa PC**. Guárdalo en un lugar privado; si se pierde no pasa nada grave: se recupera con `terraform import aws_s3_bucket.state agopify-tfstate-<AWS_ACCOUNT_ID>` (y el resto de recursos del bootstrap del mismo modo).
 
 ### 6.3 `backend.hcl`
 
 El output `backend_config` genera exactamente:
 
 ```hcl
-bucket       = "vendedoria-tfstate-<AWS_ACCOUNT_ID>"
+bucket       = "agopify-tfstate-<AWS_ACCOUNT_ID>"
 key          = "aws.tfstate"
 region       = "us-east-1"
 encrypt      = true
@@ -376,7 +376,7 @@ Los `.tfvars` no contienen secretos (credenciales siempre por `AWS_PROFILE` y `C
 | `aws_region` | sí | — | Región del bucket de fotos y `AWS_REGION` de la API. |
 | `ses_region` | no | `null` (= `aws_region`) | Solo si SES va en otra región; genera `SES_REGION` en `server_env`. |
 | `cloudflare_zone_id` | sí | — | Zona que contiene `media_domain` y `email_domain`. |
-| `app_name` | no | `vendedoria` | Prefijo de nombres (3–20 caracteres `a-z0-9-`). No lo cambies en un entorno ya desplegado: renombra (reemplaza) los recursos. |
+| `app_name` | no | `agopify` | Prefijo de nombres (3–20 caracteres `a-z0-9-`). No lo cambies en un entorno ya desplegado: renombra (reemplaza) los recursos. |
 | `media_prefix` | no | `media` | Prefijo de objetos. Debe coincidir con el que escribe `MediaService` (`media`). |
 | `media_domain` | no | `null` | Host propio del CDN. `null` = sin ACM ni CNAME, se usa `*.cloudfront.net`. |
 | `price_class` | no | `PriceClass_All` | Incluye los edge de Sudamérica. |
@@ -397,10 +397,10 @@ environment        = "staging"
 aws_region         = "us-east-1"
 cloudflare_zone_id = "<CLOUDFLARE_ZONE_ID>"
 
-media_domain = "media-staging.marrso.com"
+media_domain = "media-staging.agopify.com"
 
-email_domain            = "staging.marrso.com"
-email_from              = "VendedorIA Staging <pedidos@staging.marrso.com>"
+email_domain            = "staging.agopify.com"
+email_from              = "Agopify Staging <pedidos@staging.agopify.com>"
 manage_dmarc            = false
 manage_account_settings = false
 alerts_email            = "<ALERT_EMAIL>"
@@ -408,8 +408,8 @@ alerts_email            = "<ALERT_EMAIL>"
 
 Por qué así:
 
-- **Subdominio de correo propio** (`staging.marrso.com`): staging y prod están en la misma cuenta y región; una identidad SES distinta evita que staging toque la reputación, DKIM o MAIL FROM de producción.
-- **`manage_dmarc = false`**: `marrso.com` ya publica DMARC (`p=reject`). Para `staging.marrso.com`, los receptores aplican la política del dominio organizativo `marrso.com` si el subdominio no tiene `_dmarc` propio. Crear otro `_dmarc` desde Terraform podría chocar con lo existente; y dos registros DMARC en el mismo nombre invalidan ambos.
+- **Subdominio de correo propio** (`staging.agopify.com`): staging y prod están en la misma cuenta y región; una identidad SES distinta evita que staging toque la reputación, DKIM o MAIL FROM de producción.
+- **`manage_dmarc = false`**: `agopify.com` ya publica DMARC (`p=reject`). Para `staging.agopify.com`, los receptores aplican la política del dominio organizativo `agopify.com` si el subdominio no tiene `_dmarc` propio. Crear otro `_dmarc` desde Terraform podría chocar con lo existente; y dos registros DMARC en el mismo nombre invalidan ambos.
 - **`manage_account_settings = false`**: la lista de supresión y las alarmas de reputación son de toda la cuenta y región. Solo un workspace por cuenta+región debe administrarlas (producción); si staging y prod las declararan a la vez, se pisarían.
 
 ### 7.5 Producción
@@ -421,11 +421,11 @@ environment        = "prod"
 aws_region         = "us-east-1"
 cloudflare_zone_id = "<CLOUDFLARE_ZONE_ID>"
 
-media_domain = "media.marrso.com"
+media_domain = "media.agopify.com"
 
-email_domain = "marrso.com"
-email_from   = "VendedorIA <pedidos@marrso.com>"
-# false: marrso.com ya publica DMARC.
+email_domain = "agopify.com"
+email_from   = "Agopify <pedidos@agopify.com>"
+# false: agopify.com ya publica DMARC.
 manage_dmarc            = false
 manage_account_settings = true
 alerts_email            = "<ALERT_EMAIL>"
@@ -438,12 +438,12 @@ Antes del **primer** apply de un entorno revisa qué existe ya en DNS para los n
 ### 8.1 Nombres a revisar
 
 ```powershell
-# Staging (cambia los nombres para prod: media.marrso.com, bounce.marrso.com, marrso.com)
-Resolve-DnsName media-staging.marrso.com -Server 1.1.1.1
-Resolve-DnsName bounce.staging.marrso.com -Type MX -Server 1.1.1.1
-Resolve-DnsName bounce.staging.marrso.com -Type TXT -Server 1.1.1.1
-Resolve-DnsName _dmarc.marrso.com -Type TXT -Server 1.1.1.1
-Resolve-DnsName _dmarc.staging.marrso.com -Type TXT -Server 1.1.1.1
+# Staging (cambia los nombres para prod: media.agopify.com, bounce.agopify.com, agopify.com)
+Resolve-DnsName media-staging.agopify.com -Server 1.1.1.1
+Resolve-DnsName bounce.staging.agopify.com -Type MX -Server 1.1.1.1
+Resolve-DnsName bounce.staging.agopify.com -Type TXT -Server 1.1.1.1
+Resolve-DnsName _dmarc.agopify.com -Type TXT -Server 1.1.1.1
+Resolve-DnsName _dmarc.staging.agopify.com -Type TXT -Server 1.1.1.1
 ```
 
 Y en el panel de Cloudflare → *DNS* → *Records*, busca registros con **exactamente** esos nombres.
@@ -452,11 +452,11 @@ Y en el panel de Cloudflare → *DNS* → *Records*, busca registros con **exact
 
 | Tipo | Qué es | Ejemplo |
 |---|---|---|
-| Comodín | `*.marrso.com` responde por cualquier nombre que **no** tenga registro propio. | `A * → IP del VPS` (las tiendas `{slug}.marrso.com`) |
+| Comodín | `*.agopify.com` responde por cualquier nombre que **no** tenga registro propio. | `A * → IP del VPS` (las tiendas `{slug}.agopify.com`) |
 | Registro explícito | Registro con nombre exacto. Tiene prioridad sobre el comodín para ese nombre. | `CNAME media-staging → dXXXX.cloudfront.net` |
 | Administrado por Terraform | Registro explícito que existe en el state. Lleva el comentario `... (Terraform)` en Cloudflare. | todos los de la sección 2 |
 
-En staging, antes del apply, `media-staging.marrso.com` resolvía a la IP del VPS: no había registro propio, respondía el comodín. Es normal y no bloquea nada. Terraform creó después el CNAME explícito hacia CloudFront, que prevalece sobre el comodín.
+En staging, antes del apply, `media-staging.agopify.com` resolvía a la IP del VPS: no había registro propio, respondía el comodín. Es normal y no bloquea nada. Terraform creó después el CNAME explícito hacia CloudFront, que prevalece sobre el comodín.
 
 Lo que **sí** bloquea es un registro explícito con el mismo nombre creado a mano: Cloudflare rechaza el CNAME (`An identical record already exists` / `record already exists`). Bórralo si es basura o impórtalo (sección 18).
 
@@ -464,13 +464,13 @@ Lo que **sí** bloquea es un registro explícito con el mismo nombre creado a ma
 
 ### 8.3 CAA: autorizar a Amazon a emitir certificados
 
-Un registro **CAA** (Certification Authority Authorization) dice qué autoridades certificadoras pueden emitir certificados para un dominio. Si el dominio tiene al menos un CAA y ninguno autoriza a Amazon, ACM no puede emitir y el certificado termina en `FAILED` con `CAA_ERROR`. La CA busca el CAA en el nombre exacto y, si no hay, sube por el árbol (`media-staging.marrso.com` → `marrso.com`): el CAA del dominio raíz aplica a todos los subdominios.
+Un registro **CAA** (Certification Authority Authorization) dice qué autoridades certificadoras pueden emitir certificados para un dominio. Si el dominio tiene al menos un CAA y ninguno autoriza a Amazon, ACM no puede emitir y el certificado termina en `FAILED` con `CAA_ERROR`. La CA busca el CAA en el nombre exacto y, si no hay, sube por el árbol (`media-staging.agopify.com` → `agopify.com`): el CAA del dominio raíz aplica a todos los subdominios.
 
 Consulta en Windows: en el equipo usado, `Resolve-DnsName -Type CAA` no reconocía el tipo `CAA` y `nslookup -type=257` tampoco estaba soportado. Funciona DNS-over-HTTPS de Cloudflare:
 
 ```powershell
-(Invoke-RestMethod "https://cloudflare-dns.com/dns-query?name=marrso.com&type=CAA" -Headers @{Accept="application/dns-json"}).Answer
-(Invoke-RestMethod "https://cloudflare-dns.com/dns-query?name=media-staging.marrso.com&type=CAA" -Headers @{Accept="application/dns-json"}).Answer
+(Invoke-RestMethod "https://cloudflare-dns.com/dns-query?name=agopify.com&type=CAA" -Headers @{Accept="application/dns-json"}).Answer
+(Invoke-RestMethod "https://cloudflare-dns.com/dns-query?name=media-staging.agopify.com&type=CAA" -Headers @{Accept="application/dns-json"}).Answer
 ```
 
 Si el campo `data` aparece en formato hexadecimal (`\# ...`), consulta el mismo nombre en `https://dns.google/resolve?name=<DOMINIO>&type=CAA`, que lo devuelve legible.
@@ -481,22 +481,22 @@ Cómo interpretarlo:
 - Hay CAA y alguno contiene `issue "amazon.com"` (o `amazontrust.com`, `awstrust.com`, `amazonaws.com`): ACM funciona.
 - Hay CAA y ninguno autoriza a Amazon: **añade** `0 issue "amazon.com"` antes del apply.
 
-`marrso.com` tenía CAA para `comodoca.com`, `digicert.com`, `letsencrypt.org`, `pki.goog` y `ssl.com` (las CA que usa Cloudflare), pero no para Amazon. Se añadió en Cloudflare, sobre el dominio raíz:
+`agopify.com` tenía CAA para `comodoca.com`, `digicert.com`, `letsencrypt.org`, `pki.goog` y `ssl.com` (las CA que usa Cloudflare), pero no para Amazon. Se añadió en Cloudflare, sobre el dominio raíz:
 
 | Tipo | Nombre | Flags | Tag | Valor |
 |---|---|---|---|---|
-| CAA | `marrso.com` (`@`) | `0` | `issue` (*Only allow specific hostnames*) | `amazon.com` |
+| CAA | `agopify.com` (`@`) | `0` | `issue` (*Only allow specific hostnames*) | `amazon.com` |
 
 No hizo falta borrar las demás CA: los registros CAA se suman, cada uno autoriza a una CA más.
 
 `issue` vs `issuewild`:
 
-- `issue` autoriza certificados para nombres concretos (`media-staging.marrso.com`). Si no hay `issuewild`, también rige para comodines.
-- `issuewild` autoriza solo certificados comodín (`*.marrso.com`) y, si existe, prevalece sobre `issue` para ellos.
+- `issue` autoriza certificados para nombres concretos (`media-staging.agopify.com`). Si no hay `issuewild`, también rige para comodines.
+- `issuewild` autoriza solo certificados comodín (`*.agopify.com`) y, si existe, prevalece sobre `issue` para ellos.
 
-El certificado de `media-staging.marrso.com` (y el de `media.marrso.com` en prod) es de nombre concreto: necesita `issue`.
+El certificado de `media-staging.agopify.com` (y el de `media.agopify.com` en prod) es de nombre concreto: necesita `issue`.
 
-**Estado actual: el CAA `amazon.com` es manual.** No existe ningún recurso CAA en `infra/terraform/` ni en el state. Es un prerrequisito de cualquier entorno nuevo en una zona con CAA. Como está en el dominio raíz, ya cubre `media.marrso.com` para producción. Ver recomendación en la sección 16.8.
+**Estado actual: el CAA `amazon.com` es manual.** No existe ningún recurso CAA en `infra/terraform/` ni en el state. Es un prerrequisito de cualquier entorno nuevo en una zona con CAA. Como está en el dominio raíz, ya cubre `media.agopify.com` para producción. Ver recomendación en la sección 16.8.
 
 ## 9. Plan y apply
 
@@ -573,7 +573,7 @@ AWS devuelve `AccessKeyId` y `SecretAccessKey`.
 > - Nunca en documentación, Git, `.tfvars`, `backend.hcl`, Terraform state, tickets ni chats.
 > - Limpia la terminal cuando termines (`Clear-Host`) y no guardes la salida en archivos.
 
-## 11. Configuración del backend de VendedorIA
+## 11. Configuración del backend de Agopify
 
 ### 11.1 Lo que da Terraform
 
@@ -591,11 +591,11 @@ terraform output -raw email_alerts_topic_arn
 ```env
 AWS_REGION=us-east-1
 MEDIA_STORAGE=s3
-MEDIA_S3_BUCKET=vendedoria-media-staging-<AWS_ACCOUNT_ID>
-MEDIA_CDN_URL=https://media-staging.marrso.com
+MEDIA_S3_BUCKET=agopify-media-staging-<AWS_ACCOUNT_ID>
+MEDIA_CDN_URL=https://media-staging.agopify.com
 EMAIL_PROVIDER=ses
-EMAIL_FROM=VendedorIA Staging <pedidos@staging.marrso.com>
-SES_CONFIGURATION_SET=vendedoria-staging-transactional
+EMAIL_FROM=Agopify Staging <pedidos@staging.agopify.com>
+SES_CONFIGURATION_SET=agopify-staging-transactional
 ```
 
 Solo añade `SES_REGION=...` si `ses_region` difiere de `aws_region`. `AWS_ACCESS_KEY_ID` y `AWS_SECRET_ACCESS_KEY` **no** salen de Terraform: la key se crea a mano (10.3) precisamente para que el secreto nunca esté en el state.
@@ -611,13 +611,13 @@ Validadas al arrancar por `apps/api/src/config/env.validation.ts`; si falta algo
 | `AWS_SECRET_ACCESS_KEY` | `<SECRET>` | 10.3 | Ídem. |
 | `MEDIA_STORAGE` | `s3` | `server_env` | `local` (por defecto) guarda en `UPLOADS_DIR`. |
 | `MEDIA_S3_BUCKET` | nombre del bucket | `server_env` | Obligatoria con `s3`. |
-| `MEDIA_CDN_URL` | `https://media-staging.marrso.com` | `server_env` | Obligatoria con `s3`. Debe ser `https`, sin ruta y **no** un host `amazonaws.com`. |
+| `MEDIA_CDN_URL` | `https://media-staging.agopify.com` | `server_env` | Obligatoria con `s3`. Debe ser `https`, sin ruta y **no** un host `amazonaws.com`. |
 | `UPLOADS_DIR` | `/app/apps/api/uploads` | ya existente | Se mantiene: las fotos anteriores a S3 se siguen sirviendo desde el volumen `uploads`. No lo borres. |
 | `EMAIL_MODE` | `live` | **manual** | **No está en `server_env`.** Con `preview` (por defecto) los pedidos registran el correo pero no se envía nada. |
 | `EMAIL_PROVIDER` | `ses` | `server_env` | `ses` (por defecto) o `resend`. |
-| `EMAIL_FROM` | `VendedorIA Staging <pedidos@staging.marrso.com>` | `server_env` | Obligatoria con `live`. Debe ser del dominio verificado; la política IAM solo permite `*@<email_domain>`. |
+| `EMAIL_FROM` | `Agopify Staging <pedidos@staging.agopify.com>` | `server_env` | Obligatoria con `live`. Debe ser del dominio verificado; la política IAM solo permite `*@<email_domain>`. |
 | `SES_REGION` | — | `server_env` solo si difiere | Opcional. |
-| `SES_CONFIGURATION_SET` | `vendedoria-staging-transactional` | `server_env` | Opcional para la validación; la identidad ya lo tiene como configuration set por defecto. Mantenlo igualmente. |
+| `SES_CONFIGURATION_SET` | `agopify-staging-transactional` | `server_env` | Opcional para la validación; la identidad ya lo tiene como configuration set por defecto. Mantenlo igualmente. |
 
 Bloque final de staging:
 
@@ -627,14 +627,14 @@ AWS_ACCESS_KEY_ID=<SECRET>
 AWS_SECRET_ACCESS_KEY=<SECRET>
 
 MEDIA_STORAGE=s3
-MEDIA_S3_BUCKET=vendedoria-media-staging-<AWS_ACCOUNT_ID>
-MEDIA_CDN_URL=https://media-staging.marrso.com
+MEDIA_S3_BUCKET=agopify-media-staging-<AWS_ACCOUNT_ID>
+MEDIA_CDN_URL=https://media-staging.agopify.com
 UPLOADS_DIR=/app/apps/api/uploads
 
 EMAIL_MODE=live
 EMAIL_PROVIDER=ses
-EMAIL_FROM=VendedorIA Staging <pedidos@staging.marrso.com>
-SES_CONFIGURATION_SET=vendedoria-staging-transactional
+EMAIL_FROM=Agopify Staging <pedidos@staging.agopify.com>
+SES_CONFIGURATION_SET=agopify-staging-transactional
 ```
 
 Aplica los cambios recreando la API: `bash scripts/deploy.sh` o `docker compose up -d --force-recreate api` (ver [DEPLOY.md](DEPLOY.md)).
@@ -678,7 +678,7 @@ Esperado: `Status: Deployed`, alias = `media_domain`, `Tls: TLSv1.2_2021`.
 Resolve-DnsName $cdnHost -Type CNAME -Server 1.1.1.1
 ```
 
-Esperado: `media-staging.marrso.com` → `dXXXXXXXXXXXXX.cloudfront.net` (el mismo `Domain` de 12.2). Si responde un registro `A` con la IP del VPS, el CNAME no existe y está respondiendo el comodín.
+Esperado: `media-staging.agopify.com` → `dXXXXXXXXXXXXX.cloudfront.net` (el mismo `Domain` de 12.2). Si responde un registro `A` con la IP del VPS, el CNAME no existe y está respondiendo el comodín.
 
 ```powershell
 curl.exe -I $cdn
@@ -692,7 +692,7 @@ Usa el prefijo `media/_healthcheck/`: el lifecycle del bucket borra esos objetos
 
 ```powershell
 $testFile = Join-Path $env:TEMP "cdn-test.txt"
-"VendedorIA CDN OK - $(Get-Date)" | Set-Content $testFile
+"Agopify CDN OK - $(Get-Date)" | Set-Content $testFile
 
 aws s3 cp $testFile "s3://$bucket/media/_healthcheck/cdn-test.txt" --profile ops
 aws s3api head-object --bucket $bucket --key media/_healthcheck/cdn-test.txt --profile ops
@@ -708,13 +708,13 @@ x-amz-server-side-encryption: AES256
 X-Cache: Miss from cloudfront          (Hit from cloudfront en la segunda petición)
 Via: 1.1 xxxx.cloudfront.net (CloudFront)
 
-VendedorIA CDN OK - ...
+Agopify CDN OK - ...
 ```
 
 Esto valida la cadena completa:
 
 ```text
-Cliente ──HTTPS──▶ media-staging.marrso.com ──▶ CloudFront ──OAC──▶ S3 privado ──▶ media/_healthcheck/cdn-test.txt
+Cliente ──HTTPS──▶ media-staging.agopify.com ──▶ CloudFront ──OAC──▶ S3 privado ──▶ media/_healthcheck/cdn-test.txt
 ```
 
 Nota: un objeto inexistente bajo `media/` también devuelve **403** (no 404), porque CloudFront no tiene `s3:ListBucket`. Si un objeto que acabas de subir da 403, revisa la clave exacta antes de sospechar de la infraestructura.
@@ -730,19 +730,19 @@ Esperado: `HTTP/1.1 403 Forbidden`. Es correcto: el bucket tiene Block Public Ac
 ### 12.6 Identidad SES y DKIM
 
 ```powershell
-aws sesv2 get-email-identity --email-identity staging.marrso.com --region us-east-1 --profile ops `
+aws sesv2 get-email-identity --email-identity staging.agopify.com --region us-east-1 --profile ops `
   --query "{Type:IdentityType,Verified:VerifiedForSendingStatus,DkimSigning:DkimAttributes.SigningEnabled,DkimStatus:DkimAttributes.Status,DkimKey:DkimAttributes.CurrentSigningKeyLength,MailFrom:MailFromAttributes,ConfigSet:ConfigurationSetName}"
 ```
 
-Esperado: `Type: DOMAIN`, `Verified: true`, `DkimSigning: true`, `DkimStatus: SUCCESS`, `DkimKey: RSA_2048_BIT`, `MailFromDomainStatus: SUCCESS`, `ConfigSet: vendedoria-staging-transactional`.
+Esperado: `Type: DOMAIN`, `Verified: true`, `DkimSigning: true`, `DkimStatus: SUCCESS`, `DkimKey: RSA_2048_BIT`, `MailFromDomainStatus: SUCCESS`, `ConfigSet: agopify-staging-transactional`.
 
 Los tres tokens DKIM los genera SES al crear la identidad y Terraform los publica como CNAME `<token>._domainkey.<email_domain>` → `<token>.dkim.amazonses.com`. Son distintos en cada identidad: no se copian entre entornos ni se documentan como valores fijos.
 
 ### 12.7 MAIL FROM y SPF
 
 ```powershell
-Resolve-DnsName bounce.staging.marrso.com -Type MX -Server 1.1.1.1
-Resolve-DnsName bounce.staging.marrso.com -Type TXT -Server 1.1.1.1
+Resolve-DnsName bounce.staging.agopify.com -Type MX -Server 1.1.1.1
+Resolve-DnsName bounce.staging.agopify.com -Type TXT -Server 1.1.1.1
 ```
 
 Esperado:
@@ -759,10 +759,10 @@ TXT  v=spf1 include:amazonses.com ~all
 ### 12.8 DMARC
 
 ```powershell
-Resolve-DnsName _dmarc.marrso.com -Type TXT -Server 1.1.1.1
+Resolve-DnsName _dmarc.agopify.com -Type TXT -Server 1.1.1.1
 ```
 
-Debe haber **un solo** registro `v=DMARC1`. Con DKIM firmado por `staging.marrso.com` y MAIL FROM `bounce.staging.marrso.com`, el correo pasa DMARC por alineación de DKIM y de SPF.
+Debe haber **un solo** registro `v=DMARC1`. Con DKIM firmado por `staging.agopify.com` y MAIL FROM `bounce.staging.agopify.com`, el correo pasa DMARC por alineación de DKIM y de SPF.
 
 ### 12.9 Cuenta SES
 
@@ -772,10 +772,10 @@ Ver 10.2. Revisa `ProductionAccessEnabled`, `SendingEnabled` y `EnforcementStatu
 
 ```powershell
 aws sesv2 send-email `
-  --from-email-address "VendedorIA Staging <pedidos@staging.marrso.com>" `
+  --from-email-address "Agopify Staging <pedidos@staging.agopify.com>" `
   --destination "ToAddresses=<EMAIL_DE_PRUEBA>" `
-  --content "Simple={Subject={Data='VendedorIA SES Staging OK',Charset=UTF-8},Body={Text={Data='Prueba exitosa de Amazon SES para VendedorIA staging.',Charset=UTF-8}}}" `
-  --configuration-set-name "vendedoria-staging-transactional" `
+  --content "Simple={Subject={Data='Agopify SES Staging OK',Charset=UTF-8},Body={Text={Data='Prueba exitosa de Amazon SES para Agopify staging.',Charset=UTF-8}}}" `
+  --configuration-set-name "agopify-staging-transactional" `
   --region us-east-1 `
   --profile ops
 ```
@@ -812,7 +812,7 @@ terraform output -raw server_env | ForEach-Object { $k, $v = $_ -split '=', 2; S
 $env:CLOUDFRONT_DISTRIBUTION_ID = terraform output -raw cloudfront_distribution_id
 Pop-Location
 $env:AWS_PROFILE = "ops"
-node .agents/skills/vendedoria-aws/scripts/check-aws.mjs --write-test
+node .agents/skills/agopify-aws/scripts/check-aws.mjs --write-test
 ```
 
 Corrige todo `FAIL`. `--write-test` escribe y borra un objeto en `media/_healthcheck/`.
@@ -881,7 +881,7 @@ Separación de credenciales:
 
 ```text
 Personas / DevOps  →  AWS IAM Identity Center (SSO)  →  perfil "ops"  →  credenciales temporales
-Backend VendedorIA →  usuario IAM <name>-api          →  access key propia, solo en el entorno de ejecución
+Backend Agopify →  usuario IAM <name>-api          →  access key propia, solo en el entorno de ejecución
 ```
 
 Nunca uses credenciales del perfil `ops` en la app, ni la key de la app para operar.
@@ -896,7 +896,7 @@ Nunca uses credenciales del perfil `ops` en la app, ni la key de la app para ope
 
 - **DKIM**: Easy DKIM RSA 2048 sobre el dominio remitente.
 - **SPF**: MAIL FROM propio `bounce.<email_domain>` con `v=spf1 include:amazonses.com ~all`.
-- **DMARC**: `marrso.com` ya publica DMARC (`p=reject`); Terraform no lo toca (`manage_dmarc = false`).
+- **DMARC**: `agopify.com` ya publica DMARC (`p=reject`); Terraform no lo toca (`manage_dmarc = false`).
 - **TLS hacia el receptor**: el configuration set exige TLS (`tls_policy = REQUIRE`).
 - **Supresión**: el configuration set suprime destinatarios por `BOUNCE` y `COMPLAINT`. A nivel de cuenta, la supresión la administra el workspace con `manage_account_settings = true` (prod).
 - **Alertas**: `BOUNCE`, `COMPLAINT`, `REJECT`, `RENDERING_FAILURE` y `DELIVERY_DELAY` van al tópico SNS. Las alarmas de CloudWatch (rebote > 4 %, queja > 0,08 %, por debajo de los umbrales de revisión de SES del 5 % y 0,1 %) solo existen donde `manage_account_settings = true`.
@@ -909,16 +909,16 @@ Nunca uses credenciales del perfil `ops` en la app, ni la key de la app para ope
 |---|---|---|
 | Workspace | `staging` | `prod` |
 | Archivo | `envs/staging.tfvars` | `envs/prod.tfvars` (crearlo desde `.example`) |
-| `media_domain` | `media-staging.marrso.com` | `media.marrso.com` |
-| `email_domain` | `staging.marrso.com` | `marrso.com` |
-| MAIL FROM | `bounce.staging.marrso.com` | `bounce.marrso.com` |
-| `email_from` | `VendedorIA Staging <pedidos@staging.marrso.com>` | `VendedorIA <pedidos@marrso.com>` |
-| Bucket de fotos | `vendedoria-media-staging-<AWS_ACCOUNT_ID>` | `vendedoria-media-prod-<AWS_ACCOUNT_ID>` |
-| Configuration set | `vendedoria-staging-transactional` | `vendedoria-prod-transactional` |
-| Usuario IAM | `vendedoria-staging-api` | `vendedoria-prod-api` |
-| Tópico SNS | `vendedoria-staging-email-alerts` | `vendedoria-prod-email-alerts` |
+| `media_domain` | `media-staging.agopify.com` | `media.agopify.com` |
+| `email_domain` | `staging.agopify.com` | `agopify.com` |
+| MAIL FROM | `bounce.staging.agopify.com` | `bounce.agopify.com` |
+| `email_from` | `Agopify Staging <pedidos@staging.agopify.com>` | `Agopify <pedidos@agopify.com>` |
+| Bucket de fotos | `agopify-media-staging-<AWS_ACCOUNT_ID>` | `agopify-media-prod-<AWS_ACCOUNT_ID>` |
+| Configuration set | `agopify-staging-transactional` | `agopify-prod-transactional` |
+| Usuario IAM | `agopify-staging-api` | `agopify-prod-api` |
+| Tópico SNS | `agopify-staging-email-alerts` | `agopify-prod-email-alerts` |
 | `manage_account_settings` | `false` | `true` (supresión de cuenta + 2 alarmas) |
-| `manage_dmarc` | `false` | `false` (DMARC existente en `marrso.com`) |
+| `manage_dmarc` | `false` | `false` (DMARC existente en `agopify.com`) |
 | `alerts_email` | `<ALERT_EMAIL>` | `<ALERT_EMAIL>` (buzón del equipo, no personal) |
 | Recursos del primer plan | 28 | 31 (con `alerts_email` y `manage_dmarc = false`) |
 | State | `env:/staging/aws.tfstate` | `env:/prod/aws.tfstate` |
@@ -944,7 +944,7 @@ terraform workspace new prod                   # primera vez; luego: terraform w
 terraform workspace show                       # debe decir prod
 ```
 
-Validaciones DNS previas (sección 8) para `media.marrso.com`, `bounce.marrso.com`, `_dmarc.marrso.com` y CAA de `marrso.com` / `media.marrso.com`. Comprueba también que `marrso.com` no exista ya como identidad SES creada a mano (`aws sesv2 get-email-identity --email-identity marrso.com`); si existe, impórtala (sección 18).
+Validaciones DNS previas (sección 8) para `media.agopify.com`, `bounce.agopify.com`, `_dmarc.agopify.com` y CAA de `agopify.com` / `media.agopify.com`. Comprueba también que `agopify.com` no exista ya como identidad SES creada a mano (`aws sesv2 get-email-identity --email-identity agopify.com`); si existe, impórtala (sección 18).
 
 ```powershell
 terraform fmt -recursive
@@ -955,7 +955,7 @@ terraform plan "-var-file=envs/prod.tfvars" "-out=prod.tfplan"
 Revisión obligatoria antes del apply, idealmente por una segunda persona:
 
 - `Plan: 31 to add, 0 to change, 0 to destroy.` (o el número que justifique tu `prod.tfvars`).
-- Ningún recurso con `staging` en el nombre; todos con `vendedoria-prod-...`.
+- Ningún recurso con `staging` en el nombre; todos con `agopify-prod-...`.
 - Dominios de prod en el certificado, el alias, la identidad y los registros DNS.
 - Que no aparezca `cloudflare_dns_record.dmarc`.
 - Que aparezcan `aws_sesv2_account_suppression_attributes.account[0]` y las dos alarmas.
@@ -964,7 +964,7 @@ Revisión obligatoria antes del apply, idealmente por una segunda persona:
 terraform apply "prod.tfplan"
 ```
 
-Después: secciones 10 (suscripción SNS, access key `vendedoria-prod-api`), 11 (`.env` de producción con `EMAIL_MODE=live`), 12 (verificación con los nombres de prod) y 13.
+Después: secciones 10 (suscripción SNS, access key `agopify-prod-api`), 11 (`.env` de producción con `EMAIL_MODE=live`), 12 (verificación con los nombres de prod) y 13.
 
 ## 16. Operación y mantenimiento
 
@@ -1047,7 +1047,7 @@ Si el plan de staging sale limpio (o con cambios que entiendes), aplícalo, prue
 
 ```powershell
 git clone <REPO_URL>
-cd vendedoria\infra\terraform
+cd agopify\infra\terraform
 # backend.hcl: regénéralo desde bootstrap (6.2) o cópialo del gestor de contraseñas
 # envs/<entorno>.tfvars: del gestor de contraseñas (no está en git)
 aws sso login --profile ops
@@ -1196,7 +1196,7 @@ Si algo se creó a mano, se adopta sin borrarlo. Crea un archivo temporal `infra
 ```hcl
 import {
   to = aws_sesv2_email_identity.domain
-  id = "marrso.com"
+  id = "agopify.com"
 }
 import {
   to = cloudflare_dns_record.mail_from_mx
@@ -1265,7 +1265,7 @@ Cierre
 
 ## Anexo A: registro del primer despliegue de staging
 
-Entorno: workspace `staging`, `us-east-1`, `media-staging.marrso.com`, `staging.marrso.com`, MAIL FROM `bounce.staging.marrso.com`, configuration set `vendedoria-staging-transactional`, usuario IAM `vendedoria-staging-api`. Ids de cuenta y de distribución omitidos a propósito: se obtienen con `aws sts get-caller-identity` y `terraform output`.
+Entorno: workspace `staging`, `us-east-1`, `media-staging.agopify.com`, `staging.agopify.com`, MAIL FROM `bounce.staging.agopify.com`, configuration set `agopify-staging-transactional`, usuario IAM `agopify-staging-api`. Ids de cuenta y de distribución omitidos a propósito: se obtienen con `aws sts get-caller-identity` y `terraform output`.
 
 ```mermaid
 flowchart TD
@@ -1280,9 +1280,9 @@ flowchart TD
   I --> J["Verificación CDN, S3, SES, SNS, IAM"]
 ```
 
-1. **Bootstrap**: se creó `vendedoria-tfstate-<AWS_ACCOUNT_ID>` (cifrado, versionado, Block Public Access, solo TLS, lifecycle de 90 días) y se generó `backend.hcl` con `use_lockfile = true`. `terraform init "-backend-config=.\backend.hcl"` funcionó solo con el flag entre comillas.
+1. **Bootstrap**: se creó `agopify-tfstate-<AWS_ACCOUNT_ID>` (cifrado, versionado, Block Public Access, solo TLS, lifecycle de 90 días) y se generó `backend.hcl` con `use_lockfile = true`. `terraform init "-backend-config=.\backend.hcl"` funcionó solo con el flag entre comillas.
 2. **`for_each`**: el primer `plan` falló con `Invalid for_each argument` porque las claves salían de `domain_validation_options`. Se cambió a claves derivadas de `var.media_domain` (17.2). Tras `terraform fmt -recursive`, `terraform validate` y `terraform plan "-var-file=envs/staging.tfvars" "-out=staging.tfplan"`: `Plan: 28 to add, 0 to change, 0 to destroy.`
-3. **Primer apply**: varios recursos se crearon bien, pero `aws_acm_certificate_validation` terminó con `unexpected state 'FAILED', wanted target 'ISSUED'. last error: CAA_ERROR`. `marrso.com` tenía CAA para `comodoca.com`, `digicert.com`, `letsencrypt.org`, `pki.goog` y `ssl.com`, sin Amazon. `Resolve-DnsName -Type CAA` y `nslookup -type=257` no funcionaron en ese Windows; se usó DNS-over-HTTPS (8.3).
+3. **Primer apply**: varios recursos se crearon bien, pero `aws_acm_certificate_validation` terminó con `unexpected state 'FAILED', wanted target 'ISSUED'. last error: CAA_ERROR`. `agopify.com` tenía CAA para `comodoca.com`, `digicert.com`, `letsencrypt.org`, `pki.goog` y `ssl.com`, sin Amazon. `Resolve-DnsName -Type CAA` y `nslookup -type=257` no funcionaron en ese Windows; se usó DNS-over-HTTPS (8.3).
 4. **Corrección CAA**: se añadió a mano en Cloudflare `0 issue "amazon.com"` en el dominio raíz, sin quitar las otras CA.
 5. **Estado parcial**: no se ejecutó `destroy`. `terraform plan "-var-file=envs/staging.tfvars"` mostró `Plan: 4 to add, 0 to change, 0 to destroy.` (validación ACM, distribución, bucket policy y CNAME del CDN), pero reutilizaba el certificado `FAILED`.
 6. **Reemplazo**: `terraform plan "-replace=aws_acm_certificate.media[0]" "-var-file=envs/staging.tfvars" "-out=staging-retry.tfplan"` dio `Plan: 6 to add, 0 to change, 2 to destroy.` Los destroys eran el certificado fallido y su CNAME de validación; los adds, el nuevo certificado, su CNAME, la validación, CloudFront, la bucket policy y el CNAME del CDN. `terraform apply "staging-retry.tfplan"` dio `Apply complete! Resources: 6 added, 0 changed, 2 destroyed.` y el certificado quedó `ISSUED`.
@@ -1293,11 +1293,11 @@ flowchart TD
    - SES: identidad `DOMAIN` verificada, DKIM `SUCCESS` RSA 2048, MX y SPF de MAIL FROM correctos, cuenta ya en producción (`HEALTHY`);
    - el correo de prueba llegó;
    - suscripción SNS confirmada;
-   - access key de `vendedoria-staging-api` creada a mano.
+   - access key de `agopify-staging-api` creada a mano.
 
 ## Referencias
 
-- Detalle técnico y checklist de AWS: `.agents/skills/vendedoria-aws/` (`SKILL.md`, `reference.md`, `scripts/check-aws.mjs`).
+- Detalle técnico y checklist de AWS: `.agents/skills/agopify-aws/` (`SKILL.md`, `reference.md`, `scripts/check-aws.mjs`).
 - Despliegue de la app: [DEPLOY.md](DEPLOY.md).
 - Terraform S3 backend: https://developer.hashicorp.com/terraform/language/backend/s3
 - `for_each`: https://developer.hashicorp.com/terraform/language/meta-arguments/for_each

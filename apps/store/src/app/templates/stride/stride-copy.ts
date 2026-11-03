@@ -1,4 +1,4 @@
-import type { StorefrontView } from '@vendedoria/contracts';
+import type { StorefrontView } from '@agopify/contracts';
 
 /** Missing keys use commercial defaults; merchant empty strings stay empty. */
 export function strideCopy(store: StorefrontView | null) {

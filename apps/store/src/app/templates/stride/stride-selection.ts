@@ -4,7 +4,7 @@ import type {
   PublicProductCard,
   PublicProductList,
   StoreCatalogProduct,
-} from '@vendedoria/contracts';
+} from '@agopify/contracts';
 import { StoreApiService } from '../../core/store-api.service';
 
 export type StrideSelection = {

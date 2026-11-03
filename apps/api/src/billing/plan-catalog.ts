@@ -22,7 +22,7 @@ export type PlanLimits = {
   couponQuota: number | null;
   /** Console users, owner included. */
   seatQuota: number | null;
-  /** The store shows "Hecho con VendedorIA". */
+  /** The store shows "Hecho con Agopify". */
   platformBadge: boolean;
   integrations: IntegrationKey[];
 };
@@ -62,7 +62,7 @@ export type ChatPackDefinition = {
 /** Days granted by each paid month. */
 export const PLAN_PERIOD_DAYS = 30;
 /** Trial length; the database default of `Tenant.planExpiresAt` uses the same value. */
-export const PLAN_TRIAL_DAYS = 14;
+export const PLAN_TRIAL_DAYS = 7;
 export const PLAN_CURRENCY = 'PEN';
 /** Plan new businesses try; the database default of `Tenant.planTier` uses the same value. */
 export const TRIAL_PLAN: PlanTier = 'GROW';
@@ -139,7 +139,7 @@ export const PLAN_NOTES = [
   'Las respuestas con IA son las que tu vendedor escribe con inteligencia artificial. Si llegas al máximo del mes, sigue respondiendo con respuestas básicas de tu catálogo hasta el mes siguiente o hasta que sumes chats extra.',
   'La tienda web aún no forma parte oficial del plan: si la ves en la consola es acceso anticipado, sin compromiso de funciones ni soporte dedicado.',
   'Meta cobra los mensajes de WhatsApp aparte, en tu cuenta de WhatsApp Business: cada número tiene 1 000 respuestas gratis al mes y luego paga unos S/ 0,10 por respuesta. Un chat de venta usa entre 6 y 10 respuestas.',
-  'El dinero de tus ventas llega a tu cuenta de Mercado Pago. VendedorIA no cobra comisión por venta.',
+  'El dinero de tus ventas llega a tu cuenta de Mercado Pago. Agopify no cobra comisión por venta.',
   'Los precios incluyen IGV.',
 ];
 

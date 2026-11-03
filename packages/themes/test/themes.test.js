@@ -31,13 +31,13 @@ test('all shipped releases have unique immutable identities and compatible contr
   assert.equal(themes.THEME_CATALOG.length, 8);
   for (const theme of themes.THEME_CATALOG) assert.equal(themes.compatibility(theme).status, 'compatible');
   assert.equal(themes.getTheme('stride', '1.0.0').displayName, 'Impulso');
-  assert.equal(themes.getTheme('stride', '1.1.0').id, 'vendedoria/stride');
+  assert.equal(themes.getTheme('stride', '1.1.0').id, 'agopify/stride');
   assert.ok(Object.isFrozen(themes.getTheme('classic').tokens));
 });
 
 test('Rosaline keeps its own renderer and starts without fabricated evidence or third-party media in merchant presets', () => {
   const theme = themes.getTheme('rosaline', '1.0.0');
-  assert.equal(theme.id, 'vendedoria/rosaline');
+  assert.equal(theme.id, 'agopify/rosaline');
   assert.equal(theme.displayName, 'Rosaline');
   assert.equal(theme.renderer, 'rosaline@1');
   assert.equal(theme.license, 'LicenseRef-ThemeForest-Pending');

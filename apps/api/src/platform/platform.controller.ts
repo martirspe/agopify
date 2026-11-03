@@ -11,7 +11,7 @@ import {
   PlatformPermissions,
 } from './platform-permissions.decorator';
 
-/** VendedorIA staff sessions. Separate from business sessions: neither token works on the other side. */
+/** Agopify staff sessions. Separate from business sessions: neither token works on the other side. */
 @ApiTags('platform')
 @Controller('platform/auth')
 export class PlatformAuthController {

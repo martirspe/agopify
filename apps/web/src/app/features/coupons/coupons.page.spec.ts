@@ -4,7 +4,7 @@ import { CouponsPage } from './coupons.page';
 import { CouponsApiService, type Coupon, type CouponPayload } from '../../core/api/coupons-api.service';
 import { StoreApiService } from '../../core/api/store-api.service';
 import { IntegrationsStateService } from '../../core/integrations/integrations-state.service';
-import { DsConfirmService } from '@vendedoria/ui';
+import { DsConfirmService } from '@agopify/ui';
 
 const coupon: Coupon = { id: 'coupon', code: 'VERANO10', method: 'CODE', label: 'Descuento de verano', note: null, kind: 'PERCENT', value: 10, maxDiscountCents: null, buyQuantity: null, getQuantity: null, maxApplications: null, minSubtotalCents: 0, minItems: 0, scope: 'ALL', targets: [], startsAt: null, endsAt: null, usageLimit: null, perCustomerLimit: null, firstOrderOnly: false, isActive: true, applyToSets: true, createdAt: '2026-10-08', usedCount: 0, confirmedCount: 0, discountGivenCents: 0 };
 beforeEach(() => vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} })));

@@ -1,14 +1,18 @@
 <section id="planes" class="pricing" aria-labelledby="plans-title">
   <div class="mk-section mk-shell">
-    <header class="mk-heading">
-      <p class="mk-kicker">UN PLAN PARA TU SIGUIENTE ETAPA</p>
-      <h2 id="plans-title">Empieza a vender.<br />Crece a tu ritmo.</h2>
-      <p>14 días para probar el plan Crece. Sin tarjeta ni cobros automáticos.</p>
+    <header class="pricing__intro">
+      <p class="mk-kicker">PLANES</p>
+      <h2 id="plans-title">Empieza a vender.<br />Escala cuando el chat lo pida.</h2>
+      <p>
+        7 días del plan Crece, sin tarjeta ni cobros automáticos. Elige capacidad cuando la prueba
+        termine.
+      </p>
+      <div class="pricing__terms">
+        <span><ds-icon name="check" [size]="1" /> Precios en soles con IGV</span>
+        <span><ds-icon name="check" [size]="1" /> Sin comisión por venta de Agopify</span>
+      </div>
     </header>
-    <div class="pricing__terms">
-      <span><ds-icon name="check" [size]="1" /> Precios en soles con IGV</span
-      ><span><ds-icon name="check" [size]="1" /> Sin comisión por venta de VendedorIA</span>
-    </div>
+
     <div class="pricing__shared" aria-label="Incluido en todos los planes">
       <p class="pricing__shared-title">Todos los planes incluyen</p>
       <ul class="pricing__shared-list">
@@ -16,21 +20,22 @@
           <li><ds-icon name="check" [size]="1" /><span>{{ item }}</span></li>
         }
       </ul>
-      <p class="pricing__shared-hint">Entre planes solo cambia la capacidad.</p>
+      <p class="pricing__shared-hint">Entre planes solo cambia la capacidad. La tienda web aún no forma parte oficial del plan.</p>
     </div>
+
     <ul class="plans">
       @for (plan of plans; track plan.name) {
         <li class="plans__card" [class.plans__card--featured]="plan.featured">
           <div class="plans__name">
             <h3>{{ plan.name }}</h3>
             @if (plan.featured) {
-              <span>PRUÉBALO GRATIS</span>
+              <span>PRUEBA GRATIS</span>
             }
           </div>
           <p class="plans__description">{{ plan.description }}</p>
           <p class="plans__price"><span>S/</span> {{ plan.price }}<small>/ mes</small></p>
           <a dsLink [variant]="plan.featured ? 'primary' : 'secondary'" href="/auth/register"
-            >{{ plan.featured ? 'Probar 14 días gratis' : 'Crear mi cuenta'
+            >{{ plan.featured ? 'Probar 7 días gratis' : 'Crear mi cuenta'
             }}<ds-icon name="arrowRight" [size]="1"
           /></a>
           @if (plan.note) {
@@ -47,6 +52,7 @@
         </li>
       }
     </ul>
+
     <div class="pricing__footnote">
       <p>Las cuentas de Meta y Mercado Pago se conectan por separado.</p>
       <a [routerLink]="links.billing"
@@ -56,58 +62,90 @@
   </div>
 </section>
 
-<section id="preguntas" class="mk-section mk-shell faq" aria-labelledby="faq-title">
-  <header class="mk-heading">
-    <p class="mk-kicker">ANTES DE EMPEZAR</p>
-    <h2 id="faq-title">Conoce a tu<br />nuevo vendedor.</h2>
-    <p>Lo que necesitas saber para dar el siguiente paso.</p>
-    <a class="faq__conditions" [routerLink]="links.billing"
-      >Ver condiciones del servicio <ds-icon name="arrowRight" [size]="1"
-    /></a>
-  </header>
-  <div class="faq__list">
-    @for (item of questions; track item.question) {
-      <ds-disclosure [title]="item.question" group="marketing-faq"
-        ><p>{{ item.answer }}</p></ds-disclosure
-      >
-    }
-  </div>
-</section>
-
-<section class="final mk-shell" aria-labelledby="final-title">
-  <div class="final__copy">
-    <p class="mk-kicker">EL SIGUIENTE HOLA PUEDE SER UNA VENTA</p>
-    <h2 id="final-title">Dale a tu negocio<br /><span>un vendedor IA.</span></h2>
-    <p>Prepáralo con tu catálogo. Pruébalo con tu marca. Empieza a vender a tu manera.</p>
-  </div>
-  <div class="final__actions">
-    <a dsLink href="/auth/register">Empezar mis 14 días gratis <ds-icon name="arrowRight" /></a
-    ><span>Sin tarjeta. Sin cobros automáticos.</span>
-  </div>
-</section>
-
-<footer class="footer mk-shell">
-  <div class="footer__top">
-    <div>
-      <a class="brand" href="#inicio"
-        >Vendedor<span>IA</span><span class="brand__dot" aria-hidden="true"></span
-      ></a>
-      <p>Del hola al pago.<br />Hecho para tu negocio.</p>
+<section id="preguntas" class="faq mk-section" aria-labelledby="faq-title">
+  <div class="mk-shell faq__layout">
+    <header class="mk-heading">
+      <p class="mk-kicker">PREGUNTAS</p>
+      <h2 id="faq-title">Todo lo que<br />necesitas saber.</h2>
+      <p>Respuestas claras antes de crear tu cuenta.</p>
+      <a class="faq__conditions" [routerLink]="links.billing"
+        >Ver condiciones del servicio <ds-icon name="arrowRight" [size]="1"
+      /></a>
+    </header>
+    <div class="faq__list">
+      @for (item of questions; track item.question) {
+        <ds-disclosure [title]="item.question" group="marketing-faq"
+          ><p>{{ item.answer }}</p></ds-disclosure
+        >
+      }
     </div>
-    <nav class="footer__links" aria-label="Pie de página">
-      <a href="#funcionalidades">El producto</a><a href="#como-funciona">Cómo funciona</a
-      ><a href="#planes">Planes</a><a href="#preguntas">Preguntas</a
-      ><a href="/auth/login">Entrar a mi cuenta <ds-icon name="arrowRight" [size]="1" /></a>
-    </nav>
   </div>
-  <div class="footer__bottom">
-    <p>© {{ year }} {{ legal.brand }} · {{ legal.legalName }} · Hecho en Perú</p>
-    <nav aria-label="Legal">
-      <a [routerLink]="links.terms">Términos</a><a [routerLink]="links.privacy">Privacidad</a
-      ><a [routerLink]="links.cookies">Cookies</a><a [routerLink]="links.center">Centro legal</a
-      ><a [href]="legal.complaintsBookUrl" target="_blank" rel="noopener noreferrer"
+</section>
+
+<section class="close" aria-labelledby="close-title">
+  <div class="close__glow" aria-hidden="true"></div>
+  <div class="mk-shell close__inner">
+    <p class="mk-kicker">TU SIGUIENTE ETAPA DE COMERCIO</p>
+    <h2 id="close-title">
+      La IA que vende.<br />
+      El comercio que<br />
+      <span>conecta.</span>
+    </h2>
+    <p>
+      Une tu vendedor IA y tu operación comercial en Agopify. 7 días del plan Crece. Sin tarjeta. Sin
+      cobros automáticos.
+    </p>
+    <div class="close__actions">
+      <a dsLink href="/auth/register">Empezar con Agopify <ds-icon name="arrowRight" /></a>
+      <a class="close__secondary" href="#plataforma"
+        ><ds-icon name="layers" [size]="1" /> Explorar la plataforma</a
+      >
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="mk-shell footer__inner">
+    <div class="footer__top">
+      <div class="footer__brand">
+        <a class="brand" href="#inicio"
+          >Agopify<span class="brand__dot" aria-hidden="true"></span
+        ></a>
+        <p>IA que vende. Comercio que conecta.<br />Hecho para negocios que cierran por chat.</p>
+      </div>
+      <nav class="footer__col" aria-label="Plataforma">
+        <p class="footer__label">Plataforma</p>
+        <a href="#plataforma">Agentes IA</a>
+        <a href="#tienda">Tienda web</a>
+        <a href="#ecosistema">Ecosistema</a>
+        <a href="#planes">Planes</a>
+      </nav>
+      <nav class="footer__col" aria-label="Producto">
+        <p class="footer__label">Producto</p>
+        <a href="#demo">Cómo vende</a>
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#casos">Casos de uso</a>
+        <a href="#preguntas">Preguntas</a>
+      </nav>
+      <nav class="footer__col" aria-label="Cuenta">
+        <p class="footer__label">Cuenta</p>
+        <a href="/auth/register">Empezar gratis</a>
+        <a href="/auth/login">Entrar</a>
+      </nav>
+      <nav class="footer__col" aria-label="Legal">
+        <p class="footer__label">Legal</p>
+        <a [routerLink]="links.terms">Términos</a>
+        <a [routerLink]="links.privacy">Privacidad</a>
+        <a [routerLink]="links.cookies">Cookies</a>
+        <a [routerLink]="links.center">Centro legal</a>
+        <a [routerLink]="links.billing">Condiciones de planes</a>
+      </nav>
+    </div>
+    <div class="footer__bottom">
+      <p>© {{ year }} {{ legal.brand }} · {{ legal.legalName }} · Hecho en Perú</p>
+      <a [href]="legal.complaintsBookUrl" target="_blank" rel="noopener noreferrer"
         >Libro de Reclamaciones <ds-icon name="book" [size]="1"
       /></a>
-    </nav>
+    </div>
   </div>
 </footer>

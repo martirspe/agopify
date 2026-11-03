@@ -1,17 +1,19 @@
 <a class="skip-link" href="#contenido">Saltar al contenido</a>
-<header id="inicio" class="site-header">
+
+<header id="inicio" class="site-header" [class.site-header--scrolled]="scrolled()">
   <div class="mk-shell site-header__inner">
-    <a class="brand" href="#inicio" aria-label="VendedorIA, inicio"
-      >Vendedor<span>IA</span><span class="brand__dot" aria-hidden="true"></span
+    <a class="brand" href="#inicio" aria-label="Agopify, inicio"
+      >Agopify<span class="brand__dot" aria-hidden="true"></span
     ></a>
     <nav class="desktop-nav" aria-label="Principal">
-      <a href="#funcionalidades">El producto</a>
-      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#producto">Producto</a>
+      <a href="#demo">Cómo vende</a>
+      <a href="#plataforma">Plataforma</a>
+      <a href="#casos">Casos</a>
       <a href="#planes">Planes</a>
-      <a href="#preguntas">Preguntas</a>
     </nav>
     <div class="site-header__actions">
-      <a class="login-link" href="/auth/login">Entrar <ds-icon name="arrowRight" [size]="1" /></a>
+      <a class="login-link" href="/auth/login">Entrar</a>
       <a class="header-cta" dsLink href="/auth/register">Empezar gratis</a>
       <details
         #mobileMenu
@@ -22,10 +24,13 @@
           <ds-icon name="list" /><span>Menú</span>
         </summary>
         <nav aria-label="Navegación móvil">
-          <a href="#funcionalidades" (click)="closeMobileMenu(mobileMenu)">El producto</a>
-          <a href="#como-funciona" (click)="closeMobileMenu(mobileMenu)">Cómo funciona</a>
+          <a href="#producto" (click)="closeMobileMenu(mobileMenu)">Producto</a>
+          <a href="#demo" (click)="closeMobileMenu(mobileMenu)">Cómo vende</a>
+          <a href="#plataforma" (click)="closeMobileMenu(mobileMenu)">Plataforma</a>
+          <a href="#casos" (click)="closeMobileMenu(mobileMenu)">Casos</a>
           <a href="#planes" (click)="closeMobileMenu(mobileMenu)">Planes</a>
-          <a href="#preguntas" (click)="closeMobileMenu(mobileMenu)">Preguntas frecuentes</a>
+          <a href="#preguntas" (click)="closeMobileMenu(mobileMenu)">Preguntas</a>
+          <a href="/auth/login" (click)="closeMobileMenu(mobileMenu)">Entrar</a>
           <a dsLink href="/auth/register"
             >Empezar gratis <ds-icon name="arrowRight" [size]="1"
           /></a>
@@ -36,38 +41,120 @@
 </header>
 
 <main id="contenido" tabindex="-1">
-  <section class="hero mk-shell" aria-labelledby="hero-title">
-    <div class="hero__content">
-      <p class="mk-kicker"><span class="status-dot" aria-hidden="true"></span> DEL HOLA AL PAGO</p>
-      <h1 id="hero-title">Tu próximo<br />vendedor<br /><span>es IA.</span></h1>
-      <p class="hero__support">
-        Convierte conversaciones en pedidos. Tu vendedor IA atiende en WhatsApp e Instagram, usa tu
-        catálogo y guía al cliente hasta el pago.
-      </p>
-      <div class="hero__cta">
-        <a dsLink href="/auth/register">Probar 14 días gratis <ds-icon name="arrowRight" /></a>
-        <a class="hero__tour" href="#demo"><ds-icon name="play" [size]="1" /> Ver cómo vende</a>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <div class="mk-shell hero__stage">
+      <div class="hero__copy mk-rise">
+        <p class="hero__eyebrow">
+          <span class="status-dot" aria-hidden="true"></span>
+          Plataforma de comercio con IA · WhatsApp e Instagram
+        </p>
+        <p class="hero__brand">Agopify</p>
+        <h1 id="hero-title">
+          Tu vendedor IA.<br />
+          Tu comercio.<br />
+          <span>Una plataforma.</span>
+        </h1>
+        <p class="hero__lede">
+          Agentes de ventas inteligentes que atienden, recomiendan con tu catálogo real y cobran en
+          el chat — conectados a tu operación y a tu tienda web en camino.
+        </p>
+        <div class="hero__actions">
+          <a dsLink href="/auth/register"
+            >Empezar a vender con IA <ds-icon name="arrowRight"
+          /></a>
+          <a class="hero__ghost" href="#plataforma">
+            <ds-icon name="layers" [size]="1" /> Explorar la plataforma
+          </a>
+        </div>
+        <ul class="hero__trust">
+          <li><ds-icon name="check" [size]="1" /> 7 días del plan Crece</li>
+          <li><ds-icon name="check" [size]="1" /> Sin tarjeta</li>
+          <li><ds-icon name="check" [size]="1" /> Sin cobro automático</li>
+        </ul>
       </div>
-      <p class="hero__terms">
-        <ds-icon name="check" [size]="1" /> Sin tarjeta. Sin cobros automáticos.
-      </p>
-      <div class="hero__channels" aria-label="Canales de venta">
-        <span><ds-icon name="whatsapp" [size]="1.125" /> WhatsApp</span>
-        <span><ds-icon name="instagram" [size]="1.125" /> Instagram</span>
-        <span><ds-icon name="store" [size]="1.125" /> Tienda · pronto</span>
+
+      <div class="hero__visual mk-rise mk-rise--late" aria-hidden="true">
+        <div class="hero-comp">
+          <div class="hero-comp__chat">
+            <div class="hero-comp__bar">
+              <span class="status-dot"></span>
+              <strong>Vendedor IA</strong>
+              <ds-icon name="whatsapp" [size]="1" />
+            </div>
+            <div class="hero-comp__bubble hero-comp__bubble--in">¿Tienen la Urbana en 40?</div>
+            <div class="hero-comp__bubble hero-comp__bubble--out">
+              Sí, disponible. Talla 40 · S/ 189.00
+            </div>
+            <div class="hero-comp__product">
+              <img
+                src="/marketing/urban-sneaker.webp"
+                alt=""
+                width="72"
+                height="72"
+                fetchpriority="high"
+                decoding="async"
+              />
+              <div>
+                <strong>Urbana Blanca</strong>
+                <span>En stock · De tu catálogo</span>
+              </div>
+              <b>S/ 189</b>
+            </div>
+            <div class="hero-comp__pay">
+              <ds-icon name="wallet" [size]="1" /> Enlace de pago listo
+            </div>
+          </div>
+          <div class="hero-comp__bridge">
+            <span></span>
+            <ds-icon name="arrowRight" [size]="0.875" />
+            <span></span>
+          </div>
+          <div class="hero-comp__store">
+            <div class="hero-comp__store-bar">
+              <span class="hero-comp__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span>tienda · pronto</span>
+            </div>
+            <div class="hero-comp__store-body">
+              <p>Mismo catálogo</p>
+              <strong>Escaparate web</strong>
+              <span>En desarrollo · acceso anticipado</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-
-    <app-marketing-demo />
   </section>
 
-  <div class="capabilities mk-shell" aria-label="Lo que conecta VendedorIA">
-    <p>Una conversación.<br /><strong>Todo conectado.</strong></p>
-    <span><ds-icon name="message" /> Atención con IA</span>
-    <span><ds-icon name="package" /> Tu catálogo</span>
-    <span><ds-icon name="wallet" /> Cobros</span>
-    <span><ds-icon name="store" /> Tienda · pronto</span>
-  </div>
+  <section class="manifesto" aria-label="Promesa de Agopify" id="producto">
+    <div class="mk-shell manifesto__inner">
+      <p class="manifesto__lead">
+        No es un chatbot para responder más rápido.
+      </p>
+      <p class="manifesto__punch">
+        Es la plataforma que une
+        <strong>ventas con IA</strong> y
+        <strong>comercio conectado</strong>
+        para que cada conversación pueda terminar en pedido.
+      </p>
+    </div>
+  </section>
+
+  <section class="stage" id="demo" aria-labelledby="stage-title">
+    <div class="mk-shell stage__head">
+      <p class="mk-kicker">CÓMO SE VE UNA VENTA</p>
+      <h2 id="stage-title">Míralo vender.<br /><span>Luego pruébalo con tu marca.</span></h2>
+      <p>
+        Tres momentos del mismo flujo: recomienda con stock real, cobra en el chat y te entrega el
+        control cuando lo pides. Simulación ilustrativa — no es una conversación en vivo.
+      </p>
+    </div>
+    <div class="mk-shell stage__frame">
+      <app-marketing-demo />
+    </div>
+  </section>
+
   <app-marketing-features />
+
   <app-marketing-pricing />
 </main>

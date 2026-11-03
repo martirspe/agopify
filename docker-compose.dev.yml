@@ -1,13 +1,13 @@
-# VendedorIA — desarrollo local con recarga en caliente.
+# Agopify — desarrollo local con recarga en caliente.
 # Instrucciones: README.md → «Desarrollo (Docker)».
 #
-# Por defecto: postgres + api + consola. Opcional: store | redis | recommendations-vector.
-# Uso: npm run dev | dev:store | dev:redis | dev:all | docker:down | docker:logs | test:docker
+# Por defecto: postgres + api + consola + tienda. Opcional: redis | recommendations-vector.
+# Uso: npm run dev | dev:redis | docker:down | docker:logs | test:docker
 
-name: vendedoria-dev
+name: agopify-dev
 
 x-node: &node
-  image: vendedoria-dev:latest
+  image: agopify-dev:latest
   volumes:
     - .:/app
     - node_modules_dev:/app/node_modules
@@ -26,15 +26,15 @@ x-node: &node
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: vendedoria-dev-db
+    container_name: agopify-dev-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: vendedoria
+      POSTGRES_DB: agopify
     ports: ['127.0.0.1:5432:5432']
     volumes: [postgres_dev:/var/lib/postgresql/data]
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d vendedoria']
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d agopify']
       interval: 5s
       timeout: 3s
       retries: 20
@@ -49,13 +49,13 @@ services:
 
   api:
     <<: *node
-    container_name: vendedoria-dev-api
+    container_name: agopify-dev-api
     working_dir: /app/apps/api
     environment:
       <<: *node-env
       NODE_ENV: development
       PORT: '3100'
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/vendedoria?schema=public
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/agopify?schema=public
       CORS_ORIGIN: http://localhost:4201
       PUBLIC_API_BASE_URL: http://localhost:3100/api/v1
       STOREFRONT_URL_TEMPLATE: http://{slug}.localhost:4300
@@ -77,7 +77,7 @@ services:
 
   web:
     <<: *node
-    container_name: vendedoria-dev-web
+    container_name: agopify-dev-web
     working_dir: /app/apps/web
     ports: ['127.0.0.1:4201:4201']
     command: npx ng serve --host 0.0.0.0 --port 4201 --poll 1000
@@ -93,8 +93,7 @@ services:
 
   store:
     <<: *node
-    profiles: [store]
-    container_name: vendedoria-dev-store
+    container_name: agopify-dev-store
     working_dir: /app/apps/store
     environment:
       <<: *node-env
@@ -133,9 +132,9 @@ services:
 volumes:
   redis_conversion:
   qdrant_conversion:
-  # Nombre fijo: conserva la base del stack anterior (proyecto `vendedoria`, servicio `db`).
+  # Volumen con nombre fijo para no perder datos al recrear el stack de desarrollo.
   postgres_dev:
-    name: vendedoria_vendedoria_pg
+    name: agopify_pg
   node_modules_dev:
   api_node_modules_dev:
   web_node_modules_dev:

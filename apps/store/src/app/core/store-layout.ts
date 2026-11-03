@@ -1,4 +1,4 @@
-import type { StoreTemplate, StoreTemplateContent, StorefrontView } from '@vendedoria/contracts';
+import type { StoreTemplate, StoreTemplateContent, StorefrontView } from '@agopify/contracts';
 
 export type HomeSection = { id: string; type: string };
 

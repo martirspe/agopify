@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import type { StoreRecommendations } from '@vendedoria/contracts';
+import type { StoreRecommendations } from '@agopify/contracts';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   PRODUCT_INCLUDE,

@@ -285,9 +285,20 @@ body.tpl-rosaline .ro-shell dialog.offcanvas[open] {
   transform: none;
   margin: 0;
   border: 0;
+  width: min(100dvw, 100%);
   max-width: 100%;
   max-height: none;
-  height: 100%;
+  height: 100dvh;
+  padding-top: var(--store-safe-top, env(safe-area-inset-top, 0px));
+  padding-bottom: var(--store-safe-bottom, env(safe-area-inset-bottom, 0px));
+}
+
+body.tpl-rosaline .ro-shell #goTop,
+body.tpl-rosaline .ro-shell .btn-scroll-top {
+  right: calc(1rem + var(--store-safe-right, env(safe-area-inset-right, 0px)));
+  bottom: calc(1.5rem + var(--store-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  min-width: var(--ds-touch-target);
+  min-height: var(--ds-touch-target);
 }
 body.tpl-rosaline .ro-shell dialog.offcanvas::backdrop {
   background: rgba(0, 0, 0, 0.5);

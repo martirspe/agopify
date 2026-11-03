@@ -9,8 +9,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { LiveApiService, TikTokStatus } from '../../core/api/live-api.service';
-import { DsButtonComponent, DsConfirmService, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent, DsEmptyStateComponent } from '@vendedoria/ui';
-import { DsIconComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsConfirmService, DsFormSectionComponent, DsPageHeaderComponent, DsSelectComponent, DsDisclosureComponent, DsEmptyStateComponent } from '@agopify/ui';
+import { DsIconComponent } from '@agopify/ui';
 import type { IntegrationKey } from '../../core/api/billing-api.service';
 import { IntegrationState, IntegrationsApiService } from '../../core/api/integrations-api.service';
 import { MessagingApiService, WhatsAppSignupConfiguration } from '../../core/api/messaging-api.service';
@@ -299,7 +299,7 @@ export class IntegrationsPage {
         return `Tu tienda dejará de abrir para tus clientes. Tu vendedor IA sigue vendiendo por chat con fotos, precios y links de pago, solo sin enlaces a la tienda. Tu catálogo, tus pedidos y la configuración de la tienda se conservan.${paused}`;
       }
       case 'custom_domain':
-        return 'Tu tienda dejará de abrir en tu dominio y volverá a su dirección de VendedorIA. Puedes activarla de nuevo cuando quieras.';
+        return 'Tu tienda dejará de abrir en tu dominio y volverá a su dirección de Agopify. Puedes activarla de nuevo cuando quieras.';
       case 'instagram':
         return 'Tu vendedor dejará de responder los mensajes de Instagram. Puedes activarla de nuevo cuando quieras.';
       case 'tracking':

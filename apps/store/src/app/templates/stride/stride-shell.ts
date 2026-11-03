@@ -8,7 +8,7 @@ import {
   inject,
 } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { DsIconComponent } from '@vendedoria/ui';
+import { DsIconComponent } from '@agopify/ui';
 import { STORE_EDITOR } from '../../core/store-editor';
 import { StoreStateService } from '../../core/store-state.service';
 import { readableTextOn, storeTheme } from '../../core/theme';

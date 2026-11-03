@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { DsButtonComponent, DsConfirmService, DsIconComponent, DsFormSectionComponent, DsDisclosureComponent, DsPageFrameComponent, DsPageHeaderComponent, DsSaveBarComponent, DsEmptyStateComponent } from '@vendedoria/ui';
+import { DsButtonComponent, DsConfirmService, DsIconComponent, DsFormSectionComponent, DsDisclosureComponent, DsPageFrameComponent, DsPageHeaderComponent, DsSaveBarComponent, DsEmptyStateComponent } from '@agopify/ui';
 import { AccountApiService } from '../../core/api/account-api.service';
 import { messageFrom } from '../../core/api/api-error';
 import { AuthApiService, type MembershipRole } from '../../core/auth/auth-api.service';

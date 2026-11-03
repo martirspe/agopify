@@ -1,5 +1,5 @@
 import { RecommendationsComponent } from '../../components/recommendations.component';
-import { DsSelectComponent } from '@vendedoria/ui';
+import { DsSelectComponent } from '@agopify/ui';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import type { PublicVariant } from '@vendedoria/contracts';
+import type { PublicVariant } from '@agopify/contracts';
 import { ProductFactsComponent } from '../../components/product-facts.component';
 import { AnalyticsService } from '../../core/analytics.service';
 import { CartService } from '../../core/cart.service';

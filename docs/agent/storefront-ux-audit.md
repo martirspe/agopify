@@ -69,7 +69,7 @@ Los fixtures no usan cuentas reales, proveedor de pagos ni registros del negocio
 
 Los registros y capturas locales están en `.tmp/ux-evidence/`: `web-widths.json`, `store-widths.json`, `cart-widths.json`, `selecta-dropdown-desktop.jpg`, `selecta-checkout-mobile.jpg`, `selecta-product-mobile.jpg`, `selecta-catalog-mobile.jpg` y `selecta-cart-mobile.jpg`. Contienen datos de prueba y no forman parte del producto publicado.
 
-La skill `.agents/skills/vendedoria-ui/` incorpora `commerce-conversion.md` y `responsive-audit.md`: embudo completo, persuasión verificable, copy de producción, jerarquía, checkout de una página, selectores, consentimiento y matriz de aceptación. Las mejoras de conversión son hipótesis de diseño; su impacto necesita medirse con tráfico suficiente.
+La skill `.agents/skills/agopify-ui/` incorpora `commerce-conversion.md` y `responsive-audit.md`: embudo completo, persuasión verificable, copy de producción, jerarquía, checkout de una página, selectores, consentimiento y matriz de aceptación. Las mejoras de conversión son hipótesis de diseño; su impacto necesita medirse con tráfico suficiente.
 
 ## Refinamiento visual de Selecta — 4 de octubre de 2026
 

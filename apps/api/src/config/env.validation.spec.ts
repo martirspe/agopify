@@ -39,11 +39,11 @@ describe('validateEnv AWS settings', () => {
         ...BASE,
         MEDIA_STORAGE: 's3',
         AWS_REGION: 'us-east-1',
-        MEDIA_S3_BUCKET: 'vendedoria-media',
+        MEDIA_S3_BUCKET: 'agopify-media',
         MEDIA_CDN_URL: 'http://cdn.example.pe',
       }),
     ).toThrow(/MEDIA_CDN_URL/);
-    const s3 = { ...BASE, MEDIA_STORAGE: 's3', AWS_REGION: 'us-east-1', MEDIA_S3_BUCKET: 'vendedoria-media' };
+    const s3 = { ...BASE, MEDIA_STORAGE: 's3', AWS_REGION: 'us-east-1', MEDIA_S3_BUCKET: 'agopify-media' };
     for (const url of [
       'https://d111111abcdef8.cloudfront.net',
       'https://d111111abcdef8.cloudfront.net/',
@@ -54,10 +54,10 @@ describe('validateEnv AWS settings', () => {
   });
 
   it('rejects S3 endpoints and paths as CDN URL so the bucket never has to be public', () => {
-    const s3 = { ...BASE, MEDIA_STORAGE: 's3', AWS_REGION: 'us-east-1', MEDIA_S3_BUCKET: 'vendedoria-media' };
+    const s3 = { ...BASE, MEDIA_STORAGE: 's3', AWS_REGION: 'us-east-1', MEDIA_S3_BUCKET: 'agopify-media' };
     for (const url of [
-      'https://vendedoria-media.s3.us-east-1.amazonaws.com',
-      'https://s3.amazonaws.com/vendedoria-media',
+      'https://agopify-media.s3.us-east-1.amazonaws.com',
+      'https://s3.amazonaws.com/agopify-media',
       'https://d111111abcdef8.cloudfront.net/media',
     ]) {
       expect(() => validateEnv({ ...s3, MEDIA_CDN_URL: url })).toThrow(/MEDIA_CDN_URL/);

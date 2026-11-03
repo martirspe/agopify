@@ -8,7 +8,7 @@ import {
   DsPageHeaderComponent,
   DsSaveBarComponent,
   DsSelectComponent,
-} from '@vendedoria/ui';
+} from '@agopify/ui';
 import {
   ChangeDetectionStrategy,
   Component,
