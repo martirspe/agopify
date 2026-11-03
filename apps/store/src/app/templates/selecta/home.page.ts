@@ -76,7 +76,8 @@ export class SelectaHomePage {
     );
   });
 
-  readonly featured = computed(() => this.products().slice(0, 3));
+  /** Home selection stays editorial (not the full shop); denser on large screens without claiming curation. */
+  readonly featured = computed(() => this.products().slice(0, 6));
   readonly categoryLinks = computed(() => [...new Set(this.products().map(category))].slice(0, 6).map(value => ({ value, label: value.split(/\s*[>/]\s*/).at(-1) || value, image: photos(this.products().find(p => category(p) === value)!)[0]?.url })));
   private readonly savings = computed(
     () =>

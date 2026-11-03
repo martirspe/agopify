@@ -85,9 +85,44 @@ export class CatalogService {
     return products.map((product) => presentProduct(product));
   }
 
+  /**
+   * Lightweight taxonomy tree for the console picker (Shopify Admin pattern).
+   * Attribute definitions are omitted here — use categoryById() after selection.
+   */
   async categories() {
+    const categories = await this.prisma.catalogCategory.findMany({
+      select: { id: true, name: true, kind: true, parentId: true },
+      orderBy: { name: 'asc' },
+    });
+    const byId = new Map(categories.map((row) => [row.id, row]));
+    const parentsWithChildren = new Set(
+      categories.map((row) => row.parentId).filter((id): id is string => Boolean(id)),
+    );
+    return categories.map((row) => {
+      const path: { id: string; name: string }[] = [];
+      let current: (typeof row) | undefined = row;
+      const visited = new Set<string>();
+      while (current && !visited.has(current.id) && path.length < 12) {
+        visited.add(current.id);
+        path.unshift({ id: current.id, name: current.name });
+        current = current.parentId ? byId.get(current.parentId) : undefined;
+      }
+      return {
+        id: row.id,
+        name: row.name,
+        kind: row.kind,
+        parentId: row.parentId,
+        path,
+        attributes: [] as ReturnType<typeof categorySchema>['attributes'],
+        hasChildren: parentsWithChildren.has(row.id),
+      };
+    });
+  }
+
+  /** Full category schema with inherited metafield definitions (after picker selection). */
+  async categoryById(id: string) {
     const categories = await this.prisma.catalogCategory.findMany({ orderBy: { name: 'asc' } });
-    return categories.map((category) => categorySchema(categories, category.id));
+    return categorySchema(categories, id);
   }
 
   listCollections(tenantId: string) {
@@ -269,11 +304,21 @@ export class CatalogService {
     const pairs = variants.flatMap(variantOptions);
     for (const pair of pairs) {
       const definition = schema.attributes.find((attribute) => normalizeOption(attribute.name) === normalizeOption(pair.name));
-      if (definition && (!definition.variant || (definition.values?.length && !definition.values.includes(pair.value))))
+      // Only taxonomy attributes marked variant may back option axes (Shopify connect).
+      if (definition && !definition.variant) {
         throw new BadRequestException(`El atributo ${pair.name} no permite esa variación.`);
+      }
     }
-    const attributes = validateAttributeValues(schema.attributes, values as Record<string, string>, pairs.map((pair) => pair.name));
-    return { categoryId, attributeValues: attributes as Prisma.InputJsonObject, details: classificationDetails(rawDetails, previousDefinitions, schema.attributes, attributes) ?? Prisma.DbNull };
+    const attributes = validateAttributeValues(
+      schema.attributes,
+      values as Record<string, string | string[]>,
+      pairs.map((pair) => pair.name),
+    );
+    return {
+      categoryId,
+      attributeValues: attributes as unknown as Prisma.InputJsonObject,
+      details: classificationDetails(rawDetails, previousDefinitions, schema.attributes, attributes) ?? Prisma.DbNull,
+    };
   }
 
   async create(tenantId: string, dto: CreateProductDto) {
@@ -303,7 +348,13 @@ export class CatalogService {
             stockQty: stockless ? null : dto.stockQty,
             ...this.kindData(dto, kind),
             compareAtPriceCents: dto.compareAtPriceCents ?? null,
+            costCents: dto.costCents ?? null,
+            taxable: dto.taxable ?? true,
             brand: dto.brand?.trim() || null,
+            vendor: dto.vendor?.trim() || null,
+            tags: this.normalizeTags(dto.tags),
+            ...this.shippingData(dto, kind),
+            metafields: this.normalizeMetafields(dto.metafields),
             sortOrder: dto.sortOrder ?? 0,
             seoTitle: dto.seoTitle?.trim() || null,
             seoDescription: dto.seoDescription?.trim() || null,
@@ -461,7 +512,16 @@ export class CatalogService {
                 }),
             ...this.kindData(dto, kind),
             compareAtPriceCents: dto.compareAtPriceCents,
+            costCents: dto.costCents === undefined ? undefined : dto.costCents,
+            taxable: dto.taxable,
             brand: this.optionalText(dto.brand),
+            vendor: this.optionalText(dto.vendor),
+            tags: dto.tags === undefined ? undefined : this.normalizeTags(dto.tags),
+            ...this.shippingData(dto, kind, true),
+            metafields:
+              dto.metafields === undefined
+                ? undefined
+                : this.normalizeMetafields(dto.metafields),
             sortOrder: dto.sortOrder,
             seoTitle: this.optionalText(dto.seoTitle),
             seoDescription: this.optionalText(dto.seoDescription),
@@ -919,6 +979,76 @@ export class CatalogService {
       priceCents: variant.priceInherited ? basePriceCents : variant.priceCents,
       isAvailable: variant.isAvailable ?? true,
       stockQty: stockless ? null : (variant.stockQty ?? null),
+      metafields:
+        variant.metafields === undefined
+          ? undefined
+          : this.normalizeMetafields(variant.metafields),
+    };
+  }
+
+  private normalizeTags(tags: string[] | undefined): string[] {
+    if (!tags?.length) return [];
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const raw of tags) {
+      const tag = raw.trim().replace(/\s+/g, ' ');
+      if (!tag) continue;
+      const key = tag.toLocaleLowerCase('es');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(tag.slice(0, 40));
+      if (out.length >= 50) break;
+    }
+    return out;
+  }
+
+  private normalizeMetafields(
+    raw: Array<{ key: string; namespace?: string; value: string }> | null | undefined,
+  ): Prisma.InputJsonValue | typeof Prisma.DbNull {
+    if (raw === null) return Prisma.DbNull;
+    if (raw === undefined) return Prisma.DbNull;
+    const rows = raw
+      .map((item) => ({
+        key: item.key.trim(),
+        namespace: item.namespace?.trim() || undefined,
+        value: item.value.trim(),
+      }))
+      .filter((item) => item.key && item.value)
+      .slice(0, 50);
+    return rows.length ? (rows as unknown as Prisma.InputJsonValue) : Prisma.DbNull;
+  }
+
+  private shippingData(
+    dto: {
+      weightGrams?: number | null;
+      lengthMm?: number | null;
+      widthMm?: number | null;
+      heightMm?: number | null;
+    },
+    kind: ProductKind,
+    partial = false,
+  ) {
+    if (kind !== ProductKind.PRODUCT) {
+      return {
+        weightGrams: null,
+        lengthMm: null,
+        widthMm: null,
+        heightMm: null,
+      };
+    }
+    if (partial) {
+      return {
+        ...(dto.weightGrams !== undefined ? { weightGrams: dto.weightGrams } : {}),
+        ...(dto.lengthMm !== undefined ? { lengthMm: dto.lengthMm } : {}),
+        ...(dto.widthMm !== undefined ? { widthMm: dto.widthMm } : {}),
+        ...(dto.heightMm !== undefined ? { heightMm: dto.heightMm } : {}),
+      };
+    }
+    return {
+      weightGrams: dto.weightGrams ?? null,
+      lengthMm: dto.lengthMm ?? null,
+      widthMm: dto.widthMm ?? null,
+      heightMm: dto.heightMm ?? null,
     };
   }
 

@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.31f-training",
+  "version": "2026.11.03a-training",
   "dataset": "ai-core-training",
   "description": "Automated AI Core conversation curriculum (gap matrix, multinicho). Run via npm run train:ai-core.",
   "forbiddenPhrases": [
@@ -144,6 +144,70 @@
           "encontré esto en el catálogo"
         ],
         "replyIncludes": ["Café"],
+        "handoff": false
+      }
+    },
+    {
+      "id": "C2-solo-el-perfume-keeps-line-beauty",
+      "gap": "C2",
+      "vertical": "beauty",
+      "text": "No, quiero sólo el perfume",
+      "selected": "cielo-set",
+      "recommended": ["cielo-set"],
+      "catalog": "beauty",
+      "seedNeed": "Quiero comprar un perfume cielo para mujer",
+      "agentHistory": [
+        "Te recomiendo el Set Cielo. ¿Quieres que te lo prepare?"
+      ],
+      "expected": {
+        "replyIncludes": ["Cielo Eau de Parfum"],
+        "replyExcludes": [
+          "Set Cielo",
+          "Perfume Floral A",
+          "Perfume Floral B",
+          "cuéntame qué producto buscas",
+          "encontré esto en el catálogo"
+        ],
+        "handoff": false
+      }
+    },
+    {
+      "id": "C2-prefer-unit-over-set-on-discovery-beauty",
+      "gap": "C2",
+      "vertical": "beauty",
+      "text": "Quiero comprar un perfume cielo para mujer",
+      "catalog": "beauty",
+      "expected": {
+        "replyIncludes": ["Cielo Eau de Parfum"],
+        "replyExcludes": [
+          "Set Cielo",
+          "cuéntame qué producto buscas",
+          "encontré esto en el catálogo"
+        ],
+        "handoff": false,
+        "progressed": true
+      }
+    },
+    {
+      "id": "C2-solo-la-zapatilla-keeps-line-footwear",
+      "gap": "C2",
+      "vertical": "footwear",
+      "text": "No, quiero sólo la zapatilla",
+      "selected": "shoe-kit",
+      "recommended": ["shoe-kit"],
+      "catalog": "footwearPack",
+      "seedNeed": "Quiero comprar unas zapatillas runner pro",
+      "agentHistory": [
+        "Te recomiendo el Kit Runner Pro + Medias. ¿Te lo preparo?"
+      ],
+      "expected": {
+        "replyIncludes": ["Zapatilla Runner Pro"],
+        "replyExcludes": [
+          "Kit Runner Pro",
+          "Trail Max",
+          "cuéntame qué producto buscas",
+          "encontré esto en el catálogo"
+        ],
         "handoff": false
       }
     },

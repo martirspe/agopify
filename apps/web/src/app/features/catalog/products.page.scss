@@ -1,4 +1,4 @@
-
+﻿
 .catalog--editing {
   flex: 1 1 auto;
   min-height: 0;
@@ -69,7 +69,8 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-block-end: var(--ds-space-10);
-  background: var(--ds-console-bg, #f1f1f1);
+  /* Admin Next main canvas — same surface as sticky header (not gray #f1f1f1). */
+  background: var(--ds-console-workspace-bg, #fff);
 }
 
 .publish-frame__scroll > ds-page-header {
@@ -138,17 +139,18 @@
 
 .publish-title {
   margin: 0;
-  padding-block: var(--ds-space-1);
-  padding-inline: 0;
+  /* Admin product title input: 24/500, lh 32, pad 4 8, radius 12, no chrome */
+  padding: 0.25rem 0.5rem;
   border: 0;
-  border-radius: var(--ds-radius-md);
+  border-radius: 0.75rem;
   background: transparent;
   box-shadow: none;
-  font-size: 1.5rem;
+  font-size: 1.5rem; /* 24px */
   font-weight: 500;
-  line-height: 1.35;
+  line-height: 2rem; /* 32px */
   letter-spacing: -0.02em;
-  color: var(--ds-color-text-primary);
+  color: var(--ds-console-text, var(--ds-color-text-primary));
+  min-height: 2.5rem; /* 40px */
 }
 
 .publish-title:focus,
@@ -224,6 +226,7 @@
 .publish-status__hint {
   margin: 0;
 }
+
 
 .publish-row {
   display: grid;
@@ -377,24 +380,29 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(7.25rem, 1fr));
-  gap: var(--ds-space-2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem; /* 8px — Admin media row */
 }
 
 .media-tile {
   position: relative;
-  aspect-ratio: 1;
+  box-sizing: border-box;
+  width: 6.25rem; /* 100px — measured Admin thumbnail */
+  height: 6.25rem;
+  flex: 0 0 6.25rem;
   margin: 0;
-  border: 1px solid var(--ds-color-border);
-  border-radius: var(--ds-radius-md);
-  background: var(--ds-color-canvas);
-  
-  overflow: visible;
+  border: 0;
+  border-radius: 0.875rem; /* 14px — measured Admin _ThumbnailWrapper */
+  background: var(--ds-color-canvas, #f7f7f7);
+  overflow: hidden;
+  box-shadow: rgb(0 0 0 / 10%) 0 0 0 1px inset;
 }
 
 .media-tile.is-featured {
-  box-shadow: inset 0 0 0 1.5px var(--ds-color-ink);
+  box-shadow:
+    rgb(0 0 0 / 10%) 0 0 0 1px inset,
+    inset 0 0 0 1.5px var(--ds-color-ink);
 }
 
 .media-tile.is-selected {
@@ -432,9 +440,12 @@
 
 .media-tile__badge {
   position: absolute;
-  top: var(--ds-space-1);
-  left: var(--ds-space-1);
+  top: 0.35rem;
+  left: 0.35rem;
   z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
   padding: 0.15rem 0.45rem;
   border-radius: var(--ds-radius-sm);
   background: color-mix(in srgb, var(--ds-color-ink) 88%, transparent);
@@ -443,6 +454,18 @@
   font-weight: 650;
   letter-spacing: 0.01em;
   pointer-events: none;
+}
+
+/* Admin featured mark: compact icon chip on the cover tile. */
+.media-tile__badge--star {
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 72%);
+  color: #fff;
 }
 
 .media-tile__badge--soft {
@@ -507,8 +530,9 @@
 }
 
 .media-tile--add {
-  border-style: dashed;
-  background: color-mix(in srgb, var(--ds-color-canvas) 70%, var(--ds-color-surface));
+  border: 0;
+  background: #f7f7f7;
+  box-shadow: rgb(0 0 0 / 8%) 0 0 0 1px inset;
   overflow: hidden;
 }
 
@@ -734,13 +758,8 @@
 
 @media (max-width: 960px) {
   .variant-row,
-  .faq-row,
   .field-grid {
     grid-template-columns: 1fr;
-  }
-
-  .media-grid {
-    grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
   }
 
   .media-inspector {

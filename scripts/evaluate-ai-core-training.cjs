@@ -103,6 +103,16 @@ const CATALOGS = {
       variants: null,
       imageUrl: 'https://cdn.example.test/perfume-b.jpg',
     }),
+    product('cielo-unit', 'Cielo Eau de Parfum 50 ml', 8900, {
+      descriptionShort: 'Floral ambarada con jazmín y flor de loto',
+      categories: ['Perfumes'],
+      variants: null,
+    }),
+    product('cielo-set', 'Set Cielo', 12900, {
+      descriptionShort: 'Cielo Eau de Parfum + desodorante y jabón perfumado',
+      categories: ['Perfumes'],
+      variants: null,
+    }),
     product('deo-unit', 'Desodorante Roll On Hombre', 4600, {
       descriptionShort: 'Desodorante roll on',
       categories: ['Cuidado'],
@@ -122,6 +132,21 @@ const CATALOGS = {
     }),
     product('coffee-pack', 'Pack Café + Taza', 4500, {
       categories: ['Café'],
+      variants: null,
+    }),
+  ],
+  footwearPack: [
+    product('shoe-unit', 'Zapatilla Runner Pro 40', 18000, {
+      categories: ['Zapatillas'],
+      variants: null,
+    }),
+    product('shoe-kit', 'Kit Runner Pro + Medias', 21000, {
+      descriptionShort: 'Zapatilla Runner Pro + pares de medias',
+      categories: ['Zapatillas'],
+      variants: null,
+    }),
+    product('shoe-other', 'Zapatilla Trail Max', 19500, {
+      categories: ['Zapatillas'],
       variants: null,
     }),
   ],

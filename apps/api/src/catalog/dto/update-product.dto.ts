@@ -21,6 +21,7 @@ import {
   OptionDefinitionDto,
   PRODUCT_STATUSES,
   ProductExtrasDto,
+  ProductMetafieldDto,
   ProductVariantInputDto,
 } from './create-product.dto';
 
@@ -169,4 +170,71 @@ export class UpdateProductDto extends ProductExtrasDto {
   @IsString()
   @MaxLength(160)
   seoDescription?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsInt()
+  @Min(0)
+  costCents?: number | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  taxable?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsString()
+  @MaxLength(80)
+  vendor?: string | null;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsString({ each: true })
+  @MaxLength(40, { each: true })
+  tags?: string[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsInt()
+  @Min(0)
+  @Max(2_000_000)
+  weightGrams?: number | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsInt()
+  @Min(0)
+  @Max(100_000)
+  lengthMm?: number | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsInt()
+  @Min(0)
+  @Max(100_000)
+  widthMm?: number | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsInt()
+  @Min(0)
+  @Max(100_000)
+  heightMm?: number | null;
+
+  @ApiPropertyOptional({ type: [ProductMetafieldDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => ProductMetafieldDto)
+  metafields?: ProductMetafieldDto[] | null;
 }

@@ -787,12 +787,27 @@ model Product {
   stockUnlimited      Boolean  @default(true)
   stockQty            Int?
   compareAtPriceCents Int?
+  /// Merchant cost in cents (not shown to buyers).
+  costCents           Int?
+  /// Whether checkout should charge tax for this product.
+  taxable             Boolean  @default(true)
   brand               String?
+  /// Supplier / vendor label (Shopify “Proveedor”).
+  vendor              String?
   sku                 String?
   /// Product line inside the brand (coupons and related products).
   line                String?
+  /// Free-form product tags (Shopify “Etiquetas”).
+  tags                String[] @default([])
+  /// Physical shipping mass in grams (PRODUCT only).
+  weightGrams         Int?
+  lengthMm            Int?
+  widthMm             Int?
+  heightMm            Int?
   /// { size, benefits[], usage[], notes[], highlights[], family, intensity, scent[], montage }
   details             Json?
+  /// Free-form product metafields: [{ key, namespace?, value }] (not category attributeValues).
+  metafields          Json?
   sortOrder           Int      @default(0)
   seoTitle            String?
   seoDescription      String?
@@ -900,6 +915,8 @@ model ProductVariant {
   combinationKey String?
   /// Effective price stays materialized for existing order/agent readers.
   priceInherited Boolean @default(false)
+  /// Free-form variant metafields: [{ key, namespace?, value }].
+  metafields   Json?
 
   product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]

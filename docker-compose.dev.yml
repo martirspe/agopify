@@ -63,7 +63,7 @@ services:
       TSC_WATCHFILE: DynamicPriorityPolling
       TSC_WATCHDIRECTORY: DynamicPriorityPolling
     ports: ['127.0.0.1:3100:3100']
-    command: sh -c 'npx prisma migrate deploy && npx nest start --watch'
+    command: sh -c 'npx prisma migrate deploy && node ../../scripts/load-catalog-taxonomy.mjs && npx nest start --watch'
     depends_on:
       postgres: {condition: service_healthy}
       deps: {condition: service_completed_successfully}

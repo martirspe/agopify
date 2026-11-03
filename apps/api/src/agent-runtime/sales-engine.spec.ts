@@ -67,6 +67,11 @@ describe('AI Sales Engine regression/evaluation', () => {
     );
     jest.spyOn(tools, 'listAvailableProducts').mockResolvedValue(products);
     jest
+      .spyOn(tools, 'getProducts')
+      .mockImplementation(async (_tenant, ids) =>
+        products.filter((product) => ids.includes(product.id)),
+      );
+    jest
       .spyOn(tools, 'catalogOverview')
       .mockResolvedValue({ total: 2, categories: [], storeUrl: null });
     jest.spyOn(tools, 'shippingRules').mockResolvedValue(null);
@@ -93,6 +98,21 @@ describe('AI Sales Engine regression/evaluation', () => {
     );
   });
   afterEach(() => jest.restoreAllMocks());
+
+  it('B: observeBuyer remembers need on “quiero comprar un X” (first turn)', () => {
+    const state = observeBuyer(
+      initialSalesState(),
+      'Quiero comprar un perfume cielo para mujer',
+      'm1',
+    );
+    expect(state.requirements.need?.value.toLowerCase()).toContain('cielo');
+    const shoes = observeBuyer(
+      initialSalesState(),
+      'Quiero comprar unas zapatillas runner',
+      'm2',
+    );
+    expect(shoes.requirements.need?.value.toLowerCase()).toContain('zapatillas');
+  });
 
   it('B: validator rejects re-asking destination already in customer memory', () => {
     const state = observeBuyer(
@@ -374,9 +394,23 @@ describe('AI Sales Engine regression/evaluation', () => {
     coffee.variants = [];
     const pack = shoe('pack', 'Pack Café + Taza', 4500);
     pack.variants = [];
+    const cielo = shoe('cielo', 'Cielo Eau de Parfum 50 ml', 8900);
+    cielo.variants = [];
+    cielo.categories = ['Perfumes'];
+    const cieloSet = shoe('cielo-set', 'Set Cielo', 12900);
+    cieloSet.variants = [];
+    cieloSet.categories = ['Perfumes'];
+    cieloSet.descriptionShort = 'Cielo Eau de Parfum + desodorante y jabón';
+    const aura = shoe('aura', 'Aura Lila Perfume', 7800);
+    aura.variants = [];
+    aura.categories = ['Perfumes'];
+    const catalog = [deo, set, coffee, pack, cielo, cieloSet, aura];
+    jest.spyOn(tools, 'listAvailableProducts').mockResolvedValue(catalog);
     jest
-      .spyOn(tools, 'listAvailableProducts')
-      .mockResolvedValue([deo, set, coffee, pack]);
+      .spyOn(tools, 'getProducts')
+      .mockImplementation(async (_tenant, ids) =>
+        catalog.filter((product) => ids.includes(product.id)),
+      );
 
     const afterSet = await runtime.generateReply({
       tenantId: 'tenant-a',
@@ -431,6 +465,50 @@ describe('AI Sales Engine regression/evaluation', () => {
     expect(afterCoffee.salesState?.requirements.packaging?.value).toBe(
       'standalone',
     );
+
+    // Transcript gap: after offering the set, "sólo el perfume" must resolve the
+    // unit of the same line — never unrelated featured fragrances.
+    const afterCielo = await runtime.generateReply({
+      tenantId: 'tenant-a',
+      inboundText: 'No, quiero sólo el perfume',
+      salesState: {
+        ...initialSalesState(),
+        recommendedProductIds: ['cielo-set'],
+        selectedProduct: { productId: 'cielo-set' },
+        stage: 'PRODUCT_SELECTED',
+        requirements: {
+          need: {
+            value: 'Quiero comprar un perfume cielo para mujer',
+            source: 'buyer',
+            confidence: 1,
+            timestamp: new Date().toISOString(),
+            scope: 'conversation',
+          },
+        },
+      },
+      history: [
+        {
+          role: 'agent',
+          text: 'Te recomiendo el Set Cielo. ¿Quieres que te lo prepare?',
+        },
+      ],
+    });
+    expect(afterCielo.replyText).toMatch(/Cielo Eau de Parfum/i);
+    expect(afterCielo.replyText).not.toMatch(/Aura Lila/i);
+    expect(afterCielo.replyText).not.toMatch(/Set Cielo/i);
+    expect(afterCielo.salesState?.requirements.packaging?.value).toBe(
+      'standalone',
+    );
+
+    const firstAsk = await runtime.generateReply({
+      tenantId: 'tenant-a',
+      inboundText: 'Quiero comprar un perfume cielo para mujer',
+      salesState: initialSalesState(),
+      history: [],
+    });
+    expect(firstAsk.replyText).toMatch(/Cielo Eau de Parfum/i);
+    expect(firstAsk.replyText).not.toMatch(/Set Cielo/i);
+    expect(firstAsk.salesState?.requirements.need?.value).toMatch(/cielo/i);
   });
 
   it('B: “sí, quiero uno” after “¿te lo preparo?” keeps the selected product', async () => {

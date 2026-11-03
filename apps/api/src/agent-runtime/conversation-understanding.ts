@@ -451,6 +451,99 @@ export function standaloneCategoryHint(text: string): string | null {
 }
 
 /**
+ * Distinctive tokens of a product or buyer need (line/name), excluding pack
+ * markers and generic Spanish filler. Used to keep "Set Cielo" → unit "Cielo …"
+ * across any vertical. Description is ignored for product rows so a kit blurb
+ * ("zapatilla + medias") does not pollute family matching onto every unit.
+ */
+export function productFamilyTokens(
+  source:
+    | string
+    | {
+        name?: string | null;
+        descriptionShort?: string | null;
+        line?: string | null;
+        brand?: string | null;
+      },
+): string[] {
+  const text =
+    typeof source === 'string'
+      ? source
+      : [source.name, source.line, source.brand].filter(Boolean).join(' ');
+  const tokens = normalizeText(text)
+    .split(/\s+/)
+    .map((token) => token.replace(/[^\p{L}\p{N}]/gu, ''))
+    .filter(
+      (token) =>
+        token.length >= 4 &&
+        QUANTITY_WORDS[token] === undefined &&
+        !HINT_STOPWORDS.has(token) &&
+        !BUNDLE_STOPWORDS.has(token) &&
+        !['solo', 'solamente', 'unicamente', 'quiero', 'comprar', 'busco', 'necesito', 'tienen', 'tienes'].includes(
+          token,
+        ),
+    );
+  return [...new Set(tokens)];
+}
+
+/**
+ * Search string when the buyer wants a unit SKU after (or instead of) a pack.
+ * Prefer family tokens from the rejected pack + remembered need over a bare
+ * category hint like "perfume" that would surface unrelated units.
+ */
+export function standaloneSearchQuery(params: {
+  inboundText: string;
+  need?: string | null;
+  relatedProducts?: Array<{
+    name: string;
+    descriptionShort?: string | null;
+    line?: string | null;
+    brand?: string | null;
+  }>;
+  categoryHint?: string | null;
+}): string {
+  const family = (params.relatedProducts ?? []).flatMap(productFamilyTokens);
+  const needTokens = params.need ? productFamilyTokens(params.need) : [];
+  const distinctive = [...new Set([...family, ...needTokens])];
+  if (distinctive.length) {
+    return [...distinctive, params.categoryHint].filter(Boolean).join(' ');
+  }
+  const inbound = productFamilyTokens(params.inboundText);
+  if (inbound.length) return inbound.join(' ');
+  return (params.categoryHint || params.inboundText).trim();
+}
+
+/**
+ * Prefer unit SKUs that share line/name tokens with a rejected pack (or prior
+ * need). When the related pack has distinctive tokens but this pool has no
+ * overlap, return empty so the caller re-searches instead of random units.
+ */
+export function focusRelatedStandalone(
+  products: CatalogProductView[],
+  related: Array<{
+    name: string;
+    descriptionShort?: string | null;
+    line?: string | null;
+    brand?: string | null;
+  }>,
+): CatalogProductView[] {
+  if (!products.length || !related.length) return products;
+  const family = new Set(related.flatMap(productFamilyTokens));
+  if (!family.size) return products;
+  const scored = products.map((product) => {
+    const overlap = productFamilyTokens(product).filter((token) =>
+      family.has(token),
+    ).length;
+    return { product, overlap };
+  });
+  const focused = scored
+    .filter((item) => item.overlap > 0)
+    .sort((a, b) => b.overlap - a.overlap)
+    .map((item) => item.product);
+  return focused;
+}
+
+/**
  * Prefer unit SKUs over sets/kits unless the buyer asked for a pack.
  * Multinicho: uses structural bundle markers only.
  */
@@ -463,6 +556,20 @@ export function preferNonBundleProducts(
   if (!singles.length) return products;
   const bundles = products.filter((p) => isBundleProduct(p));
   return [...singles, ...bundles];
+}
+
+/**
+ * Recommendation pool: when the buyer did not ask for a pack/set, surface only
+ * unit SKUs if any match — avoids always leading with the set of a line.
+ */
+export function recommendSellableMatches(
+  text: string,
+  products: CatalogProductView[],
+): CatalogProductView[] {
+  const ordered = preferNonBundleProducts(text, products);
+  if (!ordered.length || wantsPackOnly(text)) return ordered;
+  const singles = ordered.filter((p) => !isBundleProduct(p));
+  return singles.length ? singles : ordered;
 }
 
 function productMatchesHint(
@@ -579,10 +686,22 @@ export function filterStandaloneProducts(
   text: string,
   products: CatalogProductView[],
   persistedStandalone = false,
+  relatedProducts: Array<{
+    name: string;
+    descriptionShort?: string | null;
+    line?: string | null;
+    brand?: string | null;
+  }> = [],
 ): CatalogProductView[] {
   if (!persistedStandalone && !wantsStandaloneOnly(text)) return products;
-  const category = standaloneCategoryHint(text);
   const singles = products.filter((p) => !isBundleProduct(p));
+  // Family of a rejected pack wins over a bare category hint ("perfume" would
+  // drop "Cielo Eau de Parfum" while keeping unrelated "Aura … Perfume").
+  if (relatedProducts.length) {
+    const focused = focusRelatedStandalone(singles, relatedProducts);
+    if (focused.length) return focused;
+  }
+  const category = standaloneCategoryHint(text);
   if (!category) return singles;
   const scoped = singles.filter((p) => productMatchesHint(p, category));
   return scoped.length ? scoped : singles;

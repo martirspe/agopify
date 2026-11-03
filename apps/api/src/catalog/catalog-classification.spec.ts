@@ -16,14 +16,14 @@ describe('catalog classification', () => {
     expect(schema.path.map((node) => node.name)).toEqual(['Moda', 'Calzado', 'Zapatillas']);
     expect(schema.attributes).toHaveLength(2);
     expect(schema.attributes[0].required).toBe(true);
-    expect(validateAttributeValues(schema.attributes, { material: ' Cuero ' }, ['Talla'])).toEqual({ material: 'Cuero' });
+    expect(validateAttributeValues(schema.attributes, { material: ' Cuero ' }, ['Talla'])).toEqual({ material: ['Cuero'] });
   });
-  it('rejects missing requirements, foreign category values and invalid enumerations', () => {
+  it('rejects missing requirements and foreign keys; allows custom taxonomy entries', () => {
     const schema = categorySchema(categories, 'footwear');
     expect(() => validateAttributeValues(schema.attributes, {})).toThrow('Completa Talla');
     expect(() => validateAttributeValues(schema.attributes, { skin_type: 'Seca' })).toThrow('no pertenecen');
-    expect(() => validateAttributeValues(schema.attributes, { size: '45' })).toThrow('no es válido');
-    expect(() => validateAttributeValues(schema.attributes, { size: 38 } as unknown as Record<string, string>)).toThrow('texto válido');
+    expect(validateAttributeValues(schema.attributes, { size: ['45', '46'] })).toEqual({ size: ['45', '46'] });
+    expect(() => validateAttributeValues(schema.attributes, { size: 38 } as unknown as Record<string, string | string[]>)).toThrow('texto válido');
   });
   it('rejects cycles, unknown categories and broken ancestry', () => {
     expect(() => categorySchema(categories, 'unknown')).toThrow('no existe');

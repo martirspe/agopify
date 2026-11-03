@@ -93,7 +93,7 @@ else if (mode === 'test') {
   };
   const envFlags = Object.entries(env).flatMap(([key, value]) => ['-e', `${key}=${value}`]);
   run([...composeFile, 'exec', '-T', ...envFlags, 'api', 'sh', '-c',
-    'npx prisma migrate deploy && npx jest && npx jest --config ./test/jest-e2e.json']);
+    'npx prisma migrate deploy && node ../../scripts/load-catalog-taxonomy.mjs && npx jest && npx jest --config ./test/jest-e2e.json']);
 } else if (mode === 'clean-legacy') {
   const volumes = list(['volume', 'ls', '-q', '--filter', 'label=com.docker.compose.project=agopify-dev'])
     .filter((volume) => !keepVolumes.has(volume));

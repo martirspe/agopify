@@ -26,7 +26,8 @@ RUN npm run prisma:generate && npm run build:api
 
 FROM api-build AS migrate
 WORKDIR /app/apps/api
-CMD ["npx", "prisma", "migrate", "deploy"]
+# Taxonomy gzip is required after migrate deploy (Shopify Standard Product Taxonomy es).
+CMD ["sh", "-c", "npx prisma migrate deploy && node ../../scripts/load-catalog-taxonomy.mjs"]
 
 FROM manifests AS api-dependencies
 RUN npm ci --omit=dev --workspace=@agopify/api --no-audit --no-fund

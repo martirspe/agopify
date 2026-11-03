@@ -133,44 +133,35 @@
           </details>
         }
 
-        <div class="card">
+        <div class="card options">
           <h2>Opciones</h2>
-          <label class="check">
+          <ds-checkbox description="Si no lo marcas, se mantiene el precio que tienen en tu catálogo.">
             <input
               type="checkbox"
               [checked]="options().updatePrices"
               [disabled]="previewing()"
               (change)="setOption('updatePrices', $any($event.target).checked)"
             />
-            <span>
-              Actualizar precios de los productos que ya existen
-              <small>Si no lo marcas, se mantiene el precio que tienen en tu catálogo.</small>
-            </span>
-          </label>
-          <label class="check">
+            Actualizar precios de los productos que ya existen
+          </ds-checkbox>
+          <ds-checkbox description="Reemplaza las unidades actuales de los productos que ya existen.">
             <input
               type="checkbox"
               [checked]="options().updateStock"
               [disabled]="previewing()"
               (change)="setOption('updateStock', $any($event.target).checked)"
             />
-            <span>
-              Actualizar el stock con el inventario del archivo
-              <small>Reemplaza las unidades actuales de los productos que ya existen.</small>
-            </span>
-          </label>
-          <label class="check">
+            Actualizar el stock con el inventario del archivo
+          </ds-checkbox>
+          <ds-checkbox description="Saca de la tienda web lo que no está en el archivo o figura inactivo. No borra nada.">
             <input
               type="checkbox"
               [checked]="options().fullSync"
               [disabled]="previewing()"
               (change)="setOption('fullSync', $any($event.target).checked)"
             />
-            <span>
-              El archivo es mi catálogo completo
-              <small>Saca de la tienda web lo que no está en el archivo o figura inactivo. No borra nada.</small>
-            </span>
-          </label>
+            El archivo es mi catálogo completo
+          </ds-checkbox>
           @if (options().fullSync && r.hidden.length) {
             <p class="option-detail">
               Dejarán de verse en la tienda:
@@ -180,18 +171,15 @@
             </p>
           }
           @if (r.store.available) {
-            <label class="check">
+            <ds-checkbox description="Plantilla, envíos e imágenes. El origen, las tarifas y las imágenes que ya configuraste no se reemplazan.">
               <input
                 type="checkbox"
                 [checked]="options().applyStoreSettings"
                 [disabled]="previewing()"
                 (change)="setOption('applyStoreSettings', $any($event.target).checked)"
               />
-              <span>
-                Aplicar los ajustes de tienda del paquete
-                <small>Plantilla, envíos e imágenes. El origen, las tarifas y las imágenes que ya configuraste no se reemplazan.</small>
-              </span>
-            </label>
+              Aplicar los ajustes de tienda del paquete
+            </ds-checkbox>
             @if (options().applyStoreSettings) {
               <p class="option-detail">
                 @if (r.store.changes.length) {

@@ -20,8 +20,8 @@ Selecta comparte una identidad visual desde inicio hasta confirmación y documen
 | Títulos | `--store-font-display`: fuente editorial del negocio. Hero, página, sección y producto usan los respectivos `--store-type-*`. |
 | Producto en tarjeta | `--store-card-name-font/size/weight`, compartidos por inicio y tienda. Sin fuente sans distinta en el catálogo. |
 | Precio en tarjeta | `--store-card-price-size`, peso 600, números tabulares; moneda y cifras conservan el contrato comercial. |
-| Imagen de tarjeta | `--store-media-ratio` 4:5, `contain`, fondo `--store-surface`, radio de tarjeta y `--store-card-media-padding` común. La tarjeta destacada del inicio puede cambiar la composición del marco en móvil. |
-| Acción principal | `.button`, `.store-btn`, `.card-cta`: mismo alto, fuente, borde, radio y color de marca. |
+| Imagen de tarjeta | `--store-media-ratio` 4:5, `cover` a sangrado (`--store-card-media-padding: 0`), fondo `--store-surface` y radio de tarjeta (`--ds-radius-sm` por defecto). La tarjeta destacada del inicio puede cambiar la composición del marco en móvil. |
+| Acción principal | `.button`, `.store-btn`, `.card-cta`: mismo alto, fuente, borde, radio de control y color de marca; sin píldoras sueltas por ruta. |
 | Acción secundaria | `.button.secondary`, `.store-btn--secondary`: fondo transparente y borde semántico. Acciones de texto usan el color de marca. |
 | Campos | Fuente de cuerpo, fondo `--store-bg`, borde y radio semánticos. Búsqueda, compra y selectores comparten altura de control. Checkbox/radio conservan su contrato nativo. |
 | Superficie | `--store-bg` para página; `--store-surface` para fotografía y agrupaciones; `--store-border` para divisiones. |

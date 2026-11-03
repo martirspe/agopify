@@ -11,14 +11,15 @@
   --ds-switch-travel: calc(
     var(--ds-switch-track-width) - var(--ds-switch-thumb-size) - (var(--ds-switch-thumb-offset) * 2)
   ); /* 16px */
-  --ds-switch-off: #dddddd;
-  --ds-switch-off-hover: #d0d0d0;
+  /* Off track must stay visibly grey on white cards (not near-white). */
+  --ds-switch-off: #b0b0b0;
+  --ds-switch-off-hover: #a3a3a3;
   --ds-switch-on: #101010;
   --ds-switch-on-hover: #0a0a0a;
   --ds-switch-thumb: #ffffff;
-  --ds-switch-thumb-shadow: none;
-  --ds-switch-thumb-disabled: #f7f7f7;
-  --ds-switch-disabled-track: #f1f1f1;
+  --ds-switch-thumb-shadow: 0 0 0 1px rgb(0 0 0 / 6%);
+  --ds-switch-thumb-disabled: #f0f0f0;
+  --ds-switch-disabled-track: #d6d6d6;
   --ds-switch-motion: 50ms cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 

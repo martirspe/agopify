@@ -10,6 +10,7 @@ export type CombinationDraft = {
   expectedStockQty?: number | null;
   id?: string; sku: string; options: OptionPair[]; imageUrl: string | null;
   price: number; priceInherited: boolean; isAvailable: boolean; stockQty: number | null;
+  metafields?: Array<{ key: string; namespace?: string; value: string }>;
 };
 const normalize = (value: string) => value.trim().normalize('NFKC').toLocaleLowerCase('es');
 export const keyOf = (pairs: OptionPair[]) => JSON.stringify(pairs.map((pair) => [normalize(pair.name), normalize(pair.value)]).sort(([a], [b]) => a.localeCompare(b)));

@@ -1,8 +1,8 @@
 {
   "mode": "ai-core-training-offline",
-  "datasetVersion": "2026.10.31f-training",
+  "datasetVersion": "2026.11.03a-training",
   "dataset": "ai-core-training",
-  "fixtureCount": 32,
+  "fixtureCount": 35,
   "gapsCovered": [
     "A1",
     "A2",
@@ -28,15 +28,15 @@
     "footwear",
     "grocery"
   ],
-  "passCount": 32,
+  "passCount": 35,
   "failCount": 0,
   "metrics": {
     "context_retention": {
-      "samples": 19,
+      "samples": 22,
       "value": 1
     },
     "repeated_question_rate": {
-      "samples": 32,
+      "samples": 35,
       "value": 0
     },
     "intent_accuracy": {
@@ -48,15 +48,15 @@
       "value": null
     },
     "price_accuracy": {
-      "samples": 19,
+      "samples": 22,
       "value": 1
     },
     "inventory_accuracy": {
-      "samples": 15,
+      "samples": 18,
       "value": 1
     },
     "hallucination_rate": {
-      "samples": 32,
+      "samples": 35,
       "value": 0
     },
     "tool_selection_accuracy": {
@@ -72,15 +72,15 @@
       "value": 1
     },
     "handoff_accuracy": {
-      "samples": 30,
+      "samples": 33,
       "value": 1
     },
     "sales_progression": {
-      "samples": 2,
+      "samples": 3,
       "value": 1
     },
     "reply_ban_accuracy": {
-      "samples": 32,
+      "samples": 35,
       "value": 1
     },
     "checkout_accuracy": {
@@ -228,6 +228,58 @@
       }
     },
     {
+      "id": "C2-solo-el-perfume-keeps-line-beauty",
+      "gap": "C2",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "Esta opción encaja con lo que me pediste:\n• Cielo Eau de Parfum 50 ml (S/ 89.00, 2 en stock) — Floral ambarada con jazmín y flor de loto\n¿Te lo preparo?",
+      "selectedProductId": null,
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
+      "id": "C2-prefer-unit-over-set-on-discovery-beauty",
+      "gap": "C2",
+      "vertical": "beauty",
+      "failed": false,
+      "replyPreview": "¡Hola! Soy Vendedor de nuestra tienda. Estas opciones encajan con lo que buscas:\n• Cielo Eau de Parfum 50 ml (S/ 89.00, 2 en stock) — Floral ambarada con jazmín",
+      "selectedProductId": null,
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "handoff_accuracy": 1,
+        "sales_progression": 1
+      }
+    },
+    {
+      "id": "C2-solo-la-zapatilla-keeps-line-footwear",
+      "gap": "C2",
+      "vertical": "footwear",
+      "failed": false,
+      "replyPreview": "Esta opción encaja con lo que me pediste:\n• Zapatilla Runner Pro 40 (S/ 180.00, 2 en stock) — Para uso diario\n¿Te lo preparo?",
+      "selectedProductId": null,
+      "metrics": {
+        "repeated_question_rate": 0,
+        "hallucination_rate": 0,
+        "price_accuracy": 1,
+        "inventory_accuracy": 1,
+        "context_retention": 1,
+        "reply_ban_accuracy": 1,
+        "handoff_accuracy": 1
+      }
+    },
+    {
       "id": "D1-sold-out-excluded-search",
       "gap": "D1",
       "vertical": "footwear",
@@ -264,7 +316,7 @@
       "gap": "F1",
       "vertical": "grocery",
       "failed": false,
-      "replyPreview": "¡Hola! Soy Vendedor de nuestra tienda. Estas opciones encajan con lo que buscas:\n• Café de Altura 250g (S/ 28.00, 2 en stock) — Para uso diario\n• Pack Café + Ta",
+      "replyPreview": "¡Hola! Soy Vendedor de nuestra tienda. Esta opción encaja con lo que me pediste:\n• Café de Altura 250g (S/ 28.00, 2 en stock) — Para uso diario\n¿Te lo preparo?",
       "selectedProductId": null,
       "metrics": {
         "repeated_question_rate": 0,

@@ -237,6 +237,13 @@ const STOPWORDS = new Set([
   'bot',
   'robot',
   'humano',
+  // Packing deixis — must not bias lexical/tsquery toward "solo" hits in copy
+  'solo',
+  'solamente',
+  'unicamente',
+  'nada',
+  'unitario',
+  'individual',
 ]);
 
 /** Words that ask to browse the catalog rather than naming what to look for. */
@@ -506,13 +513,18 @@ export class SalesAgentToolsService {
         : []),
       ...(contextIds.length ? [{ id: { in: contextIds } }] : []),
     ];
+    // Without query tokens, do not dump the featured slice of the whole catalog —
+    // that made every new chat recommend the same top products. Pin context only;
+    // browse uses browseProducts / catalogOverview instead.
     const [products, referenced, base] = await Promise.all([
-      this.prisma.product.findMany({
-        where: { ...visible, ...(tokens.length ? { id: { in: ids } } : {}) },
-        include: PRODUCT_VIEW_INCLUDE,
-        take: CATALOG_CANDIDATES,
-        orderBy: FEATURED_ORDER,
-      }),
+      tokens.length
+        ? this.prisma.product.findMany({
+            where: { ...visible, id: { in: ids } },
+            include: PRODUCT_VIEW_INCLUDE,
+            take: CATALOG_CANDIDATES,
+            orderBy: FEATURED_ORDER,
+          })
+        : Promise.resolve([]),
       pinned.length
         ? this.prisma.product.findMany({
             where: { ...visible, OR: pinned },

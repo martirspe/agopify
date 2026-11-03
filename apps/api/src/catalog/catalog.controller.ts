@@ -43,6 +43,11 @@ export class CatalogController {
     return this.catalogService.categories();
   }
 
+  @Get('categories/:categoryId')
+  categoryById(@Param('categoryId') categoryId: string) {
+    return this.catalogService.categoryById(categoryId);
+  }
+
   @Get('collections')
   listCollections(@CurrentUser() user: AuthUserPayload) {
     return this.catalogService.listCollections(user.tenantId);

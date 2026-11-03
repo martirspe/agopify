@@ -3,6 +3,7 @@ import {
   confirmsPurchase,
   detectAgentPendingAsk,
   filterStandaloneProducts,
+  focusRelatedStandalone,
   isOpenProductNeed,
   isOptionSelectionOnly,
   isPurchaseCommitAnaphora,
@@ -10,8 +11,11 @@ import {
   parseBuyerQuantity,
   pickSellerRecommendation,
   preferNonBundleProducts,
+  productFamilyTokens,
+  recommendSellableMatches,
   resolveBundlePreference,
   resolveByUniqueNameFragment,
+  standaloneSearchQuery,
   understandBuyerTurn,
   wantsCancelOrder,
   wantsStandaloneOnly,
@@ -154,6 +158,7 @@ describe('conversation understanding', () => {
     expect(wantsStandaloneOnly('No quiero el set')).toBe(true);
     expect(wantsStandaloneOnly('cafe unitario')).toBe(true);
     expect(wantsStandaloneOnly('Si, sólo uno')).toBe(false);
+    expect(wantsStandaloneOnly('No, quiero sólo el perfume')).toBe(true);
 
     const beauty = [
       product('deo', 'Temptation Desodorante Perfumado Roll on Hombre'),
@@ -186,6 +191,47 @@ describe('conversation understanding', () => {
     expect(
       filterStandaloneProducts('Solo el cafe', grocery).map((p) => p.id),
     ).toEqual(['coffee']);
+
+    const cieloUnit = product('cielo', 'Cielo Eau de Parfum 50 ml');
+    const cieloSet = {
+      ...product('cielo-set', 'Set Cielo'),
+      descriptionShort: 'Cielo Eau de Parfum + jabón',
+    };
+    const aura = product('aura', 'Aura Lila Perfume');
+    const fragrances = [cieloUnit, cieloSet, aura];
+    expect(productFamilyTokens(cieloSet)).toEqual(
+      expect.arrayContaining(['cielo']),
+    );
+    expect(
+      standaloneSearchQuery({
+        inboundText: 'No, quiero sólo el perfume',
+        need: 'Quiero comprar un perfume cielo para mujer',
+        relatedProducts: [cieloSet],
+        categoryHint: 'perfume',
+      }),
+    ).toMatch(/cielo/);
+    expect(
+      filterStandaloneProducts(
+        'No, quiero sólo el perfume',
+        fragrances,
+        false,
+        [cieloSet],
+      ).map((p) => p.id),
+    ).toEqual(['cielo']);
+    expect(
+      focusRelatedStandalone(
+        fragrances.filter((p) => !p.name.toLowerCase().includes('set')),
+        [cieloSet],
+      ).map((p) => p.id),
+    ).toEqual(['cielo']);
+    expect(
+      recommendSellableMatches('Quiero comprar un perfume cielo', fragrances).map(
+        (p) => p.id,
+      ),
+    ).toEqual(['cielo', 'aura']);
+    expect(
+      recommendSellableMatches('Quiero el set cielo', fragrances).map((p) => p.id),
+    ).toEqual(['cielo', 'cielo-set', 'aura']);
   });
 
   it('soft-declines prepare without forcing purchase', () => {

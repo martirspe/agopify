@@ -329,14 +329,16 @@
                       <img [src]="item.url" [alt]="item.alt || ''" loading="lazy" />
                     </button>
                     @if (i === 0 && item.kind === 'image') {
-                      <span class="media-tile__badge">Portada</span>
+                      <span class="media-tile__badge media-tile__badge--star" title="Portada" aria-hidden="true">
+                        <ds-icon name="sparkles" [size]="0.7" />
+                      </span>
                     } @else if (item.kind === 'related') {
                       <span class="media-tile__badge media-tile__badge--soft">Ambiente</span>
                     }
                     <div class="media-tile__toolbar">
                       @if (i !== 0) {
                         <button type="button" class="media-tile__action" (click)="setFeaturedMedia(i); $event.stopPropagation()" aria-label="Usar como portada" title="Usar como portada">
-                          <ds-icon name="image" [size]="0.9" />
+                          <ds-icon name="sparkles" [size]="0.9" />
                         </button>
                       }
                       <button type="button" class="media-tile__action media-tile__action--danger" (click)="removeMediaUrl(i); $event.stopPropagation()" aria-label="Quitar foto" title="Quitar">
@@ -459,6 +461,119 @@
             </label>
           </ds-form-section>
 
+          @if (!setEnabled() || isService()) {
+            <ds-form-section title="Variantes">
+              @if (!variantsEnabled()) {
+                <button type="button" class="publish-add-pill" (click)="toggleVariants(true)">
+                  <ds-icon name="plus" [size]="0.9" />
+                  Agrega opciones como talla y color
+                </button>
+              } @else {
+                <ds-checkbox variant="inline">
+                  <input
+                    type="checkbox"
+                    [checked]="true"
+                    (change)="toggleVariants($any($event.target).checked)"
+                  />
+                  <span>Opciones activadas</span>
+                </ds-checkbox>
+                <p class="field__hint">Define las opciones. En Color puedes asignar un swatch a cada valor. Las combinaciones se actualizan al terminar de editar.</p>
+                @for (axis of axes(); track $index; let axisIndex = $index) {
+                  <div class="tw:grid tw:gap-2 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:p-3">
+                    <label class="field"><span>Nombre de la opción {{ axisIndex + 1 }}</span><input class="tw:console-field" [value]="axis.name" maxlength="60" (input)="updateAxis(axisIndex, { name: $any($event.target).value })" (blur)="generateVariants()" placeholder="Color o talla" /></label>
+                    <span class="tw:text-caption tw:font-medium">Valores de {{ axis.name || 'la opción' }}</span>
+                    @for (value of axisValues(axis); track $index; let valueIndex = $index) {
+                      <div class="tw:flex tw:min-w-0 tw:items-center tw:gap-2">
+                        @if (isColorAxis(axis) && value.trim()) {
+                          <label class="tw:relative tw:inline-grid tw:size-touch tw:shrink-0 tw:cursor-pointer tw:place-items-center tw:overflow-hidden tw:rounded-full tw:border tw:border-solid tw:border-border" [attr.aria-label]="'Color de ' + value">
+                            <span class="tw:absolute tw:inset-0" [style.background]="axisColor(axis, value)" aria-hidden="true"></span>
+                            <input class="tw:absolute tw:inset-0 tw:cursor-pointer tw:opacity-0" type="color" [value]="axisColor(axis, value)" (input)="setAxisColor(axisIndex, value, $any($event.target).value)" />
+                          </label>
+                        }
+                        <input class="tw:console-field tw:min-w-0 tw:flex-1" [attr.aria-label]="'Valor ' + (valueIndex + 1) + ' de ' + (axis.name || 'la opción ' + (axisIndex + 1))" [value]="value" maxlength="200" (input)="updateAxisValue(axisIndex, valueIndex, $any($event.target).value)" (blur)="generateVariants()" placeholder="Ej. Negro" />
+                        <button type="button" class="tw:console-icon-button" [attr.aria-label]="'Quitar valor ' + (value || valueIndex + 1) + ' de ' + (axis.name || 'la opción')" (click)="removeAxisValue(axisIndex, valueIndex)"><ds-icon name="trash" [size]="0.9" /></button>
+                      </div>
+                    }
+                    <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
+                      <button type="button" class="tw:console-action-secondary" [disabled]="axisValues(axis).length >= 50" (click)="addAxisValue(axisIndex)"><ds-icon name="plus" [size]="0.9" />Agregar otro valor</button>
+                      <button type="button" class="tw:console-action-secondary tw:text-danger-text" (click)="removeAxis(axisIndex)">Eliminar opción</button>
+                    </div>
+                  </div>
+                }
+                <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
+                  <ds-button type="button" variant="secondary" [disabled]="axes().length >= 5" (click)="addAxis()"><ds-icon name="plus" [size]="0.9" />Agregar otra opción</ds-button>
+                  <span class="tw:text-caption tw:text-muted" role="status">{{ variantDrafts().length }} variantes · máximo 500</span>
+                </div>
+                @if (variantError()) { <p class="tw:m-0 tw:text-caption tw:text-danger-text" role="alert">{{ variantError() }}</p> }
+                @if (axesPending() && !variantError()) { <p class="tw:m-0 tw:text-caption tw:text-muted" role="status">Termina de editar las opciones para actualizar las variantes.</p> }
+                @if (variantDrafts().length) {
+                  <div class="tw:grid tw:gap-3 tw:border-0 tw:border-t tw:border-solid tw:border-divider tw:pt-3 tw:sm:grid-cols-2">
+                    <label class="field"><span>Agrupar por</span><ds-select><select [value]="activeVariantGroup() || '__all'" (change)="setVariantGroup($any($event.target).value)">@for (name of variantGroupOptions(); track name) { <option [value]="name">{{ name }}</option> }<option value="__all">Sin agrupar</option></select></ds-select></label>
+                    <label class="field"><span>Buscar variantes</span><input class="tw:console-field" type="search" [value]="variantQuery()" maxlength="100" (input)="setVariantQuery($any($event.target).value)" placeholder="Valor de opción o SKU" /></label>
+                  </div>
+                  <div class="tw:grid tw:gap-3">
+                    @for (group of variantGroups(); track group.key; let groupIndex = $index) {
+                      <section class="tw:overflow-hidden tw:rounded-sm tw:border tw:border-solid tw:border-border">
+                        <header class="tw:flex tw:items-center tw:gap-2 tw:bg-canvas tw:px-3 tw:py-2">
+                          <button type="button" class="tw:grid tw:size-touch tw:shrink-0 tw:cursor-pointer tw:place-items-center tw:overflow-hidden tw:rounded-sm tw:border tw:border-dashed tw:border-border tw:bg-surface" [attr.aria-label]="'Asignar foto al grupo ' + group.key" (click)="variantPhotoTarget.set({ indexes: group.indexes, label: 'Grupo ' + group.key })">@if (group.image) { <img [src]="group.image" alt="" class="tw:size-full tw:object-cover" /> } @else { <ds-icon name="image" [size]="1" /> }</button>
+                          <button type="button" class="tw:flex tw:min-w-0 tw:flex-1 tw:cursor-pointer tw:items-center tw:justify-between tw:gap-2 tw:border-0 tw:bg-transparent tw:p-0 tw:text-left tw:text-body tw:text-foreground" [attr.aria-expanded]="!variantGroupsClosed()[group.key]" [attr.aria-controls]="'variant-group-' + groupIndex" (click)="toggleVariantGroup(group.key)"><span class="tw:grid tw:min-w-0"><strong class="tw:font-medium tw:wrap-anywhere">{{ group.key }}</strong><span class="tw:text-caption tw:text-muted">{{ group.total }} variantes@if (group.rows.length < group.total) { · {{ group.rows.length }} en esta página }</span></span><ds-icon [name]="variantGroupsClosed()[group.key] ? 'chevronDown' : 'chevronUp'" [size]="0.85" /></button>
+                        </header>
+                        @if (!variantGroupsClosed()[group.key]) {
+                          <div [id]="'variant-group-' + groupIndex" class="tw:grid">
+                            @for (row of group.rows; track row.key) {
+                              @let variant = row.variant;
+                              <div class="tw:grid tw:gap-2 tw:border-0 tw:border-t tw:border-solid tw:border-divider tw:p-3">
+                                <div class="tw:grid tw:grid-cols-2 tw:items-center tw:gap-2 tw:md:grid-cols-12">
+                                  <div class="tw:col-span-2 tw:flex tw:min-w-0 tw:items-center tw:gap-2 tw:md:col-span-4">
+                                    <button type="button" class="tw:grid tw:size-touch tw:shrink-0 tw:cursor-pointer tw:place-items-center tw:overflow-hidden tw:rounded-sm tw:border tw:border-dashed tw:border-border tw:bg-surface" [attr.aria-label]="'Asignar foto a ' + variantLabel(variant)" (click)="variantPhotoTarget.set({ indexes: [row.index], label: variantLabel(variant) })">@if (variant.imageUrl) { <img [src]="variant.imageUrl" alt="" class="tw:size-full tw:object-cover" /> } @else { <ds-icon name="image" [size]="0.9" /> }</button>
+                                    <span class="tw:grid tw:min-w-0 tw:gap-1"><strong class="tw:text-body tw:font-medium tw:wrap-anywhere">{{ variantChildLabel(variant) }}</strong><span class="tw:text-caption tw:text-muted tw:wrap-anywhere">{{ variant.sku || 'Sin SKU' }}</span></span>
+                                  </div>
+                                  <label class="tw:grid tw:min-w-0 tw:gap-1 tw:text-caption tw:text-muted tw:md:col-span-3">Precio · {{ productForm.controls.currency.value }}<input class="tw:console-field tw:console-field" type="number" min="0" step="0.01" [attr.aria-label]="'Precio de ' + variantLabel(variant)" [value]="variant.priceInherited ? productForm.controls.price.value : variant.price" (input)="onVariantPriceInput(row.index, $any($event.target).value)" /></label>
+                                  @if (isPhysical()) { <label class="tw:grid tw:min-w-0 tw:gap-1 tw:text-caption tw:text-muted tw:md:col-span-3">Stock<input class="tw:console-field tw:console-field" type="number" min="0" step="1" [attr.aria-label]="'Stock de ' + variantLabel(variant)" [value]="variant.stockQty ?? ''" placeholder="Del producto" (input)="updateVariantStock(row.index, $any($event.target).value)" /></label> }
+                                  <span class="tw:col-span-2 tw:text-caption tw:md:col-span-2" [class.tw:text-success-text]="variant.isAvailable">{{ variant.isAvailable ? 'Disponible' : 'No disponible' }}</span>
+                                </div>
+                                <details class="tw:text-caption">
+                                  <summary class="tw:cursor-pointer tw:content-center tw:text-muted">Detalles de {{ variantLabel(variant) }}</summary>
+                                  <div class="tw:grid tw:gap-2 tw:pt-2">
+                                    <label class="field"><span>SKU de {{ variantLabel(variant) }}</span><input class="tw:console-field" [value]="variant.sku" maxlength="60" (input)="updateVariant(row.index, { sku: $any($event.target).value })" /></label>
+                                    <ds-checkbox variant="inline"><input type="checkbox" [checked]="variant.priceInherited" (change)="updateVariant(row.index, { priceInherited: $any($event.target).checked })" /><span>Usar el precio del producto</span></ds-checkbox>
+                                    <ds-checkbox variant="inline"><input type="checkbox" [checked]="variant.isAvailable" (change)="updateVariant(row.index, { isAvailable: $any($event.target).checked })" /><span>Ofrecer {{ variantLabel(variant) }}</span></ds-checkbox>
+                                    @if (isPhysical()) { <span class="tw:text-muted">Stock vacío usa el del producto; cero significa agotado.</span> }
+                                    <div class="tw:grid tw:gap-2 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:p-2">
+                                      <header class="tw:flex tw:items-center tw:justify-between tw:gap-2">
+                                        <strong class="tw:font-medium">Metacampos</strong>
+                                        <button type="button" class="tw:console-action-secondary" [disabled]="(variant.metafields?.length ?? 0) >= 50" (click)="addVariantMetafield(row.index)"><ds-icon name="plus" [size]="0.75" />Agregar</button>
+                                      </header>
+                                      @for (field of variant.metafields ?? []; track $index; let fi = $index) {
+                                        <div class="tw:grid tw:gap-2 tw:sm:grid-cols-[1fr_1.4fr_auto]">
+                                          <input class="tw:console-field" [value]="field.key" maxlength="64" placeholder="clave" aria-label="Clave del metacampo" (input)="updateVariantMetafield(row.index, fi, { key: $any($event.target).value })" />
+                                          <input class="tw:console-field" [value]="field.value" maxlength="2000" placeholder="Valor" aria-label="Valor del metacampo" (input)="updateVariantMetafield(row.index, fi, { value: $any($event.target).value })" />
+                                          <button type="button" class="tw:console-icon-button" aria-label="Quitar metacampo" (click)="removeVariantMetafield(row.index, fi)"><ds-icon name="trash" [size]="0.85" /></button>
+                                        </div>
+                                      } @empty {
+                                        <p class="tw:m-0 tw:text-muted">Sin metacampos en esta variante.</p>
+                                      }
+                                    </div>
+                                    <button type="button" class="tw:console-action-secondary tw:justify-self-start tw:text-danger-text" (click)="removeVariant(row.index)">Eliminar {{ variantLabel(variant) }}</button>
+                                  </div>
+                                </details>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </section>
+                    } @empty { <p class="tw:m-0 tw:text-body tw:text-muted">No hay variantes que coincidan con tu búsqueda.</p> }
+                  </div>
+                  <nav class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2 tw:text-caption" aria-label="Páginas de variantes">
+                    <span>{{ matchingVariants().length }} variantes · página {{ variantPage() + 1 }} de {{ variantPageCount() }}</span>
+                    <div class="tw:flex tw:gap-2"><ds-button type="button" variant="secondary" [disabled]="variantPage() === 0" (click)="variantPage.set(variantPage() - 1)">Anterior</ds-button><ds-button type="button" variant="secondary" [disabled]="(variantPage() + 1) * 25 >= matchingVariants().length" (click)="variantPage.set(variantPage() + 1)">Siguiente</ds-button></div>
+                  </nav>
+                  <p class="tw:m-0 tw:text-caption tw:text-muted">Las variantes nuevas empiezan con stock cero. Las retiradas se eliminan al guardar el producto.</p>
+                }
+              }
+            </ds-form-section>
+          }
+
           <ds-form-section title="Precio">
             <div class="field-grid field-grid--two">
               <label class="field">
@@ -486,7 +601,19 @@
                 </div>
                 <span class="field__hint">Para mostrar oferta en la tienda.</span>
               </label>
+              <label class="field">
+                <span>Costo por artículo</span>
+                <div class="price-row">
+                  <span class="price-row__currency">{{ productForm.controls.currency.value }}</span>
+                  <input class="tw:console-field" type="number" min="0" step="0.01" formControlName="cost" placeholder="0,00" aria-label="Costo por artículo" />
+                </div>
+                <span class="field__hint">Solo para ti; no se muestra al comprador.</span>
+              </label>
             </div>
+            <ds-checkbox variant="inline">
+              <input type="checkbox" formControlName="taxable" />
+              <span>Cobrar impuesto sobre este producto</span>
+            </ds-checkbox>
             <input type="hidden" formControlName="currency" />
           </ds-form-section>
 
@@ -591,119 +718,278 @@
             }
           </ds-form-section>
 
-          @if (requiredCategoryAttributes().length) {
-            <ds-form-section [title]="'Datos de ' + selectedCategory()!.name" description="Características del modelo. Color y talla se definen en Variantes.">
-              <div class="field-grid field-grid--two">
-                @for (attribute of requiredCategoryAttributes(); track attribute.key) {
-                  <label class="field"><span>{{ attribute.name }} <em>*</em></span>
-                    @if (attribute.values?.length) {
-                      <ds-select><select [ngModel]="attributeValues()[attribute.key] ?? ''" [ngModelOptions]="{ standalone: true }" (ngModelChange)="setAttribute(attribute.key, $event)"><option value="">Sin indicar</option>@for (value of attribute.values; track value) { <option [value]="value">{{ value }}</option> }</select></ds-select>
-                    } @else { <input class="tw:console-field" [value]="attributeValues()[attribute.key] ?? ''" [maxLength]="attribute.maxLength ?? 200" (input)="setAttribute(attribute.key, $any($event.target).value)" /> }
-                  </label>
-                }
+          @if (isPhysical()) {
+            <ds-form-section title="Envío">
+              <label class="field">
+                <span>Peso (kg)</span>
+                <input class="tw:console-field" type="number" min="0" step="0.001" formControlName="weightKg" placeholder="0,000" aria-label="Peso en kilogramos" />
+              </label>
+              <div class="field-grid field-grid--three">
+                <label class="field">
+                  <span>Largo (cm)</span>
+                  <input class="tw:console-field" type="number" min="0" step="0.1" formControlName="lengthCm" placeholder="0" aria-label="Largo en centímetros" />
+                </label>
+                <label class="field">
+                  <span>Ancho (cm)</span>
+                  <input class="tw:console-field" type="number" min="0" step="0.1" formControlName="widthCm" placeholder="0" aria-label="Ancho en centímetros" />
+                </label>
+                <label class="field">
+                  <span>Alto (cm)</span>
+                  <input class="tw:console-field" type="number" min="0" step="0.1" formControlName="heightCm" placeholder="0" aria-label="Alto en centímetros" />
+                </label>
               </div>
+              <p class="field__hint">Usado para calcular envíos. Solo productos físicos.</p>
             </ds-form-section>
-          } @else if (selectedCategory() && variantsEnabled()) {
-            <p class="field__hint">Color, talla y otras variaciones de {{ selectedCategory()!.name }} se configuran solo en Variantes (una vez, como opciones de compra).</p>
           }
 
-          @if (!setEnabled() || isService()) {
-            <ds-form-section title="Variantes">
-              @if (!variantsEnabled()) {
-                <button type="button" class="publish-add-pill" (click)="toggleVariants(true)">
-                  <ds-icon name="plus" [size]="0.9" />
-                  Agrega opciones como talla y color
-                </button>
-              } @else {
-                <ds-checkbox variant="inline">
-                  <input
-                    type="checkbox"
-                    [checked]="true"
-                    (change)="toggleVariants($any($event.target).checked)"
-                  />
-                  <span>Opciones activadas</span>
-                </ds-checkbox>
-                <p class="field__hint">Define las opciones. En Color puedes asignar un swatch a cada valor. Las combinaciones se actualizan al terminar de editar.</p>
-                @for (axis of axes(); track $index; let axisIndex = $index) {
-                  <div class="tw:grid tw:gap-2 tw:rounded-sm tw:border tw:border-solid tw:border-border tw:p-3">
-                    <label class="field"><span>Nombre de la opción {{ axisIndex + 1 }}</span><input class="tw:console-field" [value]="axis.name" maxlength="60" (input)="updateAxis(axisIndex, { name: $any($event.target).value })" (blur)="generateVariants()" placeholder="Color o talla" /></label>
-                    <span class="tw:text-caption tw:font-medium">Valores de {{ axis.name || 'la opción' }}</span>
-                    @for (value of axisValues(axis); track $index; let valueIndex = $index) {
-                      <div class="tw:flex tw:min-w-0 tw:items-center tw:gap-2">
-                        @if (isColorAxis(axis) && value.trim()) {
-                          <label class="tw:relative tw:inline-grid tw:size-touch tw:shrink-0 tw:cursor-pointer tw:place-items-center tw:overflow-hidden tw:rounded-full tw:border tw:border-solid tw:border-border" [attr.aria-label]="'Color de ' + value">
-                            <span class="tw:absolute tw:inset-0" [style.background]="axisColor(axis, value)" aria-hidden="true"></span>
-                            <input class="tw:absolute tw:inset-0 tw:cursor-pointer tw:opacity-0" type="color" [value]="axisColor(axis, value)" (input)="setAxisColor(axisIndex, value, $any($event.target).value)" />
-                          </label>
+          @if (selectedCategory(); as category) {
+            @if (allCategoryAttributes().length) {
+              <section class="cat-meta" [class.is-collapsed]="!categoryMetafieldsOpen()">
+                <header class="cat-meta__head">
+                  <button
+                    type="button"
+                    class="cat-meta__toggle"
+                    [attr.aria-expanded]="categoryMetafieldsOpen()"
+                    (click)="toggleCategoryMetafields()"
+                  >
+                    <span class="cat-meta__titles">
+                      <strong>Metacampos de categoría</strong>
+                      <span class="cat-meta__path">{{ categoryPath(category) }}</span>
+                    </span>
+                    <ds-icon [name]="categoryMetafieldsOpen() ? 'chevronUp' : 'chevronDown'" [size]="0.9" />
+                  </button>
+                </header>
+                @if (categoryMetafieldsOpen()) {
+                  <div class="cat-meta__body">
+                    @if (activeMetafields().length) {
+                      <ul class="cat-meta__rows">
+                        @for (attribute of activeMetafields(); track attribute.key) {
+                          <li class="cat-meta__row" [class.is-picking]="pickingKey() === attribute.key">
+                            <button type="button" class="cat-meta__label" (click)="openAttributePicker(attribute.key)">
+                              {{ attribute.name }}
+                            </button>
+                            <div class="cat-meta__values">
+                              @for (value of attributeValues()[attribute.key] ?? []; track value) {
+                                <span class="cat-meta__chip">
+                                  @if (attributeSwatch(attribute.name, value); as swatch) {
+                                    <span class="cat-meta__swatch" [style.background]="swatch" aria-hidden="true"></span>
+                                  }
+                                  <button
+                                    type="button"
+                                    class="cat-meta__chip-edit"
+                                    [attr.aria-label]="'Editar ' + value + ', ' + attribute.name"
+                                    (click)="openAttributePicker(attribute.key)"
+                                  >
+                                    {{ value }}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    class="cat-meta__chip-remove"
+                                    aria-label="Quitar chip"
+                                    (click)="removeAttributeValue(attribute.key, value)"
+                                  >
+                                    <ds-icon name="x" [size]="0.7" />
+                                  </button>
+                                </span>
+                              }
+                              <button
+                                type="button"
+                                class="cat-meta__add"
+                                [class.is-compact]="(attributeValues()[attribute.key]?.length ?? 0) > 0"
+                                aria-label="Agregar"
+                                (click)="openAttributePicker(attribute.key)"
+                              >
+                                <ds-icon name="plus" [size]="0.75" />
+                                <span class="cat-meta__add-label">Agregar</span>
+                              </button>
+                              @if (pickingKey() === attribute.key) {
+                                <div class="cat-meta__picker" role="listbox" aria-multiselectable="true" [attr.aria-label]="attribute.name">
+                                  <input
+                                    class="cat-meta__search"
+                                    type="search"
+                                    [attr.aria-label]="attribute.name"
+                                    placeholder="Buscar entradas"
+                                    [value]="pickerQuery()"
+                                    (input)="pickerQuery.set($any($event.target).value)"
+                                    (keydown.escape)="closeAttributePicker()"
+                                  />
+                                  <div class="cat-meta__options">
+                                    @if (pickerSelectedOptions().length) {
+                                      <p class="cat-meta__group">{{ attribute.name }}</p>
+                                      @for (option of pickerSelectedOptions(); track option) {
+                                        <button
+                                          type="button"
+                                          class="cat-meta__option is-selected"
+                                          role="option"
+                                          aria-selected="true"
+                                          (click)="togglePickerEntry(option)"
+                                        >
+                                          <span class="cat-meta__check" aria-hidden="true"></span>
+                                          @if (attributeSwatch(attribute.name, option); as swatch) {
+                                            <span class="cat-meta__swatch" [style.background]="swatch" aria-hidden="true"></span>
+                                          }
+                                          {{ option }}
+                                        </button>
+                                      }
+                                    }
+                                    @if (attribute.values?.length) {
+                                      @if (pickerDefaultOptions().length) {
+                                        <p class="cat-meta__group">Entradas predeterminadas</p>
+                                        @for (option of pickerDefaultOptions(); track option) {
+                                          <button
+                                            type="button"
+                                            class="cat-meta__option"
+                                            role="option"
+                                            aria-selected="false"
+                                            (click)="togglePickerEntry(option)"
+                                          >
+                                            <span class="cat-meta__check" aria-hidden="true"></span>
+                                            @if (attributeSwatch(attribute.name, option); as swatch) {
+                                              <span class="cat-meta__swatch" [style.background]="swatch" aria-hidden="true"></span>
+                                            }
+                                            {{ option }}
+                                          </button>
+                                        }
+                                      } @else if (!pickerSelectedOptions().length) {
+                                        <p class="cat-meta__empty">No se encontraron entradas</p>
+                                      }
+                                    } @else {
+                                      <input
+                                        class="cat-meta__custom"
+                                        [value]="customEntryDraft()"
+                                        [maxLength]="attribute.maxLength ?? 200"
+                                        placeholder="Escribe un valor"
+                                        (input)="customEntryDraft.set($any($event.target).value)"
+                                        (keydown.enter)="$event.preventDefault(); addCustomPickerEntry()"
+                                      />
+                                    }
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="cat-meta__new-entry"
+                                    [disabled]="!pickerCanAddCustom()"
+                                    (click)="addCustomPickerEntry()"
+                                  >
+                                    <ds-icon name="plus" [size]="0.75" />
+                                    Agregar entrada
+                                  </button>
+                                </div>
+                              }
+                            </div>
+                            <button
+                              type="button"
+                              class="cat-meta__clear"
+                              [attr.aria-label]="metafieldClearLabel(attribute)"
+                              (click)="clearMetafield(attribute.key)"
+                            >
+                              <ds-icon name="trash" [size]="0.85" />
+                            </button>
+                          </li>
                         }
-                        <input class="tw:console-field tw:min-w-0 tw:flex-1" [attr.aria-label]="'Valor ' + (valueIndex + 1) + ' de ' + (axis.name || 'la opción ' + (axisIndex + 1))" [value]="value" maxlength="200" (input)="updateAxisValue(axisIndex, valueIndex, $any($event.target).value)" (blur)="generateVariants()" placeholder="Ej. Negro" />
-                        <button type="button" class="tw:console-icon-button" [attr.aria-label]="'Quitar valor ' + (value || valueIndex + 1) + ' de ' + (axis.name || 'la opción')" (click)="removeAxisValue(axisIndex, valueIndex)"><ds-icon name="trash" [size]="0.9" /></button>
+                      </ul>
+                    }
+                    @if (suggestedMetafields().length) {
+                      <div class="cat-meta__suggest">
+                        @for (attribute of suggestedMetafields(); track attribute.key) {
+                          <button type="button" class="cat-meta__suggest-pill" (click)="activateMetafield(attribute.key)">
+                            <ds-icon name="plus" [size]="0.75" />
+                            {{ attribute.name }}
+                          </button>
+                        }
                       </div>
                     }
-                    <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
-                      <button type="button" class="tw:console-action-secondary" [disabled]="axisValues(axis).length >= 50" (click)="addAxisValue(axisIndex)"><ds-icon name="plus" [size]="0.9" />Agregar otro valor</button>
-                      <button type="button" class="tw:console-action-secondary tw:text-danger-text" (click)="removeAxis(axisIndex)">Eliminar opción</button>
-                    </div>
                   </div>
                 }
-                <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
-                  <ds-button type="button" variant="secondary" [disabled]="axes().length >= 5" (click)="addAxis()"><ds-icon name="plus" [size]="0.9" />Agregar otra opción</ds-button>
-                  <span class="tw:text-caption tw:text-muted" role="status">{{ variantDrafts().length }} variantes · máximo 500</span>
-                </div>
-                @if (variantError()) { <p class="tw:m-0 tw:text-caption tw:text-danger-text" role="alert">{{ variantError() }}</p> }
-                @if (axesPending() && !variantError()) { <p class="tw:m-0 tw:text-caption tw:text-muted" role="status">Termina de editar las opciones para actualizar las variantes.</p> }
-                @if (variantDrafts().length) {
-                  <div class="tw:grid tw:gap-3 tw:border-0 tw:border-t tw:border-solid tw:border-divider tw:pt-3 tw:sm:grid-cols-2">
-                    <label class="field"><span>Agrupar por</span><ds-select><select [value]="activeVariantGroup() || '__all'" (change)="setVariantGroup($any($event.target).value)">@for (name of variantGroupOptions(); track name) { <option [value]="name">{{ name }}</option> }<option value="__all">Sin agrupar</option></select></ds-select></label>
-                    <label class="field"><span>Buscar variantes</span><input class="tw:console-field" type="search" [value]="variantQuery()" maxlength="100" (input)="setVariantQuery($any($event.target).value)" placeholder="Valor de opción o SKU" /></label>
-                  </div>
-                  <div class="tw:grid tw:gap-3">
-                    @for (group of variantGroups(); track group.key; let groupIndex = $index) {
-                      <section class="tw:overflow-hidden tw:rounded-sm tw:border tw:border-solid tw:border-border">
-                        <header class="tw:flex tw:items-center tw:gap-2 tw:bg-canvas tw:px-3 tw:py-2">
-                          <button type="button" class="tw:grid tw:size-touch tw:shrink-0 tw:cursor-pointer tw:place-items-center tw:overflow-hidden tw:rounded-sm tw:border tw:border-dashed tw:border-border tw:bg-surface" [attr.aria-label]="'Asignar foto al grupo ' + group.key" (click)="variantPhotoTarget.set({ indexes: group.indexes, label: 'Grupo ' + group.key })">@if (group.image) { <img [src]="group.image" alt="" class="tw:size-full tw:object-cover" /> } @else { <ds-icon name="image" [size]="1" /> }</button>
-                          <button type="button" class="tw:flex tw:min-w-0 tw:flex-1 tw:cursor-pointer tw:items-center tw:justify-between tw:gap-2 tw:border-0 tw:bg-transparent tw:p-0 tw:text-left tw:text-body tw:text-foreground" [attr.aria-expanded]="!variantGroupsClosed()[group.key]" [attr.aria-controls]="'variant-group-' + groupIndex" (click)="toggleVariantGroup(group.key)"><span class="tw:grid tw:min-w-0"><strong class="tw:font-medium tw:wrap-anywhere">{{ group.key }}</strong><span class="tw:text-caption tw:text-muted">{{ group.total }} variantes@if (group.rows.length < group.total) { · {{ group.rows.length }} en esta página }</span></span><ds-icon [name]="variantGroupsClosed()[group.key] ? 'chevronDown' : 'chevronUp'" [size]="0.85" /></button>
-                        </header>
-                        @if (!variantGroupsClosed()[group.key]) {
-                          <div [id]="'variant-group-' + groupIndex" class="tw:grid">
-                            @for (row of group.rows; track row.key) {
-                              @let variant = row.variant;
-                              <div class="tw:grid tw:gap-2 tw:border-0 tw:border-t tw:border-solid tw:border-divider tw:p-3">
-                                <div class="tw:grid tw:grid-cols-2 tw:items-center tw:gap-2 tw:md:grid-cols-12">
-                                  <div class="tw:col-span-2 tw:flex tw:min-w-0 tw:items-center tw:gap-2 tw:md:col-span-4">
-                                    <button type="button" class="tw:grid tw:size-touch tw:shrink-0 tw:cursor-pointer tw:place-items-center tw:overflow-hidden tw:rounded-sm tw:border tw:border-dashed tw:border-border tw:bg-surface" [attr.aria-label]="'Asignar foto a ' + variantLabel(variant)" (click)="variantPhotoTarget.set({ indexes: [row.index], label: variantLabel(variant) })">@if (variant.imageUrl) { <img [src]="variant.imageUrl" alt="" class="tw:size-full tw:object-cover" /> } @else { <ds-icon name="image" [size]="0.9" /> }</button>
-                                    <span class="tw:grid tw:min-w-0 tw:gap-1"><strong class="tw:text-body tw:font-medium tw:wrap-anywhere">{{ variantChildLabel(variant) }}</strong><span class="tw:text-caption tw:text-muted tw:wrap-anywhere">{{ variant.sku || 'Sin SKU' }}</span></span>
-                                  </div>
-                                  <label class="tw:grid tw:min-w-0 tw:gap-1 tw:text-caption tw:text-muted tw:md:col-span-3">Precio · {{ productForm.controls.currency.value }}<input class="tw:console-field tw:console-field" type="number" min="0" step="0.01" [attr.aria-label]="'Precio de ' + variantLabel(variant)" [value]="variant.priceInherited ? productForm.controls.price.value : variant.price" (input)="onVariantPriceInput(row.index, $any($event.target).value)" /></label>
-                                  @if (isPhysical()) { <label class="tw:grid tw:min-w-0 tw:gap-1 tw:text-caption tw:text-muted tw:md:col-span-3">Stock<input class="tw:console-field tw:console-field" type="number" min="0" step="1" [attr.aria-label]="'Stock de ' + variantLabel(variant)" [value]="variant.stockQty ?? ''" placeholder="Del producto" (input)="updateVariantStock(row.index, $any($event.target).value)" /></label> }
-                                  <span class="tw:col-span-2 tw:text-caption tw:md:col-span-2" [class.tw:text-success-text]="variant.isAvailable">{{ variant.isAvailable ? 'Disponible' : 'No disponible' }}</span>
-                                </div>
-                                <details class="tw:text-caption">
-                                  <summary class="tw:cursor-pointer tw:content-center tw:text-muted">Detalles de {{ variantLabel(variant) }}</summary>
-                                  <div class="tw:grid tw:gap-2 tw:pt-2">
-                                    <label class="field"><span>SKU de {{ variantLabel(variant) }}</span><input class="tw:console-field" [value]="variant.sku" maxlength="60" (input)="updateVariant(row.index, { sku: $any($event.target).value })" /></label>
-                                    <ds-checkbox variant="inline"><input type="checkbox" [checked]="variant.priceInherited" (change)="updateVariant(row.index, { priceInherited: $any($event.target).checked })" /><span>Usar el precio del producto</span></ds-checkbox>
-                                    <ds-checkbox variant="inline"><input type="checkbox" [checked]="variant.isAvailable" (change)="updateVariant(row.index, { isAvailable: $any($event.target).checked })" /><span>Ofrecer {{ variantLabel(variant) }}</span></ds-checkbox>
-                                    @if (isPhysical()) { <span class="tw:text-muted">Stock vacío usa el del producto; cero significa agotado.</span> }
-                                    <button type="button" class="tw:console-action-secondary tw:justify-self-start tw:text-danger-text" (click)="removeVariant(row.index)">Eliminar {{ variantLabel(variant) }}</button>
-                                  </div>
-                                </details>
-                              </div>
-                            }
-                          </div>
-                        }
-                      </section>
-                    } @empty { <p class="tw:m-0 tw:text-body tw:text-muted">No hay variantes que coincidan con tu búsqueda.</p> }
-                  </div>
-                  <nav class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2 tw:text-caption" aria-label="Páginas de variantes">
-                    <span>{{ matchingVariants().length }} variantes · página {{ variantPage() + 1 }} de {{ variantPageCount() }}</span>
-                    <div class="tw:flex tw:gap-2"><ds-button type="button" variant="secondary" [disabled]="variantPage() === 0" (click)="variantPage.set(variantPage() - 1)">Anterior</ds-button><ds-button type="button" variant="secondary" [disabled]="(variantPage() + 1) * 25 >= matchingVariants().length" (click)="variantPage.set(variantPage() + 1)">Siguiente</ds-button></div>
-                  </nav>
-                  <p class="tw:m-0 tw:text-caption tw:text-muted">Las variantes nuevas empiezan con stock cero. Las retiradas se eliminan al guardar el producto.</p>
-                }
-              }
-            </ds-form-section>
+              </section>
+            }
           }
+
+          <section class="cat-meta" [class.is-collapsed]="!productMetafieldsOpen()">
+            <header class="cat-meta__head">
+              <button type="button" class="cat-meta__toggle" [attr.aria-expanded]="productMetafieldsOpen()" (click)="toggleProductMetafields()">
+                <span class="cat-meta__titles">
+                  <strong>Metacampos del producto</strong>
+                  <span class="cat-meta__path">{{ productMetafields().length }} {{ productMetafields().length === 1 ? 'campo' : 'campos' }}</span>
+                </span>
+                <ds-icon [name]="productMetafieldsOpen() ? 'chevronUp' : 'chevronDown'" [size]="0.9" />
+              </button>
+            </header>
+            @if (productMetafieldsOpen()) {
+              <div class="cat-meta__body">
+                <ul class="cat-meta__rows">
+                  @for (field of productMetafields(); track $index; let i = $index) {
+                    <li class="cat-meta__row">
+                      <div class="tw:grid tw:min-w-0 tw:flex-1 tw:gap-2 tw:sm:grid-cols-2">
+                        <input class="tw:console-field" [value]="field.key" maxlength="64" placeholder="clave (ej. care_guide)" aria-label="Clave del metacampo" (input)="updateProductMetafield(i, { key: $any($event.target).value })" />
+                        <input class="tw:console-field" [value]="field.value" maxlength="2000" placeholder="Valor" aria-label="Valor del metacampo" (input)="updateProductMetafield(i, { value: $any($event.target).value })" />
+                      </div>
+                      <button type="button" class="cat-meta__clear" aria-label="Quitar metacampo" (click)="removeProductMetafield(i)">
+                        <ds-icon name="trash" [size]="0.85" />
+                      </button>
+                    </li>
+                  }
+                </ul>
+                <button type="button" class="publish-add-pill" [disabled]="productMetafields().length >= 50" (click)="addProductMetafield()">
+                  <ds-icon name="plus" [size]="0.85" />
+                  Agregar
+                </button>
+              </div>
+            }
+          </section>
+
+          @if (variantsEnabled() && !setEnabled()) {
+            <section class="cat-meta" [class.is-collapsed]="!variantMetafieldsOpen()">
+              <header class="cat-meta__head">
+                <button type="button" class="cat-meta__toggle" [attr.aria-expanded]="variantMetafieldsOpen()" (click)="toggleVariantMetafields()">
+                  <span class="cat-meta__titles">
+                    <strong>Metacampos de la variante</strong>
+                    <span class="cat-meta__path">{{ variantMetafieldCount() }} en {{ variantDrafts().length }} variantes · edítalos en cada fila</span>
+                  </span>
+                  <ds-icon [name]="variantMetafieldsOpen() ? 'chevronUp' : 'chevronDown'" [size]="0.9" />
+                </button>
+              </header>
+              @if (variantMetafieldsOpen()) {
+                <div class="cat-meta__body">
+                  <p class="field__hint">Abre «Detalles» en una variante para agregar claves y valores propios de esa combinación.</p>
+                </div>
+              }
+            </section>
+          }
+
+          <section class="cat-meta" [class.is-collapsed]="!seoOpen()">
+            <header class="cat-meta__head">
+              <button type="button" class="cat-meta__toggle" [attr.aria-expanded]="seoOpen()" (click)="toggleSeo()">
+                <span class="cat-meta__titles">
+                  <strong>Publicación en motores de búsqueda</strong>
+                  <span class="cat-meta__path">{{ seoPreview().title }}</span>
+                </span>
+                <ds-icon [name]="seoOpen() ? 'chevronUp' : 'chevronDown'" [size]="0.9" />
+              </button>
+            </header>
+            @if (seoOpen()) {
+              <div class="cat-meta__body seo-preview">
+                <div class="seo-preview__card" aria-hidden="true">
+                  <p class="seo-preview__url">tu-tienda / productos / {{ seoPreview().handle }}</p>
+                  <p class="seo-preview__title">{{ seoPreview().title }}</p>
+                  <p class="seo-preview__desc">{{ seoPreview().description }}</p>
+                </div>
+                <label class="field">
+                  <span>Título de la página</span>
+                  <input class="tw:console-field" formControlName="seoTitle" maxlength="70" aria-label="Título SEO" placeholder="Se usa el nombre del producto si lo dejas vacío" />
+                  <span class="field__meta"><span class="field__hint">Hasta 70 caracteres.</span><span class="field__count">{{ (productForm.controls.seoTitle.value ?? '').length }}/70</span></span>
+                </label>
+                <label class="field">
+                  <span>Meta descripción</span>
+                  <textarea class="tw:console-field" formControlName="seoDescription" rows="3" maxlength="160" aria-label="Meta descripción" placeholder="Resumen que aparece en Google"></textarea>
+                  <span class="field__meta"><span class="field__hint">Hasta 160 caracteres.</span><span class="field__count">{{ (productForm.controls.seoDescription.value ?? '').length }}/160</span></span>
+                </label>
+                <label class="field">
+                  <span>URL del producto</span>
+                  <input class="tw:console-field" formControlName="handle" maxlength="64" aria-label="Handle SEO" (input)="onHandleInput()" />
+                </label>
+              </div>
+            }
+          </section>
         </div>
 
         <aside class="publish__rail tw:grid tw:min-w-0 tw:content-start tw:gap-4 tw:lg:sticky tw:lg:top-4" aria-label="Publicación y organización">
@@ -780,6 +1066,79 @@
           </ds-form-section>
 
           <ds-form-section title="Organización del producto" density="compact">
+            @if (classificationError()) {
+              <p role="alert">No pudimos cargar la clasificación. <button type="button" class="link-btn" (click)="loadCategories()">Reintentar</button></p>
+            }
+            <div class="publish-row cat-picker" [class.is-open]="categoryPickerOpen()">
+              <span class="publish-row__label">Categoría</span>
+              <div class="cat-picker__control publish-row__control">
+                <button
+                  type="button"
+                  class="cat-picker__trigger"
+                  aria-label="Categoría"
+                  [attr.aria-expanded]="categoryPickerOpen()"
+                  (click)="categoryPickerOpen() ? closeCategoryPicker() : openCategoryPicker()"
+                >
+                  <span class="cat-picker__value">
+                    @if (selectedCategory(); as category) {
+                      {{ category.name }}
+                    } @else {
+                      Seleccionar
+                    }
+                  </span>
+                  <ds-icon name="chevronDown" [size]="0.85" />
+                </button>
+                @if (categoryPickerOpen()) {
+                  <div class="cat-picker__panel" role="listbox" aria-label="Categorías">
+                    <input
+                      class="cat-picker__search"
+                      type="search"
+                      placeholder="Buscar categorías"
+                      [value]="categorySearch()"
+                      (input)="categorySearch.set($any($event.target).value)"
+                      (keydown.escape)="closeCategoryPicker()"
+                    />
+                    @if (!categorySearch().trim() && categoryBrowseId()) {
+                      <button type="button" class="cat-picker__back" (click)="browseCategoryUp()">
+                        <ds-icon name="chevronLeft" [size]="0.85" />
+                        Volver a {{ categoryBrowseBackLabel() }}
+                      </button>
+                    }
+                    <div class="cat-picker__list">
+                      @for (category of categoryPickerItems(); track category.id) {
+                        <div class="cat-picker__row" [class.is-selected]="category.id === categoryId()">
+                          <button type="button" class="cat-picker__option" role="option" (click)="setCategory(category.id)">
+                            @if (category.id === categoryId()) {
+                              <ds-icon name="check" [size]="0.85" />
+                            }
+                            <span>{{ category.name }}</span>
+                          </button>
+                          @if (category.hasChildren) {
+                            <button
+                              type="button"
+                              class="cat-picker__drill"
+                              [attr.aria-label]="'Ver ' + category.name"
+                              (click)="browseCategoryChildren(category, $event)"
+                            >
+                              <ds-icon name="chevronRight" [size]="0.85" />
+                            </button>
+                          }
+                        </div>
+                      } @empty {
+                        <p class="cat-picker__empty">Sin coincidencias</p>
+                      }
+                    </div>
+                    @if (categoryId()) {
+                      <button type="button" class="cat-picker__clear" (click)="clearCategory()">
+                        <ds-icon name="x" [size]="0.85" />
+                        Borrar
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+
             <label class="publish-row">
               <span class="publish-row__label">Tipo</span>
               <ds-select class="publish-row__control">
@@ -791,19 +1150,9 @@
               </ds-select>
             </label>
 
-            @if (classificationError()) {
-              <p role="alert">No pudimos cargar la clasificación. <button type="button" class="link-btn" (click)="loadCategories()">Reintentar</button></p>
-            }
             <label class="publish-row">
-              <span class="publish-row__label">Categoría</span>
-              <ds-select class="publish-row__control">
-                <select [ngModel]="categoryId()" [ngModelOptions]="{ standalone: true }" aria-label="Categoría" (ngModelChange)="setCategory($event)">
-                  <option value="">Seleccionar</option>
-                  @for (category of kindCategories(); track category.id) {
-                    <option [value]="category.id">{{ categoryPath(category) }}</option>
-                  }
-                </select>
-              </ds-select>
+              <span class="publish-row__label">Proveedor</span>
+              <input class="tw:console-field publish-row__control" formControlName="vendor" aria-label="Proveedor" maxlength="80" autocomplete="off" placeholder="Ninguno" />
             </label>
 
             <label class="publish-row">
@@ -849,6 +1198,37 @@
               </button>
             </div>
             <input type="hidden" formControlName="categoriesText" />
+          </ds-form-section>
+
+          <ds-form-section title="Etiquetas" density="compact">
+            <div class="chips">
+              @for (tag of tags(); track tag) {
+                <button
+                  type="button"
+                  class="chip"
+                  (click)="removeTag(tag)"
+                  [attr.aria-label]="'Quitar etiqueta ' + tag"
+                >
+                  {{ tag }}
+                  <ds-icon name="x" />
+                </button>
+              }
+            </div>
+            <div class="publish-collection-add">
+              <input class="tw:console-field"
+                type="text"
+                [value]="tagDraft()"
+                (input)="onTagDraftInput($any($event.target).value)"
+                placeholder="Nueva etiqueta"
+                aria-label="Nueva etiqueta"
+                maxlength="40"
+                (keydown.enter)="$event.preventDefault(); addTagFromDraft()"
+              />
+              <button type="button" class="publish-add-pill" [disabled]="tags().length >= 50" (click)="addTagFromDraft()">
+                <ds-icon name="plus" [size]="0.85" />
+                Agregar
+              </button>
+            </div>
           </ds-form-section>
           @if (isEditing()) {
             <div class="publish-danger">

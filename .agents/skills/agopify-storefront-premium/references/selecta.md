@@ -5,7 +5,7 @@ Read this when evolving Selecta in this repository. These are the user's accepte
 ## Experience
 
 - Home is an editorial storefront introduction: brand hero, category discovery, a short product selection, editorial content and useful purchase information. Do not turn it into the complete searchable catalog.
-- The current home selection is bounded to three products, with up to six category links. It uses the existing loaded catalog order; do not claim manual curation or best-seller status without supporting data.
+- The current home selection is bounded to six products, with up to six category links. Category and product tiles use capped `auto-fill` widths so they stay boutique-scale on wide screens (compact square categories; product cards ≈13–16 rem). It uses the existing loaded catalog order; do not claim manual curation or best-seller status without supporting data.
 - `/tienda` is the complete Selecta shop: category hierarchy, search, available facets, price filters, sorting, grid/list and pagination reuse `features/catalog` and its server-backed contracts.
 - `/productos` and `/catalogo` are compatibility redirects to `/tienda`, preserving query parameters. Product detail remains `/producto/:handle`; cart, checkout and receipt URLs stay intact.
 - Merchant navigation labels and explicit hides remain authoritative. Existing merchant links to `/productos` can map to `/tienda` in Selecta without changing other renderers.

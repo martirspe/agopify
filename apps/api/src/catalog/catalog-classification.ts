@@ -6,6 +6,8 @@ export type AttributeDefinition = {
   values?: string[]; maxLength?: number;
 };
 export type CategoryRecord = { id: string; name: string; kind: ProductKind; parentId: string | null; attributes: Prisma.JsonValue };
+export type AttributeValueMap = Record<string, string | string[]>;
+export type AttributeValueLists = Record<string, string[]>;
 
 /** Resolve root to leaf, overriding by stable attribute key. Reject invalid trees. */
 export function categorySchema(categories: CategoryRecord[], id: string) {
@@ -33,35 +35,73 @@ export function categorySchema(categories: CategoryRecord[], id: string) {
   return { ...path[path.length - 1], path: path.map(({ id, name }) => ({ id, name })), attributes: [...attributes.values()] };
 }
 
-export function validateAttributeValues(definitions: AttributeDefinition[], values: Record<string, string>, variantNames: string[] = []) {
+/** Shopify category metafields are lists of entries; accept string or string[]. */
+export function coerceAttributeList(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return [...new Set(raw.filter((item): item is string => typeof item === 'string').map((item) => item.trim()).filter(Boolean))];
+  }
+  if (typeof raw === 'string') {
+    const value = raw.trim();
+    return value ? [value] : [];
+  }
+  return [];
+}
+
+export function validateAttributeValues(
+  definitions: AttributeDefinition[],
+  values: AttributeValueMap,
+  variantNames: string[] = [],
+): AttributeValueLists {
   const byKey = new Map(definitions.map((definition) => [definition.key, definition]));
-  const clean: Record<string, string> = {};
+  const clean: AttributeValueLists = {};
   for (const [key, raw] of Object.entries(values)) {
     const definition = byKey.get(key);
     if (!definition) throw new BadRequestException('Hay características que no pertenecen a esta categoría.');
-    if (typeof raw !== 'string') throw new BadRequestException(`Completa ${definition.name} con un texto válido.`);
-    const value = raw.trim();
-    if (!value) continue;
-    if (value.length > (definition.maxLength ?? 200) || (definition.values?.length && !definition.values.includes(value)))
-      throw new BadRequestException(`El valor de ${definition.name} no es válido.`);
-    clean[key] = value;
+    if (typeof raw !== 'string' && !Array.isArray(raw)) {
+      throw new BadRequestException(`Completa ${definition.name} con un texto válido.`);
+    }
+    const list = coerceAttributeList(raw);
+    for (const value of list) {
+      // Suggested taxonomy entries are open (Shopify: “Agregar entrada”).
+      if (value.length > (definition.maxLength ?? 200)) {
+        throw new BadRequestException(`El valor de ${definition.name} no es válido.`);
+      }
+    }
+    if (list.length) clean[key] = list;
   }
   for (const definition of definitions) {
-    if (definition.required && !clean[definition.key] && !(definition.variant && variantNames.some((name) => name.trim().toLocaleLowerCase('es') === definition.name.trim().toLocaleLowerCase('es'))))
+    const coveredByVariant =
+      definition.variant &&
+      variantNames.some(
+        (name) => name.trim().toLocaleLowerCase('es') === definition.name.trim().toLocaleLowerCase('es'),
+      );
+    if (definition.required && !clean[definition.key]?.length && !coveredByVariant) {
       throw new BadRequestException(`Completa ${definition.name}.`);
+    }
   }
   return clean;
 }
 
 /** Materialize validated characteristics into the existing public/agent facts contract. */
-export function classificationDetails(raw: unknown, previous: AttributeDefinition[], definitions: AttributeDefinition[], values: Record<string, string>): Prisma.InputJsonObject | null {
+export function classificationDetails(
+  raw: unknown,
+  previous: AttributeDefinition[],
+  definitions: AttributeDefinition[],
+  values: AttributeValueLists,
+): Prisma.InputJsonObject | null {
   const details = raw && typeof raw === 'object' && !Array.isArray(raw) ? JSON.parse(JSON.stringify(raw)) as Record<string, Prisma.InputJsonValue> : {};
   const names = new Set([...previous, ...definitions].map((attribute) => attribute.name.toLocaleLowerCase('es')));
   const generic = Array.isArray(details.attributes) ? details.attributes.filter((attribute) => {
     if (!attribute || typeof attribute !== 'object' || Array.isArray(attribute)) return false;
     return typeof attribute.name === 'string' && typeof attribute.value === 'string' && !names.has(attribute.name.toLocaleLowerCase('es'));
   }) : [];
-  const attributes = [...generic, ...definitions.flatMap((definition) => values[definition.key] ? [{ name: definition.name, value: values[definition.key] }] : [])];
+  const attributes = [
+    ...generic,
+    ...definitions.flatMap((definition) => {
+      const list = coerceAttributeList(values[definition.key]);
+      return list.length ? [{ name: definition.name, value: list.join(', ') }] : [];
+    }),
+  ];
   if (attributes.length) details.attributes = attributes;
   else delete details.attributes;
   return Object.keys(details).length ? details : null;

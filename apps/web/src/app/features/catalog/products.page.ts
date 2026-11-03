@@ -28,6 +28,8 @@ import {
 } from '@agopify/ui';
 import {
   CatalogApiService,
+  CatalogAttribute,
+  CatalogCategory,
   CollectionDto,
   ComponentInput,
   MediaInput,
@@ -35,6 +37,7 @@ import {
   ProductDetails,
   ProductDto,
   ProductKind,
+  ProductMetafield,
   ProductStatus,
   ServiceMode,
 } from '../../core/api/catalog-api.service';
@@ -50,7 +53,6 @@ import {
   readOptions,
   keyOf,
 } from './variant-combinations';
-import { CatalogCategory } from '../../core/api/catalog-api.service';
 import { CatalogListState, catalogCsv, catalogStock, filterCatalog } from './catalog-list';
 type VariantDraft = CombinationDraft;
 type VariantRow = { variant: VariantDraft; index: number; key: string };
@@ -65,12 +67,48 @@ const MAX_FAQS = 10;
 type MediaDraft = { url: string; kind: 'image' | 'related'; alt: string; caption: string };
 
 const MAX_MEDIA = 12;
+/** Swatches aligned to Shopify Admin color chips (Sandalias). */
+const COLOR_SWATCHES: Record<string, string> = {
+  negro: '#1a1a1a',
+  blanco: '#f5f5f5',
+  gris: '#8a8a8a',
+  beige: '#ead8ab',
+  marrón: '#9a5630',
+  marron: '#9a5630',
+  azul: '#2a6bbf',
+  rojo: '#c62828',
+  verde: '#2f7d4a',
+  rosa: '#e38bb5',
+  dorado: '#c9a227',
+  amarillo: '#e6c200',
+  naranja: '#e67e22',
+  morado: '#7c3aed',
+  violeta: '#7c3aed',
+  multicolor: 'conic-gradient(#ef4444, #eab308, #22c55e, #3b82f6, #ef4444)',
+};
+
 const lines = (text: string) =>
   text
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
     .slice(0, 20);
+
+function normalizeAttributeValues(
+  raw: Record<string, string | string[]> | null | undefined,
+): Record<string, string[]> {
+  if (!raw) return {};
+  const out: Record<string, string[]> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (Array.isArray(value)) {
+      const list = [...new Set(value.map((item) => String(item).trim()).filter(Boolean))];
+      if (list.length) out[key] = list;
+    } else if (typeof value === 'string' && value.trim()) {
+      out[key] = [value.trim()];
+    }
+  }
+  return out;
+}
 
 function slugify(value: string): string {
   return value
@@ -80,6 +118,46 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 64);
+}
+
+function kgFromGrams(grams: number | null | undefined): number | null {
+  if (grams == null) return null;
+  return Math.round((grams / 1000) * 1000) / 1000;
+}
+
+function gramsFromKg(kg: number | null | undefined): number | null {
+  if (kg === null || kg === undefined || String(kg) === '') return null;
+  const n = Number(kg);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.round(n * 1000);
+}
+
+function cmFromMm(mm: number | null | undefined): number | null {
+  if (mm == null) return null;
+  return Math.round((mm / 10) * 10) / 10;
+}
+
+function mmFromCm(cm: number | null | undefined): number | null {
+  if (cm === null || cm === undefined || String(cm) === '') return null;
+  const n = Number(cm);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.round(n * 10);
+}
+
+function normalizeMetafieldDrafts(
+  raw: ProductMetafield[] | null | undefined,
+): ProductMetafield[] {
+  if (!raw?.length) return [];
+  const out: ProductMetafield[] = [];
+  for (const item of raw) {
+    const key = slugify(item.key).replace(/-/g, '_').slice(0, 64);
+    const value = item.value.trim().slice(0, 2000);
+    if (!key || !value) continue;
+    const namespace = item.namespace?.trim().slice(0, 64) || undefined;
+    out.push(namespace ? { key, namespace, value } : { key, value });
+    if (out.length >= 50) break;
+  }
+  return out;
 }
 
 function toCents(amount: number): number {
@@ -322,20 +400,121 @@ export class ProductsPage {
     });
   });
   readonly categories = signal<CatalogCategory[]>([]);
+  /** Selected category with full inherited metafields (loaded via categoryById). */
+  readonly categoryDetail = signal<CatalogCategory | null>(null);
   readonly classificationError = signal(false);
   readonly categoryId = signal('');
-  readonly attributeValues = signal<Record<string, string>>({});
+  readonly attributeValues = signal<Record<string, string[]>>({});
+  /** Shopify: metafields pinned into the card (vs suggested “+ name” pills). */
+  readonly activeMetafieldKeys = signal<string[]>([]);
+  readonly categoryMetafieldsOpen = signal(true);
+  readonly productMetafieldsOpen = signal(false);
+  readonly variantMetafieldsOpen = signal(false);
+  readonly seoOpen = signal(false);
+  readonly productMetafields = signal<ProductMetafield[]>([]);
+  readonly tags = signal<string[]>([]);
+  readonly tagDraft = signal('');
+  readonly pickingKey = signal<string | null>(null);
+  readonly pickerQuery = signal('');
+  readonly customEntryDraft = signal('');
+  /** Shopify Admin category picker: drill-down parent id (null = roots). */
+  readonly categoryPickerOpen = signal(false);
+  readonly categoryBrowseId = signal<string | null>(null);
+  readonly categorySearch = signal('');
   readonly kindCategories = computed(() => this.categories().filter((category) => category.kind === this.formValues().kind));
-  readonly selectedCategory = computed(() => this.categories().find((category) => category.id === this.categoryId()));
-  /**
-   * Product-level required attributes. Variant-defining ones (Color, Talla…) follow Shopify:
-   * they live only as option axes when variants are on — never duplicated here.
-   */
-  readonly requiredCategoryAttributes = computed(() => {
-    const attributes = this.selectedCategory()?.attributes.filter((attribute) => attribute.required) ?? [];
-    if (!this.variantsEnabled()) return attributes;
-    return attributes.filter((attribute) => !attribute.variant);
+  readonly selectedCategory = computed(() => {
+    const detail = this.categoryDetail();
+    if (detail && detail.id === this.categoryId()) return detail;
+    return this.categories().find((category) => category.id === this.categoryId());
   });
+  readonly categoryBrowseParent = computed(() => {
+    const id = this.categoryBrowseId();
+    if (!id) return null;
+    return this.kindCategories().find((category) => category.id === id) ?? null;
+  });
+  /** Shopify “Volver a {parent}” label while drilling the taxonomy. */
+  readonly categoryBrowseBackLabel = computed(() => {
+    const current = this.categoryBrowseParent();
+    if (!current?.parentId) return 'Categorías';
+    return this.categories().find((category) => category.id === current.parentId)?.name ?? 'Categorías';
+  });
+  readonly categoryPickerItems = computed(() => {
+    const kindRows = this.kindCategories();
+    const query = this.categorySearch().trim().toLocaleLowerCase('es');
+    if (query) {
+      return kindRows
+        .filter((category) => category.name.toLocaleLowerCase('es').includes(query))
+        .slice(0, 80);
+    }
+    const browseId = this.categoryBrowseId();
+    const children = kindRows
+      .filter((category) => category.parentId === browseId)
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    if (!browseId) return children;
+    const self = kindRows.find((category) => category.id === browseId);
+    return self ? [self, ...children.filter((category) => category.id !== browseId)] : children;
+  });
+  /** Full taxonomy attributes for the selected category (Shopify shows Color here even when linked to variants). */
+  readonly allCategoryAttributes = computed(() => this.selectedCategory()?.attributes ?? []);
+  readonly connectedVariantAttributes = computed(() =>
+    this.allCategoryAttributes().filter((attribute) => attribute.variant),
+  );
+  readonly activeMetafields = computed(() => {
+    const pinned = new Set(this.activeMetafieldKeys());
+    const values = this.attributeValues();
+    return this.allCategoryAttributes().filter(
+      (attribute) =>
+        pinned.has(attribute.key) ||
+        attribute.required ||
+        (values[attribute.key]?.length ?? 0) > 0,
+    );
+  });
+  readonly suggestedMetafields = computed(() => {
+    const active = new Set(this.activeMetafields().map((attribute) => attribute.key));
+    return this.allCategoryAttributes().filter((attribute) => !active.has(attribute.key));
+  });
+  readonly pickingAttribute = computed(() =>
+    this.allCategoryAttributes().find((attribute) => attribute.key === this.pickingKey()) ?? null,
+  );
+  /** Selected entries shown checked at the top of the Shopify multi-picker. */
+  readonly pickerSelectedOptions = computed(() => {
+    const attribute = this.pickingAttribute();
+    if (!attribute) return [] as string[];
+    const selected = this.attributeValues()[attribute.key] ?? [];
+    const query = this.pickerQuery().trim().toLocaleLowerCase('es');
+    if (!query) return selected;
+    return selected.filter((value) => value.toLocaleLowerCase('es').includes(query));
+  });
+  /** Taxonomy defaults still available to check (Shopify “Entradas predeterminadas”). */
+  readonly pickerDefaultOptions = computed(() => {
+    const attribute = this.pickingAttribute();
+    if (!attribute?.values?.length) return [] as string[];
+    const selected = new Set(this.attributeValues()[attribute.key] ?? []);
+    const query = this.pickerQuery().trim().toLocaleLowerCase('es');
+    return attribute.values.filter((value) => {
+      if (selected.has(value)) return false;
+      return !query || value.toLocaleLowerCase('es').includes(query);
+    });
+  });
+  readonly pickerCanAddCustom = computed(() => {
+    const attribute = this.pickingAttribute();
+    if (!attribute) return false;
+    const draft = (this.customEntryDraft().trim() || this.pickerQuery().trim());
+    if (!draft) return false;
+    const selected = this.attributeValues()[attribute.key] ?? [];
+    if (selected.some((value) => value.toLocaleLowerCase('es') === draft.toLocaleLowerCase('es'))) {
+      return false;
+    }
+    const defaults = attribute.values ?? [];
+    if (defaults.some((value) => value.toLocaleLowerCase('es') === draft.toLocaleLowerCase('es'))) {
+      return false;
+    }
+    return true;
+  });
+  readonly categoryPathIds = computed(() => new Set(this.selectedCategory()?.path.map((item) => item.id) ?? []));
+  readonly isFragranceCategory = computed(
+    () => this.categoryPathIds().has('fragrances') || this.categoryId() === 'fragrances',
+  );
   readonly showHandle = signal(false);
   readonly faqs = signal<FaqDraft[]>([]);
   readonly maxFaqs = MAX_FAQS;
@@ -369,9 +548,18 @@ export class ProductsPage {
     stockUnlimited: [true],
     stockQty: [0, [Validators.min(0)]],
     compareAtPrice: [null as number | null, [Validators.min(0)]],
+    cost: [null as number | null, [Validators.min(0)]],
+    taxable: [true],
     brand: ['', [Validators.maxLength(60)]],
+    vendor: ['', [Validators.maxLength(80)]],
     sku: ['', [Validators.maxLength(60)]],
     line: ['', [Validators.maxLength(80)]],
+    weightKg: [null as number | null, [Validators.min(0)]],
+    lengthCm: [null as number | null, [Validators.min(0)]],
+    widthCm: [null as number | null, [Validators.min(0)]],
+    heightCm: [null as number | null, [Validators.min(0)]],
+    seoTitle: ['', [Validators.maxLength(70)]],
+    seoDescription: ['', [Validators.maxLength(160)]],
     size: ['', [Validators.maxLength(60)]],
     family: ['', [Validators.maxLength(80)]],
     intensity: ['', [Validators.maxLength(80)]],
@@ -471,6 +659,19 @@ export class ProductsPage {
     price: this.formatPrice(Math.round(Number(this.formValues().price || 0) * 100), this.formValues().currency),
     image: this.media().find(item => item.kind === 'image')?.url,
   }));
+  readonly seoPreview = computed(() => {
+    const values = this.formValues();
+    const title = values.seoTitle.trim() || values.name.trim() || 'Título de la página';
+    const description =
+      values.seoDescription.trim() ||
+      values.descriptionShort.trim() ||
+      'Agrega una descripción para motores de búsqueda.';
+    const handle = slugify(values.handle) || 'producto';
+    return { title: title.slice(0, 70), description: description.slice(0, 160), handle };
+  });
+  readonly variantMetafieldCount = computed(() =>
+    this.variantDrafts().reduce((sum, variant) => sum + (variant.metafields?.length ?? 0), 0),
+  );
   readonly editorTitle = computed(() => {
     const name = this.formValues().name.trim();
     if (name) return name;
@@ -553,6 +754,19 @@ export class ProductsPage {
         }
       });
 
+    const onDocPointer = (event: Event) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      const el = target as Element;
+      if (this.pickingKey()) {
+        const host = this.host.nativeElement as HTMLElement;
+        if (!host.contains(target) || !el.closest?.('.cat-meta__row.is-picking')) this.closeAttributePicker();
+      }
+      if (this.categoryPickerOpen() && !el.closest?.('.cat-picker')) this.closeCategoryPicker();
+    };
+    document.addEventListener('pointerdown', onDocPointer, true);
+    this.destroyRef.onDestroy(() => document.removeEventListener('pointerdown', onDocPointer, true));
+
     void this.load();
     void this.loadCategories();
   }
@@ -592,7 +806,22 @@ export class ProductsPage {
     this.axesPending.set(false);
     this.resetVariantView();
     this.categoryId.set('');
+    this.categoryDetail.set(null);
+    this.categoryPickerOpen.set(false);
+    this.categoryBrowseId.set(null);
+    this.categorySearch.set('');
     this.attributeValues.set({});
+    this.activeMetafieldKeys.set([]);
+    this.pickingKey.set(null);
+    this.pickerQuery.set('');
+    this.customEntryDraft.set('');
+    this.categoryMetafieldsOpen.set(true);
+    this.productMetafieldsOpen.set(false);
+    this.variantMetafieldsOpen.set(false);
+    this.seoOpen.set(false);
+    this.productMetafields.set([]);
+    this.tags.set([]);
+    this.tagDraft.set('');
     this.variantPage.set(0);
     this.faqs.set([]);
     this.detailsEnabled.set(false);
@@ -617,6 +846,13 @@ export class ProductsPage {
       kind: 'PRODUCT',
       digitalAccessUrl: '',
       digitalInstructions: '',
+      digitalFormat: '',
+      license: '',
+      accessDuration: '',
+      returns: '',
+      useCasesText: '',
+      exclusionsText: '',
+      compatibilityText: '',
       durationMinutes: null,
       serviceMode: '',
       price: 0,
@@ -628,9 +864,18 @@ export class ProductsPage {
       stockUnlimited: true,
       stockQty: 0,
       compareAtPrice: null,
+      cost: null,
+      taxable: true,
       brand: '',
+      vendor: '',
       sku: '',
       line: '',
+      weightKg: null,
+      lengthCm: null,
+      widthCm: null,
+      heightCm: null,
+      seoTitle: '',
+      seoDescription: '',
       size: '',
       family: '',
       intensity: '',
@@ -666,16 +911,6 @@ export class ProductsPage {
     this.mediaDraggingIndex.set(null);
     this.categoryDraft.set('');
     const details = product.details ?? {};
-    this.detailsEnabled.set(
-      Boolean(
-        details.family ||
-          details.intensity ||
-          details.scent?.length ||
-          details.notes?.length ||
-          details.highlights?.length ||
-          details.montage,
-      ),
-    );
     this.faqs.set((details.faqs ?? []).map((faq) => ({ ...faq })));
     this.setEnabled.set((product.components?.length ?? 0) > 0);
     this.components.set(
@@ -732,19 +967,35 @@ export class ProductsPage {
       stockQty: product.stockQty ?? 0,
       compareAtPrice:
         product.compareAtPriceCents === null ? null : product.compareAtPriceCents / 100,
+      cost: product.costCents == null ? null : product.costCents / 100,
+      taxable: product.taxable ?? true,
       brand: product.brand ?? '',
+      vendor: product.vendor ?? '',
+      weightKg: kgFromGrams(product.weightGrams),
+      lengthCm: cmFromMm(product.lengthMm),
+      widthCm: cmFromMm(product.widthMm),
+      heightCm: cmFromMm(product.heightMm),
+      seoTitle: product.seoTitle ?? '',
+      seoDescription: product.seoDescription ?? '',
     });
     if (product.stockUnlimited) {
       this.productForm.controls.stockQty.disable({ emitEvent: false });
     } else {
       this.productForm.controls.stockQty.enable({ emitEvent: false });
     }
+    this.tags.set([...(product.tags ?? [])]);
+    this.tagDraft.set('');
+    this.productMetafields.set(normalizeMetafieldDrafts(product.metafields));
+    this.productMetafieldsOpen.set(false);
+    this.variantMetafieldsOpen.set(false);
+    this.seoOpen.set(Boolean(product.seoTitle || product.seoDescription));
     const variants = product.variants ?? [];
     this.variantDrafts.set(variants.map((variant) => ({
       id: variant.id, sku: variant.sku ?? '', options: readOptions(variant),
       imageUrl: variant.imageUrl ?? null, price: variant.priceCents / 100,
       priceInherited: variant.priceInherited ?? false, isAvailable: variant.isAvailable, stockQty: variant.stockQty,
       expectedStockQty: variant.stockQty,
+      metafields: normalizeMetafieldDrafts(variant.metafields),
     })));
     const optionValues = new Map<string, Set<string>>();
     for (const variant of this.variantDrafts()) for (const option of variant.options) {
@@ -768,7 +1019,35 @@ export class ProductsPage {
     this.axesPending.set(false);
     this.resetVariantView();
     this.categoryId.set(product.categoryId ?? '');
-    this.attributeValues.set({ ...(product.attributeValues ?? {}) });
+    this.categoryDetail.set(null);
+    const attrs = normalizeAttributeValues(product.attributeValues);
+    // Hydrate category attrs from legacy top-level details when the schema field is empty.
+    if (details.family && !attrs['family']?.length) attrs['family'] = [details.family];
+    if (details.intensity && !attrs['intensity']?.length) attrs['intensity'] = [details.intensity];
+    if (details.audience && !attrs['audience']?.length) attrs['audience'] = [details.audience];
+    // Legacy audience key → Shopify target-gender when present.
+    if (attrs['audience']?.length && !attrs['target-gender']?.length) {
+      attrs['target-gender'] = attrs['audience'];
+      delete attrs['audience'];
+    }
+    this.attributeValues.set(attrs);
+    this.syncActiveMetafieldKeys(attrs);
+    this.pickingKey.set(null);
+    this.pickerQuery.set('');
+    this.customEntryDraft.set('');
+    this.categoryMetafieldsOpen.set(true);
+    if (product.categoryId) void this.hydrateCategoryDetail(product.categoryId, { resetValues: false });
+    this.detailsEnabled.set(
+      this.isFragranceCategory() ||
+        Boolean(
+          details.family ||
+            details.intensity ||
+            details.scent?.length ||
+            details.notes?.length ||
+            details.highlights?.length ||
+            details.montage,
+        ),
+    );
     this.variantPage.set(0);
     this.draftDirty.set(false);
     this.productForm.markAsPristine();
@@ -940,7 +1219,12 @@ export class ProductsPage {
 
   pieceSelectable(id: string): boolean { return this.pieceOptions().some((piece) => piece.id === id); }
   hasMedia(url: string): boolean { return this.media().some((photo) => photo.url === url); }
-  categoryPath(category: CatalogCategory): string { return category.path.map((item) => item.name).join(' → '); }
+  /** Shopify Admin: “Sandalias en Calzado” (leaf en parent). */
+  categoryPath(category: CatalogCategory): string {
+    const names = category.path.map((item) => item.name);
+    if (names.length >= 2) return `${names[names.length - 1]} en ${names[names.length - 2]}`;
+    return names[0] ?? category.name;
+  }
   updateVariantStock(index: number, value: string): void { this.updateVariant(index, { stockQty: value.trim() ? Number(value) : null }); }
 
   onHandleInput(): void {
@@ -961,26 +1245,265 @@ export class ProductsPage {
 
   async loadCategories(): Promise<void> {
     this.classificationError.set(false);
-    try { this.categories.set(await this.api.categories()); }
-    catch { this.classificationError.set(true); }
+    try {
+      this.categories.set(await this.api.categories());
+      const selected = this.categoryId();
+      if (selected) await this.hydrateCategoryDetail(selected, { resetValues: false });
+    } catch {
+      this.classificationError.set(true);
+    }
   }
 
-  setCategory(id: string): void {
-    this.categoryId.set(id); this.attributeValues.set({});
-    this.detailsEnabled.set(id === 'fragrances');
+  openCategoryPicker(): void {
+    const selected = this.selectedCategory();
+    this.categoryBrowseId.set(selected?.parentId ?? null);
+    this.categorySearch.set('');
+    this.categoryPickerOpen.set(true);
+  }
+
+  closeCategoryPicker(): void {
+    this.categoryPickerOpen.set(false);
+    this.categorySearch.set('');
+  }
+
+  browseCategoryChildren(category: CatalogCategory, event?: Event): void {
+    event?.stopPropagation();
+    this.categoryBrowseId.set(category.id);
+    this.categorySearch.set('');
+  }
+
+  browseCategoryUp(): void {
+    const current = this.categoryBrowseParent();
+    this.categoryBrowseId.set(current?.parentId ?? null);
+    this.categorySearch.set('');
+  }
+
+  async setCategory(id: string): Promise<void> {
+    this.categoryId.set(id);
+    this.attributeValues.set({});
+    this.pickingKey.set(null);
+    this.pickerQuery.set('');
+    this.customEntryDraft.set('');
+    this.categoryMetafieldsOpen.set(true);
+    this.closeCategoryPicker();
     this.touchEditor();
-    const suggested = this.selectedCategory()?.attributes.filter((attribute) => attribute.variant && attribute.required) ?? [];
-    if (!suggested.length) return;
-    // Shopify pattern: Color/Size become variant options, not product-level fields.
-    if (!this.variantDrafts().length) {
-      this.variantsEnabled.set(true);
-      this.axes.set(suggested.slice(0, 5).map((attribute) => ({ name: attribute.name, values: '', colors: {} })));
-      this.axesPending.set(true);
-      this.setEnabled.set(false);
-    } else {
-      this.variantsEnabled.set(true);
-      this.ensureVariantAxesForCategory(suggested.map((attribute) => attribute.name));
+    if (!id) {
+      this.categoryDetail.set(null);
+      this.activeMetafieldKeys.set([]);
+      return;
     }
+    await this.hydrateCategoryDetail(id, { resetValues: true });
+  }
+
+  clearCategory(): void {
+    void this.setCategory('');
+  }
+
+  private async hydrateCategoryDetail(
+    id: string,
+    options: { resetValues: boolean },
+  ): Promise<void> {
+    try {
+      const detail = await this.api.categoryById(id);
+      this.categoryDetail.set(detail);
+      this.detailsEnabled.set(
+        detail.path.some((item) => item.id === 'hb-3-2-8') || detail.id === 'hb-3-2-8',
+      );
+      if (options.resetValues) {
+        this.activeMetafieldKeys.set(
+          detail.attributes.filter((attribute) => attribute.required).map((attribute) => attribute.key),
+        );
+      } else {
+        this.syncActiveMetafieldKeys(this.attributeValues());
+      }
+      const suggested = detail.attributes.filter((attribute) => attribute.variant && attribute.required);
+      if (!suggested.length) return;
+      // Shopify: required variant metafields also seed option axes.
+      if (!this.variantDrafts().length) {
+        this.variantsEnabled.set(true);
+        this.axes.set(suggested.slice(0, 5).map((attribute) => ({ name: attribute.name, values: '', colors: {} })));
+        this.axesPending.set(true);
+        this.setEnabled.set(false);
+      } else {
+        this.variantsEnabled.set(true);
+        this.ensureVariantAxesForCategory(suggested.map((attribute) => attribute.name));
+      }
+    } catch {
+      this.categoryDetail.set(null);
+      this.classificationError.set(true);
+    }
+  }
+
+  toggleCategoryMetafields(): void {
+    this.categoryMetafieldsOpen.update((open) => !open);
+    if (!this.categoryMetafieldsOpen()) this.closeAttributePicker();
+  }
+
+  toggleProductMetafields(): void {
+    this.productMetafieldsOpen.update((open) => !open);
+  }
+
+  toggleVariantMetafields(): void {
+    this.variantMetafieldsOpen.update((open) => !open);
+  }
+
+  toggleSeo(): void {
+    this.seoOpen.update((open) => !open);
+  }
+
+  addProductMetafield(): void {
+    if (this.productMetafields().length >= 50) return;
+    this.productMetafields.update((list) => [...list, { key: '', value: '' }]);
+    this.productMetafieldsOpen.set(true);
+    this.touchEditor();
+  }
+
+  updateProductMetafield(index: number, patch: Partial<ProductMetafield>): void {
+    this.productMetafields.update((list) =>
+      list.map((item, i) => (i === index ? { ...item, ...patch } : item)),
+    );
+    this.touchEditor();
+  }
+
+  removeProductMetafield(index: number): void {
+    this.productMetafields.update((list) => list.filter((_, i) => i !== index));
+    this.touchEditor();
+  }
+
+  addVariantMetafield(variantIndex: number): void {
+    this.variantDrafts.update((list) =>
+      list.map((variant, i) => {
+        if (i !== variantIndex) return variant;
+        const metafields = [...(variant.metafields ?? [])];
+        if (metafields.length >= 50) return variant;
+        return { ...variant, metafields: [...metafields, { key: '', value: '' }] };
+      }),
+    );
+    this.touchEditor();
+  }
+
+  updateVariantMetafield(
+    variantIndex: number,
+    fieldIndex: number,
+    patch: Partial<ProductMetafield>,
+  ): void {
+    this.variantDrafts.update((list) =>
+      list.map((variant, i) => {
+        if (i !== variantIndex) return variant;
+        const metafields = [...(variant.metafields ?? [])];
+        metafields[fieldIndex] = { ...metafields[fieldIndex], ...patch };
+        return { ...variant, metafields };
+      }),
+    );
+    this.touchEditor();
+  }
+
+  removeVariantMetafield(variantIndex: number, fieldIndex: number): void {
+    this.variantDrafts.update((list) =>
+      list.map((variant, i) => {
+        if (i !== variantIndex) return variant;
+        return {
+          ...variant,
+          metafields: (variant.metafields ?? []).filter((_, fi) => fi !== fieldIndex),
+        };
+      }),
+    );
+    this.touchEditor();
+  }
+
+  activateMetafield(key: string): void {
+    this.activeMetafieldKeys.update((keys) => (keys.includes(key) ? keys : [...keys, key]));
+    this.openAttributePicker(key);
+    this.touchEditor();
+  }
+
+  clearMetafield(key: string): void {
+    const attribute = this.allCategoryAttributes().find((item) => item.key === key);
+    this.attributeValues.update((values) => {
+      const next = { ...values };
+      delete next[key];
+      return next;
+    });
+    if (!attribute?.required) {
+      this.activeMetafieldKeys.update((keys) => keys.filter((item) => item !== key));
+    }
+    if (this.pickingKey() === key) this.closeAttributePicker();
+    this.touchEditor();
+  }
+
+  openAttributePicker(key: string): void {
+    this.pickingKey.set(key);
+    this.pickerQuery.set('');
+    this.customEntryDraft.set('');
+  }
+
+  closeAttributePicker(): void {
+    this.pickingKey.set(null);
+    this.pickerQuery.set('');
+    this.customEntryDraft.set('');
+  }
+
+  addAttributeValue(key: string, value: string): void {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    this.attributeValues.update((values) => {
+      const current = values[key] ?? [];
+      if (current.includes(trimmed)) return values;
+      return { ...values, [key]: [...current, trimmed] };
+    });
+    this.activeMetafieldKeys.update((keys) => (keys.includes(key) ? keys : [...keys, key]));
+    this.touchEditor();
+  }
+
+  removeAttributeValue(key: string, value: string): void {
+    this.attributeValues.update((values) => {
+      const next = (values[key] ?? []).filter((item) => item !== value);
+      if (!next.length) {
+        const copy = { ...values };
+        delete copy[key];
+        return copy;
+      }
+      return { ...values, [key]: next };
+    });
+    this.touchEditor();
+  }
+
+  /** Shopify multi-picker: check toggles value without closing. */
+  togglePickerEntry(value: string): void {
+    const key = this.pickingKey();
+    if (!key) return;
+    const selected = this.attributeValues()[key] ?? [];
+    if (selected.includes(value)) this.removeAttributeValue(key, value);
+    else this.addAttributeValue(key, value);
+  }
+
+  addCustomPickerEntry(): void {
+    const key = this.pickingKey();
+    const draft = this.customEntryDraft().trim() || this.pickerQuery().trim();
+    if (!key || !draft) return;
+    this.addAttributeValue(key, draft);
+    this.customEntryDraft.set('');
+    this.pickerQuery.set('');
+  }
+
+  metafieldClearLabel(attribute: CatalogAttribute): string {
+    const count = this.attributeValues()[attribute.key]?.length ?? 0;
+    if (count === 0) return `Eliminar campo: ${attribute.name}`;
+    if (count === 1) return `Borrar valor: ${attribute.name}`;
+    return `Borrar valores: ${attribute.name}`;
+  }
+
+  attributeSwatch(attributeName: string, value: string): string | null {
+    if (!/color/i.test(attributeName)) return null;
+    return COLOR_SWATCHES[value.trim().toLocaleLowerCase('es')] ?? null;
+  }
+
+  private syncActiveMetafieldKeys(values: Record<string, string[]>): void {
+    const attrs = this.selectedCategory()?.attributes ?? [];
+    const keys = attrs
+      .filter((attribute) => attribute.required || (values[attribute.key]?.length ?? 0) > 0)
+      .map((attribute) => attribute.key);
+    this.activeMetafieldKeys.set(keys);
   }
 
   /** Adds missing category option axes (e.g. Color, Talla) without wiping merchant values. */
@@ -1013,11 +1536,6 @@ export class ProductsPage {
           : axis,
       ),
     );
-    this.touchEditor();
-  }
-
-  setAttribute(key: string, value: string): void {
-    this.attributeValues.update((values) => ({ ...values, [key]: value }));
     this.touchEditor();
   }
 
@@ -1309,28 +1827,77 @@ export class ProductsPage {
     return this.parseCategories(this.formValues().categoriesText);
   }
 
+  onTagDraftInput(value: string): void {
+    this.tagDraft.set(value);
+  }
+
+  addTagFromDraft(): void {
+    const raw = this.tagDraft().trim().replace(/\s+/g, ' ');
+    if (!raw) return;
+    const key = raw.toLocaleLowerCase('es');
+    if (this.tags().some((tag) => tag.toLocaleLowerCase('es') === key)) {
+      this.tagDraft.set('');
+      return;
+    }
+    if (this.tags().length >= 50) return;
+    this.tags.update((list) => [...list, raw.slice(0, 40)]);
+    this.tagDraft.set('');
+    this.touchEditor();
+  }
+
+  removeTag(tag: string): void {
+    this.tags.update((list) => list.filter((item) => item !== tag));
+    this.touchEditor();
+  }
+
   private storeFields(values: {
     status: ProductStatus;
     channelStore: boolean;
     channelWhatsapp: boolean;
     channelInstagram: boolean;
     compareAtPrice: number | null;
+    cost: number | null;
+    taxable: boolean;
     brand: string;
+    vendor: string;
+    weightKg: number | null;
+    lengthCm: number | null;
+    widthCm: number | null;
+    heightCm: number | null;
+    seoTitle: string;
+    seoDescription: string;
+    kind: ProductKind;
   }) {
     const compareAt =
       values.compareAtPrice === null || String(values.compareAtPrice) === ''
         ? null
         : toCents(Number(values.compareAtPrice));
+    const cost =
+      values.cost === null || String(values.cost) === ''
+        ? null
+        : toCents(Number(values.cost));
     const channelListings: Array<{ channel: ProductChannelKind; isPublished: boolean }> = [
       { channel: 'STORE', isPublished: values.channelStore },
       { channel: 'WHATSAPP', isPublished: values.channelWhatsapp },
       { channel: 'INSTAGRAM', isPublished: values.channelInstagram },
     ];
+    const physical = values.kind === 'PRODUCT';
     return {
       status: values.status,
       channelListings,
       compareAtPriceCents: compareAt && compareAt > 0 ? compareAt : null,
+      costCents: cost != null && cost >= 0 ? cost : null,
+      taxable: values.taxable,
       brand: values.brand.trim() || null,
+      vendor: values.vendor.trim() || null,
+      tags: this.tags(),
+      weightGrams: physical ? gramsFromKg(values.weightKg) : null,
+      lengthMm: physical ? mmFromCm(values.lengthCm) : null,
+      widthMm: physical ? mmFromCm(values.widthCm) : null,
+      heightMm: physical ? mmFromCm(values.heightCm) : null,
+      metafields: normalizeMetafieldDrafts(this.productMetafields()),
+      seoTitle: values.seoTitle.trim() || null,
+      seoDescription: values.seoDescription.trim() || null,
     };
   }
 
@@ -1413,6 +1980,7 @@ export class ProductsPage {
       options: item.options, imageUrl: item.imageUrl, priceInherited: item.priceInherited,
       priceCents: toCents(item.priceInherited ? Number(values.price) : item.price),
       isAvailable: item.isAvailable, stockQty: stockless ? null : item.stockQty,
+      metafields: normalizeMetafieldDrafts(item.metafields),
     })) : [];
     if (this.variantsEnabled() && !asSet && (!variants.length || new Set(variants.map((item) => keyOf(item.options))).size !== variants.length)) {
       this.errorMessage.set('Genera combinaciones válidas y distintas antes de guardar.'); return;
@@ -1421,9 +1989,9 @@ export class ProductsPage {
       this.errorMessage.set('Carga la clasificación antes de guardar este producto.'); return;
     }
     const missing = this.selectedCategory()?.attributes.find((attribute) => {
-      if (!attribute.required || this.attributeValues()[attribute.key]?.trim()) return false;
+      if (!attribute.required || (this.attributeValues()[attribute.key]?.length ?? 0) > 0) return false;
       if (!attribute.variant) return true;
-      // Variant-defining attrs (Color, Talla…) must be covered by option axes, not product fields.
+      // Variant-defining attrs may be covered by option axes (Shopify connect).
       if (!variants.length) return true;
       return !variants.every((variant) =>
         variant.options.some(
@@ -1436,7 +2004,7 @@ export class ProductsPage {
     if (missing) {
       this.errorMessage.set(
         missing.variant
-          ? `Define la opción «${missing.name}» en Variantes (como en Shopify: no se pide otra vez arriba).`
+          ? `Completa «${missing.name}» en Metacampos de categoría o en Variantes.`
           : `Completa ${missing.name}.`,
       );
       return;
@@ -1605,13 +2173,15 @@ export class ProductsPage {
     const details: ProductDetails = {};
     const text = (value: string) => value.trim() || undefined;
     const service = values.kind === 'SERVICE';
-    const fragrance = this.detailsEnabled() && values.kind === 'PRODUCT';
+    const fragrance = this.isFragranceCategory() && values.kind === 'PRODUCT';
+    const attrs = this.attributeValues();
+    const firstAttr = (key: string) => attrs[key]?.[0]?.trim() || undefined;
     details.size = text(values.size);
-    details.audience = text(values.audience);
+    details.audience = text(values.audience) ?? firstAttr('audience');
     details.returns = text(values.returns);
     if (values.kind === 'DIGITAL') {
-      details.digitalFormat = text(values.digitalFormat);
-      details.license = text(values.license);
+      details.digitalFormat = text(values.digitalFormat) ?? firstAttr('format');
+      details.license = text(values.license) ?? firstAttr('license');
       details.accessDuration = text(values.accessDuration);
     }
     if (!service) details.warranty = text(values.warranty);
@@ -1620,9 +2190,12 @@ export class ProductsPage {
       details.cancellation = text(values.cancellation);
     }
     if (fragrance) {
-      details.family = text(values.family);
-      details.intensity = text(values.intensity);
+      // Store templates read top-level family/intensity; keep them in sync with category attrs.
+      details.family = firstAttr('family') ?? text(values.family);
+      details.intensity = firstAttr('intensity') ?? text(values.intensity);
     }
+    const keepNotes = fragrance || Boolean(values.notesText.trim());
+    const keepHighlights = fragrance || Boolean(values.highlightsText.trim());
     const listFields: Array<[keyof ProductDetails, string, boolean]> = [
       ['benefits', values.benefitsText, true],
       ['useCases', values.useCasesText, true],
@@ -1630,9 +2203,9 @@ export class ProductsPage {
       ['compatibility', values.compatibilityText, !service],
       ['contents', values.contentsText, true],
       ['usage', values.usageText, !service],
-      ['requirements', values.requirementsText, service || values.kind === 'DIGITAL'],
-      ['notes', values.notesText, fragrance],
-      ['highlights', values.highlightsText, fragrance],
+      ['requirements', values.requirementsText, service || values.kind === 'DIGITAL' || Boolean(values.requirementsText.trim())],
+      ['notes', values.notesText, keepNotes],
+      ['highlights', values.highlightsText, keepHighlights],
     ];
     for (const [key, raw, enabled] of listFields) {
       const list = enabled ? lines(raw) : [];
@@ -1650,8 +2223,8 @@ export class ProductsPage {
       .filter((row) => row.rest)
       .map((row) => ({ name: row.name.slice(0, 60), value: row.rest.slice(0, 200) }));
     for (const definition of this.selectedCategory()?.attributes ?? []) {
-      const value = this.attributeValues()[definition.key]?.trim();
-      if (value) attributes.push({ name: definition.name, value });
+      const list = this.attributeValues()[definition.key];
+      if (list?.length) attributes.push({ name: definition.name, value: list.join(', ') });
     }
     if (attributes.length) details.attributes = [...new Map(attributes.map((attribute) => [attribute.name.trim().toLocaleLowerCase('es'), attribute])).values()];
     const keywords = values.keywordsText
@@ -1664,14 +2237,15 @@ export class ProductsPage {
       .map((faq) => ({ question: faq.question.trim(), answer: faq.answer.trim() }))
       .filter((faq) => faq.question.length >= 3 && faq.answer);
     if (faqs.length) details.faqs = faqs;
-    const scent = fragrance
+    const keepScent = fragrance || Boolean(values.scentText.trim());
+    const scent = keepScent
       ? pairs(values.scentText, 6).map((row) => ({
           name: row.name.slice(0, 80),
           ...(row.rest ? { description: row.rest.slice(0, 200) } : {}),
         }))
       : [];
     if (scent.length) details.scent = scent;
-    if (fragrance && values.montage) details.montage = true;
+    if ((fragrance || values.montage) && values.montage) details.montage = true;
     const clean = Object.fromEntries(
       Object.entries(details).filter(([, value]) => value !== undefined),
     ) as ProductDetails;

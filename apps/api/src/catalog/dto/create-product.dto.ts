@@ -33,6 +33,28 @@ export class VariantOptionDto {
   value!: string;
 }
 
+/** Free-form product/variant metafield (not category attributeValues). */
+export class ProductMetafieldDto {
+  @ApiProperty({ example: 'care_guide' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(64)
+  @Matches(/^[a-z0-9]+(?:[_-][a-z0-9]+)*$/i)
+  key!: string;
+
+  @ApiPropertyOptional({ example: 'custom' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  namespace?: string;
+
+  @ApiProperty({ example: 'Lavar a mano' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(2000)
+  value!: string;
+}
+
 export class ProductVariantInputDto {
   @ApiPropertyOptional({ description: 'Stock count when editing began; detects concurrent reservations' })
   @IsOptional()
@@ -118,6 +140,14 @@ export class ProductVariantInputDto {
   @IsInt()
   @Min(0)
   stockQty?: number | null;
+
+  @ApiPropertyOptional({ type: [ProductMetafieldDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => ProductMetafieldDto)
+  metafields?: ProductMetafieldDto[] | null;
 }
 
 export class ScentNoteDto {
@@ -452,10 +482,12 @@ export class ProductExtrasDto {
   @MaxLength(100)
   categoryId?: string | null;
 
-  @ApiPropertyOptional({ description: 'Values indexed by category attribute key' })
+  @ApiPropertyOptional({
+    description: 'Category metafield values by attribute key (string or list of entries, Shopify-style)',
+  })
   @IsOptional()
   @IsObject()
-  attributeValues?: Record<string, string> | null;
+  attributeValues?: Record<string, string | string[]> | null;
   @ApiPropertyOptional({
     enum: PRODUCT_KINDS,
     description:
@@ -704,4 +736,71 @@ export class CreateProductDto extends ProductExtrasDto {
   @IsString()
   @MaxLength(160)
   seoDescription?: string | null;
+
+  @ApiPropertyOptional({ example: 4500, description: 'Merchant cost in cents' })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsInt()
+  @Min(0)
+  costCents?: number | null;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  taxable?: boolean;
+
+  @ApiPropertyOptional({ example: 'Mi tienda' })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsString()
+  @MaxLength(80)
+  vendor?: string | null;
+
+  @ApiPropertyOptional({ type: [String], example: ['verano', 'cuero'] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsString({ each: true })
+  @MaxLength(40, { each: true })
+  tags?: string[];
+
+  @ApiPropertyOptional({ description: 'Shipping mass in grams (PRODUCT only)' })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsInt()
+  @Min(0)
+  @Max(2_000_000)
+  weightGrams?: number | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsInt()
+  @Min(0)
+  @Max(100_000)
+  lengthMm?: number | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsInt()
+  @Min(0)
+  @Max(100_000)
+  widthMm?: number | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsInt()
+  @Min(0)
+  @Max(100_000)
+  heightMm?: number | null;
+
+  @ApiPropertyOptional({ type: [ProductMetafieldDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => ProductMetafieldDto)
+  metafields?: ProductMetafieldDto[] | null;
 }

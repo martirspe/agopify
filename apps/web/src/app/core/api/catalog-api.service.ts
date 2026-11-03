@@ -3,6 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+export type ProductMetafield = {
+  key: string;
+  namespace?: string;
+  value: string;
+};
+
 export type ProductVariantDto = {
   options?: { name: string; value: string }[] | null;
   priceInherited?: boolean;
@@ -18,6 +24,7 @@ export type ProductVariantDto = {
   priceCents: number;
   isAvailable: boolean;
   stockQty: number | null;
+  metafields?: ProductMetafield[] | null;
 };
 
 export type ProductMediaDto = {
@@ -70,8 +77,26 @@ export type ComponentInput = { productId: string; quantity: number };
 export type ProductKind = 'PRODUCT' | 'SERVICE' | 'DIGITAL';
 export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 export type ProductChannelKind = 'STORE' | 'WHATSAPP' | 'INSTAGRAM';
-export type CatalogAttribute = { key: string; name: string; group?: string; required?: boolean; variant?: boolean; values?: string[]; maxLength?: number };
-export type CatalogCategory = { id: string; name: string; kind: ProductKind; parentId: string | null; path: { id: string; name: string }[]; attributes: CatalogAttribute[] };
+export type CatalogAttribute = {
+  key: string;
+  name: string;
+  group?: string;
+  required?: boolean;
+  variant?: boolean;
+  values?: string[];
+  maxLength?: number;
+};
+export type AttributeValueMap = Record<string, string | string[]>;
+export type CatalogCategory = {
+  id: string;
+  name: string;
+  kind: ProductKind;
+  parentId: string | null;
+  path: { id: string; name: string }[];
+  attributes: CatalogAttribute[];
+  /** Present on the lightweight tree list used by the Shopify-style picker. */
+  hasChildren?: boolean;
+};
 export type ServiceMode = 'onsite' | 'home' | 'online';
 export type ChannelListingDto = {
   channel: ProductChannelKind;
@@ -92,7 +117,7 @@ export type CollectionDto = {
 
 type ProductExtrasPayload = {
   categoryId?: string | null;
-  attributeValues?: Record<string, string> | null;
+  attributeValues?: AttributeValueMap | null;
   digitalAccessUrl?: string | null;
   digitalInstructions?: string | null;
   kind?: ProductKind;
@@ -121,7 +146,7 @@ export type InventoryUpdate = { productId: string; variantId?: string; stockQty:
 
 export type ProductDto = {
   categoryId?: string | null;
-  attributeValues?: Record<string, string> | null;
+  attributeValues?: AttributeValueMap | null;
   digitalAccessUrl: string | null;
   digitalInstructions: string | null;
   id: string;
@@ -147,9 +172,20 @@ export type ProductDto = {
   /** Derived from STORE channel listing for one release. */
   isPublishedOnStore: boolean;
   compareAtPriceCents: number | null;
+  costCents?: number | null;
+  taxable?: boolean;
   brand: string | null;
+  vendor?: string | null;
   sku: string | null;
   line: string | null;
+  tags?: string[];
+  weightGrams?: number | null;
+  lengthMm?: number | null;
+  widthMm?: number | null;
+  heightMm?: number | null;
+  metafields?: ProductMetafield[] | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   details: ProductDetails | null;
   variants?: ProductVariantDto[];
   media?: ProductMediaDto[];
@@ -174,6 +210,7 @@ export type VariantPayload = {
   priceCents: number;
   isAvailable?: boolean;
   stockQty?: number | null;
+  metafields?: ProductMetafield[] | null;
 };
 
 export type CreateProductPayload = ProductExtrasPayload & {
@@ -196,6 +233,17 @@ export type CreateProductPayload = ProductExtrasPayload & {
   isPublishedOnStore?: boolean;
   compareAtPriceCents?: number | null;
   brand?: string | null;
+  costCents?: number | null;
+  taxable?: boolean;
+  vendor?: string | null;
+  tags?: string[];
+  weightGrams?: number | null;
+  lengthMm?: number | null;
+  widthMm?: number | null;
+  heightMm?: number | null;
+  metafields?: ProductMetafield[] | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
 };
 
 export type UpdateProductPayload = ProductExtrasPayload & {
@@ -219,6 +267,17 @@ export type UpdateProductPayload = ProductExtrasPayload & {
   isPublishedOnStore?: boolean;
   compareAtPriceCents?: number | null;
   brand?: string | null;
+  costCents?: number | null;
+  taxable?: boolean;
+  vendor?: string | null;
+  tags?: string[];
+  weightGrams?: number | null;
+  lengthMm?: number | null;
+  widthMm?: number | null;
+  heightMm?: number | null;
+  metafields?: ProductMetafield[] | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
 };
 
 export type CatalogImportOptions = {
@@ -289,6 +348,10 @@ export class CatalogApiService {
 
   categories(): Promise<CatalogCategory[]> {
     return firstValueFrom(this.http.get<CatalogCategory[]>(`${this.root}/categories`));
+  }
+
+  categoryById(categoryId: string): Promise<CatalogCategory> {
+    return firstValueFrom(this.http.get<CatalogCategory>(`${this.root}/categories/${encodeURIComponent(categoryId)}`));
   }
 
   listCollections(): Promise<CollectionDto[]> {

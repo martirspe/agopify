@@ -25,15 +25,18 @@ import {
   anchorSelectedProduct,
   asksSellerRecommendation,
   filterStandaloneProducts,
+  focusRelatedStandalone,
   isBundleProduct,
   asksAboutDiscount,
   isOpenProductNeed,
   isOptionSelectionOnly,
   isPurchaseCommitAnaphora,
   pickSellerRecommendation,
-  preferNonBundleProducts,
+  productFamilyTokens,
+  recommendSellableMatches,
   PREPARE_PURCHASE_ASK,
   standaloneCategoryHint,
+  standaloneSearchQuery,
   understandBuyerTurn,
   wantsCancelOrder,
   wantsStandaloneOnly,
@@ -280,7 +283,15 @@ export class SalesAgentRuntimeService {
     const cancelAsked = wantsCancelOrder(params.inboundText);
     const refs = this.tools.extractProductRefs(params.inboundText);
     const genericSearch = /^(?:que tienes|que tienen|que hay|que opciones|muestrame|y ahora)$/.test(normalizeText(params.inboundText).replace(/[¿?!.]/g, '').trim());
-    const searchText = genericSearch && state?.requirements.need ? state.requirements.need.value : params.inboundText;
+    // Standalone turns ("sólo el perfume") keep the prior need / line tokens so we
+    // do not reload a featured slice of unrelated units from a bare category word.
+    const earlyStandalone =
+      wantsStandaloneOnly(params.inboundText) ||
+      state?.requirements.packaging?.value === 'standalone';
+    let searchText =
+      genericSearch && state?.requirements.need
+        ? state.requirements.need.value
+        : params.inboundText;
     // Load overview early so a category browse can release a stuck district ask.
     const [agentRow, runtimeKnowledge, overview] = await Promise.all([
       this.resolveAgent(params.tenantId, params.agentId, params.channelId),
@@ -312,6 +323,31 @@ export class SalesAgentRuntimeService {
         ...pendingLines.map((line) => line.productId),
       ]),
     ];
+    if (earlyStandalone) {
+      const anchorIds = [
+        ...new Set(
+          [
+            state?.selectedProduct?.productId,
+            ...(state?.recommendedProductIds ?? []),
+            ...(state?.previousRecommendedProductIds ?? []),
+            ...(state?.rejectedProducts ?? []).map((row) => row.productId),
+          ].filter((id): id is string => Boolean(id)),
+        ),
+      ];
+      const anchors = anchorIds.length
+        ? await this.tools.getProducts(
+            params.tenantId,
+            anchorIds,
+            params.channelId,
+          )
+        : [];
+      searchText = standaloneSearchQuery({
+        inboundText: params.inboundText,
+        need: state?.requirements.need?.value,
+        relatedProducts: anchors.filter((product) => isBundleProduct(product)),
+        categoryHint: standaloneCategoryHint(params.inboundText),
+      });
+    }
     const products = await this.tools.listAvailableProducts(
       params.tenantId,
       refs.map((ref) => ref.handle),
@@ -517,18 +553,30 @@ export class SalesAgentRuntimeService {
         scope: 'conversation',
       };
     }
-    // "quiero comprar un X" is discovery; "quiero comprar Perfume X" (named SKU) may checkout.
+    // "quiero comprar un X" is discovery; "quiero comprar Zapatilla negra Uno" (exact name) may checkout.
+    // Unique token hits are too weak here ("cielo" must not auto-buy amid Set Cielo + unit).
     const namedPurchaseTarget = openProductNeed
-      ? this.tools.identifyProduct(params.inboundText, products, refs)
+      ? (() => {
+          const exact = products.filter((product) =>
+            normalizeText(params.inboundText).includes(
+              normalizeText(product.name),
+            ),
+          );
+          return exact.length === 1 ? exact[0] : null;
+        })()
       : null;
     // "quiero el X" after a list pins the SKU and asks prepare — it is not checkout yet.
     const optionSelectionOnly =
       Boolean(reference) && isOptionSelectionOnly(params.inboundText);
+    // Open-need discovery releases a stuck checkout, but a named SKU in the same
+    // phrase ("quiero comprar Zapatilla X talla 40") may still buy.
+    const releasingWithoutNamedSku =
+      releasingCheckout && !namedPurchaseTarget;
     // Never treat bare stage=purchase as buying: that trapped browse/cancel after a pending order.
     const buying =
       !turn.declinesOffer &&
       !optionSelectionOnly &&
-      !releasingCheckout &&
+      !releasingWithoutNamedSku &&
       !cancelAsked &&
       (turn.confirmsPurchase ||
         (districtReply && Boolean(contextPick)) ||
@@ -626,17 +674,39 @@ export class SalesAgentRuntimeService {
     const standaloneNeed =
       standaloneNow || state?.requirements.packaging?.value === 'standalone';
     const categoryHint = standaloneCategoryHint(params.inboundText);
-    const effectiveSearch =
-      standaloneNeed && categoryHint
-        ? categoryHint
-        : searchText;
+    const relatedForStandalone = (state?.rejectedProducts ?? [])
+      .map((row) => products.find((product) => product.id === row.productId))
+      .filter((product): product is CatalogProductView => Boolean(product))
+      .filter((product) => isBundleProduct(product));
+    // Also use the pack that was just on the table (before rejection) via context.
+    if (!relatedForStandalone.length && standaloneNeed) {
+      for (const id of [
+        ...(state?.previousRecommendedProductIds ?? []),
+        ...(state?.recommendedProductIds ?? []),
+        ...contextIds,
+      ]) {
+        const item = products.find((product) => product.id === id);
+        if (item && isBundleProduct(item) && !relatedForStandalone.includes(item)) {
+          relatedForStandalone.push(item);
+        }
+      }
+    }
+    const effectiveSearch = standaloneNeed
+      ? standaloneSearchQuery({
+          inboundText: params.inboundText,
+          need: state?.requirements.need?.value,
+          relatedProducts: relatedForStandalone,
+          categoryHint,
+        }) || searchText
+      : searchText;
     const search = this.tools.searchCatalog(effectiveSearch, products, refs);
-    let matches = preferNonBundleProducts(
+    let matches = recommendSellableMatches(
       params.inboundText,
       filterStandaloneProducts(
         params.inboundText,
         search.matches,
         state?.requirements.packaging?.value === 'standalone',
+        relatedForStandalone,
       ),
     );
     let searchTrace: AgentToolTrace = {
@@ -646,36 +716,57 @@ export class SalesAgentRuntimeService {
         matchIds: matches.map((p) => p.id),
         count: matches.length,
         ...(standaloneNeed ? { standaloneOnly: true } : {}),
+        ...(productFamilyTokens(effectiveSearch).length
+          ? { familyQuery: effectiveSearch }
+          : {}),
       },
     };
     if (standaloneNeed && !matches.length) {
       const needQuery =
-        categoryHint ??
-        state?.requirements.need?.value ??
+        standaloneSearchQuery({
+          inboundText: params.inboundText,
+          need: state?.requirements.need?.value,
+          relatedProducts: relatedForStandalone,
+          categoryHint,
+        }) ||
+        state?.requirements.need?.value ||
         params.inboundText;
       const fromNeed = filterStandaloneProducts(
         params.inboundText,
         this.tools.searchCatalog(needQuery, products, []).matches,
         true,
+        relatedForStandalone,
       );
       const catalogSingles = filterStandaloneProducts(
         params.inboundText,
         products.filter((p) => p.isAvailable && !isSoldOut(p)),
         true,
+        relatedForStandalone,
       );
       const pool = fromNeed.length ? fromNeed : catalogSingles;
-      const scoped = categoryHint
-        ? pool.filter((p) =>
-            normalizeText(
-              [p.name, p.descriptionShort ?? '', ...p.categories].join(' '),
-            ).includes(categoryHint),
-          )
-        : pool;
-      // If the hint finds nothing, do not fall back to unrelated unit SKUs or packs.
-      const picked = (scoped.length ? scoped : categoryHint ? [] : pool).slice(
-        0,
-        3,
+      const family = new Set(
+        relatedForStandalone.flatMap((product) => productFamilyTokens(product)),
       );
+      for (const token of productFamilyTokens(
+        state?.requirements.need?.value ?? '',
+      )) {
+        family.add(token);
+      }
+      const scoped = family.size
+        ? pool.filter((product) =>
+            productFamilyTokens(product).some((token) => family.has(token)),
+          )
+        : categoryHint
+          ? pool.filter((p) =>
+              normalizeText(
+                [p.name, p.descriptionShort ?? '', ...p.categories].join(' '),
+              ).includes(categoryHint),
+            )
+          : pool;
+      // Family/need first; bare category only when no line tokens exist.
+      const picked = (
+        scoped.length ? scoped : family.size ? [] : categoryHint ? [] : pool
+      ).slice(0, 3);
       if (picked.length) {
         matches = picked;
         searchTrace = {

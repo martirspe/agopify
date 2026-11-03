@@ -125,8 +125,9 @@ import { DsStickyEdgeDirective } from '../sticky-edge/ds-sticky-edge.directive';
     }
 
     /*
-     * Admin .page-header: sticky, height 52px, padding 0, flex + align center,
-     * border only via dsStickyEdge when scrolled.
+     * Admin .page-header (admin-next, measured): sticky 52px, transparent host,
+     * ::before workspace fill + ::after 1px hairline only when scrolled
+     * (dsStickyEdge ↔ Shopify scroll() timeline on ::after).
      */
     .ds-page-header {
       /* Defeat console touch-target 2rem so header controls stay Admin 28px. */
@@ -144,12 +145,50 @@ import { DsStickyEdgeDirective } from '../sticky-edge/ds-sticky-edge.directive';
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      background: var(--ds-console-workspace-bg, var(--ds-color-canvas, var(--ds-color-surface)));
-      overflow: hidden;
+      background: transparent;
+      overflow: visible;
+      border-block-end: 0;
+    }
+
+    .ds-page-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background: var(--ds-console-workspace-bg, #fff);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--ds-motion-fast, 120ms) var(--ds-ease-out, ease);
+    }
+
+    .ds-page-header::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      top: 3.1875rem; /* 51px — hairline under 52px strip */
+      height: 1px;
+      z-index: 1;
+      background: rgb(0 0 0 / 7%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--ds-motion-fast, 120ms) var(--ds-ease-out, ease);
+    }
+
+    .ds-page-header.ds-sticky-edge--scrolled::before,
+    .ds-page-header.ds-sticky-edge--scrolled::after {
+      opacity: 1;
+    }
+
+    /* Prefer ::after hairline; keep class border transparent. */
+    .ds-page-header.ds-sticky-edge,
+    .ds-page-header.ds-sticky-edge--scrolled {
+      border-block-end-color: transparent;
     }
 
     /* Admin .toolbar: height 28px, padding 0 4px 0 16px */
     .ds-page-header__toolbar {
+      position: relative;
+      z-index: 2;
       display: flex;
       flex-wrap: nowrap;
       align-items: center;

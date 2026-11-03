@@ -98,16 +98,18 @@
   /* Index views fill the console frame; keep token for optional narrow layouts. */
   --ds-console-page-width: 61.25rem;
   --ds-console-form-width: 61.25rem;
-  /* Admin Next card: 20px radius; hairline + soft lift (no hard border, no ink stamp). */
+  /* Admin Next card (measured): 20px radius; soft ring + layered lift. */
   --ds-console-card-radius: 1.25rem;
   --ds-console-card-shadow:
-    rgb(0 0 0 / 10%) 0 0 0 1px,
-    rgb(0 0 0 / 3%) 0 1px 2px 0,
-    rgb(0 0 0 / 3%) 0 2px 8px -2px;
+    rgb(0 0 0 / 24%) 0 0 2px 0,
+    rgb(0 0 0 / 2%) 0 2px 12px 0,
+    rgb(0 0 0 / 2%) 0 4px 16px 0,
+    rgb(0 0 0 / 2%) 0 4px 48px 0;
   --ds-console-card-shadow-selected:
-    rgb(0 0 0 / 14%) 0 0 0 1px,
-    rgb(0 0 0 / 4%) 0 1px 3px 0,
-    rgb(0 0 0 / 4%) 0 4px 12px -2px;
+    rgb(0 0 0 / 28%) 0 0 2px 0,
+    rgb(0 0 0 / 3%) 0 2px 12px 0,
+    rgb(0 0 0 / 3%) 0 4px 16px 0,
+    rgb(0 0 0 / 3%) 0 4px 48px 0;
   /* Admin Next text fields: 12px radius + quiet ring. */
   --ds-console-field-radius: 0.75rem;
   --ds-console-field-shadow:

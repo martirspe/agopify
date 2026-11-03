@@ -35,7 +35,8 @@ While district/checkout is pending, “quiero ver foto” / “muéstrame el pro
 ## Product references (recommended list only)
 
 - Ordinals: primero…quinto, último (slot-stable if a product was deactivated)  
-- Bundle vs unit (cualquier rubro): “el que viene sólo”, “quiero sólo…”, “quiero solo”, “X solo”, “no quiero el set/pack”, “sin el kit”. Tras rechazar un pack, no se reancla ni se resuelve la referencia al mismo set. Preferencia de unitarios sobre packs si el comprador no pidió combo. Detección de pack por nombre/categoría genérica (`set|kit|pack|combo|paquete|bundle|…`), no por industria.  
+- Bundle vs unit (cualquier rubro): “el que viene sólo”, “quiero sólo…”, “quiero solo”, “sólo el \<producto\>”, “X solo”, “no quiero el set/pack”, “sin el kit”. Tras rechazar un pack, la búsqueda conserva tokens de familia del set/need (p. ej. línea del nombre) y **no** sustituye la query por un hint genérico de categoría (“perfume”) que devolvería unitarios ajenos. Si el comprador no pidió combo, el pool de recomendación prioriza/deja solo SKUs unitarios cuando existen. Detección de pack por nombre/categoría genérica (`set|kit|pack|combo|paquete|bundle|…`), no por industria.  
+- Open product need (“quiero comprar un X”, “busco Y”) **persiste** `requirements.need` desde el primer turno para continuidad standalone y rediscovery.  
 - “el más barato / más caro”, “el otro”, color  
 - Unique token of the message present in exactly one recommended name (vocabulario del catálogo del tenant)  
 - “me interesa / me gusta / prefiero / ese / este” with a single current option or prior selection  

@@ -16,11 +16,19 @@
   --store-card-name-size: var(--store-type-product);
   --store-card-name-weight: 400;
   --store-card-price-size: var(--store-type-product);
-  --store-card-media-padding: var(--ds-space-4);
+  --store-card-media-padding: 0;
   --store-media-ratio: 4 / 5;
-  --store-media-fit: contain;
+  --store-media-fit: cover;
   --store-gallery-ratio: 1;
+  --store-radius-card: var(--ds-radius-sm);
+  --store-radius-control: var(--ds-radius-sm);
   --store-card-media-radius: var(--store-radius-card);
   --store-control-height: 3.25rem;
-  --store-price-tracking: 0;
+  --store-price-tracking: 0.01em;
+  --store-type-hero: clamp(2.85rem, 6.2vw, 5rem);
+  --store-type-title: clamp(2.15rem, 4.2vw, 3.1rem);
+  --store-type-section: clamp(1.75rem, 3.2vw, 2.35rem);
+  --store-section-space: var(--store-theme-space-airy);
+  --store-reading-width: 38rem;
+  --store-shadow-card: 0 1px 1px rgb(48 24 36 / 4%), 0 12px 28px rgb(48 24 36 / 6%);
 }

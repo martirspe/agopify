@@ -243,12 +243,19 @@ export function observeBuyer(
   }
   // Preserve the buyer's search wording across recent-window eviction; it remains attributed input.
   // "quiero uno" is quantity of the current pick, not a new catalog need.
+  // "quiero comprar un X" must remember need on the first turn (not only on topic_change).
+  // Bare catalog asks ("qué tienes") must not overwrite a more specific remembered need.
+  const bareCatalogAsk =
+    /^(?:que tienes|que tienen|que hay|que opciones|muestrame|y ahora)(?:\s+disponibles?)?$/.test(
+      normalized.replace(/[¿?!.]/g, '').trim(),
+    );
   if (
-    (/\b(?:busco|buscando|necesito)\b/.test(normalized) ||
-      /\bquiero (?:unos|unas|una|un) \S/.test(normalized)) &&
+    isOpenProductNeed(text) &&
+    !bareCatalogAsk &&
     !/\b(humano|asesor|persona|reembolso)\b/.test(normalized)
-  )
+  ) {
     remember('need', text.slice(0, 600));
+  }
   const analysis = extractBuyerIntents(text);
   next.intents = analysis.intents;
   if (
