@@ -431,9 +431,16 @@ obtain_console_tls() {
 }
 
 obtain_store_tls() {
-  if has_cert "$STORE_CERT_NAME"; then
+  # Must check SANs, not only that /live/<name> exists: after a domain rename the old
+  # lineage keeps the same cert name but no longer covers STORE_BASE_DOMAIN. Skipping
+  # here leaves apex/console without a 443 server, so another app's default_server
+  # (e.g. gohabix) answers HTTPS and may 301 to its own domain.
+  if cert_for "*.${STORE_BASE_DOMAIN}" >/dev/null && cert_for "$STORE_BASE_DOMAIN" >/dev/null; then
     log "Wildcard certificate already present for *.${STORE_BASE_DOMAIN}"
     return 0
+  fi
+  if has_cert "$STORE_CERT_NAME"; then
+    warn "Certificate ${STORE_CERT_NAME} exists but its SANs do not cover ${STORE_BASE_DOMAIN} — reissuing."
   fi
   if [[ -z "$CLOUDFLARE_API_TOKEN" ]]; then
     warn "CLOUDFLARE_API_TOKEN empty: stores ({slug}.${STORE_BASE_DOMAIN}) stay on HTTP."
@@ -457,6 +464,24 @@ obtain_store_tls() {
   fi
 }
 
+# Without 443 server_name blocks for our hosts, the VPS default_server (often another
+# app) handles HTTPS. Fail loudly so deploy does not leave a silent cross-site redirect.
+assert_https_vhosts() {
+  local missing=() host
+  for host in "$STORE_BASE_DOMAIN" "$CONSOLE_HOST"; do
+    cert_for "$host" >/dev/null || missing+=("$host")
+  done
+  if [[ ${#missing[@]} -eq 0 ]]; then
+    log "HTTPS ready for ${STORE_BASE_DOMAIN} and ${CONSOLE_HOST}"
+    return 0
+  fi
+  err "No Let's Encrypt certificate covers: ${missing[*]}"
+  err "HTTPS for those names falls through to another site on this VPS (often a 301 to that app)."
+  err "Fix: DNS A/@ and A/* → this VPS (grey cloud), CERTBOT_EMAIL + CLOUDFLARE_API_TOKEN in .env,"
+  err "then: sudo bash scripts/bootstrap-host.sh"
+  exit 1
+}
+
 ensure_packages
 ensure_firewall
 generate_vhost
@@ -467,6 +492,8 @@ if [[ "$DO_TLS" != true ]]; then
 elif [[ -z "$CERTBOT_EMAIL" ]]; then
   warn "No CERTBOT_EMAIL (or EMAIL_FROM) in .env — skipping certbot."
   warn "Add CERTBOT_EMAIL=tu@correo.com and re-run: sudo bash scripts/bootstrap-host.sh"
+  err "Refusing to leave ${STORE_BASE_DOMAIN} on HTTP-only while sharing :443 with other apps."
+  exit 1
 else
   obtain_store_tls
   obtain_site_tls
@@ -474,6 +501,7 @@ else
   log "Refreshing nginx vhost with the certificates found..."
   generate_vhost
   install_vhost
+  assert_https_vhosts
 fi
 
 scheme_for() { cert_for "$1" >/dev/null && echo https || echo http; }

@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Deploy / nginx del VPS: tras un cambio de dominio, el bootstrap ya no da por bueno un lineage Let's Encrypt solo porque exista el directorio (`agopify-stores`); exige SANs que cubran `STORE_BASE_DOMAIN` y falla si apex/consola quedan sin HTTPS (si no, el `default_server` de otra app del VPS —p. ej. gohabix— responde el 443 y puede redirigir).
 - Consola / rail: bloque de prueba alineado al Admin — Ajustes + cuenta encima de la hairline, texto/CTA de suscripción abajo del todo; hairline inset 20 px, tipografía medium 13/12, CTA píldora 184×30; un solo glow en el shell (sin capa duplicada en el rail), con fade continuo bajo el main.
 - Móvil: pulido responsive en tienda, consola y marketing — safe areas (`--store-safe-*`), cabecera Selecta sin desborde, catálogo/carrito/checkout táctiles, FAB/consent/barra de compra con inset, filtros de Productos y padding del asistente flotante; landing a 320 px sin recortes.
 - Consola: el glow del rail no se refuerza — se continúa con la misma receta solo en el hueco chrome bajo la esquina del main (máscara desde el borde del rail); composer del asistente con padding simétrico e interruptor/`ac__btn` excluidos del min-touch 44 px.
